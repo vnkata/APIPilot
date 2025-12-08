@@ -82,12 +82,6 @@ class SimilarityValue:
             "in_value": self.in_value,
         }
 
-# def make_humanreadable_params(params):
-#     humaneadable = []
-#     for p in params:
-#         str = f"{p.get("")}"
-#         humaneadable.append(f"{p.value1} -> {p.value2} (in {p.in_value})")
-#     return s.replace("_", " ").title()
 def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
             flat_schema = {}
             if schema is None:
@@ -333,105 +327,8 @@ class OperationGraph:
             params["data_schemas"] = "\n".join(data_schemas)
             results = self.op_schema_deps.exec(**params)
             print(results)
-            # PROMPT = """
-            #     Your task is to analyze a specific endpoint within an API application, as defined in its Swagger Specification, and determine the necessary data schemas and matching keys required to obtain information pertinent to the endpoint's parameters.
-            #     Please review the following details for the endpoint and its associated parameters to identify the corresponding schemas needed for data retrieval:
-            #     Endpoint: {endpoint}
-            #     Description: {summary}
-            #     Specific Endpoint Parameters:
-            #     {specific_endpoint_params}
-            #     Additionally, you are provided with a list of all data schemas and their attributes as described in the Swagger Specification of the API application:
-            #     {data_schemas}
-            #     Follow these steps below to complete your task:
-            #     **STEP 1**: Review the provided API endpoint and describe each parameter briefly based on its function or purpose.
-            #     **STEP 2**: Review the provided API endpoint along with its parameters and brief descriptions from STEP 1 to identify and select only the parameters that function as identifying or foreign key parameters.  Exclude generic and contextual filtering parameters.
-            #     **STEP 3**: Review the data schemas and their attributes to locate potential matches for each endpoint parameter key from **STEP 2** and verify whether these parameters serve as identifiers or foreign keys. Then, map each parameter to the schema attribute(s) that can best provide the required information.
-            #     FINAL OUTPUT:
-            #     The response is in the format below, no explanation is needed:
-            #     ```json 
-            #     {{
-            #         "schema_1": {{
-            #             "parameter_name_1": "attribute_name_1, attribute_name_2", 
-            #             "parameter_name_2": "attribute_name_3, attribute_name_4"
-            #         }}
-            #     }}```
-            # """  
-           
-            # logger.debug("GPT PROMPT" + PROMPT.format(**params))
-            # # print( PROMPT.format(**params))
-            # # if u.operation_id == v.operation_id:
-            # #     str =  "response to parameter via GPT same operation"
-            # for _ in range(3):
-            #     try:
-            #         response, _ = self.model.generate(
-            #                     PROMPT.format(**params))
-            #         logger.debug("GPT RESPONSE" + response)
-            #         start, end  = -1, -1
-            #         # start = response.find('json') 
-            #         start = response.find('{') # vị trí dấu { đầu tiên 
-            #         end = response.rfind('}') # vị trí ``` cuối cùng
-            #         if start != -1 and end != -1:
-            #             json_str = response[start:end+1].strip()   
-            #             data = json.loads(json_str) # response mapping
-            #             for schema_name, mappings in data.items():
-            #                 for dep_operation in operations.values():
-            #                     if schema_name in dep_operation.schemas:
-            #                         self.logger.debug("MAPPING SCHEMA " + schema_name + " TO OPERATION " + dep_operation.uuid)
-            #                         # flatten schemas: 
-            #                         flattened_schema = flatten_json_schema(dep_operation.successful_responses.to_dict())
-            #                         similar_parameters = []
-            #                         for param_name, attr_names in mappings.items():
-            #                             attr_list = [attr.strip() for attr in attr_names.split(",")]
-                                        
-            #                             for attr_name in attr_list:
-            #                                 # mapping attributes to real attributes path in schema
-            #                                 # 
-            #                                 attributes = []
-            #                                 for field, values in flattened_schema.items():
-            #                                     if field.endswith(attr_name) and schema_name == values.get("xrefs", ""):
-            #                                         attributes.append(field)
-
-            #                                 logger.debug("ATTRIBUTES FOUND FOR " + attr_name + " : " + ", ".join(attributes))
-            #                                 for attribute in attributes:        
-            #                                     similar_parameters.append(SimilarityValue(
-            #                                         value1=attribute,
-            #                                         value2=param_name,
-            #                                         in_value="response to parameter via GPT"
-            #                                     ))
-            #                         # mapping
-            #                         edges.append(OperationEdge(
-            #                             from_node=dep_operation,
-            #                             to_node=operation,
-            #                             similar_parameters=similar_parameters
-            #                         ))
-            #         break
-            #     except Exception as e:
-            #         print("Error during GPT similarity check: ", e)
-            #         time.sleep(10)
+            
         return edges
-    
-                    
-
-        #  has connection u -> v
-        # self.logger.debug("HEURISTIC CHECK BETWEEN: " + u.http_method.upper() + " " +  u.endpoint_path + " TO " +  v.http_method.upper()+ " "+ v.endpoint_path)
-        # similar_parameters = []
-        # if v.http_method.lower() == "delete":  # delete operation is end of flow
-        #     return similar_parameters
-        # if u.endpoint_path.startswith(v.endpoint_path):
-        #     if ["post", "get", "put", "delete"].index(v.http_method.lower()) > ["post", "get", "put", "delete"].index(u.http_method.lower()):
-        #         return similar_parameters
-        #     parameters = v.get_parameters(required=True) 
-        #     dependent_response = u.get_responses()
-
-        #     for param in parameters: 
-        #         for response in dependent_response:
-        #             if param.get("name") == response.get("name"):
-        #                 similar_parameters.append(SimilarityValue(
-        #                     value1=response.get("name"), 
-        #                     value2=param.get("name"), 
-        #                     in_value="response to parameter via heuristic"
-        #                 ))
-        # return similar_parameters
     
     def deduplicate_similarity_values(self, similarity_list: List[SimilarityValue]) -> List[SimilarityValue]:
         """
@@ -502,64 +399,6 @@ class OperationGraph:
             
         edges = self.merge_operation_edges(heuristic_edges, gpt_edges)
         self.edges = edges
-        
-        # group edges
-
-        # for op_id, op_properties in operations.items():
-        #     print(
-        #         f"PROCESS NODE {op_properties.http_method.upper()} {op_properties.endpoint_path}")
-        #     # 
-        #     if len(op_properties.parameters) == 0 and len(op_properties.request_body) == 0:
-        #         print(
-        #             f"SKIP NODE {op_properties.http_method.upper()} {op_properties.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
-        #         continue
-        #     # reranking endpoints related to current operation
-        #     # ranked_operations = self.rank_operations_by_endpoint_similarity(op_properties, operations.values())
-        #     # print(ranked_operations)
-        #     # only get relative path
-        #     # gpt
-        #     gpt_similarities = self.gpt_similarities(op_properties, operations.values())
-        #     # # self.add_edge(
-        #     # #         dep_op_id,op_id, gpt_similarities)
-
-        #     for dep_op_id, dep_op_properties in operations.items():
-        #         # ignore if not have response 
-        #         successful_responses = dep_op_properties.successful_responses
-        #         if successful_responses is None:
-        #             print(
-        #             f" SKIP DEPENDENCY NODE {dep_op_properties.http_method.upper()} {dep_op_properties.endpoint_path} DUE TO NO RESPONSES OR SAME NODE")
-        #             continue
-        #         heuristic_similarities = self.heuristic_similarities(
-        #             dep_op_properties, op_properties )
-        #         self.add_edge(
-        #             dep_op_id, op_id, heuristic_similarities)
-                # GPT inferences
-
-            #         # gpt
-            #     # GPT Embedding
-                
-            #     # GPT Edge
-                # if has_heuristic_connect(operation_properties, dependent_operation_properties)
-                # parameter_similarities: List[SimilarityValue] = self.compare_similarities(
-                #     operation_properties, dependent_operation_properties)
-                # #  LLM check
-                # self.add_edg               e(
-                #     operation_id, dependent_operation_id, parameter_similarities)
-
-            # if op_properties.parameters.length == 0 or op_properties.request_body.length == 0:
-            #     print(
-            #         f"SKIP NODE {op_properties.http_method.upper()} {op_properties.endpoint_path} DUE TO NO PARAMETERS")
-            #     continue
-            # 
-        # normalize edge weights or other post-processing if needed
-        # edges = self.edges
-        # dicts_edges =  {}
-        # for edge in edges:
-        #     key = f"{edge.from_node.uuid}--{edge.to_node.uuid}"
-        #     if key not in dicts_edges:
-        #         dicts_edges[key] = edge
-        #     else:
-        #         dicts_edges[key].similar_parameters.extend(edge.similar_parameters)
         
     def create_graph(self):
         operations: Dict[str,
