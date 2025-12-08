@@ -1,0 +1,11 @@
+.cache
+.cache/**/*
+.datasets/**/*
+.venv
+.venv/**/*
+.env
+.lib
+.lib/**/*
+__pycache__
+.datasets
+.datasets/**/*
