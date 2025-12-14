@@ -151,6 +151,7 @@ class OperationGraph:
         self.logger = getLogger()
 
         self.op_schema_deps = OpSchemaDeps(self.model)
+
         self.load_or_initialize_graph()
 
     def add_node(self, operation):
@@ -241,8 +242,8 @@ class OperationGraph:
                 if len(similar_parameters) > 0:
                     edges.append(OperationEdge(dep_op_properties, op_properties, similar_parameters))
         return edges
-    
-    def get_best_mathching_schema(self, operation: OperationProperties, schemas: Dict[str, ItemProperties], top_k: int =3):
+
+    def get_best_matching_schema(self, operation: OperationProperties, schemas: Dict[str, ItemProperties], top_k: int =3):
         endpoint = operation.endpoint_path
 
         endpoint = endpoint.replace(self.path_tree, "") # only get relative path
@@ -266,11 +267,16 @@ class OperationGraph:
         # 
         results = list(sorted_schemas[:top_k]) 
         results = { schema_name: schemas.get(schema_name) for schema_name in results}
-        for schema_name in results:
-                schema = schemas.get(schema_name)
-                if schema is not None:
-                    subschemas = self.get_subschemas_of_schema(schema)
-                    results.update(subschemas)
+        
+        # Collect all subschemas first, then update results after iteration
+        subschemas_to_add = {}
+        for schema_name in list(results.keys()):
+            schema = schemas.get(schema_name)
+            if schema is not None:
+                subschemas = self.get_subschemas_of_schema(schema)
+                subschemas_to_add.update(subschemas)
+        
+        results.update(subschemas_to_add)
 
         return results
         # return list(sorted_schemas)
@@ -298,22 +304,32 @@ class OperationGraph:
     def gpt_similarities(self, operations: List[OperationProperties], schemas: Dict[str,ItemProperties]):
         
         edges = []
+        summary_results = []
         
-        for operation in operations.values(): 
-            #par
+        # Create debug folder BEFORE the loop
+        debug_folder = os.path.join(os.path.dirname(self.cache_file), "op_schema_deps_debug")
+        os.makedirs(debug_folder, exist_ok=True)
+
+        for idx, operation in enumerate(operations.values()): 
+            # Skip operations with no parameters
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
                 print(
                     f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
+                summary_results.append({
+                    "index": idx,
+                    "operation": f"{operation.http_method.upper()} {operation.endpoint_path}",
+                    "success": False,
+                    "skipped": True,
+                    "reason": "No parameters or request body"
+                })
                 continue
  
             params = {
                 "endpoint": f"{operation.http_method.upper()} {operation.endpoint_path}",
                 "summary": ((operation.summary or "") + " " + (operation.description or "")).strip(),
-                "specific_endpoint_params": "\n".join([ f"- {k} : {v.to_human_readable()}" for k,v in operation.parameters.items() if v.schema.type not in ("boolean")]), # experiences filter params
+                "specific_endpoint_params": "\n".join([ f"- {k} : {v.to_human_readable()}" for k,v in operation.parameters.items() if v.schema.type not in ("boolean")]),
             }
-            relavant_schemas = self.get_best_mathching_schema(operation, schemas, top_k = 7)
-            # only consider top k schemas
-            # get extension relavant schemas: example: User schema -> Profile schema
+            relavant_schemas = self.get_best_matching_schema(operation, schemas, top_k = 7)
 
             data_schemas = []
             for schema_name, schema in relavant_schemas.items():
@@ -325,11 +341,97 @@ class OperationGraph:
                     cleaned_string = re.sub(r'\\+', "", cleaned_string)
                     data_schemas.append(f"- {schema_name}: {cleaned_string}")
             params["data_schemas"] = "\n".join(data_schemas)
-            results = self.op_schema_deps.exec(**params)
-            print(results)
             
+            # Create safe filename for individual debug file
+            safe_name = re.sub(r'[^\w\-]', '_', f"{operation.http_method}_{operation.endpoint_path}")
+            safe_name = re.sub(r'_+', '_', safe_name)[:100]
+            debug_file = os.path.join(debug_folder, f"{idx:03d}_{safe_name}.json")
+            
+            # Build debug entry
+            debug_entry = {
+                "index": idx,
+                "operation": params["endpoint"],
+                "operation_uuid": operation.uuid,
+                "input": {
+                    "endpoint": params["endpoint"],
+                    "summary": params["summary"],
+                    "specific_endpoint_params": params["specific_endpoint_params"],
+                    "data_schemas": params["data_schemas"],
+                },
+                "relevant_schemas": list(relavant_schemas.keys()),
+            }
+            
+            try:
+                print(f"\n[{idx}] Calling LLM for: {operation.http_method.upper()} {operation.endpoint_path}")
+                results = self.op_schema_deps.exec(**params)
+                print(f"    Results: {results}")
+                
+                # Convert results to dict
+                if results is not None:
+                    if hasattr(results, 'model_dump'):
+                        result_dict = results.model_dump()
+                    elif hasattr(results, '__dict__'):
+                        result_dict = results.__dict__
+                    else:
+                        result_dict = {"raw": str(results)}
+                    
+                    debug_entry["output"] = result_dict
+                    debug_entry["success"] = True
+                    
+                    # Add to summary
+                    summary_results.append({
+                        "index": idx,
+                        "operation": params["endpoint"],
+                        "success": True,
+                        "schemas_found": list(result_dict.get("schemas", {}).keys()) if result_dict else [],
+                    })
+                else:
+                    debug_entry["output"] = None
+                    debug_entry["success"] = False
+                    summary_results.append({
+                        "index": idx,
+                        "operation": params["endpoint"],
+                        "success": False,
+                        "error": "No results returned"
+                    })
+                    
+            except Exception as e:
+                print(f"    ERROR: {e}")
+                import traceback
+                traceback.print_exc()
+                
+                debug_entry["output"] = None
+                debug_entry["error"] = str(e)
+                debug_entry["success"] = False
+                summary_results.append({
+                    "index": idx,
+                    "operation": params["endpoint"],
+                    "success": False,
+                    "error": str(e)
+                })
+                results = None
+            
+            # Save individual debug file
+            with open(debug_file, "w", encoding="utf-8") as f:
+                json.dump(debug_entry, f, indent=2, ensure_ascii=False, default=str)
+            print(f"    Saved debug to: {debug_file}")
+        
+        # Save summary file
+        summary_file = os.path.join(debug_folder, "_summary.json")
+        with open(summary_file, "w", encoding="utf-8") as f:
+            json.dump({
+                "total_operations": len(summary_results),
+                "successful": sum(1 for r in summary_results if r.get("success", False)),
+                "failed": sum(1 for r in summary_results if not r.get("success", False)),
+                "results": summary_results
+            }, f, indent=2, ensure_ascii=False)
+        
+        print(f"\n{'='*60}")
+        print(f"Debug files saved to: {debug_folder}")
+        print(f"Total: {len(summary_results)} | Success: {sum(1 for r in summary_results if r.get('success', False))} | Failed: {sum(1 for r in summary_results if not r.get('success', False))}")
+        print(f"Summary: {summary_file}")
+        
         return edges
-    
     def deduplicate_similarity_values(self, similarity_list: List[SimilarityValue]) -> List[SimilarityValue]:
         """
         Removes duplicate SimilarityValue objects from a list based on the

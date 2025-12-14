@@ -12,4 +12,6 @@ ruamel.yaml
 tenacity
 langchain_text_splitters
 charboundary
+openai
 qdrant_client
+dotenv
