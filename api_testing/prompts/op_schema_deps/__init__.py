@@ -1,7 +1,6 @@
-from typing import Dict
-
+import json
 from .schema import Verdict
-
+from api_testing.log import getLogger
 
 class OpSchemaDeps:
   SYSTEM_PROMPT = """
@@ -13,13 +12,10 @@ Follow these steps below to complete your task:
 **IMPORTANT**: The parameter and schema attribute must either share the same data type or be of an array type.
 FINAL OUTPUT:
 The response is in the format below, no explanation is needed:
-```json
-{ 
-  "schemas": {
-    "schema_1": {
-      "parameter_name_1": "attribute_name_1, attribute_name_2",
-      "parameter_name_2": "attribute_name_3, attribute_name_4"
-    }
+```json {
+  "schema_1": {
+    "parameter_name_1": "attribute_name_1, attribute_name_2",
+    "parameter_name_2": "attribute_name_3, attribute_name_4"
   }
 }```
 """
@@ -34,12 +30,27 @@ Additionally, you are provided with a list of all data schemas and their attribu
 """
   def __init__(self, llm):
     self.llm = llm
+    self.logger = getLogger(__name__)
+
   
   def exec(self, *args, **kargs):
     prompt = self.PROMPT.format(*args, **kargs) ## pass
+    self.logger.debug("OpSchemaDeps Prompt: " + prompt)
+
     response, _ = self.llm.generate(
       system_prompt=self.SYSTEM_PROMPT,
       prompt=prompt,
-      schema=Verdict
+      # schema=Verdict
     )
-    return response
+    self.logger.debug("OpSchemaDeps Response: " + response)
+    
+    start, end  = -1, -1
+    # start = response.find('json') 
+    start = response.find('{') # vị trí dấu { đầu tiên 
+    end = response.rfind('}') # vị trí ``` cuối cùng
+    if start != -1 and end != -1:
+      json_str = response[start:end+1].strip()   
+      data = json.loads(json_str) # response mapping
+      return data
+    return {}
+  
