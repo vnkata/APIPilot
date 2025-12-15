@@ -7,7 +7,8 @@ import json
 from typing import List, Dict, Optional, Union, Iterable
 
 from api_testing.models.specification_model import ItemProperties, OperationProperties, ParameterProperties, ResponseProperties
-from api_testing.utils import isSuccessful, to_dict_helper
+from api_testing.utils import to_dict_helper
+from api_testing.utils.http import isSuccessful
 
 
 def recursion_limit_handler_none(limit, refstring, recursions):
@@ -46,17 +47,14 @@ class SpecificationParser:
 
     def load_from_file(self, spec_cache):
         operation_collection = {}
-        schema_collection = {}
-        with open(spec_cache, "r") as file:
+        with open(spec_cache, "r",encoding="utf-8") as file:
             data = json.load(file)
-            schema_collection = data.get("endpoints_belong_to_schemas", {})
             for operation_id, operationProperties in data.get("operations").items():
                 operation_properties = OperationProperties.from_dict(
                     operationProperties)
                 operation_collection.setdefault(
                     operation_id, operation_properties)
         self.operations = operation_collection
-        self.endpoints_belong_to_schemas = schema_collection
         return operation_collection
 
     def load_or_initialize(self, cache_dir=None):

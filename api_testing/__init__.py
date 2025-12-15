@@ -119,44 +119,15 @@ class APITesting:
             json.dump(constraints, file, ensure_ascii=False, indent=4)
 
     def init_graph(self):
-        # normalize spec
-        # analyzer_constraints
-        # analyzer dependencies
-        self.operation_graph = OperationGraph(
+        operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
             model=self.model,
             embedding_model=self.embedder,
             cache_dir=self.project_dir
         )
         # get_param_combinations
-        self.operation_graph.print_graph()
-        self.operation_graph.plot_graph()
-
-    def init_graph_for_single_endpoint(self, operation_uuid: str):
-        """
-        Initialize graph in test mode for a single endpoint.
-        Only runs the LLM call for the specified endpoint.
+        operation_graph.print_graph()
+        operation_graph.plot_graph()
         
-        :param operation_uuid: The UUID of the operation to test
-        :return: The result from the LLM
-        """
-        print("=" * 80)
-        print(f"TEST SINGLE ENDPOINT MODE: {operation_uuid}")
-        print("=" * 80)
-        
-        self.operation_graph = OperationGraph(
-            spec_parser=self.spec_parser,
-            model=self.model,
-            embedding_model=self.embedder,
-            cache_dir=self.project_dir,
-            skip_create_graph=True  # Don't run full graph creation
-        )
-        
-        return self.operation_graph.test_single_endpoint(operation_uuid)
-
-    def list_operations(self) -> List[str]:
-        """List all available operation UUIDs"""
-        return list(self.spec_parser.operations.keys())
-
     def run_tests(self):
         pass

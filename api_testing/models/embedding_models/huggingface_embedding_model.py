@@ -28,7 +28,7 @@ class HuggingfaceEmbeddingModel(APITestingBaseEmbeddingModel):
 
     def embed_texts(self, texts: List[str]) -> List[List[float]]:
         return self.load_model(use_half=self.use_half).encode(
-            texts, device=self.device, convert_to_tensor=True, batch_size=1)
+            texts, device=self.device, convert_to_tensor=True, batch_size=1, prompt_name="document")
 
     async def a_embed_text(self, text: str) -> List[float]:
         return self.embed_text(text)

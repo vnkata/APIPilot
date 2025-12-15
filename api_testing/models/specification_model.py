@@ -4,8 +4,9 @@ import json
 from typing import List, Dict, Optional, Union, Iterable
 from dataclasses import dataclass, field, asdict
 from functools import cached_property
-from api_testing.utils import flatten_json_schema, isEmpty, isSuccessful, remove_nulls, to_dict_helper
-
+from api_testing.utils import flatten_json_schema, to_dict_helper
+from api_testing.utils.common import isEmpty, remove_nulls
+from api_testing.utils.http import isSuccessful
 
 @dataclass
 class ItemProperties:
