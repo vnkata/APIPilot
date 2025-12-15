@@ -22,7 +22,7 @@ from .graph import (
     OperationNode,
     OperationEdge
 )
-from typing import Optional, Union
+from typing import Optional, Union, List
 from api_testing.dataset import SpecificationParser
 from api_testing.graph import OperationGraph
 from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMModel
@@ -43,6 +43,7 @@ class APITesting:
                                           APITestingBaseEmbeddingModel]] = None,
                  vector_db: Optional[Union[str,
                                            APITestingVectorDB]] = None,
+                 test_single_endpoint: Optional[str] = None,  # New parameter
                  # async_mode=False,
                  ):
         self.base_url = base_url
@@ -53,8 +54,14 @@ class APITesting:
         self.critic_model = critic_model  # judge model
         self.vector_db = vector_db
         self.project_dir = None
+        self.test_single_endpoint = test_single_endpoint
+        self.operation_graph = None
         self._load_()
-        self.init_graph()
+        
+        if self.test_single_endpoint:
+            self.init_graph_for_single_endpoint(self.test_single_endpoint)
+        else:
+            self.init_graph()
 
     def _load_(self):
         #  get tile from spec_path
@@ -111,38 +118,45 @@ class APITesting:
         with open(file_name, 'w', encoding='utf-8') as file:
             json.dump(constraints, file, ensure_ascii=False, indent=4)
 
-            # self.spec_parser.json_spec_output(file_name=normalize_path)
-        # print("="*20)
-        # print("=" + " "*5 + "EXTRACT CONSTRAINTS" + " "*5 + "=")
-        # print("="*20)
-        # normalize_path = os.path.join(
-        #     self.project_dir, "specification_normalize.json")
-        # if os.path.exists(normalize_path):
-        #     self.spec_parser.load_from_file(normalize_path)
-        # else:
-        #     for operation, details in self.spec_parser.operations.items():
-        #         print("NORMALIZE SPECIFICATION", operation)
-        #         analyzer = OperationAnalyer(
-        #             llm=self.model,
-        #             operation=details
-        #         )
-        #         self.spec_parser.operations[operation] = analyzer.analyze()
-        #         self.spec_parser.json_spec_output(file_name=normalize_path)
-
     def init_graph(self):
         # normalize spec
         # analyzer_constraints
         # analyzer dependencies
-        operation_graph = OperationGraph(
+        self.operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
             model=self.model,
             embedding_model=self.embedder,
             cache_dir=self.project_dir
         )
         # get_param_combinations
-        operation_graph.print_graph()
-        operation_graph.plot_graph()
+        self.operation_graph.print_graph()
+        self.operation_graph.plot_graph()
+
+    def init_graph_for_single_endpoint(self, operation_uuid: str):
+        """
+        Initialize graph in test mode for a single endpoint.
+        Only runs the LLM call for the specified endpoint.
         
+        :param operation_uuid: The UUID of the operation to test
+        :return: The result from the LLM
+        """
+        print("=" * 80)
+        print(f"TEST SINGLE ENDPOINT MODE: {operation_uuid}")
+        print("=" * 80)
+        
+        self.operation_graph = OperationGraph(
+            spec_parser=self.spec_parser,
+            model=self.model,
+            embedding_model=self.embedder,
+            cache_dir=self.project_dir,
+            skip_create_graph=True  # Don't run full graph creation
+        )
+        
+        return self.operation_graph.test_single_endpoint(operation_uuid)
+
+    def list_operations(self) -> List[str]:
+        """List all available operation UUIDs"""
+        return list(self.spec_parser.operations.keys())
 
     def run_tests(self):
         pass

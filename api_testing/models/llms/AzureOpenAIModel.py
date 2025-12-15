@@ -1,5 +1,7 @@
+from hmac import new
 import os
 import json
+import re
 from openai import AzureOpenAI, AsyncAzureOpenAI
 from typing import List, Optional, Tuple, Union, Dict
 
@@ -89,6 +91,9 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
         
         content = response.choices[0].message.content
         
+        # Remove markdown code blocks if present
+        content = self._extract_json_from_response(content)
+        
         if schema:
             # Try to fix common issues before validation
             try:
@@ -96,9 +101,64 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
             except Exception as e:
                 # Try to fix the JSON by converting single values to arrays
                 fixed_content = self._fix_json_arrays(content, schema)
-                return schema.model_validate_json(fixed_content), 0
+                try:
+                    return schema.model_validate_json(fixed_content), 0
+                except Exception as e2:
+                    print(f"Warning: Failed to validate response. Original error: {e}, Fixed error: {e2}")
+                    print(f"Original content: {content[:500]}")
+                    print(f"Fixed content: {fixed_content[:500]}")
+                    raise e2
         else:
             return remove_think_tags(content), 0
+
+    def _extract_json_from_response(self, content: str) -> str:
+        """Extract JSON from markdown code blocks if present."""
+        # Remove markdown code block markers
+        content = content.strip()
+        
+        # Check for ```json ... ``` pattern
+        if content.startswith("```"):
+            # Find the end of the first line (after ```json or ```)
+            first_newline = content.find("\n")
+            if first_newline != -1:
+                content = content[first_newline + 1:]
+            
+            # Remove trailing ```
+            if content.endswith("```"):
+                content = content[:-3]
+        
+        return content.strip()
+
+    def _fix_json_arrays(self, content: str, schema: BaseModel) -> str:
+        """Fix JSON where single strings should be arrays."""
+        try:
+            data = json.loads(content)
+            
+            # Special handling for the Verdict schema structure
+            # Structure: {"schemas": {"SchemaName": {"param": ["attr1", "attr2"]}}}
+            if "schemas" in data and isinstance(data["schemas"], dict):
+                for schema_name, schema_params in data["schemas"].items():
+                    if isinstance(schema_params, dict):
+                        for param_key, param_value in list(schema_params.items()):
+                            if isinstance(param_value, str):
+                                # Convert single string to array
+                                # Handle comma-separated values like "id, path_with_namespace"
+                                if "," in param_value:
+                                    values = [v.strip() for v in param_value.split(",")]
+                                    data["schemas"][schema_name][param_key] = values
+                                else:
+                                    data["schemas"][schema_name][param_key] = [param_value]
+                            elif param_value is None:
+                                # Remove None values
+                                del data["schemas"][schema_name][param_key]
+            
+            return json.dumps(data)
+        except json.JSONDecodeError as e:
+            print(f"Warning: Failed to parse JSON: {e}")
+            return content
+        except Exception as e:
+            print(f"Warning: Failed to fix JSON arrays: {e}")
+            return content
 
     async def a_generate(
         self, 
@@ -143,63 +203,21 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
         
         content = response.choices[0].message.content
         
+        # Remove markdown code blocks if present
+        content = self._extract_json_from_response(content)
+        
         if schema:
             try:
                 return schema.model_validate_json(content), 0
-            except Exception:
+            except Exception as e:
                 fixed_content = self._fix_json_arrays(content, schema)
-                return schema.model_validate_json(fixed_content), 0
+                try:
+                    return schema.model_validate_json(fixed_content), 0
+                except Exception as e2:
+                    print(f"Warning: Failed to validate response. Original error: {e}, Fixed error: {e2}")
+                    raise e2
         else:
             return remove_think_tags(content), 0
-
-    def _fix_json_arrays(self, content: str, schema: BaseModel) -> str:
-        """Fix JSON where single strings should be arrays."""
-        try:
-            data = json.loads(content)
-            schema_dict = schema.model_json_schema()
-            
-            def fix_arrays(obj, schema_props):
-                if not isinstance(obj, dict) or not schema_props:
-                    return obj
-                
-                for key, value in obj.items():
-                    if key in schema_props:
-                        prop_schema = schema_props[key]
-                        # Check if this should be an array
-                        if prop_schema.get("type") == "array" and isinstance(value, str):
-                            obj[key] = [value]
-                        elif isinstance(value, dict):
-                            # Handle nested objects
-                            nested_props = prop_schema.get("properties", {})
-                            if not nested_props and "$ref" in prop_schema:
-                                # Handle $ref - simplified
-                                pass
-                            fix_arrays(value, nested_props)
-                        elif isinstance(value, dict):
-                            # Handle additionalProperties (like Dict[str, SchemaParam])
-                            additional = prop_schema.get("additionalProperties", {})
-                            if additional:
-                                nested_props = additional.get("properties", {})
-                                for nested_key, nested_val in value.items():
-                                    if isinstance(nested_val, dict):
-                                        fix_arrays(nested_val, nested_props)
-                return obj
-            
-            # Get the properties from schema
-            props = schema_dict.get("properties", {})
-            fixed_data = fix_arrays(data, props)
-            
-            # Special handling for the Verdict schema structure
-            if "schemas" in fixed_data and isinstance(fixed_data["schemas"], dict):
-                for schema_name, schema_params in fixed_data["schemas"].items():
-                    if isinstance(schema_params, dict):
-                        for param_key, param_value in schema_params.items():
-                            if isinstance(param_value, str):
-                                fixed_data["schemas"][schema_name][param_key] = [param_value]
-            
-            return json.dumps(fixed_data)
-        except Exception:
-            return content
 
     ###############################################
     # Model

@@ -42,6 +42,13 @@ test = APITesting(
     model=llm,
     # vector_db=db,
     # embedder=embedder,
-    # spec_path="datasets/GitLabCommit.json",
-    spec_path="datasets/GitLabIssues.json",
+    spec_path="datasets/GitLabCommit.json",
+    # spec_path="datasets/GitLabIssues.json",zz
 )
+
+# test = APITesting(
+#     "localhost:80",
+#     model=llm,
+#     spec_path="datasets/GitLabCommit.json",
+#     test_single_endpoint="get-/projects/{id}/repository/commits/{sha}"  # Replace with your endpoint
+# )

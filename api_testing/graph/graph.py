@@ -136,7 +136,7 @@ def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
 
 @dataclass
 class OperationGraph:
-    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None):
+    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None, skip_create_graph: bool = False):
         self.spec_parser = spec_parser
         self.embedding_model = embedding_model
         self.model = model  # llm model
@@ -151,7 +151,7 @@ class OperationGraph:
         self.logger = getLogger()
 
         self.op_schema_deps = OpSchemaDeps(self.model)
-
+        self.skip_create_graph  = skip_create_graph
         self.load_or_initialize_graph()
 
     def add_node(self, operation):
@@ -197,8 +197,10 @@ class OperationGraph:
 
         else:
             print("Cache file not found. Initializing graph...")
-            self.create_graph()
-            self.save_graph_to_cache()
+            if not self.skip_create_graph:
+
+                self.create_graph()
+                self.save_graph_to_cache()
 
     def save_graph_to_cache(self):
         # Save the graph to the cache file
@@ -242,7 +244,23 @@ class OperationGraph:
                 if len(similar_parameters) > 0:
                     edges.append(OperationEdge(dep_op_properties, op_properties, similar_parameters))
         return edges
-
+    def get_param_entity(self, param_name: str, endpoint_path: str) -> str:
+        """
+        Get the entity name for a path parameter.
+        
+        /projects/{id}/commits/{sha}
+        -> id: "project"
+        -> sha: "commit"
+        """
+        segments = endpoint_path.split('/')
+        for i, segment in enumerate(segments):
+            if segment == f"{{{param_name}}}" and i > 0:
+                preceding = segments[i - 1]
+                # Remove trailing 's' for singular
+                if preceding.endswith('s'):
+                    return preceding[:-1]
+                return preceding
+        return ""
     def get_best_matching_schema(self, operation: OperationProperties, schemas: Dict[str, ItemProperties], top_k: int =3):
         endpoint = operation.endpoint_path
 
@@ -254,7 +272,11 @@ class OperationGraph:
         endpoint = re.sub(r"\s+", " ", endpoint).strip()
         similarity_scores = [0] * len(schemas)
         for params in operation.parameters.values():
-            base_str = f"{params.name}_{endpoint}".lower()
+            entity = self.get_param_entity(params.name, operation.endpoint_path)
+            if entity:
+                base_str = f"{params.name}_{entity}".lower()
+            else:
+                base_str = f"{params.name}_{endpoint}".lower()
             for schema_i, (schema_name, schema) in enumerate(schemas.items()):
                 # schema_name = schema.lower()
                 # schema_name = ""
@@ -301,7 +323,7 @@ class OperationGraph:
         get_schema_recursive(schema)
         return relevant_schemas
     
-    def gpt_similarities(self, operations: List[OperationProperties], schemas: Dict[str,ItemProperties]):
+    def gpt_similarities(self, operations: List[OperationProperties], schemas: Dict[str, ItemProperties]):
         
         edges = []
         summary_results = []
@@ -313,8 +335,7 @@ class OperationGraph:
         for idx, operation in enumerate(operations.values()): 
             # Skip operations with no parameters
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
-                print(
-                    f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
+                print(f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
                 summary_results.append({
                     "index": idx,
                     "operation": f"{operation.http_method.upper()} {operation.endpoint_path}",
@@ -323,24 +344,31 @@ class OperationGraph:
                     "reason": "No parameters or request body"
                 })
                 continue
- 
+
             params = {
                 "endpoint": f"{operation.http_method.upper()} {operation.endpoint_path}",
                 "summary": ((operation.summary or "") + " " + (operation.description or "")).strip(),
-                "specific_endpoint_params": "\n".join([ f"- {k} : {v.to_human_readable()}" for k,v in operation.parameters.items() if v.schema.type not in ("boolean")]),
+                "specific_endpoint_params": "\n".join([
+                    f"- {k} : {v.to_human_readable()}" 
+                    for k, v in operation.parameters.items() 
+                    if v.schema.type not in ("boolean",)
+                ]),
             }
-            relavant_schemas = self.get_best_matching_schema(operation, schemas, top_k = 7)
+            relevant_schemas = self.get_best_matching_schema(operation, schemas, top_k=10)
 
             data_schemas = []
-            for schema_name, schema in relavant_schemas.items():
+            for schema_name, schema in relevant_schemas.items():
                 if schema is not None:
                     newSchema = copy.deepcopy(schema)
                     newSchema.xrefs = None
-                    cleaned_string = newSchema.to_human_readable().replace('\\n', '').replace("\n","")
+                    cleaned_string = newSchema.to_human_readable().replace('\\n', '').replace("\n", "")
                     cleaned_string = re.sub(r'\s+', ' ', cleaned_string).strip()
                     cleaned_string = re.sub(r'\\+', "", cleaned_string)
                     data_schemas.append(f"- {schema_name}: {cleaned_string}")
             params["data_schemas"] = "\n".join(data_schemas)
+            
+            # Build full prompt
+            full_prompt = self.op_schema_deps.PROMPT.format(**params)
             
             # Create safe filename for individual debug file
             safe_name = re.sub(r'[^\w\-]', '_', f"{operation.http_method}_{operation.endpoint_path}")
@@ -358,49 +386,90 @@ class OperationGraph:
                     "specific_endpoint_params": params["specific_endpoint_params"],
                     "data_schemas": params["data_schemas"],
                 },
-                "relevant_schemas": list(relavant_schemas.keys()),
+                "full_prompt": full_prompt,
+                "relevant_schemas": list(relevant_schemas.keys()),
             }
             
             try:
                 print(f"\n[{idx}] Calling LLM for: {operation.http_method.upper()} {operation.endpoint_path}")
-                results = self.op_schema_deps.exec(**params)
-                print(f"    Results: {results}")
                 
-                # Convert results to dict
-                if results is not None:
-                    if hasattr(results, 'model_dump'):
-                        result_dict = results.model_dump()
-                    elif hasattr(results, '__dict__'):
-                        result_dict = results.__dict__
-                    else:
-                        result_dict = {"raw": str(results)}
+                # Single LLM call - get raw response
+                raw_response, _ = self.model.generate(
+                    system_prompt=self.op_schema_deps.SYSTEM_PROMPT,
+                    prompt=full_prompt,
+                    schema=None
+                )
+                debug_entry["raw_response"] = raw_response
+                print(f"RAW RESPONSE:\n{raw_response}")
+                
+                # Parse the raw response locally (NO second LLM call)
+                from api_testing.prompts.op_schema_deps.schema import Verdict
+                try:
+                    # Extract JSON from response
+                    json_content = raw_response.strip()
+                    if json_content.startswith("```"):
+                        first_newline = json_content.find("\n")
+                        if first_newline != -1:
+                            json_content = json_content[first_newline + 1:]
+                        if json_content.endswith("```"):
+                            json_content = json_content[:-3]
+                        json_content = json_content.strip()
                     
-                    debug_entry["output"] = result_dict
+                    # Fix arrays - convert single strings to arrays
+                    data = json.loads(json_content)
+                    if "schemas" in data and isinstance(data["schemas"], dict):
+                        for schema_name, schema_params in data["schemas"].items():
+                            if isinstance(schema_params, dict):
+                                for param_key, param_value in list(schema_params.items()):
+                                    if isinstance(param_value, str):
+                                        if "," in param_value:
+                                            data["schemas"][schema_name][param_key] = [v.strip() for v in param_value.split(",")]
+                                        else:
+                                            data["schemas"][schema_name][param_key] = [param_value]
+                                    elif param_value is None:
+                                        del data["schemas"][schema_name][param_key]
+                    
+                    fixed_content = json.dumps(data)
+                    parsed_response = Verdict.model_validate_json(fixed_content)
+                    
+                    print(f"PARSED RESPONSE:\n{parsed_response}")
+                    
+                    # Convert results to dict
+                    if hasattr(parsed_response, 'model_dump'):
+                        result_dict = parsed_response.model_dump()
+                    elif hasattr(parsed_response, '__dict__'):
+                        result_dict = parsed_response.__dict__
+                    else:
+                        result_dict = {"raw": str(parsed_response)}
+                    
+                    debug_entry["parsed_response"] = result_dict
                     debug_entry["success"] = True
                     
-                    # Add to summary
                     summary_results.append({
                         "index": idx,
                         "operation": params["endpoint"],
                         "success": True,
                         "schemas_found": list(result_dict.get("schemas", {}).keys()) if result_dict else [],
                     })
-                else:
-                    debug_entry["output"] = None
+                    
+                except Exception as parse_error:
+                    print(f"PARSING ERROR: {parse_error}")
+                    debug_entry["parsed_response"] = None
+                    debug_entry["parse_error"] = str(parse_error)
                     debug_entry["success"] = False
                     summary_results.append({
                         "index": idx,
                         "operation": params["endpoint"],
                         "success": False,
-                        "error": "No results returned"
+                        "error": f"Parse error: {parse_error}"
                     })
                     
             except Exception as e:
-                print(f"    ERROR: {e}")
+                print(f"LLM ERROR: {e}")
                 import traceback
                 traceback.print_exc()
                 
-                debug_entry["output"] = None
+                debug_entry["raw_response"] = None
                 debug_entry["error"] = str(e)
                 debug_entry["success"] = False
                 summary_results.append({
@@ -409,12 +478,11 @@ class OperationGraph:
                     "success": False,
                     "error": str(e)
                 })
-                results = None
             
             # Save individual debug file
             with open(debug_file, "w", encoding="utf-8") as f:
                 json.dump(debug_entry, f, indent=2, ensure_ascii=False, default=str)
-            print(f"    Saved debug to: {debug_file}")
+            print(f"Saved debug to: {debug_file}")
         
         # Save summary file
         summary_file = os.path.join(debug_folder, "_summary.json")
@@ -556,3 +624,97 @@ class OperationGraph:
             for edge in filter(lambda x: x.from_node.uuid == operation_id, self.edges):
                 print(
                     f"Edge: {edge.from_node.uuid} -> {edge.to_node.uuid} with parameters: {edge.similar_parameters}")
+    def test_single_endpoint(self, operation_uuid: str, operations: Dict[str, OperationProperties] = None, schemas: Dict[str, ItemProperties] = None):
+            """
+            Test the LLM prompt for a single endpoint to debug schema dependency detection.
+            
+            :param operation_uuid: The UUID of the operation (e.g., "get-/projects/{id}/repository/commits/{sha}")
+            :param operations: Optional dict of operations, uses spec_parser if not provided
+            :param schemas: Optional dict of schemas, uses spec_parser if not provided
+            :return: Tuple of (prompt_params, raw_response, parsed_response)
+            """
+            if operations is None:
+                operations = self.spec_parser.operations
+            if schemas is None:
+                schemas = {k: v for opt in operations.values() for k, v in opt.schemas.items()}
+            
+            # Find the operation
+            operation = operations.get(operation_uuid)
+            if operation is None:
+                available = list(operations.keys())
+                raise ValueError(f"Operation '{operation_uuid}' not found. Available: {available[:5]}...")
+            
+            # Build the same params as gpt_similarities
+            paths = [opt.endpoint_path for opt in operations.values()]
+            self.path_tree = os.path.commonprefix(paths)
+            
+            params = {
+                "endpoint": f"{operation.http_method.upper()} {operation.endpoint_path}",
+                "summary": ((operation.summary or "") + " " + (operation.description or "")).strip(),
+                "specific_endpoint_params": "\n".join([
+                    f"- {k} : {v.to_human_readable()}" 
+                    for k, v in operation.parameters.items() 
+                    if v.schema.type not in ("boolean")
+                ]),
+            }
+            
+            relevant_schemas = self.get_best_matching_schema(operation, schemas, top_k=10)
+            
+            data_schemas = []
+            for schema_name, schema in relevant_schemas.items():
+                if schema is not None:
+                    newSchema = copy.deepcopy(schema)
+                    newSchema.xrefs = None
+                    cleaned_string = newSchema.to_human_readable().replace('\\n', '').replace("\n", "")
+                    cleaned_string = re.sub(r'\s+', ' ', cleaned_string).strip()
+                    cleaned_string = re.sub(r'\\+', "", cleaned_string)
+                    data_schemas.append(f"- {schema_name}: {cleaned_string}")
+            
+            params["data_schemas"] = "\n".join(data_schemas)
+            
+            # Print the full prompt for debugging
+            print("=" * 80)
+            print("SYSTEM PROMPT:")
+            print("=" * 80)
+            print(self.op_schema_deps.SYSTEM_PROMPT)
+            print("\n" + "=" * 80)
+            print("USER PROMPT:")
+            print("=" * 80)
+            full_prompt = self.op_schema_deps.PROMPT.format(**params)
+            print(full_prompt)
+            print("\n" + "=" * 80)
+            
+            # Get raw response (without schema validation)
+            print("CALLING LLM (raw, no schema)...")
+            raw_response, _ = self.model.generate(
+                system_prompt=self.op_schema_deps.SYSTEM_PROMPT,
+                prompt=full_prompt,
+                schema=None  # No schema to see raw output
+            )
+            print("RAW RESPONSE:")
+            print(raw_response)
+            print("\n" + "=" * 80)
+            
+            # Get parsed response (with schema validation)
+            print("CALLING LLM (with schema validation)...")
+            try:
+                from api_testing.prompts.op_schema_deps.schema import Verdict
+                parsed_response, _ = self.model.generate(
+                    system_prompt=self.op_schema_deps.SYSTEM_PROMPT,
+                    prompt=full_prompt,
+                    schema=Verdict
+                )
+                print("PARSED RESPONSE:")
+                print(parsed_response)
+            except Exception as e:
+                print(f"PARSING ERROR: {e}")
+                parsed_response = None
+            
+            print("=" * 80)
+            
+            return {
+                "params": params,
+                "raw_response": raw_response,
+                "parsed_response": parsed_response,
+                "relevant_schemas": list(relevant_schemas.keys())
+            }
