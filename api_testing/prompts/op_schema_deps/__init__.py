@@ -1,4 +1,5 @@
 import json
+from time import sleep
 from .schema import Verdict
 from api_testing.log import getLogger
 
@@ -36,21 +37,26 @@ Additionally, you are provided with a list of all data schemas and their attribu
   def exec(self, *args, **kargs):
     prompt = self.PROMPT.format(*args, **kargs) ## pass
     self.logger.debug("OpSchemaDeps Prompt: " + prompt)
-
-    response, _ = self.llm.generate(
-      system_prompt=self.SYSTEM_PROMPT,
-      prompt=prompt,
-      # schema=Verdict
-    )
-    self.logger.debug("OpSchemaDeps Response: " + response)
-    
-    start, end  = -1, -1
-    # start = response.find('json') 
-    start = response.find('{') # vị trí dấu { đầu tiên 
-    end = response.rfind('}') # vị trí ``` cuối cùng
-    if start != -1 and end != -1:
-      json_str = response[start:end+1].strip()   
-      data = json.loads(json_str) # response mapping
-      return data
+    for i in range(3):  # Thử lại tối đa 3 lần nếu không lấy được JSON hợp lệ
+      try:
+        response, _ = self.llm.generate(
+          system_prompt=self.SYSTEM_PROMPT,
+          prompt=prompt,
+          # schema=Verdict
+        )
+        self.logger.debug("OpSchemaDeps Response: " + response)
+        
+        start, end  = -1, -1
+        # start = response.find('json') 
+        start = response.find('{') # vị trí dấu { đầu tiên 
+        end = response.rfind('}') # vị trí ``` cuối cùng
+        if start != -1 and end != -1:
+          json_str = response[start:end+1].strip()   
+          data = json.loads(json_str) # response mapping
+          return data
+      except:
+        sleep(20)
+        print("Retrying...", i+1)
+        pass
     return {}
   

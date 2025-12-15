@@ -17,7 +17,7 @@ import copy
 from api_testing.log import getLogger
 from sentence_transformers import util
 
-from api_testing.utils.graph import get_best_mathching_schema
+from api_testing.utils.graph import get_best_mathching_schema, is_nested_path_end_with
 
 @dataclass
 class OperationGraph:
@@ -53,7 +53,7 @@ class OperationGraph:
 
     def load_or_initialize_graph(self):
         # Check if the cache file exists
-        if os.path.exists(self.cache_file):
+        if False and os.path.exists(self.cache_file):
             print(f"Loading graph from cache: {self.cache_file}")
             with open(self.cache_file, "r") as file:
                 data = json.load(file)
@@ -150,6 +150,8 @@ class OperationGraph:
     def gpt_similarities(self, operations: List[OperationProperties], schemas: Dict[str,ItemProperties]):
         edges = []
         for operation in operations.values(): 
+            if operation.uuid in ("get-/api/v1/holidays","get-/api/v1/provinces"):
+                continue
             #par
             self.logger.debug("GPT CHECK FOR OPERATION: " + operation.http_method.upper() + " " + operation.endpoint_path)
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
@@ -178,23 +180,24 @@ class OperationGraph:
                 similarities = []
                 for opt in operations.values():
                     if schema_name in opt.schemas:
+                        self.logger.debug("CHECK MAPPING FOR SCHEMA: " + schema_name + " IN OPERATION: " + opt.http_method.upper() + " " + opt.endpoint_path)
                         for param_name, attribute_names in mapping.items():
                             for attribute_name in attribute_names.split(", "):
                                 # attribute_name
                                 successful_responses = opt.successful_responses
                                 flatten = flatten_json_schema(successful_responses.to_dict())
-                                for att, props in flatten.items():
-                                    if att.endswith(attribute_name) and props.get("xrefs") == schema_name:
-                                        attribute_name = att
-                                similarities.append(SimilarityValue(
-                                    value1=attribute_name,
-                                    value2=param_name,
-                                    in_value=f"response to parameter via gpt"
-                                ))
+                                attributes = [ att for att, props in flatten.items() if is_nested_path_end_with(att, attribute_name) and props.get("xrefs", None) == schema_name ]
+                                for attr in attributes:
+                                    self.logger.debug(f"Mapping parameter {param_name} to attribute {attr} via GPT")
+                                    similarities.append(SimilarityValue(
+                                        value1=attr,
+                                        value2=param_name,
+                                        in_value=f"response to parameter via gpt"
+                                    ))
                         if len(similarities) > 0:
                             edges.append(OperationEdge(
-                                from_node=operation,
-                                to_node=opt,
+                                from_node=opt,
+                                to_node=operation,
                                 similar_parameters=similarities
                             ))
                 
@@ -260,6 +263,14 @@ class OperationGraph:
         heuristic_edges = self.heuristic_similarities(operations)
         gpt_edges = self.gpt_similarities(operations, schemas)    
         edges = self.merge_operation_edges(heuristic_edges, gpt_edges)
+        print(f"HEURISTIC EDGES: {len(heuristic_edges)}")
+        print(f"GPT EDGES: {len(gpt_edges)}")
+        with open(self.cache_file.replace("semantic_property_dependency_graph", "heuristic_edges"), "w") as f:
+            json.dump([to_dict_helper(edge) for edge in heuristic_edges], f, indent=4)
+        with open(self.cache_file.replace("semantic_property_dependency_graph", "gpt_edges"), "w") as f:
+            json.dump([to_dict_helper(edge) for edge in gpt_edges], f, indent=4)
+            
+        
         self.edges = edges
         
     def create_graph(self):

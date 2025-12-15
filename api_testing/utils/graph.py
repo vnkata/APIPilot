@@ -77,10 +77,10 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
             flattened_schema = {
                 field: values
                 for field, values in flatten_json_schema(schema.to_dict()).items()
-                # if (
-                #     (schema.xrefs is None and values.get("xrefs") is None)
-                #     or (schema.xrefs is not None and values.get("xrefs") == schema.xrefs)
-                # )
+                if (
+                    (schema.xrefs is None and values.get("xrefs") is None)
+                    or (schema.xrefs is not None and values.get("xrefs") == schema.xrefs)
+                )
             }
             attributes = [ field for field, values in flattened_schema.items() if values.get('type') not in ['object','array', None]]
             attributes_texts = [ f"{ handle_word_cases(values.get('xrefs','') + "_" + field.split('.')[-1])} {ItemProperties(**values).to_human_readable()}" for field, values in flattened_schema.items() if values.get('type') not in ['object','array', None]]
@@ -101,4 +101,17 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
     return keep_schemas
 
     
-    
+def is_nested_path_end_with(
+    nested_path: str, 
+    ending_path: str,
+    delimiter: str = '.'
+) -> bool:
+    segments: List[str] = nested_path.split(delimiter)
+    ending_segment: List[str] = ending_path.split(delimiter)
+    if not segments or not ending_segment:
+        return False
+        
+    last_segment: str = segments[-1]
+    ending_segment: str = ending_segment[-1]
+
+    return last_segment == ending_segment
