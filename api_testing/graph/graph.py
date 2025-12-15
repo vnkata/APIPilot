@@ -3,10 +3,11 @@ import os
 from dataclasses import asdict, dataclass
 from typing import List, Dict
 
+from api_testing.models.graph_model import OperationEdge, OperationNode, SimilarityValue
 from api_testing.models.specification_model import ItemProperties, OperationProperties
 
 from api_testing.prompts import OpSchemaDeps
-from api_testing.utils import to_dict_helper
+from api_testing.utils import flatten_json_schema, to_dict_helper
 import networkx as nx
 import pyvis.network as net
 import time
@@ -14,125 +15,9 @@ import re
 from difflib import SequenceMatcher
 import copy
 from api_testing.log import getLogger
+from sentence_transformers import util
 
-
-def remove_path_variables(string):
-    pattern = r'\{.*?\}'
-    result = re.sub(pattern, '', string)
-    return result
-
-def preprocess_string(s):
-    s = s.lower()
-    s = re.sub(r"[_]", " ", s)
-    s = re.sub(r"[^\w\s]", "", s)
-    s = re.sub(r"\s+", " ", s).strip()
-    return s
-
-def levenshtein_ratio(s1, s2):
-    return SequenceMatcher(None, s1, s2).ratio()
-
-@dataclass
-class OperationNode(OperationProperties):
-    in_degree: int = 0
-    out_degree: int = 0
-
-    def __repr__(self):
-        return f"OperationNode({self.uuid})"
-
-    def to_dict(self):
-        result = {k: to_dict_helper(
-            v) for k, v in self.__dict__.items() if v is not None}
-        if 'parameters' in result and self.parameters:
-            result['parameters'] = {k: v.to_dict()
-                                    for k, v in self.parameters.items()}
-        if 'request_body' in result and self.request_body:
-            result['request_body'] = {
-                k: v.to_dict() for k, v in self.request_body.items()}
-        return result
-
-
-@dataclass
-class OperationEdge:
-    def __init__(self, from_node, to_node, similar_parameters):
-        self.from_node = from_node
-        self.to_node = to_node
-        self.similar_parameters = similar_parameters
-
-    def __repr__(self):
-        return f"OperationEdge({self.from_node} -> {self.to_node})"
-
-    def to_dict(self):
-        return {
-            "from_node": self.from_node.uuid,
-            "to_node": self.to_node.uuid,
-            "similar_parameters": to_dict_helper(self.similar_parameters)
-        }
-
-
-@dataclass
-class SimilarityValue:
-    value1: str = ""
-    value2: str = ""
-    in_value: str = ""
-
-    def to_dict(self):
-        return {
-            "value1": self.value1,
-            "value2": self.value2,
-            "in_value": self.in_value,
-        }
-
-def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
-            flat_schema = {}
-            if schema is None:
-                return
-            newRef = ref
-            if 'properties' in schema:
-                if "xrefs" in schema:
-                    ref = schema.get("xrefs", "")    
-                # root
-                for key, value in schema['properties'].items():
-                    new_key = f"{parent_key}{sep}{key}" if parent_key else key
-                    if value is None:
-                        continue
-
-                    if value.get('type') == 'object' and 'properties' in value:
-                        # Recursively flatten nested object
-                        if "xrefs" in value:
-                            newRef = value.get("xrefs", "")
-                        flat_schema.update(
-                            flatten_json_schema(value, new_key, sep=sep, ref=newRef))
-
-                    elif value.get('type') == 'array':
-                        items = value.get('items', {})
-                        array_key = f"{new_key}"
-                        # if "xrefs" in value.get("items",[]):
-                        #     ref = value.get("xrefs")
-                        if items.get('type') == 'object' and 'properties' in items:
-                            # Flatten object inside array
-                            if "xrefs" in value.get("items", {}):
-                                newRef = value.get("items", {}).get("xrefs", "")
-                            flat_schema.update(flatten_json_schema(
-                                items, array_key, sep=sep, ref=newRef))
-                        else:
-                            if ref != "":
-                                items["xrefs"] = ref
-                            # Array of primitives
-                            flat_schema[array_key] = items
-                    else:
-                        # Primitive field
-                        if ref != "":
-                            value["xrefs"] = ref
-                        flat_schema[new_key] = value
-            elif schema.get('type') == 'array':
-                # nested
-                items = schema.get('items', {})
-                newRef = ref
-                if "xrefs" in items:
-                    newRef = items.get("xrefs", "")
-                flat_schema.update(
-                    flatten_json_schema(items, parent_key, sep=sep, ref=newRef))
-            return flat_schema
+from api_testing.utils.graph import get_best_mathching_schema
 
 @dataclass
 class OperationGraph:
@@ -147,9 +32,8 @@ class OperationGraph:
 
         self.cache_file = os.path.join(
             cache_dir, "semantic_property_dependency_graph.json")
-        # self.create_graph()
         self.logger = getLogger()
-
+        # prompt for operation-schema dependencies
         self.op_schema_deps = OpSchemaDeps(self.model)
         self.load_or_initialize_graph()
 
@@ -169,7 +53,7 @@ class OperationGraph:
 
     def load_or_initialize_graph(self):
         # Check if the cache file exists
-        if False and os.path.exists(self.cache_file):
+        if os.path.exists(self.cache_file):
             print(f"Loading graph from cache: {self.cache_file}")
             with open(self.cache_file, "r") as file:
                 data = json.load(file)
@@ -185,7 +69,7 @@ class OperationGraph:
                             value2=item.get("value2"),
                             in_value=item.get("in_value"),
                         )
-                        for item in edge['similar_parameters'] if item.get("check") is None or item.get("check") == True
+                        for item in edge['similar_parameters']
                     ]
                     if len(similarities) > 0:
                         self.add_edge(
@@ -242,38 +126,6 @@ class OperationGraph:
                     edges.append(OperationEdge(dep_op_properties, op_properties, similar_parameters))
         return edges
     
-    def get_best_mathching_schema(self, operation: OperationProperties, schemas: Dict[str, ItemProperties], top_k: int =3):
-        endpoint = operation.endpoint_path
-
-        endpoint = endpoint.replace(self.path_tree, "") # only get relative path
-        endpoint = endpoint.lower()
-        endpoint = re.sub(r'\{.*?\}', '', endpoint)
-        endpoint = re.sub(r"[_]", " ", endpoint)
-        endpoint = re.sub(r"[^\w\s]", "", endpoint) 
-        endpoint = re.sub(r"\s+", " ", endpoint).strip()
-        similarity_scores = [0] * len(schemas)
-        for params in operation.parameters.values():
-            base_str = f"{params.name}_{endpoint}".lower()
-            for schema_i, (schema_name, schema) in enumerate(schemas.items()):
-                # schema_name = schema.lower()
-                # schema_name = ""
-                if schema is not None:
-                    flattened_schema = flatten_json_schema(schema.to_dict())
-                    similarity_scores[schema_i] += max([levenshtein_ratio(base_str, f"{field.split('.')[-1]}_{values.get('xrefs','').lower()}") for field, values in flattened_schema.items()]+[0])
-        
-        sort_object = sorted(zip(similarity_scores, schemas.keys()), reverse=True)
-        _, sorted_schemas = zip(*sort_object)
-        # 
-        results = list(sorted_schemas[:top_k]) 
-        results = { schema_name: schemas.get(schema_name) for schema_name in results}
-        for schema_name in results:
-                schema = schemas.get(schema_name)
-                if schema is not None:
-                    subschemas = self.get_subschemas_of_schema(schema)
-                    results.update(subschemas)
-
-        return results
-        # return list(sorted_schemas)
     
     def get_subschemas_of_schema(self, schema: ItemProperties):
         relevant_schemas = {}
@@ -296,11 +148,10 @@ class OperationGraph:
         return relevant_schemas
     
     def gpt_similarities(self, operations: List[OperationProperties], schemas: Dict[str,ItemProperties]):
-        
         edges = []
-        
         for operation in operations.values(): 
             #par
+            self.logger.debug("GPT CHECK FOR OPERATION: " + operation.http_method.upper() + " " + operation.endpoint_path)
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
                 print(
                     f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
@@ -311,10 +162,7 @@ class OperationGraph:
                 "summary": ((operation.summary or "") + " " + (operation.description or "")).strip(),
                 "specific_endpoint_params": "\n".join([ f"- {k} : {v.to_human_readable()}" for k,v in operation.parameters.items() if v.schema.type not in ("boolean")]), # experiences filter params
             }
-            relavant_schemas = self.get_best_mathching_schema(operation, schemas, top_k = 7)
-            # only consider top k schemas
-            # get extension relavant schemas: example: User schema -> Profile schema
-
+            relavant_schemas = get_best_mathching_schema(embedding_model=self.embedding_model, operation=operation, schemas=schemas, threshold=self.threshold, path_tree=self.path_tree)
             data_schemas = []
             for schema_name, schema in relavant_schemas.items():
                 if schema is not None:
@@ -326,8 +174,30 @@ class OperationGraph:
                     data_schemas.append(f"- {schema_name}: {cleaned_string}")
             params["data_schemas"] = "\n".join(data_schemas)
             results = self.op_schema_deps.exec(**params)
-            print(results)
-            
+            for schema_name, mapping in results.items():
+                similarities = []
+                for opt in operations.values():
+                    if schema_name in opt.schemas:
+                        for param_name, attribute_names in mapping.items():
+                            for attribute_name in attribute_names.split(", "):
+                                # attribute_name
+                                successful_responses = opt.successful_responses
+                                flatten = flatten_json_schema(successful_responses.to_dict())
+                                for att, props in flatten.items():
+                                    if att.endswith(attribute_name) and props.get("xrefs") == schema_name:
+                                        attribute_name = att
+                                similarities.append(SimilarityValue(
+                                    value1=attribute_name,
+                                    value2=param_name,
+                                    in_value=f"response to parameter via gpt"
+                                ))
+                        if len(similarities) > 0:
+                            edges.append(OperationEdge(
+                                from_node=operation,
+                                to_node=opt,
+                                similar_parameters=similarities
+                            ))
+                
         return edges
     
     def deduplicate_similarity_values(self, similarity_list: List[SimilarityValue]) -> List[SimilarityValue]:
@@ -388,15 +258,7 @@ class OperationGraph:
         self.path_tree  = os.path.commonprefix(paths) 
         schemas = {k: v for opt in operations.values() for k, v in opt.schemas.items()} # extract all schemas
         heuristic_edges = self.heuristic_similarities(operations)
-        gpt_edges = self.gpt_similarities(operations, schemas)
-        # merge duplicate edges
-        print(f"HEURISTIC EDGES: {len(heuristic_edges)}")
-        print(f"GPT EDGES: {len(gpt_edges)}")
-        with open(self.cache_file.replace("semantic_property_dependency_graph", "heuristic_edges"), "w") as f:
-            json.dump([to_dict_helper(edge) for edge in heuristic_edges], f, indent=4)
-        with open(self.cache_file.replace("semantic_property_dependency_graph", "gpt_edges"), "w") as f:
-            json.dump([to_dict_helper(edge) for edge in gpt_edges], f, indent=4)
-            
+        gpt_edges = self.gpt_similarities(operations, schemas)    
         edges = self.merge_operation_edges(heuristic_edges, gpt_edges)
         self.edges = edges
         

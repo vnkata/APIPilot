@@ -2,7 +2,7 @@ import random
 import logging
 from typing import Optional
 from pydantic import Field
-from .random_generator import RandomGenerator
+from . import RandomGenerator
 
 try:
     import rstr
@@ -18,10 +18,14 @@ class RandomRegExpGenerator(RandomGenerator):
     reg_exp: str
     min_length: Optional[int] = Field(default=-1)
     max_length: Optional[int] = Field(default=-1)
+    
+    def __init__(self, reg_exp=None, min_length=-1, max_length=-1, *args, **kwargs):
+        self.reg_exp = reg_exp
+        self.min_length = min_length
+        self.max_length = max_length
 
-    def model_post_init(self, __context):
-        super().model_post_init(__context)
-        self._random = random.Random(self.seed)
+        super().__init__(*args, **kwargs)
+
 
     def next_value(self) -> str:
         """Generate a random string matching the regex."""

@@ -1,4 +1,4 @@
-sentence_transformers==4.1.0
+sentence_transformers==5.2.0
 google-genai==1.13.0
 openapi-spec-validator==0.7.1
 ollama==0.4.8
@@ -11,5 +11,5 @@ chardet
 ruamel.yaml
 tenacity
 langchain_text_splitters
-charboundary
+hypothesis
 qdrant_client

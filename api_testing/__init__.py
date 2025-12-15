@@ -130,9 +130,6 @@ class APITesting:
         #         self.spec_parser.json_spec_output(file_name=normalize_path)
 
     def init_graph(self):
-        # normalize spec
-        # analyzer_constraints
-        # analyzer dependencies
         operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
             model=self.model,
@@ -143,6 +140,5 @@ class APITesting:
         operation_graph.print_graph()
         operation_graph.plot_graph()
         
-
     def run_tests(self):
         pass
