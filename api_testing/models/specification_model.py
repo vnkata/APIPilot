@@ -1,11 +1,10 @@
 
 
 import json
-from typing import List, Dict, Optional, Union, Iterable
-from dataclasses import dataclass, field, asdict
-from functools import cached_property
-from api_testing.utils import flatten_json_schema, to_dict_helper
-from api_testing.utils.common import isEmpty, remove_nulls
+from typing import List, Dict, Optional, Union
+from dataclasses import dataclass, field, fields
+from api_testing.utils import to_dict_helper
+from api_testing.utils.common import isEmpty
 from api_testing.utils.http import isSuccessful
 
 @dataclass
@@ -230,8 +229,34 @@ class OperationProperties:
     request_body: Dict[str, ItemProperties] = field(default_factory=dict)
     # status code as first key, then each response with its properties as second dict
     responses: Dict[str, ResponseProperties] = None
-    # available schemas for operation
-    schemas: Dict[str, ItemProperties] = field(default_factory=dict)
+
+    @property
+    def schemas(self) -> Dict[str, ItemProperties]:
+        
+        def get_relevant_schema_of_endpoint(response: ResponseProperties) -> List[str]:
+            relevant_schemas = {}
+
+            def get_schema_recursive(item_properties: ItemProperties):
+                if item_properties is None:
+                    return
+                if item_properties.xrefs and item_properties.type in ['object', 'array']:
+                    schema_name = item_properties.xrefs
+                    if schema_name not in relevant_schemas:
+                        relevant_schemas[schema_name] = item_properties
+
+                if item_properties.items:
+                    get_schema_recursive(item_properties.items)
+                if item_properties.properties:
+                    for prop in item_properties.properties.values():
+                        get_schema_recursive(prop)
+
+            for status_code, properties in response.items():
+                if isSuccessful(status_code):
+                    for item_properties in properties.content.values():
+                        get_schema_recursive(item_properties)
+            return relevant_schemas
+
+        return get_relevant_schema_of_endpoint(self.responses)
 
     @property
     def required_parameters(self) -> Dict[str, ParameterProperties]:
@@ -254,7 +279,11 @@ class OperationProperties:
     
     @classmethod
     def from_dict(cls, data: dict):
-        ints = cls(**data)
+        # Lấy tên của tất cả các fields định nghĩa trong dataclass
+        class_fields = {f.name for f in fields(cls)} 
+        # Lọc data
+        filtered_data = {k: v for k, v in data.items() if k in class_fields}
+        ints = cls(**filtered_data)
         if data.get("parameters"):
             for params in data.get("parameters").keys():
                 ints.parameters[params] = ParameterProperties.from_dict(
@@ -278,72 +307,3 @@ class OperationProperties:
             for k, v in self.__dict__.items() if not isEmpty(v)
         }
         return result
-
-    def simple_operation(self):
-        # for status, props in self.responses.items():
-        #     if isSuccessful(status):
-        #         print(props.to_human_readable())
-        data = {
-            "operation_id": self.operation_id,
-            "endpoint_path": self.endpoint_path,
-            "http_method": self.http_method,
-            "summary": self.summary,
-            "description": self.description,
-            "tags": self.tags,
-            # simple parameters
-            "parameters": {
-                name: details.to_human_readable()
-                for name, details in self.parameters.items()
-            },
-            "responses": ' '.join([props.to_human_readable() for status, props in self.responses.items() if isSuccessful(status)])
-        }
-        # first level
-        return data
-
-    def get_parameters(self, required=False):
-        if not self.parameters:
-            return []
-        
-        return remove_nulls([{
-            "name": name,
-            "type": details.schema.type,
-            "description": details.description,
-            "enum": details.schema.enum,
-            "xrefs": details.schema.xrefs if details.schema.type in ('array', 'object') else None # return xrefs only for complex types
-        } for name, details in self.parameters.items()
-            if not required or details.required])
-
-    def get_responses(self):
-        if self.responses is None:
-            return []
-        response_list = {}
-        for status_code, response_properties in self.responses.items():
-            if status_code and isSuccessful(status_code) and response_properties.content:
-                for _, response_details in response_properties.content.items():
-                    curr_responses = flatten_json_schema(
-                        to_dict_helper(response_details))
-                    response_list.update(curr_responses)
-
-        return remove_nulls([{
-            "name": item.split(".")[-1],
-            "type": val.get("type"),
-            "description": val.get("description", ""),
-            "enum": val.get("enum"),
-            "xrefs": val.get("xrefs") if val.get("type") in ('array', 'object') else None  # return xrefs only for complex types
-        } for item, val in response_list.items()])
-
-    def get_request_body(self):
-        if self.request_body is None:
-            return []
-        request_body_list = {}
-        for content_type, item_properties in self.request_body.items():
-            curr_request_body = flatten_json_schema(
-                to_dict_helper(item_properties))
-            request_body_list.update(curr_request_body)
-        return remove_nulls([{
-            "name": item,
-            "type": val.get("type"),
-            "description": val.get("description", ""),
-            "enum": val.get("enum"),
-            "xrefs": val.get("xrefs")
-        } for item, val in request_body_list.items()])

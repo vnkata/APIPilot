@@ -1,6 +1,5 @@
 import json
 import logging
-# from api_testing.dataset.specification_analyzer import OperationAnalyer
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
 from api_testing.utils import to_dict_helper
 
@@ -28,7 +27,7 @@ from api_testing.graph import OperationGraph
 from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMModel
 import shutil
 import os
-from api_testing.log import configure_logging
+from api_testing.utils.log import configure_logging
 
 
 class APITesting:

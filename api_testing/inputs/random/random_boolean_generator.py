@@ -9,7 +9,7 @@ class RandomBooleanGenerator(RandomGenerator):
 
     def __init__(self, true_probability=0.5, *args, **kwargs):
         self.true_probability = true_probability
-        super().__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs) 
 
     def next_value(self) -> bool:
         """Generate a random boolean based on true_probability."""

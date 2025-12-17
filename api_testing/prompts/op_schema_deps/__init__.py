@@ -1,7 +1,7 @@
 import json
 from time import sleep
 from .schema import Verdict
-from api_testing.log import getLogger
+from api_testing.utils.log import getLogger
 
 class OpSchemaDeps:
   SYSTEM_PROMPT = """

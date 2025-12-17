@@ -53,7 +53,7 @@ class OperationGraph:
 
     def load_or_initialize_graph(self):
         # Check if the cache file exists
-        if False and os.path.exists(self.cache_file):
+        if os.path.exists(self.cache_file):
             print(f"Loading graph from cache: {self.cache_file}")
             with open(self.cache_file, "r") as file:
                 data = json.load(file)
@@ -301,20 +301,26 @@ class OperationGraph:
                 operation_id, label=operation_id, title=operation_id)
         for edge in self.edges:
             G.add_edge(edge.from_node.uuid, edge.to_node.uuid, capacity=', '.join(list(set([f"{similar.value1} -> {similar.value2}" for similar in edge.similar_parameters]))))
-            # if edges
-            # ODG_pyvis.add_edge(edge.from_node.uuid, edge.to_node.uuid, title=', '.join(list(set(
-            #         [f"{similar.value1} -> {similar.value2}" for similar in edge.similar_parameters]))))
+            
+            # # if edges
+            ODG_pyvis.add_edge(edge.from_node.uuid, edge.to_node.uuid, title=', '.join(list(set(
+                    [f"{similar.value1} -> {similar.value2}" for similar in edge.similar_parameters]))))
                 
-            required_similar_parameters = [ similar for similar in edge.similar_parameters if similar.value2 in edge.to_node.required_parameters]
-            if len(required_similar_parameters):
-                ODG_pyvis.add_edge(edge.from_node.uuid, edge.to_node.uuid, title=', '.join(list(set(
-                    [f"{similar.value1} -> {similar.value2}" for similar in required_similar_parameters]))))
-            optional_similar_parameters = [ similar for similar in edge.similar_parameters if similar.value2 in edge.to_node.optional_parameters]
-            if len(optional_similar_parameters):
-                ODG_pyvis_opt.add_edge(edge.from_node.uuid, edge.to_node.uuid, title=', '.join(list(set(
-                    [f"{similar.value1} -> {similar.value2}" for similar in optional_similar_parameters]))))
+            # required_similar_parameters = [ similar for similar in edge.similar_parameters if similar.value2 in edge.to_node.required_parameters]
+            # if len(required_similar_parameters):
+            #     ODG_pyvis.add_edge(edge.from_node.uuid, edge.to_node.uuid, title=', '.join(list(set(
+            #         [f"{similar.value1} -> {similar.value2}" for similar in required_similar_parameters]))))
+            # optional_similar_parameters = [ similar for similar in edge.similar_parameters if similar.value2 in edge.to_node.optional_parameters]
+            # if len(optional_similar_parameters):
+            #     ODG_pyvis_opt.add_edge(edge.from_node.uuid, edge.to_node.uuid, title=', '.join(list(set(
+            #         [f"{similar.value1} -> {similar.value2}" for similar in optional_similar_parameters]))))
 
         nx.write_graphml(G, self.cache_file.replace("json", "graphml"))
+        # 3. Tìm các thành phần liên thông (Clusters)
+        clusters = list(nx.weakly_connected_components(G))
+        print(f"Total clusters found: {len(clusters)}")
+        # for i, cluster in enumerate(clusters):
+        #     print(f"Cluster {i+1}: {cluster}")
         ODG_pyvis.show(self.cache_file.replace("json", "html"))
         ODG_pyvis_opt.show(self.cache_file.replace("json", "optional.html"))
 
