@@ -1,5 +1,6 @@
 import json
 import logging
+from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
 from api_testing.utils import to_dict_helper
 
@@ -129,6 +130,10 @@ class APITesting:
         #         self.spec_parser.json_spec_output(file_name=normalize_path)
 
     def init_graph(self):
+        # miner = StaticConstraintMiner(spec_parser=self.spec_parser,
+        #     model=self.model,
+        #     embedding_model=self.embedder,cache_dir=self.project_dir)
+        # miner.response_properties_constraints()
         operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
             model=self.model,

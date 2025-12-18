@@ -57,11 +57,14 @@ class ItemProperties:
         }
         return result
 
-    def to_human_readable(self):
+    def to_human_readable(self,ingore_type=False):
         if self.type not in ('array', 'object'):
             # pass
             str = ''
-            str += f'a {self.type} to describe {self.description}' if self.description else f'a {self.type}'
+            if ingore_type:
+                str+= f'a attribute to describe {self.description}' if self.description else ' a attribute'
+            else:
+                str += f'a {self.type} to describe {self.description}' if self.description else f'a {self.type}'
             if self.format:
                 str += f', format {self.format}'
             if self.pattern:

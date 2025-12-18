@@ -14,7 +14,7 @@ import time
 import re
 from difflib import SequenceMatcher
 import copy
-from api_testing.log import getLogger
+from api_testing.utils.log import getLogger
 from sentence_transformers import util
 
 from api_testing.utils.graph import get_best_mathching_schema, is_nested_path_end_with
