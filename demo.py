@@ -15,18 +15,17 @@ print("============= API Testing =============")
 
 # llm = GeminiModel(
 #     model_name="gemini-2.5-flash",
-#     # api_key="xx",
+#     api_key="xx",
 #     temperature=0.7,
 # )
+# 
 llm = AzureOpenAIModel(
     model="gpt-4.1",  
     temperature=0.7,
 )
+embedder = HuggingfaceEmbeddingModel(  
+    model="google/embeddinggemma-300m", use_half=False)
 
-embedder = OllamaEmbeddingModel(
-    base_url="http://host.docker.internal:11434",
-    model_name="siv/Qwen3-Embedding-0.6B-GGUF:F16"
-)
 
 # db = QdrantDB(
 #     collection="GitLab_Qwen3Embedding06B",
@@ -41,7 +40,7 @@ embedder = OllamaEmbeddingModel(
 test = APITesting(
     "localhost:80",
     model=llm,
-    vector_db=db,
+    # vector_db=db,
     embedder=embedder,
-    spec_path="datasets/GitLabProject.json",
+    spec_path="datasets/GitLabIssues.json",
 )
