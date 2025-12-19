@@ -9,11 +9,6 @@ from api_testing.utils import flatten_json_schema, handle_word_cases
 from sentence_transformers import util
 
 
-def remove_path_variables(string):
-    pattern = r'\{.*?\}'
-    result = re.sub(pattern, '', string)
-    return result
-
 def preprocess_string(s):
     # s = s.lower()
     s = re.sub(r'\{.*?\}', '', s)
@@ -21,10 +16,6 @@ def preprocess_string(s):
     s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
-
-def levenshtein_ratio(s1, s2):
-    return SequenceMatcher(None, s1, s2).ratio()
-
 
 
 def filter_item_properties(item: ItemProperties,
@@ -64,10 +55,29 @@ def filter_item_properties(item: ItemProperties,
 
 def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7, path_tree=""):
     endpoint = operation.endpoint_path
+    common_path = endpoint
     endpoint = endpoint.replace(path_tree, "") # only get relative path
     endpoint = preprocess_string(endpoint)
     
-    parameters = [ f"{handle_word_cases(endpoint + "_" + param.name)} {param.to_human_readable()}".lower() for param in operation.parameters.values()]
+    def lookup_string(path: str, param) -> str | None:
+        """Trả về phần chuỗi path đến hết {param}, làm sạch định dạng."""
+        if param.in_value != "path":
+            return None
+        match = re.search(rf"\{{{re.escape(param.name)}\}}", path)
+        if not match:
+            return None
+        return (
+            path[:match.end()]
+            .replace("/", " ")
+            .replace("{", "")
+            .replace("}", "")
+            .lower()
+        )
+
+    parameters = [
+        f"{lookup_string(common_path, p) or handle_word_cases(f'{endpoint}_{p.name}')} {p.to_human_readable()}".lower()
+        for p in operation.parameters.values()
+    ]
     if len(parameters) == 0:
         return {}
     parameter_embeddings = embedding_model.embed_texts(parameters)
