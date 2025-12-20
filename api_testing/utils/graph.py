@@ -83,7 +83,14 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
                 )
             }
             attributes = [ field for field, values in flattened_schema.items() if values.get('type') not in ['object','array', None]]
-            attributes_texts = [ f"{ handle_word_cases(values.get('xrefs','') + "_" + field.split('.')[-1])} {ItemProperties(**values).to_human_readable()}" for field, values in flattened_schema.items() if values.get('type') not in ['object','array', None]]
+            attributes_texts = []
+            for field, values in flattened_schema.items():
+                if values.get('type') not in ['object','array', None]:
+                    xrefs = values.get('xrefs', '')
+                    field_name = field.split('.')[-1]
+                    combined = handle_word_cases(xrefs + "_" + field_name)
+                    readable = ItemProperties(**values).to_human_readable()
+                    attributes_texts.append(f"{combined} {readable}")
             attributes_embedding = embedding_model.embed_texts(attributes_texts)
             
             hits = util.semantic_search(parameter_embeddings, attributes_embedding)

@@ -1,4 +1,5 @@
-from api_testing import APITesting, GeminiModel
+# from api_testing import APITesting, GeminiModel
+from api_testing import APITesting
 from pathlib import Path
 import os
 
@@ -42,5 +43,5 @@ test = APITesting(
     model=llm,
     # vector_db=db,
     embedder=embedder,
-    spec_path="datasets/GitLabIssues.json",
+    spec_path="datasets/GitLabCommit.json",
 )
