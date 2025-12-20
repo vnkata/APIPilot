@@ -1,0 +1,55 @@
+endpoints:
+  # --- Scenario 1: Independent Fields & Nested Objects ---
+  - id: post-/pet
+    request:
+      application/json:
+        - id: [1001, 1002, 1003, 1004]
+        - name: ["Buggies", "Lulu", "Nana", "Rex", "Fluffy"]
+        - category:
+            id: [1, 2, 3]
+            name: ["Dogs", "Cats", "Birds"]
+        - status: ["available", "pending", "sold"]
+        - photoUrls:
+            - ["https://images.com/dog1.jpg"]
+            - ["https://images.com/cat1.jpg", "https://images.com/cat2.jpg"]
+
+  # --- Scenario 2: Binary Storage, Heuristics & Independent Params ---
+  - id: post-/pet/{petId}/uploadImage
+    params:
+      - petId: [1001, 1002, 1003]
+      - additionalMetadata: "@fn/gen_lorem(word_count=5)"
+    request:
+      application/octet-stream:
+        - "@storage/pets/german_shepherd.jpg"
+        - "@storage/pets/siamese_cat.png"
+        - "@storage/pets/parrot.jpeg"
+
+  # --- Scenario 3: Collision-Safe Relational Data ($pool) ---
+  - id: get-/user/login
+    params:
+      - $pool:
+          - {
+              username: "admin_user",
+              password: "SecurePass123!",
+              role: "admin",
+            }
+          - {
+              username: "test_worker_1",
+              password: "KAT_Test_2024",
+              role: "editor",
+            }
+          - {
+              username: "qa_specialist",
+              password: "Password999",
+              role: "viewer",
+            }
+      - remember_me: [true, false]
+
+  - id: post-/store/order
+    request:
+      application/json:
+        - petId: [1001, 1002, 1003]
+        - quantity: [1, 2, 5, 10]
+        - shipDate: ["@now", "@now+1d", "@now+7d"]
+        - status: ["placed", "approved", "delivered"]
+        - complete: [true, false]

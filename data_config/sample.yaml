@@ -1,0 +1,83 @@
+version: "1.0"
+description: "Flat list of available heuristic generators for KAT."
+
+functions:
+  - name: "gen_from_list"
+    description: "Randomly selects one item from a provided list of values."
+    input: ["value_list"]
+    output: "any"
+
+  - name: "gen_weighted_choice"
+    description: "Selects an item based on weights (e.g., choose 'available' 80% of the time)."
+    input: ["value_list", "weights"]
+    output: "any"
+
+  - name: "gen_email"
+    description: "Generates a unique test email address."
+    input: ["domain"]
+    output: "string"
+
+  - name: "gen_phone"
+    description: "Generates a numeric string for phone numbers."
+    input: ["format"]
+    output: "string"
+
+  - name: "gen_uuid"
+    description: "Generates a standard UUID v4."
+    input: []
+    output: "string"
+
+  - name: "gen_relative_date"
+    description: "Generates a date string relative to today (e.g., +1d, -5d)."
+    input: ["offset_days", "format"]
+    output: "string"
+
+  - name: "gen_timestamp"
+    description: "Current Unix timestamp."
+    input: []
+    output: "integer"
+
+  - name: "gen_currency"
+    description: "Generates a random price within a range."
+    input: ["min", "max", "decimals"]
+    output: "float"
+
+  - name: "gen_credit_card"
+    description: "Generates a valid-format test credit card number."
+    input: ["brand"]
+    output: "string"
+
+  - name: "gen_lat_long"
+    description: "Generates random GPS coordinates."
+    input: []
+    output: "object"
+
+  - name: "gen_address"
+    description: "Generates a mock street address string."
+    input: []
+    output: "string"
+
+  - name: "gen_lorem"
+    description: "Generates random placeholder text."
+    input: ["word_count"]
+    output: "string"
+
+  - name: "gen_hex_color"
+    description: "Generates a random CSS hex color code."
+    input: []
+    output: "string"
+
+  - name: "gen_integer"
+    description: "Generates a random integer within a range."
+    input: ["min", "max"]
+    output: "integer"
+
+  - name: "gen_boolean"
+    description: "Randomly returns true or false."
+    input: []
+    output: "boolean"
+
+  - name: "gen_user_agent"
+    description: "Generates a realistic browser User-Agent string."
+    input: ["browser_type"]
+    output: "string"
