@@ -1,4 +1,3 @@
-
 from copy import copy
 from difflib import SequenceMatcher
 import re
@@ -11,16 +10,15 @@ from sentence_transformers import util
 
 def preprocess_string(s):
     # s = s.lower()
-    s = re.sub(r'\{.*?\}', '', s)
+    s = re.sub(r"\{.*?\}", "", s)
     s = re.sub(r"[_]", " ", s)
     s = re.sub(r"[^\w\s]", "", s)
     s = re.sub(r"\s+", " ", s).strip()
     return s
 
 
-def filter_item_properties(item: ItemProperties,
-    root_xrefs: Optional[str],
-    paths: List[str]
+def filter_item_properties(
+    item: ItemProperties, root_xrefs: Optional[str], paths: List[str]
 ) -> ItemProperties:
     """Return a filtered copy of `item` keeping only properties matching given dot-paths."""
     if not item or not item.properties:
@@ -30,10 +28,12 @@ def filter_item_properties(item: ItemProperties,
     tree = {}
     for path in paths:
         current = tree
-        for part in path.split('.'):
+        for part in path.split("."):
             current = current.setdefault(part, {})
 
-    def _filter_recursive(source: ItemProperties, allowed_tree: Dict[str, dict]) -> ItemProperties:
+    def _filter_recursive(
+        source: ItemProperties, allowed_tree: Dict[str, dict]
+    ) -> ItemProperties:
         if not source or not source.properties:
             return source
 
@@ -53,12 +53,14 @@ def filter_item_properties(item: ItemProperties,
     return _filter_recursive(item, tree)
 
 
-def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7, path_tree=""):
+def get_best_mathching_schema(
+    embedding_model, operation, schemas, threshold=0.7, path_tree=""
+):
     endpoint = operation.endpoint_path
     common_path = endpoint
-    endpoint = endpoint.replace(path_tree, "") # only get relative path
+    endpoint = endpoint.replace(path_tree, "")  # only get relative path
     endpoint = preprocess_string(endpoint)
-    
+
     def lookup_string(path: str, param) -> str | None:
         """Trả về phần chuỗi path đến hết {param}, làm sạch định dạng."""
         if param.in_value != "path":
@@ -67,7 +69,7 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
         if not match:
             return None
         return (
-            path[:match.end()]
+            path[: match.end()]
             .replace("/", " ")
             .replace("{", "")
             .replace("}", "")
@@ -89,13 +91,23 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
                 for field, values in flatten_json_schema(schema.to_dict()).items()
                 if (
                     (schema.xrefs is None and values.get("xrefs") is None)
-                    or (schema.xrefs is not None and values.get("xrefs") == schema.xrefs)
+                    or (
+                        schema.xrefs is not None and values.get("xrefs") == schema.xrefs
+                    )
                 )
             }
-            attributes = [ field for field, values in flattened_schema.items() if values.get('type') not in ['object','array', None]]
-            attributes_texts = [ f"{ handle_word_cases(values.get('xrefs','') + "_" + field.split('.')[-1])} {ItemProperties(**values).to_human_readable()}" for field, values in flattened_schema.items() if values.get('type') not in ['object','array', None]]
+            attributes = [
+                field
+                for field, values in flattened_schema.items()
+                if values.get("type") not in ["object", "array", None]
+            ]
+            attributes_texts = [
+                f"{ handle_word_cases(values.get('xrefs','') + "_" + field.split('.')[-1])} {ItemProperties(**values).to_human_readable()}"
+                for field, values in flattened_schema.items()
+                if values.get("type") not in ["object", "array", None]
+            ]
             attributes_embedding = embedding_model.embed_texts(attributes_texts)
-            
+
             hits = util.semantic_search(parameter_embeddings, attributes_embedding)
             keep_attributes = {}
             for param_i in range(len(hits)):
@@ -104,23 +116,59 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
                     score = hit["score"]
                     if score >= threshold:
                         keep_attributes[attribute] = score
-            schema = filter_item_properties(schema, root_xrefs=schema.xrefs, paths=list(keep_attributes.keys()))
+            schema = filter_item_properties(
+                schema, root_xrefs=schema.xrefs, paths=list(keep_attributes.keys())
+            )
             print(keep_attributes)
             if len(keep_attributes) > 0:
                 keep_schemas[schema_name] = schema
     return keep_schemas
 
-    
+
+def normalize_path(path: str) -> str:
+    """Remove [] notation from path for matching compatibility.
+
+    This ensures backward compatibility when matching paths with or without
+    array notation. For example:
+    - 'provinces[].nextHoliday.id' -> 'provinces.nextHoliday.id'
+    - 'provinces.nextHoliday.id' -> 'provinces.nextHoliday.id'
+
+    Args:
+        path: Path string that may contain [] notation
+
+    Returns:
+        Normalized path with [] notation removed
+    """
+    return path.replace("[]", "")
+
+
 def is_nested_path_end_with(
-    nested_path: str, 
-    ending_path: str,
-    delimiter: str = '.'
+    nested_path: str, ending_path: str, delimiter: str = "."
 ) -> bool:
+    """Check if nested_path ends with ending_path, normalizing array notation.
+
+    Both paths are normalized ([] notation removed) before comparison to ensure
+    backward compatibility. For example:
+    - 'provinces[].nextHoliday.id' matches 'nextHoliday.id'
+    - 'provinces.nextHoliday.id' matches 'nextHoliday.id'
+
+    Args:
+        nested_path: Full nested path (e.g., 'provinces[].nextHoliday.id')
+        ending_path: Ending path to match (e.g., 'nextHoliday.id')
+        delimiter: Path delimiter (default: '.')
+
+    Returns:
+        True if nested_path ends with ending_path after normalization
+    """
+    # Normalize both paths to remove [] notation for compatibility
+    nested_path = normalize_path(nested_path)
+    ending_path = normalize_path(ending_path)
+
     segments: List[str] = nested_path.split(delimiter)
     ending_segment: List[str] = ending_path.split(delimiter)
     if not segments or not ending_segment:
         return False
-        
+
     last_segment: str = segments[-1]
     ending_segment: str = ending_segment[-1]
 
