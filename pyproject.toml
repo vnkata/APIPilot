@@ -1,0 +1,26 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "restapi-testing-tool"
+version = "0.1.0"
+description = "REST API Testing Tool with common utilities"
+requires-python = ">=3.12"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.ruff]
+fix = true
+select = ["F", "E", "W", "I", "B", "UP"]
+unfixable = ["F401"]
+
+[tool.vulture]
+min_confidence = 80
+paths = ["app", "src"]
+
+[tool.pytest.ini_options]
+pythonpath = [".", "src"]
+testpaths = ["tests"]
