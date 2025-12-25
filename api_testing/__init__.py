@@ -22,7 +22,7 @@ from .graph import (
     OperationNode,
     OperationEdge
 )
-from typing import Optional, Union
+from typing import Optional, Union, List
 from api_testing.dataset import SpecificationParser
 from api_testing.graph import OperationGraph
 from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMModel
@@ -43,6 +43,7 @@ class APITesting:
                                           APITestingBaseEmbeddingModel]] = None,
                  vector_db: Optional[Union[str,
                                            APITestingVectorDB]] = None,
+                 test_single_endpoint: Optional[str] = None,  # New parameter
                  # async_mode=False,
                  ):
         self.base_url = base_url
@@ -53,8 +54,14 @@ class APITesting:
         self.critic_model = critic_model  # judge model
         self.vector_db = vector_db
         self.project_dir = None
+        self.test_single_endpoint = test_single_endpoint
+        self.operation_graph = None
         self._load_()
-        self.init_graph()
+        
+        if self.test_single_endpoint:
+            self.init_graph_for_single_endpoint(self.test_single_endpoint)
+        else:
+            self.init_graph()
 
     def _load_(self):
         #  get tile from spec_path
@@ -110,24 +117,6 @@ class APITesting:
             self.project_dir, f"request_resonponse_constraint.json")
         with open(file_name, 'w', encoding='utf-8') as file:
             json.dump(constraints, file, ensure_ascii=False, indent=4)
-
-            # self.spec_parser.json_spec_output(file_name=normalize_path)
-        # print("="*20)
-        # print("=" + " "*5 + "EXTRACT CONSTRAINTS" + " "*5 + "=")
-        # print("="*20)
-        # normalize_path = os.path.join(
-        #     self.project_dir, "specification_normalize.json")
-        # if os.path.exists(normalize_path):
-        #     self.spec_parser.load_from_file(normalize_path)
-        # else:
-        #     for operation, details in self.spec_parser.operations.items():
-        #         print("NORMALIZE SPECIFICATION", operation)
-        #         analyzer = OperationAnalyer(
-        #             llm=self.model,
-        #             operation=details
-        #         )
-        #         self.spec_parser.operations[operation] = analyzer.analyze()
-        #         self.spec_parser.json_spec_output(file_name=normalize_path)
 
     def init_graph(self):
         # miner = StaticConstraintMiner(spec_parser=self.spec_parser,

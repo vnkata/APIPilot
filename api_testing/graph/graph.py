@@ -21,7 +21,7 @@ from api_testing.utils.graph import get_best_mathching_schema, is_nested_path_en
 
 @dataclass
 class OperationGraph:
-    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None):
+    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None, skip_create_graph: bool = False):
         self.spec_parser = spec_parser
         self.embedding_model = embedding_model
         self.model = model  # llm model
@@ -35,6 +35,7 @@ class OperationGraph:
         self.logger = getLogger()
         # prompt for operation-schema dependencies
         self.op_schema_deps = OpSchemaDeps(self.model)
+        self.skip_create_graph  = skip_create_graph
         self.load_or_initialize_graph()
 
     def add_node(self, operation):
@@ -80,8 +81,10 @@ class OperationGraph:
 
         else:
             print("Cache file not found. Initializing graph...")
-            self.create_graph()
-            self.save_graph_to_cache()
+            if not self.skip_create_graph:
+
+                self.create_graph()
+                self.save_graph_to_cache()
 
     def save_graph_to_cache(self):
         # Save the graph to the cache file
@@ -155,22 +158,32 @@ class OperationGraph:
             #par
             self.logger.debug("GPT CHECK FOR OPERATION: " + operation.http_method.upper() + " " + operation.endpoint_path)
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
-                print(
-                    f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
+                print(f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
+                summary_results.append({
+                    "index": idx,
+                    "operation": f"{operation.http_method.upper()} {operation.endpoint_path}",
+                    "success": False,
+                    "skipped": True,
+                    "reason": "No parameters or request body"
+                })
                 continue
- 
+
             params = {
                 "endpoint": f"{operation.http_method.upper()} {operation.endpoint_path}",
                 "summary": ((operation.summary or "") + " " + (operation.description or "")).strip(),
-                "specific_endpoint_params": "\n".join([ f"- {k} : {v.to_human_readable()}" for k,v in operation.parameters.items() if v.schema.type not in ("boolean")]), # experiences filter params
+                "specific_endpoint_params": "\n".join([
+                    f"- {k} : {v.to_human_readable()}" 
+                    for k, v in operation.parameters.items() 
+                    if v.schema.type not in ("boolean",)
+                ]),
             }
             relavant_schemas = get_best_mathching_schema(embedding_model=self.embedding_model, operation=operation, schemas=schemas, threshold=self.threshold, path_tree=self.path_tree)
             data_schemas = []
-            for schema_name, schema in relavant_schemas.items():
+            for schema_name, schema in relevant_schemas.items():
                 if schema is not None:
                     newSchema = copy.deepcopy(schema)
                     newSchema.xrefs = None
-                    cleaned_string = newSchema.to_human_readable().replace('\\n', '').replace("\n","")
+                    cleaned_string = newSchema.to_human_readable().replace('\\n', '').replace("\n", "")
                     cleaned_string = re.sub(r'\s+', ' ', cleaned_string).strip()
                     cleaned_string = re.sub(r'\\+', "", cleaned_string)
                     data_schemas.append(f"- {schema_name}: {cleaned_string}")
@@ -202,7 +215,6 @@ class OperationGraph:
                             ))
                 
         return edges
-    
     def deduplicate_similarity_values(self, similarity_list: List[SimilarityValue]) -> List[SimilarityValue]:
         """
         Removes duplicate SimilarityValue objects from a list based on the
@@ -333,3 +345,97 @@ class OperationGraph:
             for edge in filter(lambda x: x.from_node.uuid == operation_id, self.edges):
                 print(
                     f"Edge: {edge.from_node.uuid} -> {edge.to_node.uuid} with parameters: {edge.similar_parameters}")
+    def test_single_endpoint(self, operation_uuid: str, operations: Dict[str, OperationProperties] = None, schemas: Dict[str, ItemProperties] = None):
+            """
+            Test the LLM prompt for a single endpoint to debug schema dependency detection.
+            
+            :param operation_uuid: The UUID of the operation (e.g., "get-/projects/{id}/repository/commits/{sha}")
+            :param operations: Optional dict of operations, uses spec_parser if not provided
+            :param schemas: Optional dict of schemas, uses spec_parser if not provided
+            :return: Tuple of (prompt_params, raw_response, parsed_response)
+            """
+            if operations is None:
+                operations = self.spec_parser.operations
+            if schemas is None:
+                schemas = {k: v for opt in operations.values() for k, v in opt.schemas.items()}
+            
+            # Find the operation
+            operation = operations.get(operation_uuid)
+            if operation is None:
+                available = list(operations.keys())
+                raise ValueError(f"Operation '{operation_uuid}' not found. Available: {available[:5]}...")
+            
+            # Build the same params as gpt_similarities
+            paths = [opt.endpoint_path for opt in operations.values()]
+            self.path_tree = os.path.commonprefix(paths)
+            
+            params = {
+                "endpoint": f"{operation.http_method.upper()} {operation.endpoint_path}",
+                "summary": ((operation.summary or "") + " " + (operation.description or "")).strip(),
+                "specific_endpoint_params": "\n".join([
+                    f"- {k} : {v.to_human_readable()}" 
+                    for k, v in operation.parameters.items() 
+                    if v.schema.type not in ("boolean")
+                ]),
+            }
+            
+            relevant_schemas = self.get_best_matching_schema(operation, schemas, top_k=10)
+            
+            data_schemas = []
+            for schema_name, schema in relevant_schemas.items():
+                if schema is not None:
+                    newSchema = copy.deepcopy(schema)
+                    newSchema.xrefs = None
+                    cleaned_string = newSchema.to_human_readable().replace('\\n', '').replace("\n", "")
+                    cleaned_string = re.sub(r'\s+', ' ', cleaned_string).strip()
+                    cleaned_string = re.sub(r'\\+', "", cleaned_string)
+                    data_schemas.append(f"- {schema_name}: {cleaned_string}")
+            
+            params["data_schemas"] = "\n".join(data_schemas)
+            
+            # Print the full prompt for debugging
+            print("=" * 80)
+            print("SYSTEM PROMPT:")
+            print("=" * 80)
+            print(self.op_schema_deps.SYSTEM_PROMPT)
+            print("\n" + "=" * 80)
+            print("USER PROMPT:")
+            print("=" * 80)
+            full_prompt = self.op_schema_deps.PROMPT.format(**params)
+            print(full_prompt)
+            print("\n" + "=" * 80)
+            
+            # Get raw response (without schema validation)
+            print("CALLING LLM (raw, no schema)...")
+            raw_response, _ = self.model.generate(
+                system_prompt=self.op_schema_deps.SYSTEM_PROMPT,
+                prompt=full_prompt,
+                schema=None  # No schema to see raw output
+            )
+            print("RAW RESPONSE:")
+            print(raw_response)
+            print("\n" + "=" * 80)
+            
+            # Get parsed response (with schema validation)
+            print("CALLING LLM (with schema validation)...")
+            try:
+                from api_testing.prompts.op_schema_deps.schema import Verdict
+                parsed_response, _ = self.model.generate(
+                    system_prompt=self.op_schema_deps.SYSTEM_PROMPT,
+                    prompt=full_prompt,
+                    schema=Verdict
+                )
+                print("PARSED RESPONSE:")
+                print(parsed_response)
+            except Exception as e:
+                print(f"PARSING ERROR: {e}")
+                parsed_response = None
+            
+            print("=" * 80)
+            
+            return {
+                "params": params,
+                "raw_response": raw_response,
+                "parsed_response": parsed_response,
+                "relevant_schemas": list(relevant_schemas.keys())
+            }

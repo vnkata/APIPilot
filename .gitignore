@@ -9,3 +9,6 @@
 __pycache__
 .datasets
 .datasets/**/*
+venv/
+.idea/
+.DS_Store
