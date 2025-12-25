@@ -13,20 +13,16 @@ load_dotenv()
 
 print("============= API Testing =============")
 
-# llm = GeminiModel(
-#     model_name="gemini-2.5-flash",
-#     # api_key="xx",
-#     temperature=0.7,
-# )
-llm = AzureOpenAIModel(
-    model="gpt-4.1",  
+llm = GeminiModel(
+    model_name="gemini-2.5-flash",
+    api_key="xx",
     temperature=0.7,
 )
+# 
 
-# embedder = OllamaEmbeddingModel(
-#     base_url="http://host.docker.internal:11434",
-#     model_name="siv/Qwen3-Embedding-0.6B-GGUF:F16"
-# )
+embedder = HuggingfaceEmbeddingModel(  
+    model="google/embeddinggemma-300m", use_half=False)
+
 
 # db = QdrantDB(
 #     collection="GitLab_Qwen3Embedding06B",
@@ -40,15 +36,7 @@ llm = AzureOpenAIModel(
 test = APITesting(
     "localhost:80",
     model=llm,
-    # vector_db=db,
-    # embedder=embedder,
-    spec_path="datasets/GitLabCommit.json",
-    # spec_path="datasets/GitLabIssues.json",zz
+    vector_db=db,
+    embedder=embedder,
+    spec_path="datasets/GitLabProject.json",
 )
-
-# test = APITesting(
-#     "localhost:80",
-#     model=llm,
-#     spec_path="datasets/GitLabCommit.json",
-#     test_single_endpoint="get-/projects/{id}/repository/commits/{sha}"  # Replace with your endpoint
-# )

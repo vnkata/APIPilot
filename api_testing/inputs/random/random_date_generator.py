@@ -2,7 +2,7 @@ import random
 import logging
 from datetime import datetime, timedelta
 from pydantic import Field
-from .random_generator import RandomGenerator
+from . import RandomGenerator
 
 logger = logging.getLogger(__name__)
 
@@ -16,6 +16,16 @@ class RandomDateGenerator(RandomGenerator):
     end_days: int = 0
     from_today: bool = False
     format: str = Field(default="yyyy-MM-dd HH:mm:ss")
+
+    def __init__(self, start_date=None, end_date=None,start_days=None,end_days=None, from_today=None, format=None, *args, **kwargs):
+        current_date = datetime.now()
+        self.start_date = start_date or current_date - timedelta(days=365 * 10)
+        self.end_date = end_date
+        self.start_days = start_days or 0
+        self.end_days = end_days or 0
+        self.from_today = from_today or False
+        self.format = format or "yyyy-MM-dd HH:mm:ss"
+        super().__init__(*args, **kwargs)
 
     def model_post_init(self, __context):
         super().model_post_init(__context)

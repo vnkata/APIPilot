@@ -1,16 +1,15 @@
 import random
 from pydantic import Field
-from .random_generator import RandomGenerator
-
+from . import RandomGenerator
 
 class RandomBooleanGenerator(RandomGenerator):
     """Random Boolean generator with configurable true probability."""
 
-    true_probability: float = Field(default=0.5, ge=0.0, le=1.0)
+    true_probability: float = 0.5 
 
-    def model_post_init(self, __context):
-        # Initialize random state using the parent model’s logic
-        super().model_post_init(__context)
+    def __init__(self, true_probability=0.5, *args, **kwargs):
+        self.true_probability = true_probability
+        super().__init__(*args, **kwargs) 
 
     def next_value(self) -> bool:
         """Generate a random boolean based on true_probability."""

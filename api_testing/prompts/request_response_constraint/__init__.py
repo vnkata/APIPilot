@@ -1,7 +1,7 @@
 import time
 import uuid
 from api_testing.prompts.request_response_constraint.schema import Verdict
-from api_testing.log import logger
+from api_testing.utils.log import logger
 
 
 class RequestResponseConstraint:

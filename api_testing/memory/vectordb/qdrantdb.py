@@ -5,7 +5,7 @@ from api_testing.models.base_model import APITestingBaseEmbeddingModel
 from .base import Distance, Document, APITestingVectorDB
 
 from hashlib import md5
-from api_testing.log import logger
+from api_testing.utils.log import logger
 try:
     from qdrant_client import QdrantClient  # noqa: F401
     from qdrant_client.http import models

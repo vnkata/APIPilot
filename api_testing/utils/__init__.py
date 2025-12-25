@@ -1,3 +1,4 @@
+
 from datetime import time
 import itertools
 import os
@@ -6,73 +7,56 @@ from typing import Iterable, Dict, List, Any, Optional, Tuple, Set
 import re
 import hashlib
 
-
-def remove_nulls(item):
-    if hasattr(item, 'to_dict'):
-        return item.to_dict()
-    elif isinstance(item, dict):
-        return {k: remove_nulls(v) for k, v in item.items() if not isEmpty(v) and remove_nulls(v)}
-    elif isinstance(item, Iterable) and not isinstance(item, (str, bytes)):
-        return [remove_nulls(i) for i in item if remove_nulls(i) is not None]
-    else:
-        return item
-
-
-def isEmpty(value):
-    return value == '-' or value is None or value == [] or value == ['-'] or value == ''
-
 #  HTTP Status Code
-
-def isSuccessful(code) -> bool:
-    if isinstance(code, str):
-        return code[0] == '2'
-    return code >= 200 and code < 300
-
-
-def isInformational(code: int):
-    return code >= 100 and code < 200
-
-
-def isRedirection(code: int):
-    return code >= 300 and code < 400
-
-
-def isClientError(code: int):
-    return code >= 400 and code < 500
-
-
-def isServerError(code: int):
-    return code >= 500 and code < 600
-
-
-def flatten_json_schema(schema, parent_key='', sep='.'):
-    flat_schema = {}
-    if 'properties' in schema:
-        for key, value in schema['properties'].items():
-            new_key = f"{parent_key}{sep}{key}" if parent_key else key
-            if not value:
-                continue
-            if value.get('type') == 'object' and 'properties' in value:
-                # Recursively flatten nested object
-                flat_schema.update(
-                    flatten_json_schema(value, new_key, sep=sep))
-
-            elif value.get('type') == 'array':
-                items = value.get('items', {})
-                array_key = f"{new_key}[]"
-
-                if items.get('type') == 'object' and 'properties' in items:
-                    # Flatten object inside array
-                    flat_schema.update(flatten_json_schema(
-                        items, array_key, sep=sep))
+def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
+        flat_schema = {}
+        if schema is None:
+            return
+        newRef = ref
+        if 'properties' in schema:
+            if "xrefs" in schema:
+                ref = schema.get("xrefs", "")    
+            # root
+            for key, value in schema['properties'].items():
+                new_key = f"{parent_key}{sep}{key}" if parent_key else key
+                if value is None:
+                    continue
+                if value.get('type') == 'object' and 'properties' in value:
+                    # Recursively flatten nested object
+                    if "xrefs" in value:
+                        newRef = value.get("xrefs", "")
+                    flat_schema.update(
+                        flatten_json_schema(value, new_key, sep=sep, ref=newRef))
+                elif value.get('type') == 'array':
+                    items = value.get('items', {})
+                    array_key = f"{new_key}"
+                    # if "xrefs" in value.get("items",[]):
+                    #     ref = value.get("xrefs")
+                    if items.get('type') == 'object' and 'properties' in items:
+                        # Flatten object inside array
+                        if "xrefs" in value.get("items", {}):
+                            newRef = value.get("items", {}).get("xrefs", "")
+                        flat_schema.update(flatten_json_schema(
+                            items, array_key, sep=sep, ref=newRef))
+                    else:
+                        if ref != "":
+                            items["xrefs"] = ref
+                        # Array of primitives
+                        flat_schema[array_key] = items
                 else:
-                    # Array of primitives
-                    flat_schema[array_key] = items
-            else:
-                # Primitive field
-                flat_schema[new_key] = value
-
-    return flat_schema
+                    # Primitive field
+                    if ref != "":
+                        value["xrefs"] = ref
+                    flat_schema[new_key] = value
+        elif schema.get('type') == 'array':
+            # nested
+            items = schema.get('items', {})
+            newRef = ref
+            if "xrefs" in items:
+                newRef = items.get("xrefs", "")
+            flat_schema.update(
+                flatten_json_schema(items, parent_key, sep=sep, ref=newRef))
+        return flat_schema
 
 
 def get_combinations(arr, requiredArr) -> List[Tuple]:
@@ -176,39 +160,5 @@ def is_data_modified(a, b):
         # So sánh giá trị primitive
         return a != b
 
-
-def trim_and_load_json(
-    input_string: str,
-) -> Dict:
-
-    start = input_string.find("{")
-    end = input_string.rfind("}") + 1
-    if end == 0 and start != -1:
-        input_string = input_string + "}"
-        end = len(input_string)
-    jsonStr = input_string[start:end] if start != -1 and end != 0 else ""
-    jsonStr = re.sub(r",\s*([\]}])", r"\1", jsonStr)
-    try:
-        return json.loads(jsonStr)
-    except json.JSONDecodeError:
-        error_str = "Evaluation LLM outputted an invalid JSON. Please use a better evaluation model."
-        print(input_string)
-        raise ValueError(error_str)
-    except Exception as e:
-        raise Exception(f"An unexpected error occurred: {str(e)}")
-
-
-def call_with_retry(func, max_retries=3, sleep_time=10, fallback_return=None, **kwargs):
-    for attempt in range(1, max_retries + 1):
-        try:
-            return func(**kwargs)
-        except Exception as e:
-            print(e)
-            if attempt < max_retries:
-                time.sleep(sleep_time)
-            else:
-                print(
-                    "Max retries reached, returning fallback_return.")
-                return fallback_return
 
 #### MARKDOWN TABLES PROCESSING ####

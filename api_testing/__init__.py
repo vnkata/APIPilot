@@ -1,6 +1,6 @@
 import json
 import logging
-# from api_testing.dataset.specification_analyzer import OperationAnalyer
+from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
 from api_testing.utils import to_dict_helper
 
@@ -28,7 +28,7 @@ from api_testing.graph import OperationGraph
 from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMModel
 import shutil
 import os
-from api_testing.log import configure_logging
+from api_testing.utils.log import configure_logging
 
 
 class APITesting:
@@ -119,44 +119,19 @@ class APITesting:
             json.dump(constraints, file, ensure_ascii=False, indent=4)
 
     def init_graph(self):
-        # normalize spec
-        # analyzer_constraints
-        # analyzer dependencies
-        self.operation_graph = OperationGraph(
+        # miner = StaticConstraintMiner(spec_parser=self.spec_parser,
+        #     model=self.model,
+        #     embedding_model=self.embedder,cache_dir=self.project_dir)
+        # miner.response_properties_constraints()
+        operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
             model=self.model,
             embedding_model=self.embedder,
             cache_dir=self.project_dir
         )
         # get_param_combinations
-        self.operation_graph.print_graph()
-        self.operation_graph.plot_graph()
-
-    def init_graph_for_single_endpoint(self, operation_uuid: str):
-        """
-        Initialize graph in test mode for a single endpoint.
-        Only runs the LLM call for the specified endpoint.
+        operation_graph.print_graph()
+        operation_graph.plot_graph()
         
-        :param operation_uuid: The UUID of the operation to test
-        :return: The result from the LLM
-        """
-        print("=" * 80)
-        print(f"TEST SINGLE ENDPOINT MODE: {operation_uuid}")
-        print("=" * 80)
-        
-        self.operation_graph = OperationGraph(
-            spec_parser=self.spec_parser,
-            model=self.model,
-            embedding_model=self.embedder,
-            cache_dir=self.project_dir,
-            skip_create_graph=True  # Don't run full graph creation
-        )
-        
-        return self.operation_graph.test_single_endpoint(operation_uuid)
-
-    def list_operations(self) -> List[str]:
-        """List all available operation UUIDs"""
-        return list(self.spec_parser.operations.keys())
-
     def run_tests(self):
         pass

@@ -7,7 +7,7 @@ import json
 from typing import List, Dict, Optional, Union, Iterable
 
 from api_testing.models.specification_model import ItemProperties, OperationProperties, ParameterProperties, ResponseProperties
-from api_testing.utils import isSuccessful, to_dict_helper
+from api_testing.utils import to_dict_helper
 
 
 def recursion_limit_handler_none(limit, refstring, recursions):
@@ -29,7 +29,6 @@ class SpecificationParser:
             )
         self.operations = {}
         self.schemas = {}
-        self.endpoints_belong_to_schemas = {}
     # load specification from file
 
     def get_api_url(self) -> str:
@@ -46,23 +45,20 @@ class SpecificationParser:
 
     def load_from_file(self, spec_cache):
         operation_collection = {}
-        schema_collection = {}
-        with open(spec_cache, "r") as file:
+        with open(spec_cache, "r",encoding="utf-8") as file:
             data = json.load(file)
-            schema_collection = data.get("endpoints_belong_to_schemas", {})
             for operation_id, operationProperties in data.get("operations").items():
                 operation_properties = OperationProperties.from_dict(
                     operationProperties)
                 operation_collection.setdefault(
                     operation_id, operation_properties)
         self.operations = operation_collection
-        self.endpoints_belong_to_schemas = schema_collection
         return operation_collection
 
     def load_or_initialize(self, cache_dir=None):
         # Check if the cache file exists
         self.cache_file = os.path.join(cache_dir, "specification.json")
-        if False and os.path.exists(self.cache_file):
+        if os.path.exists(self.cache_file):
             print(f"Loading graph from cache: {self.cache_file}")
             self.load_from_file(self.cache_file)
         else:
@@ -219,39 +215,8 @@ class SpecificationParser:
         if operation_details.get('responses'):
             operation_properties.responses = self.process_responses(
                 responses=operation_details.get('responses'))
-            relevant_schemas = self.get_relevant_schema_of_endpoint(operation_properties.responses)
-            operation_properties.schemas = relevant_schemas
-
-            for schema in relevant_schemas:
-                if schema not in self.endpoints_belong_to_schemas:
-                    self.endpoints_belong_to_schemas[schema] = [operation_properties.uuid]
-                elif operation_properties.uuid not in self.endpoints_belong_to_schemas[schema]:
-                    self.endpoints_belong_to_schemas[schema].append(operation_properties.uuid)
         return operation_properties
 
-    def get_relevant_schema_of_endpoint(self, response: ResponseProperties) -> List[str]:
-        relevant_schemas = {}
-
-        def get_schema_recursive(item_properties: ItemProperties):
-            if item_properties is None:
-                return
-            if item_properties.xrefs and item_properties.type in ['object', 'array']:
-                schema_name = item_properties.xrefs
-                if schema_name not in relevant_schemas:
-                    relevant_schemas[schema_name] = item_properties
-
-            if item_properties.items:
-                get_schema_recursive(item_properties.items)
-            if item_properties.properties:
-                for prop in item_properties.properties.values():
-                    get_schema_recursive(prop)
-
-        for status_code, properties in response.items():
-            if isSuccessful(status_code):
-                for item_properties in properties.content.values():
-                    get_schema_recursive(item_properties)
-        return relevant_schemas
-    
     def parse_specification(self) -> Dict[str, OperationProperties]:
         """
         Parse the specification file to return a dictionary of all the operations and their properties.
@@ -285,7 +250,6 @@ class SpecificationParser:
         serializable_spec = to_dict_helper(self.operations)
         dicts = {
             "operations": serializable_spec,
-            "schemas": { k: v for k,v in self.schemas.items() if k in self.endpoints_belong_to_schemas }
         }
         with open(file_name, 'w', encoding='utf-8') as file:
             json.dump(dicts, file, ensure_ascii=False, indent=4) 
