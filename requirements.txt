@@ -16,3 +16,5 @@ charboundary
 openai
 qdrant_client
 dotenv
+faker
+faker-file[all]
