@@ -1,9 +1,11 @@
+from pathlib import Path
+import zipfile
 from api_testing.models.base_model import APITestingBaseEmbeddingModel
 from typing import Any, Optional, List
 import torch
+import os
 
-default_huggingface_embedding_model = 'flax-sentence-embeddings/st-codesearch-distilroberta-base'
-
+default_huggingface_embedding_model = f"{os.path.dirname(__file__)}/.cache/embeddinggemma-300m"
 
 class HuggingfaceEmbeddingModel(APITestingBaseEmbeddingModel):
     _model_instance = None  # Singleton model
@@ -43,7 +45,11 @@ class HuggingfaceEmbeddingModel(APITestingBaseEmbeddingModel):
         if HuggingfaceEmbeddingModel._model_instance is None:
             print("Loading Huggingface model:", self.model_name,
                   " wtih device: ", self.device)
-            from sentence_transformers import SentenceTransformer, util
+            from sentence_transformers import SentenceTransformer
+            if self.model_name == default_huggingface_embedding_model and not os.path.exists(default_huggingface_embedding_model):
+                with zipfile.ZipFile(Path(f"{os.path.dirname(__file__)}/embeddinggemma-300m.zip"), 'r') as zip_ref:
+                    zip_ref.extractall(Path(os.path.dirname(__file__)))
+                    print("Extracted Default Model")
             HuggingfaceEmbeddingModel._model_instance = SentenceTransformer(
                 self.model_name,
                 device=self.device,
