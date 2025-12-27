@@ -18,3 +18,4 @@ qdrant_client
 dotenv
 faker
 faker-file[all]
+prance
