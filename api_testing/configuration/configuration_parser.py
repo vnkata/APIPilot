@@ -1,7 +1,7 @@
 from api_testing.inputs import RandomGeneratorFactory
 from api_testing.models.configuration_model import FieldConfiguration
 from api_testing.models.specification_model import ParameterProperties
-from api_testing.prompts.parameter_random_mapper import ParameterRandomMapper
+# from api_testing.prompts.parameter_random_mapper import ParameterRandomMapper
 
 
 class ConfigurationParser:

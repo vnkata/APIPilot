@@ -7,13 +7,16 @@ from .random_boolean_generator import RandomBooleanGenerator
 from .random_date_generator import RandomDateGenerator
 from .random_number_generator import RandomNumberGenerator
 from .random_generator import RandomGenerator
-
+from .random_file_generator import RandomFileGenerator
+from .random_text_generator import RandomTextGenerator
 
 class RandomGeneratorFactory:
     _registries = {
         "RandomBooleanGenerator": RandomBooleanGenerator,
         "RandomNumberGenerator": RandomNumberGenerator,
         "RandomDateGenerator": RandomDateGenerator,
+        "RandomFileGenerator": RandomFileGenerator,
+        "RandomTextGenerator": RandomTextGenerator,
         "LLMGenerator": LLMGenerator,
         "ProducerGenerator": ProducerGenerator
     }
