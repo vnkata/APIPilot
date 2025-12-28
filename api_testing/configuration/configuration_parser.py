@@ -12,7 +12,8 @@ class ConfigurationParser:
     
     def parse(self):
         operations = self.spec_parser.operations
-        for operation in operations.values():
+
+        for operation in operations.values(): 
             parser = {
                 "parameters": {}   
             }    
