@@ -26,8 +26,8 @@ class OperationGraph:
         self.embedding_model = embedding_model
         self.model = model  # llm model
 
-        self.nodes = {}
-        self.edges = []
+        self.nodes: dict[str, OperationNode] = {}
+        self.edges: List[OperationEdge] = []
         self.threshold = threshold
 
         self.cache_file = os.path.join(
@@ -39,9 +39,7 @@ class OperationGraph:
         self.load_or_initialize_graph()
 
     def add_node(self, operation):
-        data = asdict(operation)
-        self.nodes[operation.uuid] = OperationNode(
-            **{k: data[k] for k in OperationProperties.__dataclass_fields__})
+        self.nodes[operation.uuid] = operation
 
     def add_edge(self, from_node, to_node, parameters):
         if len(parameters) == 0:
@@ -58,8 +56,6 @@ class OperationGraph:
             print(f"Loading graph from cache: {self.cache_file}")
             with open(self.cache_file, "r") as file:
                 data = json.load(file)
-                # Load nodes and edges from the cache file (implementation depends on your data structure)
-                #
                 operations = self.spec_parser.operations
                 for operation_properties in data.get("nodes", []):
                     self.add_node(operations[operation_properties])
@@ -78,11 +74,9 @@ class OperationGraph:
                             edge['to_node'],
                             similarities
                         )
-
         else:
             print("Cache file not found. Initializing graph...")
             if not self.skip_create_graph:
-
                 self.create_graph()
                 self.save_graph_to_cache()
 
@@ -153,19 +147,9 @@ class OperationGraph:
     def gpt_similarities(self, operations: List[OperationProperties], schemas: Dict[str,ItemProperties]):
         edges = []
         for operation in operations.values(): 
-            if operation.uuid in ("get-/api/v1/holidays","get-/api/v1/provinces"):
-                continue
-            #par
             self.logger.debug("GPT CHECK FOR OPERATION: " + operation.http_method.upper() + " " + operation.endpoint_path)
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
                 print(f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
-                summary_results.append({
-                    "index": idx,
-                    "operation": f"{operation.http_method.upper()} {operation.endpoint_path}",
-                    "success": False,
-                    "skipped": True,
-                    "reason": "No parameters or request body"
-                })
                 continue
 
             params = {
@@ -179,7 +163,7 @@ class OperationGraph:
             }
             relavant_schemas = get_best_mathching_schema(embedding_model=self.embedding_model, operation=operation, schemas=schemas, threshold=self.threshold, path_tree=self.path_tree)
             data_schemas = []
-            for schema_name, schema in relevant_schemas.items():
+            for schema_name, schema in relavant_schemas.items():
                 if schema is not None:
                     newSchema = copy.deepcopy(schema)
                     newSchema.xrefs = None
@@ -194,7 +178,7 @@ class OperationGraph:
                 for opt in operations.values():
                     if schema_name in opt.schemas:
                         self.logger.debug("CHECK MAPPING FOR SCHEMA: " + schema_name + " IN OPERATION: " + opt.http_method.upper() + " " + opt.endpoint_path)
-                        for param_name, attribute_names in mapping.items():
+                        for param_name, attribute_names in mapping.root.items():
                             for attribute_name in attribute_names.split(", "):
                                 # attribute_name
                                 successful_responses = opt.successful_responses
@@ -221,13 +205,10 @@ class OperationGraph:
         unique combination of (value1, value2).
         """
         unique_keys = {}
-        # deduplicated_list = []
-
         for item in similarity_list:
             key = (item.value1, item.value2)
             if key not in unique_keys:
                 unique_keys[key] = item
-                # deduplicated_list.append(item)
         return list(unique_keys.values())
 
     def merge_operation_edges(self, heuristic_edges, gpt_edges):
@@ -292,6 +273,8 @@ class OperationGraph:
         for operation in operations.values():
             self.add_node(operation)
         self.determine_dependencies(operations)
+        # extract 
+
 
     def plot_graph(self):
         G = nx.DiGraph(directed=True)
@@ -345,6 +328,7 @@ class OperationGraph:
             for edge in filter(lambda x: x.from_node.uuid == operation_id, self.edges):
                 print(
                     f"Edge: {edge.from_node.uuid} -> {edge.to_node.uuid} with parameters: {edge.similar_parameters}")
+    
     def test_single_endpoint(self, operation_uuid: str, operations: Dict[str, OperationProperties] = None, schemas: Dict[str, ItemProperties] = None):
             """
             Test the LLM prompt for a single endpoint to debug schema dependency detection.

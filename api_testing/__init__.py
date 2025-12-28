@@ -1,5 +1,6 @@
 import json
 import logging
+from api_testing.configuration.configuration_parser import ConfigurationParser
 from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
 from api_testing.utils import to_dict_helper
@@ -123,15 +124,25 @@ class APITesting:
         #     model=self.model,
         #     embedding_model=self.embedder,cache_dir=self.project_dir)
         # miner.response_properties_constraints()
-        operation_graph = OperationGraph(
+        self.operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
             model=self.model,
             embedding_model=self.embedder,
             cache_dir=self.project_dir
         )
-        # get_param_combinations
-        operation_graph.print_graph()
-        operation_graph.plot_graph()
+
         
-    def run_tests(self):
+    def train_experience(self, population=200):
         pass
+        # print("Trainning")
+        # # 
+        # nodes = self.operation_graph.nodes.values()
+        # nodes_sorted_by_degree = sorted(nodes, key=lambda x : x.degree)
+        
+        # for node in nodes_sorted_by_degree:
+        #     print(node.uuid)
+    
+    def run_tests(self):
+        parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model)
+        parser.parse()
+        
