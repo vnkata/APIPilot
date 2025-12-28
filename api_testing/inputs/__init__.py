@@ -9,6 +9,8 @@ from .random_number_generator import RandomNumberGenerator
 from .random_generator import RandomGenerator
 from .random_file_generator import RandomFileGenerator
 from .random_text_generator import RandomTextGenerator
+from .random_identity_generator import RandomIdentityGenerator
+from .random_input_generator import RandomInputGenerator
 
 class RandomGeneratorFactory:
     _registries = {
@@ -17,6 +19,8 @@ class RandomGeneratorFactory:
         "RandomDateGenerator": RandomDateGenerator,
         "RandomFileGenerator": RandomFileGenerator,
         "RandomTextGenerator": RandomTextGenerator,
+        "RandomIdentityGenerator": RandomIdentityGenerator,
+        "RandomInputGenerator": RandomInputGenerator,
         "LLMGenerator": LLMGenerator,
         "ProducerGenerator": ProducerGenerator
     }

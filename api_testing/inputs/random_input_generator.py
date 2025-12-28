@@ -1,7 +1,7 @@
 from typing import Any, List
 from .random_generator import RandomGenerator
 
-class RandomInputValueGenerator(RandomGenerator):
+class RandomInputGenerator(RandomGenerator):
     """
     A generator that randomly selects one or more values from a provided list.
 

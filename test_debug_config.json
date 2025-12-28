@@ -1,0 +1,446 @@
+[
+    {
+        "method": "post",
+        "endpoint": "/v1/account_links",
+        "params": {},
+        "reqbody": {
+            "account": {
+                "name": "account",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "collect": {
+                "name": "collect",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "collection_options.fields": {
+                "name": "collection_options.fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "currently_due",
+                        "eventually_due"
+                    ],
+                    "count": 1
+                }
+            },
+            "collection_options.future_requirements": {
+                "name": "collection_options.future_requirements",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "include",
+                        "omit"
+                    ],
+                    "count": 1
+                }
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "refresh_url": {
+                "name": "refresh_url",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "return_url": {
+                "name": "return_url",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "type": {
+                "name": "type",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/v1/apple_pay/domains",
+        "params": {
+            "domain_name": {
+                "name": "domain_name",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "sentence",
+                    "count": 1
+                }
+            },
+            "ending_before": {
+                "name": "ending_before",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "limit": {
+                "name": "limit",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "starting_after": {
+                "name": "starting_after",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        },
+        "reqbody": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/v1/apple_pay/domains",
+        "params": {},
+        "reqbody": {
+            "domain_name": {
+                "name": "domain_name",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "sentence",
+                    "count": 1
+                }
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        }
+    },
+    {
+        "method": "post",
+        "endpoint": "/v1/ephemeral_keys",
+        "params": {},
+        "reqbody": {
+            "customer": {
+                "name": "customer",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "issuing_card": {
+                "name": "issuing_card",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "nonce": {
+                "name": "nonce",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "verification_session": {
+                "name": "verification_session",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/v1/radar/value_list_items",
+        "params": {
+            "created": {
+                "name": "created",
+                "type": "",
+                "genParameters": {}
+            },
+            "ending_before": {
+                "name": "ending_before",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "limit": {
+                "name": "limit",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "starting_after": {
+                "name": "starting_after",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "value": {
+                "name": "value",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "value_list": {
+                "name": "value_list",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        },
+        "reqbody": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/v1/radar/value_list_items",
+        "params": {},
+        "reqbody": {
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "value": {
+                "name": "value",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "value_list": {
+                "name": "value_list",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/v1/tax_rates",
+        "params": {
+            "active": {
+                "name": "active",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "created": {
+                "name": "created",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "ending_before": {
+                "name": "ending_before",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "inclusive": {
+                "name": "inclusive",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "limit": {
+                "name": "limit",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "starting_after": {
+                "name": "starting_after",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        },
+        "reqbody": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/v1/tax_rates",
+        "params": {},
+        "reqbody": {
+            "active": {
+                "name": "active",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "country": {
+                "name": "country",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "description": {
+                "name": "description",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "display_name": {
+                "name": "display_name",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "inclusive": {
+                "name": "inclusive",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "jurisdiction": {
+                "name": "jurisdiction",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "metadata": {
+                "name": "metadata",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "percentage": {
+                "name": "percentage",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "state": {
+                "name": "state",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "tax_type": {
+                "name": "tax_type",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/v1/test_helpers/test_clocks",
+        "params": {
+            "ending_before": {
+                "name": "ending_before",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "limit": {
+                "name": "limit",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "starting_after": {
+                "name": "starting_after",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        },
+        "reqbody": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/v1/test_helpers/test_clocks",
+        "params": {},
+        "reqbody": {
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "frozen_time": {
+                "name": "frozen_time",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "name": {
+                "name": "name",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/v1/webhook_endpoints",
+        "params": {
+            "ending_before": {
+                "name": "ending_before",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "limit": {
+                "name": "limit",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "starting_after": {
+                "name": "starting_after",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        },
+        "reqbody": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/v1/webhook_endpoints",
+        "params": {},
+        "reqbody": {
+            "api_version": {
+                "name": "api_version",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "connect": {
+                "name": "connect",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "description": {
+                "name": "description",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "enabled_events": {
+                "name": "enabled_events",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "metadata": {
+                "name": "metadata",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            },
+            "url": {
+                "name": "url",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/v1/reporting/report_types",
+        "params": {
+            "expand": {
+                "name": "expand",
+                "type": "PENDING_GPT",
+                "genParameters": {}
+            }
+        },
+        "reqbody": {}
+    }
+]

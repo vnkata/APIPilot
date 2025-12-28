@@ -1,80 +1,155 @@
+from dataclasses import asdict
+from typing import List, Dict, Any, Union, Optional
+import json
 from api_testing.inputs import RandomGeneratorFactory
-from api_testing.models.configuration_model import FieldConfiguration
-from api_testing.models.specification_model import ParameterProperties
-# from api_testing.prompts.parameter_random_mapper import ParameterRandomMapper
-
+from api_testing.inputs.random_number_generator import DataType
+from api_testing.models.configuration_model import FieldConfiguration, OperationConfiguration
+from api_testing.models.specification_model import ItemProperties, ParameterProperties
 
 class ConfigurationParser:
     def __init__(self, spec_parser=None, model=None):
-      self.spec_parser = spec_parser
-      self.model = model
-      self.parameter_random_mapper = ParameterRandomMapper(llm=self.model)
-    
-    def parse(self):
+        self.spec_parser = spec_parser
+        self.model = model
+        self.configurations: List[OperationConfiguration] = []
+        self.gpt_tasks = []
+
+    def parse(self) -> List[OperationConfiguration]:
         operations = self.spec_parser.operations
 
-        for operation in operations.values(): 
-            parser = {
-                "parameters": {}   
-            }    
+        for op_id, operation in operations.items():
+            # Standardize naming access for OperationProperties
+            method = getattr(operation, "http_method", None) or getattr(operation, "method", None)
+            endpoint = getattr(operation, "endpoint_path", None) or getattr(operation, "path", None)
+            
+            op_config = OperationConfiguration(
+                method=method,
+                endpoint=endpoint
+            )
+
+            # --- 1. Process Parameters (Handles deepObject and Flat Params) ---
             for param_name, param_details in operation.parameters.items():
-                if param_details.description is None:
-                    parser["parameters"][param_name] = self.heuristic_parser(param_details)
+                # Check if the parameter is an object (deepObject style)
+                schema = param_details.schema
+                if schema and (schema.type == "object" or schema.properties):
+                    flattened_params = self._flatten_schema(schema, prefix=param_name, location="params")
+                    op_config.params.update(flattened_params)
+                elif schema and schema.type == "array":
+                    # For simple arrays in params, we treat as one field
+                    self._process_field(param_details, op_config.params, "params", method, endpoint)
                 else:
-                    parser["parameters"][param_name] = self.gpt_parser(param_details)
+                    self._process_field(param_details, op_config.params, "params", method, endpoint)
+
+            # --- 2. Process Request Body (Handles MIME types and Deep Nesting) ---
+            if hasattr(operation, "request_body") and operation.request_body:
+                for mime_type, schema in operation.request_body.items():
+                    # This recursively flattens every property in the body
+                    flattened_body = self._flatten_schema(schema, location="body")
+                    op_config.reqbody.update(flattened_body)
+                    break # Process the first valid MIME type (usually form-urlencoded)
+
+            self.configurations.append(op_config)
+        return self.configurations
+
+    def _process_field(self, item: Union[ParameterProperties, ItemProperties], container: dict, location: str, method: str, endpoint: str, path: str = None):
+        """Standard entry point for judging Heuristic vs GPT for a single field."""
+        name = path or getattr(item, 'name', 'unknown')
+        description = getattr(item, 'description', None)
+
+        # Handle 'anyOf' cases found in Stripe (e.g., 'created' can be int or object)
+        if hasattr(item, 'anyOf') and item.anyOf:
+            # We target the most complex part of anyOf (usually the object)
+            item = item.anyOf[0] 
+
+        if description is None:
+            container[name] = self.heuristic_parser(item, name_override=name)
+        else:
+            self.gpt_tasks.append({
+                "endpoint": f"{method} {endpoint}",
+                "location": location,
+                "path": name,
+                "parameter": item
+            })
+            container[name] = FieldConfiguration(name=name, type="PENDING_GPT")
+
+    def _flatten_schema(self, schema: ItemProperties, prefix: str = "", location: str = "body") -> Dict[str, FieldConfiguration]:
+        """Recursively traverses objects and arrays to produce dot-notation keys."""
+        flattened = {}
+        
+        # 1. Handle Objects
+        if schema.properties:
+            for prop_name, prop_info in schema.properties.items():
+                full_path = f"{prefix}.{prop_name}" if prefix else prop_name
+                
+                if prop_info.properties:
+                    # Drill down into nested objects
+                    flattened.update(self._flatten_schema(prop_info, prefix=full_path, location=location))
+                else:
+                    # Leaf Node: Pass to judgment
+                    self._process_field(prop_info, flattened, location, "Nested", "Object", path=full_path)
+        
+        # 2. Handle Arrays (Optional: can be expanded if you need specific item counts)
+        elif schema.type == "array" and schema.items:
+            # We treat the array as a single field PENDING_GPT if it has a description
+            self._process_field(schema, flattened, location, "Array", "Object", path=prefix)
+
+        return flattened
+
+    def heuristic_parser(self, item: Union[ParameterProperties, ItemProperties], name_override: str = None) -> FieldConfiguration:
+        """Normalized parser: determines generator based on type/format/enum."""
+        # Fix: Determine if we use the object itself or its nested schema (ParameterProperties)
+        schema_source = getattr(item, "schema", item)
+        
+        p_type = getattr(schema_source, "type", "string")
+        p_format = getattr(schema_source, "format", None)
+        p_name = name_override or getattr(item, "name", "unknown")
+
+        config = FieldConfiguration(name=p_name)
+
+        match p_type:
+            case "boolean":
+                config.type = "RandomBooleanGenerator"
+                config.genParameters = {"true_probability": 0.5}
+            case "integer" | "number":
+                config.type = "RandomNumberGenerator"
+                dt = DataType.INTEGER if p_type == "integer" else DataType.NUMBER
+                if p_format == "int32": dt = DataType.INT32
+                elif p_format == "int64" or p_format == "unix-time": dt = DataType.INT64
+                
+                config.genParameters = {
+                    "type": dt,
+                    "min": getattr(schema_source, "minimum", None),
+                    "max": getattr(schema_source, "maximum", None)
+                }
+            case "string":
+                enum_vals = getattr(schema_source, "enum", None)
+                if enum_vals:
+                    config.type = "RandomInputGenerator"
+                    config.genParameters = {"values": enum_vals, "count": 1}
+                elif p_format in ["date", "date-time"]:
+                    config.type = "RandomDateGenerator"
+                    config.genParameters = {"format": "%Y-%m-%d %H:%M:%S"}
+                else:
+                    config.type = "RandomTextGenerator"
+                    config.genParameters = {"mode": "sentence", "count": 1}
+
+        # Clean None values
+        config.genParameters = {k: v for k, v in config.genParameters.items() if v is not None}
+        return config
+
+    def export_debug_log(self, file_path: str = "debug_config.json"):
+        output = [asdict(conf) for conf in self.configurations]
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump(output, f, indent=4, default=str)
+        print(f"Debug log saved to: {file_path}")
 
     def gpt_parser(self, parameter: ParameterProperties):
         factory = RandomGeneratorFactory()
         descriptions = factory.gen_description()
         params = {
-            "class_description": "/n".join([f"- {k}: {v}" for k, v in factory.gen_description().items()]),
-            "parameter_description": f"{parameter.name}: {parameter.to_human_readable()}" 
+            "class_description": "\n".join([f"- {k}: {v}" for k, v in descriptions.items()]),
+            "parameter_description": f"{parameter.name}: {parameter.to_human_readable()}"
         }
         print(params)
         results = self.parameter_random_mapper.exec(**params)
         print(results)
-
         print(descriptions)
-        
-    def heuristic_parser(self, parameter: ParameterProperties ):
-        
-        match parameter.schema.type:
-            case "boolean":
-                return FieldConfiguration(name=parameter.name, type="RandomBooleanGenerator")
-            case "number":
-                return FieldConfiguration(name=parameter.name, type="RandomBooleanGenerator")
-            case "integer":
-                params = {
-                    "name": parameter.name, 
-                    "type": "RandomNumberGenerator"
-                }
-                schema = parameter.schema
-                if schema.minimum is not None:
-                    params["minimum"] = schema.minimum
-                if schema.maximum is not None:
-                    params["maximum"] = schema.maximum
-                if schema.format is not None:
-                    from api_testing.inputs.random_number_generator import DataType
-                    match schema.format:
-                        case 'int32':
-                            params["type"] = DataType.INT32
-                        case 'int64':
-                            params["type"] = DataType.INT64
-                        case 'unix-time':
-                            params["type"] = DataType.INT64 # unknow will fix in future
-
-                return FieldConfiguration(**params)
-            case "string":
-                params = {
-                    "name": parameter.name, 
-                    "type": "RandomNumberGenerator"
-                }
-                schema = parameter.schema
-                if schema.minimum is not None:
-                    params["minimum"] = schema.minimum
-                if schema.maximum is not None:
-                    params["maximum"] = schema.maximum
-                return FieldConfiguration(**params)
-
-            
-
