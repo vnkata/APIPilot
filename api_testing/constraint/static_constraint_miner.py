@@ -151,10 +151,13 @@ class StaticConstraintMiner:
                 self.logger.debug(f"Skipping schema with no attributes: {schema_name}")
                 return (schema_name, None)
 
-            # Extract constraints using LLM
+            # Extract constraints using LLM (validation-based approach)
+            # Pass flattened_schema for potential future use (e.g., using ItemProperties.to_human_readable())
             result = (
                 await self.response_constraint.extract_response_property_constraints(
-                    schema=schema_name, attributes="\n".join(flatten_texts)
+                    schema=schema_name,
+                    attributes="\n".join(flatten_texts),
+                    flattened_schema=flattened_schema,
                 )
             )
             constraints_dict = result.constraints
@@ -243,7 +246,6 @@ class StaticConstraintMiner:
             LLMError: If constraint extraction fails
             IOError: If cache file cannot be written
         """
-        from common.llm.exceptions import LLMError
 
         self.logger.info(
             f"Processing {len(self.schemas)} schemas for response properties constraints"
@@ -259,7 +261,8 @@ class StaticConstraintMiner:
             except (json.JSONDecodeError, IOError) as e:
                 self.logger.warning(
                     "Failed to load cache, will regenerate",
-                    extra={"error": str(e), "cache_file": self.cache_file},
+                    error=str(e),
+                    cache_file=self.cache_file,
                 )
 
         # Extract constraints for all schemas using batch processing
@@ -336,3 +339,49 @@ class StaticConstraintMiner:
             raise
 
         return output
+
+    async def extract_and_save_constraint_ir(self) -> None:
+        """Generate Constraint IR and save to cache (non-breaking extension).
+
+        This method builds a Constraint IR document from operations and schemas,
+        then saves it to cache alongside the existing static_constraint_miner.json.
+
+        The Constraint IR is used by the validation engine for runtime constraint validation.
+        """
+        from api_testing.constraint.constraint_ir_builder import ConstraintIRBuilder
+
+        self.logger.info("Building Constraint IR from operations")
+
+        # Build Constraint IR using builder
+        builder = ConstraintIRBuilder(
+            operations=self.operations,
+            schemas=self.schemas,
+            static_constraints_path=self.cache_file,  # Pass path to static_miner
+            llm_client=self.model,
+            embedding_model=self.embedding_model,
+            cache_dir=os.path.dirname(self.cache_file),
+            logger_instance=self.logger,
+        )
+
+        ir = await builder.build()
+
+        # Save to cache (separate file from static_constraint_miner.json)
+        ir_file = os.path.join(os.path.dirname(self.cache_file), "constraint_ir.json")
+
+        try:
+            with open(ir_file, "w", encoding="utf-8") as f:
+                json.dump(ir.model_dump(), f, indent=2, ensure_ascii=False)
+
+            self.logger.info(
+                "Constraint IR saved successfully",
+                file=ir_file,
+                operations_count=len(ir.operation_constraints),
+                total_checks=sum(
+                    len(oc.checks) for oc in ir.operation_constraints.values()
+                ),
+            )
+        except IOError as e:
+            self.logger.error(
+                f"Failed to write constraint IR file: {ir_file}, error={str(e)}"
+            )
+            raise

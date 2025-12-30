@@ -1,19 +1,21 @@
 """
 Response constraints extraction prompt class.
 
-Extracts constraints, rules, and limitations from response schema attributes
-using LLM with structured outputs.
+Extracts constraints from response schema attributes using validation-based approach:
+1. LLM validates which attributes have non-trivial constraints (bool)
+2. Use schema's to_human_readable() for constraint descriptions
 """
 
 import asyncio
-import json
 import re
-from typing import Optional
+from typing import Dict, Optional
 from common.llm import ask
-from common.llm.exceptions import LLMError, LLMValidationError
+from common.llm.exceptions import LLMError
+from common.llm.extractors import StructuredOutputExtractor
 from common.logger import get_logger, LogLevel
 from api_testing.prompts.response_constraints.schema import (
     ResponsePropertyConstraintsOutput,
+    ResponsePropertyConstraintsValidation,
 )
 from dotenv import load_dotenv
 
@@ -21,329 +23,252 @@ load_dotenv()
 
 logger = get_logger("response_constraints", level=LogLevel.DEBUG)
 
-RESPONSE_PROPERTY_CONSTRAINTS_MINING_SYSTEM_PROMPT_V1 = """
-You are given a schema and its attributes. Identify any constraints, rules, or limitations implied by each attribute’s description. Confirm that the description contains enough information to support automated validation of these constraints.
-Follow these steps below to complete your task:
-**STEP 1**: Review the provided schema and its attributes. Briefly describe the purpose or function of each attribute based on its definition or description.
-**STEP 2**: From STEP 1, identify attributes whose name and descriptions imply constraints, rules, or limits that can be programmatically verified:
-- Semantic inference: Constraints can be inferred from the attribute’s name and description based on their common or contextual meaning.
-- General: Descriptions defining specific values, ranges, formats, or logic indicate constraints.
-- Format: Mention or imply URI/URL, timestamp (ISO 8601), email, slug, date, datetime, version, or schema hints like format: uri, format: date-time.
-- Enum: Fixed value sets (e.g., “one of public, private”).
-- Range: Numeric or string limits (e.g., “≤255”, “1–10”, “max length 32”).
-- Ignore vague terms: “recommended”, “typically”, “usually” are not constraints unless precise.
-- Examples: Examples showing valid formats (URL, date, etc.) imply constraints if consistent.
+# Validation-based prompt: LLM returns Dict[str, bool] indicating which attributes have constraints
+RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_SYSTEM_PROMPT = """You are an expert at analyzing API schema attributes and identifying which attributes have ONLY non-trivial, programmatically verifiable constraints.
 
-FINAL OUTPUT:
-The response is in the format below, no explanation is needed:
-```json {
+**CRITICAL: What NOT to Mark as Having Constraints (Trivial Type Info)**
+DO NOT mark attributes that only have basic type information:
+- ❌ Attributes with only "String" type
+- ❌ Attributes with only "Integer" type  
+- ❌ Attributes with only "Boolean" type
+- ❌ Attributes with only "Array" type structure
+- ❌ Attributes without any explicit constraints beyond their type
+
+**What TO Mark as Having Constraints (Non-Trivial)**
+Only mark True for attributes that have constraints BEYOND basic schema validation:
+
+1. **Explicit Schema Constraints** (from schema properties):
+   - ✅ `format` is specified (e.g., `format: date-time`, `format: uri`)
+   - ✅ `enum` is specified (e.g., `enum: [1, 0]`, `enum: ['AB', 'BC']`)
+   - ✅ `minimum`, `maximum`, `minLength`, `maxLength` are specified
+   - ✅ `pattern` is specified (regex pattern)
+   - ✅ `minItems`, `maxItems`, `uniqueItems` are specified for arrays
+
+2. **Explicit Description-Based Constraints** (only if clearly stated):
+   - ✅ Description explicitly mentions format (e.g., "ISO 8601 date", "URI starting with https://")
+   - ✅ Description explicitly lists allowed values (e.g., "one of: public, private")
+   - ✅ Description explicitly states limits (e.g., "between 1 and 32", "max length 255")
+   - ✅ Description explicitly describes a pattern (e.g., "must start with https://")
+
+3. **Semantic Constraints** (ONLY if explicitly stated in description):
+   - ✅ Extract ONLY if the description explicitly states a constraint rule
+   - ✅ Example: If description says "must be a positive integer" → Mark True
+   - ✅ Example: If description says "must be 1 or 0" → Mark True
+   - ❌ DO NOT infer constraints from attribute names alone
+
+**Your Task:**
+For each attribute, determine: Does it have non-trivial constraints beyond basic type? (True/False)
+
+**Decision Rules:**
+- If attribute has `enum`, `format`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern` → True
+- If description explicitly states a constraint rule → True
+- If attribute only has basic type info (String, Integer, Boolean, Array) → False
+- If uncertain, be conservative → False
+
+**Output Format (CRITICAL):**
+Return ONLY a JSON object in this EXACT format. Do not include markdown formatting, explanations, or additional text:
+
+{
   "constraints": {
-    "attribute_name_1": "briefly_description_1",
-    "attribute_name_2": "briefly_description_2",
+    "attribute_name_1": true,
+    "attribute_name_2": false,
+    "attribute_name_3": true
   }
 }
-```
+
+**Important Notes:**
+- Return True ONLY if you are confident the attribute has non-trivial constraints
+- Return False for attributes with only basic type information
+- Include ALL attributes you analyzed in the output
+- Use lowercase `true` and `false` (JSON boolean format)
+- Do not add comments (//) in the actual JSON output
 """
 
-RESPONSE_PROPERTY_CONSTRAINTS_MINING_USER_PROMPT_V1 = """
-Please review the following details for the schema and its attributes:
+RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_USER_PROMPT = """Please analyze the following schema and its attributes. For each attribute, determine if it has non-trivial constraints beyond basic type validation.
+
 Schema: {schema}
 Attributes:
 {attributes}
+
+Return a JSON object with "constraints" field mapping each attribute name to true (has non-trivial constraints) or false (only basic type).
 """
-
-RESPONSE_PROPERTY_CONSTRAINTS_MINING_SYSTEM_PROMPT_V2 = """You are given a schema and its attributes. Identify any constraints, rules, or limitations implied by each attribute's description. Confirm that the description contains enough information to support automated validation of these constraints.
-Follow these steps below to complete your task:
-**STEP 1**: Review the provided schema and its attributes. Briefly describe the purpose or function of each attribute based on its definition or description.
-**STEP 2**: From STEP 1, identify attributes whose name and descriptions imply constraints, rules, or limits that can be programmatically verified:
-- Semantic inference: Constraints can be inferred from the attribute's name and description based on their common or contextual meaning.
-- General: Descriptions defining specific values, ranges, formats, or logic indicate constraints.
-- Format: Mention or imply URI/URL, timestamp (ISO 8601), email, slug, date, datetime, version, or schema hints like format: uri, format: date-time.
-- Enum: Fixed value sets (e.g., "one of public, private").
-- Range: Numeric or string limits (e.g., "≤255", "1–10", "max length 32").
-- Ignore vague terms: "recommended", "typically", "usually" are not constraints unless precise.
-- Examples: Examples showing valid formats (URL, date, etc.) imply constraints if consistent.
-
-FINAL OUTPUT:
-Return a JSON object with a "constraints" field mapping attribute names to their constraint descriptions."""
-
-
-RESPONSE_PROPERTY_CONSTRAINTS_MINING_USER_PROMPT_V2 = """Please review the following details for the schema and its attributes:
-Schema: {schema}
-Attributes:
-{attributes}"""
-
-RESPONSE_PROPERTY_CONSTRAINTS_MINING_SYSTEM_PROMPT_V3 = """You are an expert at analyzing API schema attributes and extracting programmatically verifiable constraints.
-
-Your task is to identify constraints, rules, or limitations implied by each attribute's description that can be used for automated validation.
-
-**Analysis Guidelines:**
-1. Review each attribute's name, type, format, and description
-2. Identify constraints that can be programmatically verified:
-   - **Format constraints**: ISO 8601 dates, URIs, emails, specific formats
-   - **Range constraints**: Numeric min/max, string length limits
-   - **Enum constraints**: Fixed value sets (e.g., [1, 0], ["public", "private"])
-   - **Semantic constraints**: Inferred from attribute names and descriptions (e.g., "id" implies positive integer, "date" implies valid date format)
-   - **Type-specific constraints**: minimum/maximum for numbers, minLength/maxLength for strings
-
-3. **Ignore vague terms** unless they specify precise limits:
-   - Skip: "recommended", "typically", "usually", "may", "can"
-   - Include: Specific ranges, formats, enums, or clear semantic meanings
-
-4. **Extract constraint descriptions** that are:
-   - Concise but specific (e.g., "Integer between 1 and 32", "ISO date format (YYYY-MM-DD)", "Must be 1 or 0")
-   - Actionable for validation logic
-   - Based on explicit schema properties (minimum, maximum, format, enum) or clear semantic inference
-
-**Important**: You must extract constraints for ALL attributes that have verifiable constraints. Do not return an empty constraints dictionary unless truly no constraints can be identified."""
 
 
 class ResponsePropertyConstraintMiner:
-    """Extracts constraints from response schema attributes using LLM.
+    """Extracts constraints from response schema attributes using validation-based LLM approach.
 
-    This class uses structured LLM outputs to identify constraints,
-    rules, and limitations implied by schema attribute descriptions.
+    New approach (validation-based):
+    1. LLM validates which attributes have non-trivial constraints → Dict[str, bool]
+    2. For validated attributes (True), use schema's to_human_readable() for description
+    3. Return only attributes with constraints → Dict[str, str]
 
-    Features:
-    - Structured output via Pydantic validation (primary method)
-    - Fallback to raw output parsing if structured output fails or returns empty
-    - Automatic retry with improved prompts
-    - Validation to ensure non-empty constraints when attributes are provided
+    Benefits:
+    - Reduced hallucination (yes/no vs text generation)
+    - Consistent descriptions from schema
+    - Cleaner separation of concerns
 
     Example:
         >>> from api_testing.prompts.response_constraints import ResponsePropertyConstraintMiner
         >>> extractor = ResponsePropertyConstraintMiner()
         >>> result = await extractor.extract_response_property_constraints(
-        ...     schema="User",
-        ...     attributes="- name: a string attribute..."
+        ...     schema="Holiday",
+        ...     attributes="- id: an integer, minimum: 1, maximum: 32\\n- name: a string",
+        ...     flattened_schema={"id": ItemProperties(...), "name": ItemProperties(...)}
         ... )
-        >>> print(result.constraints)
+        >>> print(result.constraints)  # {"id": "an integer, minimum: 1, maximum: 32"}
     """
 
-    SYSTEM_PROMPT: str = RESPONSE_PROPERTY_CONSTRAINTS_MINING_SYSTEM_PROMPT_V3
-    USER_PROMPT: str = RESPONSE_PROPERTY_CONSTRAINTS_MINING_USER_PROMPT_V1
-    MAX_RETRIES: int = 2  # Retry once with fallback parsing
+    SYSTEM_PROMPT: str = RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_SYSTEM_PROMPT
+    USER_PROMPT: str = RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_USER_PROMPT
 
     def __init__(self, llm: Optional[object] = None) -> None:
         """Initialize ResponseConstraints extractor.
 
         Args:
             llm: Deprecated parameter (kept for backward compatibility).
-                The class now uses src/common/llm directly.
+                The class now uses common.llm directly.
         """
+        pass
 
-    def _parse_json_from_text(self, text: str) -> Optional[dict]:
-        """Extract JSON from text that may contain markdown code blocks.
+    def _parse_attributes_string(self, attributes: str) -> Dict[str, str]:
+        """Parse attributes string to extract attribute names and their descriptions.
 
         Args:
-            text: Text that may contain JSON in code blocks or plain JSON
+            attributes: Formatted attribute descriptions (one per line with "- " prefix)
+                Example: "- id: an integer, minimum: 1\\n- name: a string"
 
         Returns:
-            Parsed dict or None if parsing fails
+            Dictionary mapping attribute names to their full descriptions
+            Example: {"id": "an integer, minimum: 1", "name": "a string"}
         """
-        # Try to extract JSON from markdown code blocks
-        json_match = re.search(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group(1))
-            except json.JSONDecodeError:
-                pass
+        attr_dict: Dict[str, str] = {}
 
-        # Try to find JSON object directly
-        json_match = re.search(r"\{.*\}", text, re.DOTALL)
-        if json_match:
-            try:
-                return json.loads(json_match.group(0))
-            except json.JSONDecodeError:
-                pass
+        # Split by lines and process each attribute
+        lines = attributes.strip().split("\n")
+        for line in lines:
+            line = line.strip()
+            if not line or not line.startswith("- "):
+                continue
 
-        return None
+            # Remove "- " prefix
+            content = line[2:].strip()
 
-    async def _extract_with_fallback(
-        self, prompt: str, schema: str, attributes: str
-    ) -> ResponsePropertyConstraintsOutput:
-        """Extract constraints with fallback to raw output parsing.
+            # Split on first colon to get name and description
+            if ":" in content:
+                name, description = content.split(":", 1)
+                attr_dict[name.strip()] = description.strip()
 
-        Args:
-            prompt: User prompt
-            schema: Schema name for logging
-            attributes: Original attributes string for validation
-
-        Returns:
-            ResponsePropertyConstraintsOutput
-
-        Raises:
-            LLMError: If all extraction methods fail
-        """
-        # Primary: Try structured output
-        try:
-            logger.debug(
-                f"Attempting structured output extraction for schema: {schema}"
-            )
-            result = await ask(
-                prompt=prompt,
-                system=self.SYSTEM_PROMPT,
-                response_model=ResponsePropertyConstraintsOutput,
-                temperature=0.3,
-            )
-
-            # Validate that constraints were actually extracted
-            if result.constraints:
-                logger.debug(
-                    f"Structured output successful: schema={schema}, "
-                    f"constraints_count={len(result.constraints)}"
-                )
-                return result
-            else:
-                # Count attributes to determine if empty result is expected
-                attribute_count = attributes.count("- ")
-                if attribute_count > 0:
-                    logger.warning(
-                        f"Structured output returned empty constraints for schema: {schema} "
-                        f"with {attribute_count} attributes. Falling back to raw output parsing."
-                    )
-                    raise LLMValidationError(
-                        "Empty constraints returned from structured output",
-                        provider="openai",
-                        model="gpt-4o-mini",
-                        request_id=None,
-                    )
-                else:
-                    # No attributes, empty result is expected
-                    logger.debug(
-                        f"Structured output returned empty constraints for schema: {schema} "
-                        "(no attributes provided)"
-                    )
-                    return result
-
-        except (LLMValidationError, LLMError) as e:
-            logger.debug(
-                f"Structured output failed for schema: {schema}, error: {e}. "
-                "Attempting fallback to raw output parsing."
-            )
-
-            # Fallback: Use raw output and parse manually
-            try:
-                # Enhanced prompt for raw output
-                fallback_system = (
-                    self.SYSTEM_PROMPT
-                    + "\n\nCRITICAL: You MUST return valid JSON in this exact format:\n"
-                    + '{"constraints": {"attribute_name": "constraint_description", ...}}\n'
-                    + "Do not include any markdown formatting, explanations, or additional text. "
-                    + "Return ONLY the JSON object."
-                )
-
-                raw_response = await ask(
-                    prompt=prompt,
-                    system=fallback_system,
-                    temperature=0.3,
-                )
-
-                # Parse JSON from response
-                parsed = self._parse_json_from_text(raw_response)
-                if parsed and "constraints" in parsed:
-                    constraints = parsed["constraints"]
-                    if constraints:
-                        result = ResponsePropertyConstraintsOutput(
-                            constraints=constraints
-                        )
-                        logger.info(
-                            f"Fallback parsing successful: schema={schema}, "
-                            f"constraints_count={len(result.constraints)}"
-                        )
-                        return result
-                    else:
-                        logger.warning(
-                            f"Fallback parsing returned empty constraints for schema: {schema}"
-                        )
-                        # Return empty result but log warning
-                        return ResponsePropertyConstraintsOutput(constraints={})
-                else:
-                    raise LLMError(
-                        f"Failed to parse constraints from raw output. "
-                        f"Response preview: {raw_response[:200]}",
-                        provider="openai",
-                        model="gpt-4o-mini",
-                    )
-
-            except Exception as fallback_error:
-                logger.error(
-                    f"Both structured output and fallback parsing failed for schema: {schema}. "
-                    f"Structured error: {e}, Fallback error: {fallback_error}"
-                )
-                raise LLMError(
-                    f"Failed to extract constraints: {fallback_error}",
-                    provider="openai",
-                    model="gpt-4o-mini",
-                ) from fallback_error
+        logger.debug(f"Parsed {len(attr_dict)} attributes from string")
+        return attr_dict
 
     async def extract_response_property_constraints(
-        self, schema: str, attributes: str
+        self, schema: str, attributes: str, flattened_schema: Optional[Dict] = None
     ) -> ResponsePropertyConstraintsOutput:
-        """Extract constraints from response schema attributes.
+        """Extract constraints using validation-based approach.
 
-        Analyzes schema attributes and extracts constraints, rules, and
-        limitations that can be programmatically validated.
-
-        Uses structured output as primary method with automatic fallback
-        to raw output parsing if structured output fails or returns empty results.
+        Steps:
+        1. Call LLM to validate which attributes have non-trivial constraints
+        2. Extract validation result using StructuredOutputExtractor
+        3. For attributes with constraints=True, use their description from attributes string
+        4. Return Dict[str, str] with only validated attributes
 
         Args:
             schema: Schema name to analyze
             attributes: Formatted attribute descriptions (one per line with "- " prefix)
+            flattened_schema: Optional dict mapping attribute names to ItemProperties
+                (for future enhancement if we want to use ItemProperties.to_human_readable())
 
         Returns:
-            ResponsePropertyConstraintsOutput containing extracted constraints mapping
-            attribute names to constraint descriptions
+            ResponsePropertyConstraintsOutput containing only attributes with non-trivial constraints
 
         Raises:
-            LLMError: If LLM call fails after retries and fallback
+            LLMError: If LLM call or extraction fails
         """
-        prompt = self.USER_PROMPT.format(schema=schema, attributes=attributes)
         attribute_count = attributes.count("- ")
         logger.debug(
-            f"ResponsePropertyConstraintMiner prompt: schema={schema}, "
-            f"prompt_length={len(prompt)}, attributes_count={attribute_count}"
+            f"Validating constraints for schema: {schema}, attributes_count={attribute_count}"
         )
 
+        # Step 1: Call LLM for validation (NO response_model - raw text output)
+        prompt = self.USER_PROMPT.format(schema=schema, attributes=attributes)
         try:
-            result = await self._extract_with_fallback(prompt, schema, attributes)
-
-            # Final validation and logging
-            if not result.constraints:
-                if attribute_count > 0:
-                    logger.warning(
-                        f"No constraints extracted for schema: {schema} "
-                        f"despite {attribute_count} attributes provided. "
-                        "This may indicate the attributes have no verifiable constraints."
-                    )
-                else:
-                    logger.debug(
-                        f"No constraints extracted for schema: {schema} "
-                        "(no attributes provided)"
-                    )
-
+            raw_response = await ask(
+                prompt=prompt,
+                system=self.SYSTEM_PROMPT,
+                temperature=0.1,  # Lower temperature for yes/no decisions
+            )
             logger.debug(
-                f"ResponsePropertyConstraintMiner result: schema={schema}, "
-                f"constraints_count={len(result.constraints)}"
+                f"LLM validation response received: schema={schema}, "
+                f"response_length={len(raw_response)}"
             )
-            return result
-
         except LLMError as e:
-            logger.error(
-                f"Failed to extract response property constraints: schema={schema}, "
-                f"error={str(e)}, error_type={type(e).__name__}"
-            )
+            logger.error(f"LLM call failed for schema: {schema}, error={str(e)}")
             raise
+
+        # Step 2: Extract validation result using StructuredOutputExtractor
+        try:
+            validation_result = StructuredOutputExtractor.extract(
+                raw_text=raw_response,
+                model_class=ResponsePropertyConstraintsValidation,
+                strict=True,
+            )
+            logger.debug(
+                f"Validation extraction successful: schema={schema}, "
+                f"validated_count={len(validation_result.constraints)}"
+            )
+        except Exception as e:
+            logger.error(
+                f"Failed to extract validation result for schema: {schema}, "
+                f"error={str(e)}, raw_response_preview={raw_response[:200]}"
+            )
+            raise LLMError(
+                f"Failed to extract validation result: {str(e)}",
+                provider="extractor",
+                model="validation",
+            ) from e
+
+        # Step 3: Parse attributes string to get descriptions
+        attr_descriptions = self._parse_attributes_string(attributes)
+
+        # Step 4: Build final output - only attributes with constraints=True
+        final_constraints: Dict[str, str] = {}
+        for attr_name, has_constraint in validation_result.constraints.items():
+            if has_constraint:
+                # Get description from attributes string
+                description = attr_descriptions.get(attr_name, "")
+                if description:
+                    final_constraints[attr_name] = description
+                    logger.debug(f"Added constraint for {attr_name}: {description}")
+                else:
+                    logger.warning(
+                        f"Attribute {attr_name} validated as having constraint "
+                        f"but description not found in attributes string"
+                    )
+
+        logger.info(
+            f"Constraint validation complete: schema={schema}, "
+            f"total_attributes={attribute_count}, "
+            f"validated_with_constraints={len(final_constraints)}"
+        )
+
+        return ResponsePropertyConstraintsOutput(constraints=final_constraints)
 
 
 async def main():
+    """Test the constraint validation approach."""
     extractor = ResponsePropertyConstraintMiner()
+
+    # Test with sample attributes
+    test_attributes = """- id: an integer, minimum: 1, maximum: 32
+- name: a string
+- date: a string, format date
+- federal: an integer, values in of [1, 0]
+- description: a string"""
+
     result = await extractor.extract_response_property_constraints(
-        schema="User",
-        attributes="- name: a string attribute...\n- age: an integer attribute, between 18 and 100",
+        schema="Holiday", attributes=test_attributes
     )
-    logger.info(f"ResponsePropertyConstraintMiner result: {result.constraints}")
+    logger.info(f"Test result: {result.constraints}")
 
 
 if __name__ == "__main__":
