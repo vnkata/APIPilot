@@ -11,16 +11,15 @@ class ConfigurationParser:
         self.spec_parser = spec_parser
         self.model = model
         self.configurations: List[OperationConfiguration] = []
-        self.gpt_tasks = []
 
     def parse(self) -> List[OperationConfiguration]:
         operations = self.spec_parser.operations
-
-        for op_id, operation in operations.items():
+        gpt_inferences = []
+        for operation in operations.values():
             # Standardize naming access for OperationProperties
-            method = getattr(operation, "http_method", None) or getattr(operation, "method", None)
-            endpoint = getattr(operation, "endpoint_path", None) or getattr(operation, "path", None)
-            
+            method = getattr(operation, "http_method", None) 
+            endpoint = getattr(operation, "endpoint_path", None) 
+
             op_config = OperationConfiguration(
                 method=method,
                 endpoint=endpoint
@@ -33,15 +32,12 @@ class ConfigurationParser:
                 if schema and (schema.type == "object" or schema.properties):
                     flattened_params = self._flatten_schema(schema, prefix=param_name, location="params")
                     op_config.params.update(flattened_params)
-                elif schema and schema.type == "array":
-                    # For simple arrays in params, we treat as one field
+                else: # to
                     self._process_field(param_details, op_config.params, "params", method, endpoint)
-                else:
-                    self._process_field(param_details, op_config.params, "params", method, endpoint)
-
+                 
             # --- 2. Process Request Body (Handles MIME types and Deep Nesting) ---
-            if hasattr(operation, "request_body") and operation.request_body:
-                for mime_type, schema in operation.request_body.items():
+            if hasattr(operation, "request_body"):
+                for schema in operation.request_body.values():
                     # This recursively flattens every property in the body
                     flattened_body = self._flatten_schema(schema, location="body")
                     op_config.reqbody.update(flattened_body)
@@ -50,15 +46,10 @@ class ConfigurationParser:
             self.configurations.append(op_config)
         return self.configurations
 
-    def _process_field(self, item: Union[ParameterProperties, ItemProperties], container: dict, location: str, method: str, endpoint: str, path: str = None):
+    def _process_field(self, item: Union[ParameterProperties, ItemProperties], container: dict, location: str, method: str, endpoint: str, path: str):
         """Standard entry point for judging Heuristic vs GPT for a single field."""
         name = path or getattr(item, 'name', 'unknown')
         description = getattr(item, 'description', None)
-
-        # Handle 'anyOf' cases found in Stripe (e.g., 'created' can be int or object)
-        if hasattr(item, 'anyOf') and item.anyOf:
-            # We target the most complex part of anyOf (usually the object)
-            item = item.anyOf[0] 
 
         if description is None:
             container[name] = self.heuristic_parser(item, name_override=name)
@@ -108,13 +99,14 @@ class ConfigurationParser:
         match p_type:
             case "boolean":
                 config.type = "RandomBooleanGenerator"
-                config.genParameters = {"true_probability": 0.5}
             case "integer" | "number":
                 config.type = "RandomNumberGenerator"
                 dt = DataType.INTEGER if p_type == "integer" else DataType.NUMBER
                 if p_format == "int32": dt = DataType.INT32
                 elif p_format == "int64" or p_format == "unix-time": dt = DataType.INT64
-                
+                elif p_format == "format": dt = DataType.FLOAT
+                elif p_format == "double": dt = DataType.DOUBLE
+
                 config.genParameters = {
                     "type": dt,
                     "min": getattr(schema_source, "minimum", None),
@@ -124,13 +116,13 @@ class ConfigurationParser:
                 enum_vals = getattr(schema_source, "enum", None)
                 if enum_vals:
                     config.type = "RandomInputGenerator"
-                    config.genParameters = {"values": enum_vals, "count": 1}
+                    config.genParameters = {"values": enum_vals}
                 elif p_format in ["date", "date-time"]:
                     config.type = "RandomDateGenerator"
                     config.genParameters = {"format": "%Y-%m-%d %H:%M:%S"}
                 else:
                     config.type = "RandomTextGenerator"
-                    config.genParameters = {"mode": "sentence", "count": 1}
+                    config.genParameters = {"mode": "sentence"}
 
         # Clean None values
         config.genParameters = {k: v for k, v in config.genParameters.items() if v is not None}
