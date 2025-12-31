@@ -159,13 +159,6 @@ class OperationGraph:
             self.logger.debug("GPT CHECK FOR OPERATION: " + operation.http_method.upper() + " " + operation.endpoint_path)
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
                 print(f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
-                summary_results.append({
-                    "index": idx,
-                    "operation": f"{operation.http_method.upper()} {operation.endpoint_path}",
-                    "success": False,
-                    "skipped": True,
-                    "reason": "No parameters or request body"
-                })
                 continue
 
             params = {
@@ -179,7 +172,7 @@ class OperationGraph:
             }
             relavant_schemas = get_best_mathching_schema(embedding_model=self.embedding_model, operation=operation, schemas=schemas, threshold=self.threshold, path_tree=self.path_tree)
             data_schemas = []
-            for schema_name, schema in relevant_schemas.items():
+            for schema_name, schema in relavant_schemas.items():
                 if schema is not None:
                     newSchema = copy.deepcopy(schema)
                     newSchema.xrefs = None
@@ -213,7 +206,6 @@ class OperationGraph:
                                 to_node=operation,
                                 similar_parameters=similarities
                             ))
-                
         return edges
     def deduplicate_similarity_values(self, similarity_list: List[SimilarityValue]) -> List[SimilarityValue]:
         """

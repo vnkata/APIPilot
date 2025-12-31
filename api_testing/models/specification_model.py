@@ -3,8 +3,8 @@
 import json
 from typing import List, Dict, Optional, Union
 from dataclasses import dataclass, field, fields
-from api_testing.utils import to_dict_helper
-from api_testing.utils.common import isEmpty
+from api_testing.utils import flatten_json_schema, to_dict_helper
+from api_testing.utils.common import isEmpty, remove_nulls
 from api_testing.utils.http import isSuccessful
 
 @dataclass
@@ -310,3 +310,51 @@ class OperationProperties:
             for k, v in self.__dict__.items() if not isEmpty(v)
         }
         return result
+
+    def get_parameters(self, required=False):
+        if not self.parameters:
+            return []
+        
+        return remove_nulls([{
+            "name": name,
+            "type": details.schema.type,
+            "description": details.description,
+            "enum": details.schema.enum,
+            "xrefs": details.schema.xrefs if details.schema.type in ('array', 'object') else None # return xrefs only for complex types
+        } for name, details in self.parameters.items()
+            if not required or details.required])
+
+    def get_responses(self):
+        if self.responses is None:
+            return []
+        response_list = {}
+        for status_code, response_properties in self.responses.items():
+            if status_code and isSuccessful(status_code) and response_properties.content:
+                for _, response_details in response_properties.content.items():
+                    curr_responses = flatten_json_schema(
+                        to_dict_helper(response_details))
+                    response_list.update(curr_responses)
+
+        return remove_nulls([{
+            "name": item.split(".")[-1],
+            "type": val.get("type"),
+            "description": val.get("description", ""),
+            "enum": val.get("enum"),
+            "xrefs": val.get("xrefs") if val.get("type") in ('array', 'object') else None  # return xrefs only for complex types
+        } for item, val in response_list.items()])
+
+    def get_request_body(self):
+        if self.request_body is None:
+            return []
+        request_body_list = {}
+        for content_type, item_properties in self.request_body.items():
+            curr_request_body = flatten_json_schema(
+                to_dict_helper(item_properties))
+            request_body_list.update(curr_request_body)
+        return remove_nulls([{
+            "name": item,
+            "type": val.get("type"),
+            "description": val.get("description", ""),
+            "enum": val.get("enum"),
+            "xrefs": val.get("xrefs")
+        } for item, val in request_body_list.items()])
