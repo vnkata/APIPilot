@@ -1,7 +1,10 @@
-import random
+
 from abc import ABC, abstractmethod
+import random
+
 
 class RandomGenerator(ABC):
+    description: str = ""
     """Superclass for random generators with seed management."""
 
     def __init__(self, seed: int | None = None):
@@ -20,3 +23,4 @@ class RandomGenerator(ABC):
     def next_value(self):
         """Generate the next random value."""
         pass
+    

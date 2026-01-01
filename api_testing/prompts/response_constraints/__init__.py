@@ -19,10 +19,7 @@ Follow these steps below to complete your task:
 FINAL OUTPUT:
 The response is in the format below, no explanation is needed:
 ```json {
-  "constraints": {
-    "attribute_name_1": "briefly_description_1",
-    "attribute_name_2": "briefly_description_2",
-  }
+  "constraints": ["attribute_name_1","attribute_name_2"]
 }```
 """
   PROMPT = """

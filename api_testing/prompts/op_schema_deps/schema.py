@@ -1,9 +1,10 @@
 from dataclasses import Field, dataclass
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, RootModel
 from typing import Dict, List
+
+class MappingContents(RootModel):
+    root: Dict[str,str]
 
 @dataclass
 class Verdict(BaseModel):
-    model_config = ConfigDict(extra='allow') # Cấu hình Pydantic v2
-    schemas: Dict[str, Dict[str, str]]
-    
+    schemas: Dict[str, MappingContents]

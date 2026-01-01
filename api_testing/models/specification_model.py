@@ -144,7 +144,7 @@ class ParameterProperties:
 
     def to_human_readable(self):
         str = ''
-        str += f'a {self.schema.type} parameter to describe {self.description}' if self.description else f'a {self.schema.type} parameter '
+        str += f'a {self.schema.type} to describe {self.description}' if self.description else f'a {self.schema.type} '
         #
         if self.schema.format:
             str += f', format {self.schema.format}'
