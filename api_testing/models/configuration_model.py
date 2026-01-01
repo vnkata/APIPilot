@@ -11,4 +11,4 @@ class OperationConfiguration:
     method: str
     endpoint: str
     params: Dict[str, FieldConfiguration] = field(default_factory=dict)
-    reqbody: Dict[str, FieldConfiguration] = field(default_factory=dict)
+    request_body: Dict[str, FieldConfiguration] = field(default_factory=dict)

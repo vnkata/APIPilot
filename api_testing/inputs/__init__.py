@@ -20,9 +20,9 @@ class RandomGeneratorFactory:
         "RandomFileGenerator": RandomFileGenerator,
         "RandomTextGenerator": RandomTextGenerator,
         "RandomIdentityGenerator": RandomIdentityGenerator,
-        "RandomInputGenerator": RandomInputGenerator,
-        "LLMGenerator": LLMGenerator,
-        "ProducerGenerator": ProducerGenerator
+        "RandomInputGenerator": RandomInputGenerator, 
+        "LLMGenerator": LLMGenerator, ## auto fallback
+        # "ProducerGenerator": ProducerGenerator ## auto fallback
     }
 
     @classmethod

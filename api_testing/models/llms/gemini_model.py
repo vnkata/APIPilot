@@ -1,22 +1,25 @@
 import logging
+import re
 from api_testing.models.base_model import APITestingBaseLLMModel
 from google import genai
 from typing import Any, Optional, List, Union
 from google.genai import types
 from pydantic import BaseModel
 
-# from tenacity import (
-#     retry,
-#     retry_if_exception_type,
-#     wait_exponential_jitter,
-#     RetryCallState,
-# )
+from tenacity import (
+    retry,
+    retry_if_exception_type,
+    stop_after_attempt,
+    wait_exponential_jitter,
+    wait_fixed,
+    RetryCallState,
+)
 
-# def log_retry_error(retry_state: RetryCallState):
-#     exception = retry_state.outcome.exception()
-#     logging.error(
-#         f"Confident AI Error: {exception}. Retrying: {retry_state.attempt_number} time(s)..."
-#     )
+def log_retry_error(retry_state: RetryCallState):
+    exception = retry_state.outcome.exception()
+    logging.error(
+        f"Confident AI Error: {exception}. Retrying: {retry_state.attempt_number} time(s)..."
+    )
 
 
 default_gemini_model = "gemini-2.0-flash"
@@ -144,10 +147,12 @@ class GeminiModel(APITestingBaseLLMModel):
         ]
         return self.client.models
 
-    # @retry(
-    #     wait=wait_exponential_jitter(initial=1, exp_base=2, jitter=2, max=10),
-    #     after=log_retry_error,
-    # )
+    @retry(
+        sleep=20,
+        wait=wait_fixed(20),
+        stop=stop_after_attempt(3),
+        after=log_retry_error,
+    )
     def generate(self, prompt: Union[str, List], system_prompt=None, schema: Optional[BaseModel] = None, ) -> str:
         """Generates text from a prompt.
 
@@ -159,20 +164,21 @@ class GeminiModel(APITestingBaseLLMModel):
             Generated text response or structured output as Pydantic model
         """ 
         configure_params =  {
-            "response_mime_type": "application/json",
+            # "response_mime_type": "application/json",
             "safety_settings": self.model_safety_settings,
             "temperature": self.temperature,
         }
         if system_prompt:
             configure_params["system_instruction"] = system_prompt
         if schema is not None:
-            configure_params["response_schema"] = schema
+            # configure_params["response_schema"] = schema
             response = self.client.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
                 config=types.GenerateContentConfig(**configure_params),
             )
-            return response.parsed, 0
+            cleaned = re.sub(r"^```json\s*|\s*```$", "", response.text.strip(), flags=re.MULTILINE)
+            return schema.model_validate_json(cleaned), 0
         else:
             response = self.client.models.generate_content(
                 model=self.model_name,

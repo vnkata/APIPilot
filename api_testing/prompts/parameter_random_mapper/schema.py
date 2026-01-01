@@ -1,10 +1,13 @@
-from dataclasses import Field, dataclass
-from pydantic import BaseModel, ConfigDict, RootModel
-from typing import Dict, List
+from pydantic import BaseModel, Field
+from typing import Any, Dict, List
 
-class MappingContents(RootModel):
-    root: Dict[str,str]
+class GenContent(BaseModel):
+    className: str
+    args: Dict[str, Any]
 
-@dataclass
+class PropertyGenContent(BaseModel):
+    property: str
+    generator: GenContent
+
 class Verdict(BaseModel):
-    schemas: Dict[str, MappingContents]
+    mapping: List[PropertyGenContent]

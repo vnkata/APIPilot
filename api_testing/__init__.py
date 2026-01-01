@@ -143,6 +143,7 @@ class APITesting:
         #     print(node.uuid)
     
     def run_tests(self):
-        parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model)
+        parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
         parser.parse()
+        parser.export_debug_log()
         
