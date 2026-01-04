@@ -1,12 +1,16 @@
 import random
 from pydantic import Field
-from . import RandomGenerator
+from .random_generator import RandomGenerator
 
 class RandomBooleanGenerator(RandomGenerator):
-    """Random Boolean generator with configurable true probability."""
+    """
+    Generates random booleans with a configurable probability of being True.
+    Attributes:
+        true_probability (float): Likelihood of returning True (0.0 to 1.0).
+    """
 
     true_probability: float = 0.5 
-
+    description: str = """Generates random boolean values"""
     def __init__(self, true_probability=0.5, *args, **kwargs):
         self.true_probability = true_probability
         super().__init__(*args, **kwargs) 

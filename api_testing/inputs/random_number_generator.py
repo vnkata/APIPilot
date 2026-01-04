@@ -2,7 +2,7 @@ import random
 from enum import Enum
 from pydantic import Field
 from typing import Any
-from . import RandomGenerator  # assuming previous class is saved separately
+from .random_generator import RandomGenerator
 
 
 class DataType(str, Enum):
@@ -32,7 +32,14 @@ class RandomNumberGenerator(RandomGenerator):
     type: DataType
     min: Any = Field(default=None)
     max: Any = Field(default=None)
-    
+    description: str = """A generator that produces random numeric values within a specified range.
+    Attributes:
+        type (DataType): Defines the numeric type to generate 
+            (e.g., INTEGER, FLOAT, DOUBLE, LONG).
+        min (Any): The minimum possible value for the generated number (optional).
+        max (Any): The maximum possible value for the generated number (optional).
+    """
+
     def model_post_init(self, __context):
         super().model_post_init(__context)
 

@@ -59,7 +59,7 @@ class SpecificationParser:
         # Check if the cache file exists
         self.cache_file = os.path.join(cache_dir, "specification.json")
         if os.path.exists(self.cache_file):
-            print(f"Loading graph from cache: {self.cache_file}")
+            print(f"Loading openapi from cache: {self.cache_file}")
             self.load_from_file(self.cache_file)
         else:
             print("Cache file not found. Initializing Specification...")
