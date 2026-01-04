@@ -1,7 +1,9 @@
+from collections import defaultdict, deque
 import json
 import logging
 from api_testing.configuration.configuration_parser import ConfigurationParser
 from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
+from api_testing.models.configuration_model import FieldConfiguration
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
 from api_testing.utils import to_dict_helper
 
@@ -23,13 +25,71 @@ from .graph import (
     OperationNode,
     OperationEdge
 )
-from typing import Optional, Union, List
+from typing import Dict, Optional, Set, Union, List
 from api_testing.dataset import SpecificationParser
 from api_testing.graph import OperationGraph
 from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMModel
 import shutil
 import os
 from api_testing.utils.log import configure_logging
+
+
+def build_endpoint_groups(data: dict) -> Dict[str, List[str]]:
+    """
+    Gom nhóm tham số tương tự nhưng tôn trọng hướng truyền dữ liệu giữa các endpoint.
+    - value1: từ response của from_node
+    - value2: vào parameter của to_node
+    Lan truyền bắc cầu theo hướng endpoint graph.
+    """
+    graph: Dict[str, Set[str]] = defaultdict(set)
+    reverse_graph: Dict[str, Set[str]] = defaultdict(set)
+
+    # ==== B1. Xây dựng đồ thị có hướng ====
+    for edge in data.get("edges", []):
+        for sp in edge.get("similar_parameters", []):
+            v1, v2 = sp.get("value1"), sp.get("value2")
+            if not v1 or not v2:
+                continue
+            kv1 = edge.get("from_node") + "_attributes_" + v1
+            kv2 = edge.get("to_node") + "_params_" + v2
+            graph[kv1].add(kv2)
+            reverse_graph[kv2].add(kv1)
+
+    # ==== B2. Duyệt nhóm liên thông (bắc cầu hai chiều) ====
+    def traverse_group(start: str, visited: Set[str]) -> Set[str]:
+        group = set()
+        queue = deque([start])
+        while queue:
+            node = queue.popleft()
+            if node in visited:
+                continue
+            visited.add(node)
+            group.add(node)
+            # Lan truyền xuôi
+            for nxt in graph.get(node, []):
+                if nxt not in visited:
+                    queue.append(nxt)
+            # Lan truyền ngược
+            for prev in reverse_graph.get(node, []):
+                if prev not in visited:
+                    queue.append(prev)
+        return group
+
+    # ==== B3. Gom nhóm ====
+    visited = set()
+    groups: Dict[str, Set[str]] = {}
+    all_nodes = list(graph.keys()) + list(reverse_graph.keys())
+
+    for node in all_nodes:
+        if node not in visited:
+            group = traverse_group(node, visited)
+            if group:
+                canonical = min(group, key=len)
+                groups[canonical] = group
+
+    # ==== B4. Kết quả trả về dạng Dict[str, List[str]] ====
+    return {k: sorted(list(v)) for k, v in groups.items()}
+
 
 
 class APITesting:
@@ -88,8 +148,31 @@ class APITesting:
         )
         self.spec_parser.load_or_initialize(cache_dir=self.project_dir)
         # self._preprocess_()
-
+    def build_conf(self):
+        parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
+        parser.parse()
+        parser.export_debug_log()
+    
+    def process(self):
+        self.init_graph()
+        with open(os.path.join(self.project_dir,"semantic_property_dependency_graph.json"), "r", encoding="utf-8") as f:
+            graph_data = json.load(f)
+        endpoint_groups = build_endpoint_groups(graph_data)
+        with open(os.path.join(self.project_dir,"producer_pool.json"), "w", encoding="utf-8") as f:
+            f.write(json.dumps(endpoint_groups, indent=4, ensure_ascii=False))
+        parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
+        parser.parse()
+        for endpoint in parser.configurations:
+            for param in endpoint.params.keys():
+                for k,v in endpoint_groups.items():
+                    print(f'{endpoint.method.lower()}-{endpoint.endpoint}_params_{param}')
+                    print(v)
+                    if f'{endpoint.method}-{endpoint.endpoint}_params_{param}' in v:
+                        endpoint.params[param] = FieldConfiguration(name=param, type="ProducerGenerator",genParameters={"pool": k} )
+        parser.export_debug_log()
+        
         # process
+    
     def _preprocess_(self):
         # extract contrains
         constraints = {}
@@ -124,6 +207,7 @@ class APITesting:
         #     model=self.model,
         #     embedding_model=self.embedder,cache_dir=self.project_dir)
         # miner.response_properties_constraints()
+
         self.operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
             model=self.model,
@@ -145,5 +229,7 @@ class APITesting:
     def run_tests(self):
         parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
         parser.parse()
+        # endpoint_groups = build_endpoint_groups(os.path.join(self.cache_dir,"semantic_property_dependency_graph.json"))
+        # for endpoint_conf in parser.configurations:
         parser.export_debug_log()
         

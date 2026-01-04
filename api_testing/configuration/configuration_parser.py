@@ -8,6 +8,7 @@ from api_testing.models.configuration_model import FieldConfiguration, Operation
 from api_testing.models.specification_model import ItemProperties, ParameterProperties
 from api_testing.prompts.parameter_random_mapper import ParameterRandomMapper
 from api_testing.utils import flatten_json_schema
+from api_testing.utils.log import getLogger
 
 class ConfigurationParser:
     def __init__(self, spec_parser=None, model=None, cache_dir=None):
@@ -17,16 +18,18 @@ class ConfigurationParser:
         self.cache_file = os.path.join(
             cache_dir, "configuration.json")
         self.parameter_random_mapper = ParameterRandomMapper(llm=model)
-        
+        self.logger = getLogger(__name__)
+
 
     def parse(self) -> List[OperationConfiguration]:
         operations = self.spec_parser.operations
-        gpt_inferences = {
-            "params": {},
-            "request_body": {}
-        }
         for operation in operations.values():
+            gpt_inferences = {
+                "params": {},
+                "request_body": {}
+            }    
             # Standardize naming access for OperationProperties
+            self.logger.debug("Conf for Prompt: " + operation.uuid)
             op_config = OperationConfiguration(
                 method= getattr(operation, "http_method", None),
                 endpoint= getattr(operation, "endpoint_path", None) 
@@ -43,6 +46,7 @@ class ConfigurationParser:
                 for schema in operation.request_body.values():
                     flattened_body = flatten_json_schema(schema.to_dict())
                     body_schemas.update(flattened_body)
+                
                 for property,details in body_schemas.items():
                     item_details = ItemProperties(**details)
                     op_config.request_body[property] = self._process_field(item_details, path=property)

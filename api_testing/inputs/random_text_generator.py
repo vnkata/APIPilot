@@ -10,17 +10,19 @@ class RandomTextGenerator(RandomGenerator):
         mode (str): The type of text to generate ('word', 'sentence', 'paragraph').
         count (int): Number of items to generate.
     """
-    description: str = """A generator that produces random text using the 'lorem' provider from Faker.
-    Params:
-        mode (str): The type of text to generate ('word', 'sentence', 'paragraph').
-        count (int): Number of items to generate (default: 1).
-    Output:
-        str: The generated text.
+    description: str = """
+    Generates random text according to the specified mode.
+    Attributes:
+        mode (str): Generation mode — can be "word", "sentence", "paragraph", or "regex".
+        pattern (str): Regular expression pattern used when mode is "regex".
+        count (int): Number of words, sentences, or paragraphs to generate based on the mode.
+        seed (int | None): Optional random seed value to ensure reproducible results.
     """
 
     def __init__(
         self,
-        mode: Literal["word", "sentence", "paragraph"] = "sentence",
+        mode: Literal["word", "sentence", "paragraph","regex"] = "sentence",
+        pattern: str = None,
         count: int = 1,
         seed: int | None = None
     ):

@@ -148,7 +148,6 @@ class GeminiModel(APITestingBaseLLMModel):
         return self.client.models
 
     @retry(
-        sleep=20,
         wait=wait_fixed(20),
         stop=stop_after_attempt(3),
         after=log_retry_error,
