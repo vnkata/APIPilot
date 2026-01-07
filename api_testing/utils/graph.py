@@ -112,7 +112,6 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
                     if score >= threshold:
                         keep_attributes[attribute] = score
             schema = filter_item_properties(schema, root_xrefs=schema.xrefs, paths=list(keep_attributes.keys()))
-            print(keep_attributes)
             if len(keep_attributes) > 0:
                 keep_schemas[schema_name] = schema
     return keep_schemas

@@ -3,7 +3,7 @@ from typing import Any, Dict, List
 
 class GenContent(BaseModel):
     className: str
-    args: Dict[str, Any]
+    args: Dict[str, Any] = Field(default_factory=dict)
 
 class PropertyGenContent(BaseModel):
     property: str

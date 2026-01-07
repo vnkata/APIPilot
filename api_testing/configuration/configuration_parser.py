@@ -19,8 +19,21 @@ class ConfigurationParser:
             cache_dir, "configuration.json")
         self.parameter_random_mapper = ParameterRandomMapper(llm=model)
         self.logger = getLogger(__name__)
+        self.load_or_initialize()
 
+    def load_or_initialize(self):
+        print(os.path.exists(self.cache_file))
+        if os.path.exists(self.cache_file):
+            print(f"Loading Configuration from cache: {self.cache_file}")
+            with open(self.cache_file, "r") as file:
+                data = json.load(file)
+                self.configurations = [ OperationConfiguration.from_dict(item) for item in data]
 
+        else:
+            print("Cache file not found. Initializing Configuration...")
+            self.parse()
+            self.json_output()
+    
     def parse(self) -> List[OperationConfiguration]:
         operations = self.spec_parser.operations
         for operation in operations.values():
@@ -117,11 +130,11 @@ class ConfigurationParser:
         config.genParameters = {k: v for k, v in config.genParameters.items() if v is not None}
         return config
 
-    def export_debug_log(self):
+    def json_output(self):
         output = [asdict(conf) for conf in self.configurations]
         with open(self.cache_file, "w", encoding="utf-8") as f:
             json.dump(output, f, indent=4, default=str)
-        print(f"Debug log saved to: {self.cache_file}")
+        print(f"Configuration saved to: {self.cache_file}")
 
     def gpt_parser(self, data: Union[Dict[str, ParameterProperties], Dict[str, ItemProperties]]):
         factory = RandomGeneratorFactory()
