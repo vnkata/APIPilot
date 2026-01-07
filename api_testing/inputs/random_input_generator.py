@@ -10,11 +10,9 @@ class RandomInputGenerator(RandomGenerator):
         count (int): Number of values to select (default: 1).
     """
     description: str = """A generator that randomly selects one or more values from a provided list.
-    Params:
-        values (List[Any]): List of possible values.
+    Attributes:
+        values (List[Any]): The list of possible values to select from.
         count (int): Number of values to select (default: 1).
-    Output:
-        Any: A single value or a list of values.
     """
 
     def __init__(self, values: List[Any], count: int = 1, seed: int | None = None):

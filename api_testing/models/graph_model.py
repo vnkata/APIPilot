@@ -23,7 +23,7 @@ class OperationNode(OperationProperties):
             result['request_body'] = {
                 k: v.to_dict() for k, v in self.request_body.items()}
         return result
-
+    
 
 @dataclass
 class OperationEdge:

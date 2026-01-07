@@ -8,6 +8,7 @@ from api_testing.models.configuration_model import FieldConfiguration, Operation
 from api_testing.models.specification_model import ItemProperties, ParameterProperties
 from api_testing.prompts.parameter_random_mapper import ParameterRandomMapper
 from api_testing.utils import flatten_json_schema
+from api_testing.utils.log import getLogger
 
 class ConfigurationParser:
     def __init__(self, spec_parser=None, model=None, cache_dir=None):
@@ -17,16 +18,31 @@ class ConfigurationParser:
         self.cache_file = os.path.join(
             cache_dir, "configuration.json")
         self.parameter_random_mapper = ParameterRandomMapper(llm=model)
-        
+        self.logger = getLogger(__name__)
+        self.load_or_initialize()
 
+    def load_or_initialize(self):
+        print(os.path.exists(self.cache_file))
+        if os.path.exists(self.cache_file):
+            print(f"Loading Configuration from cache: {self.cache_file}")
+            with open(self.cache_file, "r") as file:
+                data = json.load(file)
+                self.configurations = [ OperationConfiguration.from_dict(item) for item in data]
+
+        else:
+            print("Cache file not found. Initializing Configuration...")
+            self.parse()
+            self.json_output()
+    
     def parse(self) -> List[OperationConfiguration]:
         operations = self.spec_parser.operations
-        gpt_inferences = {
-            "params": {},
-            "request_body": {}
-        }
         for operation in operations.values():
+            gpt_inferences = {
+                "params": {},
+                "request_body": {}
+            }    
             # Standardize naming access for OperationProperties
+            self.logger.debug("Conf for Prompt: " + operation.uuid)
             op_config = OperationConfiguration(
                 method= getattr(operation, "http_method", None),
                 endpoint= getattr(operation, "endpoint_path", None) 
@@ -43,6 +59,7 @@ class ConfigurationParser:
                 for schema in operation.request_body.values():
                     flattened_body = flatten_json_schema(schema.to_dict())
                     body_schemas.update(flattened_body)
+                
                 for property,details in body_schemas.items():
                     item_details = ItemProperties(**details)
                     op_config.request_body[property] = self._process_field(item_details, path=property)
@@ -113,11 +130,11 @@ class ConfigurationParser:
         config.genParameters = {k: v for k, v in config.genParameters.items() if v is not None}
         return config
 
-    def export_debug_log(self):
+    def json_output(self):
         output = [asdict(conf) for conf in self.configurations]
         with open(self.cache_file, "w", encoding="utf-8") as f:
             json.dump(output, f, indent=4, default=str)
-        print(f"Debug log saved to: {self.cache_file}")
+        print(f"Configuration saved to: {self.cache_file}")
 
     def gpt_parser(self, data: Union[Dict[str, ParameterProperties], Dict[str, ItemProperties]]):
         factory = RandomGeneratorFactory()

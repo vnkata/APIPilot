@@ -9,11 +9,9 @@ class RandomFileGenerator(RandomGenerator):
     Attributes:
         file_type (str): The type of file to generate ('pdf', 'docx', 'txt', 'png', 'jpeg', 'bmp').
     """
-    description: str = """A generator that produces random file bytes for various file types.
-    Params:
+    description: str = """A generator that produces random file bytes for various file types (PDF, DOCX, TXT, PNG, JPEG, BMP).
+    Attributes:
         file_type (str): The type of file to generate ('pdf', 'docx', 'txt', 'png', 'jpeg', 'bmp').
-    Output:
-        bytes: The generated file content as bytes.
     """
 
     def __init__(

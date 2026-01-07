@@ -8,11 +8,10 @@ class RandomIdentityGenerator(RandomGenerator):
     Attributes:
         field (str): The type of identity field to generate ('name', 'email', 'address', etc.).
     """
-    description: str = """A generator that produces random identity information.
-    Params:
+    description: str = """A generator that produces random identity information (name, email, address, etc.).
+
+    Attributes:
         field (str): The type of identity field to generate ('name', 'email', 'address', etc.).
-    Output:
-        str: The generated identity value.
     """
 
     def __init__(self, field: str = "name", seed: int | None = None):

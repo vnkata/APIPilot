@@ -46,7 +46,7 @@ Here is list input property and descriptions:
       prompt=prompt,
       schema=Verdict
     )
-    self.logger.debug("ParameterRandomMapper Response: " + str(response))
+    self.logger.debug("ParameterRandomMapper Response: " + response.model_dump_json())
 
     return response.mapping
   
