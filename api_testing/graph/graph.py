@@ -21,7 +21,7 @@ from api_testing.utils.graph import get_best_mathching_schema, is_nested_path_en
 
 @dataclass
 class OperationGraph:
-    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None, skip_create_graph: bool = False):
+    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.5, cache_dir=None, skip_create_graph: bool = False):
         self.spec_parser = spec_parser
         self.embedding_model = embedding_model
         self.model = model  # llm model
@@ -109,6 +109,8 @@ class OperationGraph:
                         continue
                     parameters = op_properties.get_parameters(required=True) # heuristic on required parameters 
                     dependent_response = dep_op_properties.get_responses()
+                    dependent_parameters = dep_op_properties.get_parameters(required=True) # heuristic on required parameters 
+                    
                     for param in parameters: 
                         for response in dependent_response:
                             if param.get("name") == response.get("name"):
@@ -117,6 +119,15 @@ class OperationGraph:
                                     value2=param.get("name"), 
                                     in_value="response to parameter via heuristic"
                                 ))
+                        if op_properties.endpoint_path != dep_op_properties.endpoint_path: # for /user/{user_id} vs /user/{user_id}/download
+                            for dep_param in dependent_parameters:
+                                if param.get("name") == dep_param.get("name"):
+                                    similar_parameters.append(SimilarityValue(
+                                        value1=dep_param.get("name"), 
+                                        value2=param.get("name"), 
+                                        in_value="parameter to parameter via heuristic"
+                                    ))
+                             
                 # temporal edges
                 #edge from dep_op to op
                 if len(similar_parameters) > 0:

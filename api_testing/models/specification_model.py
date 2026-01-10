@@ -234,6 +234,10 @@ class OperationProperties:
     responses: Dict[str, ResponseProperties] = None
 
     @property
+    def degree(self) -> int:
+        # type: ignore
+        return len(self.required_parameters)
+    @property
     def schemas(self) -> Dict[str, ItemProperties]:
         
         def get_relevant_schema_of_endpoint(response: ResponseProperties) -> List[str]:
