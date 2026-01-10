@@ -53,3 +53,47 @@ class RandomFileGenerator(RandomGenerator):
             return self.fake.bmp_file(raw=True)
         else:
             raise ValueError(f"Unsupported file type: {self.file_type}")
+    def next_fuzz_value(self, strategy: str = "corrupt") -> Any:
+        """
+        Generates invalid or boundary byte data for file upload testing.
+
+        Strategies:
+            'empty': Returns zero bytes (checks for empty file handling).
+            'large': Returns an oversized byte sequence (buffer overflow/limit test).
+            'corrupt': Generates a valid file then destroys its magic bytes/headers.
+            'wrong_type': Returns a string instead of the expected byte stream.
+            'junk': Returns purely random binary noise.
+        """
+        if strategy == "empty":
+            return b""
+
+        if strategy == "large":
+            # Generate 10MB of repeating bytes to test upload limits
+            return b"A" * (1024 * 1024 * 10)
+
+        if strategy == "wrong_type":
+            # Send a plain string to confuse binary parsers
+            return f"binary_data_stub_{self.rand.getrandbits(32)}"
+
+        if strategy == "junk":
+            # 2KB of random binary noise
+            return self.rand.randbytes(2048)
+
+        # Default strategy: 'corrupt'
+        # Get a valid file and then break it
+        valid_file = self.next_value()
+        if not valid_file:
+            return b"\xFF\xFF\xFF\xFF"
+
+        mutable = bytearray(valid_file)
+        if len(mutable) > 16:
+            # Destroy the 'Magic Bytes' (header). 
+            # This is where libraries detect if a file is actually a PDF, PNG, etc.
+            for i in range(min(16, len(mutable))):
+                mutable[i] = self.rand.randint(0, 255)
+            
+            # Optionally inject a null byte in a random position
+            random_pos = self.rand.randint(0, len(mutable) - 1)
+            mutable[random_pos] = 0
+
+        return bytes(mutable)

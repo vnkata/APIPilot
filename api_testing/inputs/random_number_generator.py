@@ -75,3 +75,14 @@ class RandomNumberGenerator(RandomGenerator):
     def next_value_as_string(self) -> str:
         """Generate next random value as string."""
         return str(self.next_value())
+    def next_fuzz_value(self, strategy: str = "boundary") -> Any:
+        if strategy == "boundary":
+            return self.rand.choice([self.min, self.max, self.min - 1, self.max + 1, 0])
+        
+        if strategy == "type_error":
+            return self.rand.choice(["not_a_number", True, {}, []])
+        
+        if strategy == "overflow":
+            return 2**128 
+        
+        return None
