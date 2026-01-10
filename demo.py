@@ -13,11 +13,11 @@ load_dotenv()
 
 print("============= API Testing =============")
 
-llm = GeminiModel(
-    model_name="gemini-2.5-flash",
-    api_key="xx",
-    temperature=0.7,
-)
+# llm = GeminiModel(
+#     model_name="gemini-2.5-flash",
+#     api_key="xx",
+#     temperature=0.7,
+# )
 # 
 llm = AzureOpenAIModel(
     model="gpt-4.1",
