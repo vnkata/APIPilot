@@ -1,7 +1,9 @@
 import random
 from enum import Enum
 from pydantic import Field
-from typing import Any
+from typing import Any, Set
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 
@@ -39,6 +41,7 @@ class RandomNumberGenerator(RandomGenerator):
         min (Any): The minimum possible value for the generated number (optional).
         max (Any): The maximum possible value for the generated number (optional).
     """
+    supported_strategies: Set[FuzzStrategy] = {"boundary", "type_error", "overflow"}
 
     def model_post_init(self, __context):
         super().model_post_init(__context)
@@ -75,3 +78,14 @@ class RandomNumberGenerator(RandomGenerator):
     def next_value_as_string(self) -> str:
         """Generate next random value as string."""
         return str(self.next_value())
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+        if strategy == FuzzStrategy.BOUNDARY:
+            return self.rand.choice([self.min, self.max, self.min - 1, self.max + 1, 0])
+        
+        if strategy == FuzzStrategy.TYPE_ERROR:
+            return self.rand.choice(["not_a_number", True, {}, []])
+        
+        if strategy == FuzzStrategy.OVERFLOW:
+            return 2**128 
+        
+        return None

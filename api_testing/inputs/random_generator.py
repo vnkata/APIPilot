@@ -2,6 +2,8 @@
 from abc import ABC, abstractmethod
 import random
 
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
+
 
 class RandomGenerator(ABC):
     description: str = ""
@@ -22,5 +24,9 @@ class RandomGenerator(ABC):
     @abstractmethod
     def next_value(self):
         """Generate the next random value."""
+        pass
+    @abstractmethod
+    def next_fuzz_value(self, strategy: FuzzStrategy):
+        """Generate the next fuzzed value."""
         pass
     

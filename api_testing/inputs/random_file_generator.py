@@ -1,5 +1,7 @@
-from typing import Literal
+from typing import Any, Literal
 from faker import Faker
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 class RandomFileGenerator(RandomGenerator):
@@ -53,3 +55,26 @@ class RandomFileGenerator(RandomGenerator):
             return self.fake.bmp_file(raw=True)
         else:
             raise ValueError(f"Unsupported file type: {self.file_type}")
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+        if strategy == FuzzStrategy.EMPTY:
+            return b""
+
+        if strategy == FuzzStrategy.LARGE:
+            return b"A" * (1024 * 1024 * 10)
+
+        if strategy == FuzzStrategy.WRONG_TYPE:
+            return f"binary_data_{self.rand.getrandbits(32)}"
+
+        if strategy == FuzzStrategy.JUNK:
+            return self.rand.randbytes(2048)
+
+        if strategy == FuzzStrategy.CORRUPT:
+            valid_file = self.next_value() # Assume next_value() generates valid bytes
+            if not valid_file: return b"\xFF\xFF"
+            mutable = bytearray(valid_file)
+            for i in range(min(16, len(mutable))):
+                mutable[i] = self.rand.randint(0, 255)
+            return bytes(mutable)
+            
+        return None
+    

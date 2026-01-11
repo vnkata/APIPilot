@@ -1,6 +1,8 @@
 import random
 from abc import ABC, abstractmethod
 
+from api_testing.inputs.file_source_generator import FileSourceGenerator
+from api_testing.inputs.file_source_generator import FileSourceGenerator
 from api_testing.inputs.llm_generator import LLMGenerator
 from api_testing.inputs.producer_generator import ProducerGenerator
 from .random_boolean_generator import RandomBooleanGenerator
@@ -21,8 +23,8 @@ class RandomGeneratorFactory:
         "RandomTextGenerator": RandomTextGenerator,
         # "RandomIdentityGenerator": RandomIdentityGenerator,
         "RandomInputGenerator": RandomInputGenerator,
-        
-        "LLMGenerator": LLMGenerator, ## auto fallback
+        "FileSourceGenerator": FileSourceGenerator,
+        "LLMGenerator": LLMGenerator, ## auto fallbackn
         # "ProducerGenerator": ProducerGenerator ## auto fallback
     }
 

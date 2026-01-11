@@ -1,7 +1,10 @@
 import random
 import logging
 from datetime import datetime, timedelta
+from typing import Any
 from pydantic import Field
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 logger = logging.getLogger(__name__)
@@ -52,3 +55,22 @@ class RandomDateGenerator(RandomGenerator):
         """Return a formatted random datetime as string."""
         value = self.next_value()
         return value.strftime(self.format)
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+            if strategy == FuzzStrategy.EMPTY:
+                return self.rand.choice([None, ""])
+
+            if strategy == FuzzStrategy.BOUNDARY:
+                return self.rand.choice([
+                    datetime(1970, 1, 1).strftime(self.format),
+                    datetime(9999, 12, 31).strftime(self.format),
+                    self.start_date.strftime(self.format)
+                ])
+
+            if strategy == FuzzStrategy.LOGIC_ERROR:
+                return self.rand.choice(["2025-02-30", "2025-13-01", "0000-00-00"])
+
+            if strategy == FuzzStrategy.FORMAT_ERROR:
+                val = datetime.now()
+                return self.rand.choice([val.timestamp(), val.isoformat(), "01-01-2025"])
+
+            return None

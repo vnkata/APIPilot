@@ -13,12 +13,19 @@ load_dotenv()
 
 print("============= API Testing =============")
 
-llm = GeminiModel(
-    model_name="gemini-2.5-flash",
-    api_key="xx",
+# llm = GeminiModel(
+#     model_name="gemini-2.5-flash",
+#     api_key="xx",
+#     temperature=0.7,
+# )
+# 
+llm = AzureOpenAIModel(
+    model="gpt-4.1",
+    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
+    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
     temperature=0.7,
 )
-# 
 
 embedder = HuggingfaceEmbeddingModel(  
     model="google/embeddinggemma-300m", use_half=False)
@@ -36,7 +43,7 @@ embedder = HuggingfaceEmbeddingModel(
 test = APITesting(
     "localhost:80",
     model=llm,
-    vector_db=db,
+    # vector_db=db,
     embedder=embedder,
-    spec_path="datasets/GitLabProject.json",
+    spec_path="datasets/Bills-api.json",
 )
