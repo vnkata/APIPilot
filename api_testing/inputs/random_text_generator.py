@@ -1,5 +1,7 @@
 from typing import Literal
 from faker import Faker
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 class RandomTextGenerator(RandomGenerator):
@@ -40,13 +42,11 @@ class RandomTextGenerator(RandomGenerator):
             return "\n\n".join(self.fake.paragraphs(self.count))
         else:
             raise ValueError(f"Unsupported mode: {self.mode}")
-    def next_fuzz_value(self, strategy: str = "injection") -> str:
-        if strategy == "boundary":
-            # Empty string or an extremely long string
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> str:
+        if strategy == FuzzStrategy.BOUNDARY:
             return self.rand.choice(["", "A" * 10000])
         
-        if strategy == "injection":
-            # Common SQL, XSS, or Command injections
+        if strategy == FuzzStrategy.INJECTION:
             injections = [
                 "' OR '1'='1", 
                 "<script>alert(1)</script>", 
@@ -55,8 +55,7 @@ class RandomTextGenerator(RandomGenerator):
             ]
             return self.rand.choice(injections)
         
-        if strategy == "encoding":
-            # Non-UTF8 or special control characters
+        if strategy == FuzzStrategy.ENCODING:
             return "\0\n\r\t\b"
             
         return ""

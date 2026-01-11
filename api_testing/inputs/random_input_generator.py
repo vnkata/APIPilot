@@ -1,4 +1,6 @@
 from typing import Any, List
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 class RandomInputGenerator(RandomGenerator):
@@ -26,40 +28,27 @@ class RandomInputGenerator(RandomGenerator):
         if self.count <= 1:
             return self.rand.choice(self.values)
         return self.rand.sample(self.values, min(self.count, len(self.values)))
-    def next_fuzz_value(self, strategy: str = "mutate") -> Any:
-        """
-        Generates an invalid or boundary value based on the input list.
-
-        Strategies:
-            'mutate': Picks a value from the list and breaks its data (e.g., adding null bytes).
-            'empty': Returns None, an empty string, or an empty list.
-            'out_of_bounds': Returns a value that is definitely not in the provided list.
-            'structure': Returns a single value when a list is expected, or vice versa.
-        """
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
         if not self.values:
             return self.rand.choice([None, "", "null"])
 
-        if strategy == "empty":
+        if strategy == FuzzStrategy.EMPTY:
             return self.rand.choice([None, "", [], {}])
 
-        if strategy == "out_of_bounds":
-            # Generate a string/number that is guaranteed not to be in the set
+        if strategy == FuzzStrategy.OUT_OF_BOUNDS:
             return f"not_in_list_{self.rand.getrandbits(32)}"
 
-        if strategy == "structure":
-            # If the generator usually returns multiple items, return a single one (or vice versa)
+        if strategy == FuzzStrategy.STRUCTURE:
             val = self.rand.choice(self.values)
             return [val] if self.count <= 1 else val
 
-        # Default strategy: 'mutate'
-        # Get a legitimate value and destroy it
-        val = self.rand.choice(self.values)
+        if strategy == FuzzStrategy.MUTATE:
+            val = self.rand.choice(self.values)
+            if isinstance(val, str):
+                return val + "\0"
+            if isinstance(val, (int, float)):
+                return val * -1000000
+            if isinstance(val, list):
+                return val + [None, "fuzz"]
         
-        if isinstance(val, str):
-            return val + "\0"
-        if isinstance(val, (int, float)):
-            return val * -1000000
-        if isinstance(val, list):
-            return val + [None, "fuzz"]
-        
-        return self.rand.choice([None, "undefined", "NaN"])
+        return None

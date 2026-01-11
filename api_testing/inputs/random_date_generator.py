@@ -1,7 +1,10 @@
 import random
 import logging
 from datetime import datetime, timedelta
+from typing import Any
 from pydantic import Field
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 logger = logging.getLogger(__name__)
@@ -52,45 +55,22 @@ class RandomDateGenerator(RandomGenerator):
         """Return a formatted random datetime as string."""
         value = self.next_value()
         return value.strftime(self.format)
-    def next_fuzz_value(self, strategy: str = "logic_error") -> Any:
-        """
-        Generates an invalid or boundary date value.
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+            if strategy == FuzzStrategy.EMPTY:
+                return self.rand.choice([None, ""])
 
-        Strategies:
-            'boundary': Min/Max system dates (Epoch, Year 9999, etc).
-            'logic_error': Semantically invalid dates (Feb 31st).
-            'format_error': Dates in wrong formats or wrong types (timestamp).
-            'empty': Returns null or empty strings.
-        """
-        if strategy == "empty":
-            return self.rand.choice([None, ""])
+            if strategy == FuzzStrategy.BOUNDARY:
+                return self.rand.choice([
+                    datetime(1970, 1, 1).strftime(self.format),
+                    datetime(9999, 12, 31).strftime(self.format),
+                    self.start_date.strftime(self.format)
+                ])
 
-        if strategy == "boundary":
-            # Test Epoch start, Year 2038 problem edge, and far future
-            return self.rand.choice([
-                datetime(1970, 1, 1).strftime(self.format),
-                datetime(2038, 1, 19).strftime(self.format),
-                datetime(9999, 12, 31).strftime(self.format),
-                self.start_date.strftime(self.format),
-                self.end_date.strftime(self.format)
-            ])
+            if strategy == FuzzStrategy.LOGIC_ERROR:
+                return self.rand.choice(["2025-02-30", "2025-13-01", "0000-00-00"])
 
-        if strategy == "logic_error":
-            # Dates that are syntactically dates but impossible
-            return self.rand.choice([
-                "2025-02-30", # February 30th
-                "2025-04-31", # April has 30 days
-                "2025-13-01", # Month 13
-                "0000-00-00"  # Zero date
-            ])
+            if strategy == FuzzStrategy.FORMAT_ERROR:
+                val = datetime.now()
+                return self.rand.choice([val.timestamp(), val.isoformat(), "01-01-2025"])
 
-        if strategy == "format_error":
-            val = self.next_value()
-            return self.rand.choice([
-                val.timestamp(),          # Numeric timestamp instead of string
-                val.isoformat(),          # ISO 8601 when custom format is expected
-                "Monday, January 2025",   # Verbal format
-                "01-01-2025"              # Wrong separator
-            ])
-
-        return self.rand.choice([0, -1, "null", "invalid_date"])
+            return None

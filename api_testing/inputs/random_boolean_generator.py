@@ -1,5 +1,8 @@
 import random
+from typing import Any
 from pydantic import Field
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 class RandomBooleanGenerator(RandomGenerator):
@@ -22,27 +25,18 @@ class RandomBooleanGenerator(RandomGenerator):
     def next_value_as_string(self) -> str:
         """Return next random value as string."""
         return str(self.next_value())
-    def next_fuzz_value(self, strategy: str = "type_error") -> Any:
-            """
-            Generates an invalid or boundary value for a boolean type.
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+        if strategy == FuzzStrategy.EMPTY:
+            return self.rand.choice([None, ""])
 
-            Strategies:
-                'mutate': Returns a non-boolean representation of the current state.
-                'empty': Returns null or empty values.
-                'type_error': Returns common non-boolean values used to confuse parsers (strings/ints).
-                'structure': Returns a list or object containing a boolean.
-            """
-            if strategy == "empty":
-                return self.rand.choice([None, ""])
+        if strategy == FuzzStrategy.TYPE_ERROR:
+            return self.rand.choice(["true", "false", "TRUE", "FALSE", 0, 1, "yes", "no"])
 
-            if strategy == "type_error":
-                # Values that are often incorrectly used as booleans in different languages
-                return self.rand.choice(["true", "false", "TRUE", "FALSE", 0, 1, "yes", "no", "on", "off"])
+        if strategy == FuzzStrategy.STRUCTURE:
+            val = self.next_value()
+            return [val] if self.rand.random() > 0.5 else {"val": val}
 
-            if strategy == "structure":
-                val = self.next_value()
-                return [val] if self.rand.random() > 0.5 else {"val": val}
-
-            # Default strategy: 'mutate'
-            # Returns values that break the strict boolean primitive expectation
+        if strategy == FuzzStrategy.MUTATE:
             return self.rand.choice([None, "null", "undefined", -1, 2])
+        
+        return None
