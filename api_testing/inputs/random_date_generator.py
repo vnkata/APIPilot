@@ -55,22 +55,37 @@ class RandomDateGenerator(RandomGenerator):
         """Return a formatted random datetime as string."""
         value = self.next_value()
         return value.strftime(self.format)
-    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
-            if strategy == FuzzStrategy.EMPTY:
-                return self.rand.choice([None, ""])
+    def next_fuzz_value(self) -> Any:
+        """Randomly selects a date-specific fuzzing strategy and returns a value."""
+        
+        # Define only the strategies implemented within this specific logic
+        supported_strategies = [
+            FuzzStrategy.EMPTY,
+            FuzzStrategy.BOUNDARY,
+            FuzzStrategy.LOGIC_ERROR,
+            FuzzStrategy.FORMAT_ERROR
+        ]
+        
+        # Internal random selection
+        strategy = self.rand.choice(supported_strategies)
 
-            if strategy == FuzzStrategy.BOUNDARY:
-                return self.rand.choice([
-                    datetime(1970, 1, 1).strftime(self.format),
-                    datetime(9999, 12, 31).strftime(self.format),
-                    self.start_date.strftime(self.format)
-                ])
+        if strategy == FuzzStrategy.EMPTY:
+            return self.rand.choice([None, ""])
 
-            if strategy == FuzzStrategy.LOGIC_ERROR:
-                return self.rand.choice(["2025-02-30", "2025-13-01", "0000-00-00"])
+        if strategy == FuzzStrategy.BOUNDARY:
+            return self.rand.choice([
+                datetime(1970, 1, 1).strftime(self.format),
+                datetime(9999, 12, 31).strftime(self.format),
+                self.start_date.strftime(self.format)
+            ])
 
-            if strategy == FuzzStrategy.FORMAT_ERROR:
-                val = datetime.now()
-                return self.rand.choice([val.timestamp(), val.isoformat(), "01-01-2025"])
+        if strategy == FuzzStrategy.LOGIC_ERROR:
+            # Invalid dates that might bypass simple regex but fail logic checks
+            return self.rand.choice(["2025-02-30", "2025-13-01", "0000-00-00"])
 
-            return None
+        if strategy == FuzzStrategy.FORMAT_ERROR:
+            val = datetime.now()
+            # Mix of valid data in the wrong formats (timestamp vs ISO vs custom)
+            return self.rand.choice([val.timestamp(), val.isoformat(), "01-01-2025"])
+
+        return None

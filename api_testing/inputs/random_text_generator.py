@@ -42,20 +42,4 @@ class RandomTextGenerator(RandomGenerator):
             return "\n\n".join(self.fake.paragraphs(self.count))
         else:
             raise ValueError(f"Unsupported mode: {self.mode}")
-    def next_fuzz_value(self, strategy: FuzzStrategy) -> str:
-        if strategy == FuzzStrategy.BOUNDARY:
-            return self.rand.choice(["", "A" * 10000])
-        
-        if strategy == FuzzStrategy.INJECTION:
-            injections = [
-                "' OR '1'='1", 
-                "<script>alert(1)</script>", 
-                "../../etc/passwd",
-                "%; stop"
-            ]
-            return self.rand.choice(injections)
-        
-        if strategy == FuzzStrategy.ENCODING:
-            return "\0\n\r\t\b"
-            
-        return ""
+    
