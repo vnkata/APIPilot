@@ -1,8 +1,14 @@
 import random
 from abc import ABC, abstractmethod
 
+from api_testing.inputs.file_source_generator import FileSourceGenerator
+from api_testing.inputs.file_source_generator import FileSourceGenerator
 from api_testing.inputs.llm_generator import LLMGenerator
 from api_testing.inputs.producer_generator import ProducerGenerator
+from api_testing.inputs.random_color_generator import RandomColorGenerator
+from api_testing.inputs.random_credit_card_generator import RandomCreditCardGenerator
+from api_testing.inputs.random_locale_generator import RandomLocaleGenerator
+from api_testing.inputs.random_network_generator import RandomNetworkGenerator
 from .random_boolean_generator import RandomBooleanGenerator
 from .random_date_generator import RandomDateGenerator
 from .random_number_generator import RandomNumberGenerator
@@ -21,8 +27,12 @@ class RandomGeneratorFactory:
         "RandomTextGenerator": RandomTextGenerator,
         # "RandomIdentityGenerator": RandomIdentityGenerator,
         "RandomInputGenerator": RandomInputGenerator,
-        
-        "LLMGenerator": LLMGenerator, ## auto fallback
+        "FileSourceGenerator": FileSourceGenerator,
+        "RandomLocaleGenerator": RandomLocaleGenerator,
+        "RandomColorGenerator": RandomColorGenerator,
+        "RandomCreditCardGenerator": RandomCreditCardGenerator,
+        "RandomNetworkGenerator": RandomNetworkGenerator,
+        "LLMGenerator": LLMGenerator, ## auto fallbackn
         # "ProducerGenerator": ProducerGenerator ## auto fallback
     }
 

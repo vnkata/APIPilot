@@ -1,4 +1,6 @@
 from typing import Any, List
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 class RandomInputGenerator(RandomGenerator):
@@ -18,11 +20,28 @@ class RandomInputGenerator(RandomGenerator):
             return None
         if self.count <= 1:
             return self.rand.choice(self.values)
-        return self.rand.choices(self.values, k=min(self.count, len(self.values)))
-                                 
-    def next_value_as_string(self) -> str:
-        """Return a formatted random datetime as string."""
-        value = self.next_value()
-        if self.count <= 1:
-            return str(value)
-        return ','.join([str(v) for v in value])
+        return self.rand.sample(self.values, min(self.count, len(self.values)))
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+        if not self.values:
+            return self.rand.choice([None, "", "null"])
+
+        if strategy == FuzzStrategy.EMPTY:
+            return self.rand.choice([None, "", [], {}])
+
+        if strategy == FuzzStrategy.OUT_OF_BOUNDS:
+            return f"not_in_list_{self.rand.getrandbits(32)}"
+
+        if strategy == FuzzStrategy.STRUCTURE:
+            val = self.rand.choice(self.values)
+            return [val] if self.count <= 1 else val
+
+        if strategy == FuzzStrategy.MUTATE:
+            val = self.rand.choice(self.values)
+            if isinstance(val, str):
+                return val + "\0"
+            if isinstance(val, (int, float)):
+                return val * -1000000
+            if isinstance(val, list):
+                return val + [None, "fuzz"]
+        
+        return None

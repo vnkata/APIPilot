@@ -1,5 +1,8 @@
 import random
+from typing import Any
 from pydantic import Field
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 class RandomBooleanGenerator(RandomGenerator):
@@ -22,3 +25,18 @@ class RandomBooleanGenerator(RandomGenerator):
     def next_value_as_string(self) -> str:
         """Return next random value as string."""
         return str(self.next_value())
+    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+        if strategy == FuzzStrategy.EMPTY:
+            return self.rand.choice([None, ""])
+
+        if strategy == FuzzStrategy.TYPE_ERROR:
+            return self.rand.choice(["true", "false", "TRUE", "FALSE", 0, 1, "yes", "no"])
+
+        if strategy == FuzzStrategy.STRUCTURE:
+            val = self.next_value()
+            return [val] if self.rand.random() > 0.5 else {"val": val}
+
+        if strategy == FuzzStrategy.MUTATE:
+            return self.rand.choice([None, "null", "undefined", -1, 2])
+        
+        return None
