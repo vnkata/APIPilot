@@ -21,6 +21,7 @@ class RandomInputGenerator(RandomGenerator):
         if self.count <= 1:
             return self.rand.choice(self.values)
         return self.rand.sample(self.values, min(self.count, len(self.values)))
+    
     def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
         if not self.values:
             return self.rand.choice([None, "", "null"])
