@@ -21,8 +21,9 @@ class ConfigurationParser:
         self.logger = getLogger(__name__)
         self.load_or_initialize()
 
+    def update_conf(self):
+        pass
     def load_or_initialize(self):
-        print(os.path.exists(self.cache_file))
         if os.path.exists(self.cache_file):
             print(f"Loading Configuration from cache: {self.cache_file}")
             with open(self.cache_file, "r") as file:
@@ -97,7 +98,6 @@ class ConfigurationParser:
         p_name = name_override or getattr(item, "name", "unknown")
 
         config = FieldConfiguration(name=p_name)
-
         match p_type:
             case "boolean":
                 config.type = "RandomBooleanGenerator"
@@ -138,7 +138,7 @@ class ConfigurationParser:
 
     def gpt_parser(self, data: Union[Dict[str, ParameterProperties], Dict[str, ItemProperties]]):
         factory = RandomGeneratorFactory()
-        descriptions = factory.gen_description()
+        descriptions = factory.gen_description() 
         params = {
             "genFunction": "\n".join([f"- {k}: {v}" for k, v in descriptions.items()]),
             "attributes":  "\n".join([f"- {k}: {v.to_human_readable()}" for k,v in data.items()])

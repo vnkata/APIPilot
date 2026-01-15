@@ -21,17 +21,13 @@ class RandomDateGenerator(RandomGenerator):
     Attributes:
         start_date (datetime | None): Optional fixed start date for the range.
         end_date (datetime | None): Optional fixed end date for the range.
-        start_days (int): Number of days offset from the start date (if applicable).
-        end_days (int): Number of days offset from the end date (if applicable).
         from_today (bool): If True, generate dates relative to the current day.
         format (str): The output date format string (default: "yyyy-MM-dd HH:mm:ss")
     """
-    def __init__(self, start_date=None, end_date=None, start_days=None, end_days=None, from_today=None, format=None, *args, **kwargs):
+    def __init__(self, start_date=None, end_date=None, from_today=None, format=None, *args, **kwargs):
         current_date = datetime.now()
         self.start_date = start_date or current_date - timedelta(days=365 * 10) # 10 years
         self.end_date = end_date or current_date + timedelta(days=365 * 2)  # 2 years ahead
-        self.start_days = start_days or 0
-        self.end_days = end_days or 0
         self.from_today = from_today or False
         if self.from_today:
             self.start_date = current_date

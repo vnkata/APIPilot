@@ -40,9 +40,10 @@ class RandomNumberGenerator(RandomGenerator):
         max (Any): The maximum possible value for the generated number (optional).
     """
 
-    def model_post_init(self, __context):
-        super().model_post_init(__context)
-
+    def __init__(self, type: DataType = None, min=None, max=None, *args, **kwargs):
+        self.type = type
+        self.min = min
+        self.max = max
         if not self.type.is_number():
             raise ValueError("The requested type is not a number")
 
@@ -59,6 +60,7 @@ class RandomNumberGenerator(RandomGenerator):
         elif self.type == DataType.LONG:
             self.min = self.min if self.min is not None else -2**63
             self.max = self.max if self.max is not None else 2**63 - 1
+        super().__init__(*args, **kwargs)
 
     def next_value(self) -> Any:
         """Generate a random numeric value according to the DataType."""

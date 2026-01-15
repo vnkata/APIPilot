@@ -3,6 +3,9 @@ import json
 import logging
 from api_testing.configuration.configuration_parser import ConfigurationParser
 from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
+from api_testing.generators.executor import Executor, Strategy
+from api_testing.generators.requestor import Requestor
+from api_testing.generators.smart_value_generator import SmartValueGenerator
 from api_testing.models.configuration_model import FieldConfiguration
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
 from api_testing.utils import to_dict_helper
@@ -32,6 +35,7 @@ from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMMo
 import shutil
 import os
 from api_testing.utils.log import configure_logging
+from typing import List, Dict, Set, Any
 
 
 def build_endpoint_groups(data: dict) -> Dict[str, List[str]]:
@@ -156,7 +160,7 @@ class APITesting:
         
         self.init_graph()
         self.build_conf()
-
+        
         with open(os.path.join(self.project_dir,"semantic_property_dependency_graph.json"), "r", encoding="utf-8") as f:
             graph_data = json.load(f)
         endpoint_groups = build_endpoint_groups(graph_data)
@@ -219,234 +223,121 @@ class APITesting:
     def train_experience(self, population=200):
         print("Trainning")
         # 
-        nodes = [ node for node in self.operation_graph.nodes.values() if node.degree == 0] 
-        from typing import List, Dict, Set, Any
-
-        # def find_api_workflows_recursive(
-        #     current_node: OperationNode,
-        #     path: List[str],
-        #     provided_pool: Set[str],
-        #     adj_list: Dict[str, List[OperationEdge]],
-        #     all_valid_paths: List[Dict]
-        # ):
-        #     """
-        #     Hàm đệ quy duyệt các nhánh API dựa trên điều kiện tham số.
-        #     """
-        #     # 1. Thu hoạch dữ liệu từ node hiện tại
-        #     # Lấy 'value1' từ các cạnh đi RA (giả định node này có thể cung cấp các field đó)
-        #     new_data_harvested = set()
-        #     for edge in adj_list.get(current_node.uuid, []):
-        #         for param_mapping in edge.similar_parameters:
-        #             new_data_harvested.add(param_mapping.value1)
-        #     current_branch_pool = provided_pool
-            
-        #     # 2. Tìm các node lân cận có thể đi tiếp
-        #     possible_edges = adj_list.get(current_node.uuid, [])
-        #     has_valid_next = False
-
-        #     for edge in possible_edges:
-        #         neighbor = edge.to_node
-                
-        #         # ĐIỀU KIỆN 1: Chặn lặp node (Cycle Detection trên nhánh)
-        #         if neighbor.uuid in path:
-        #             continue
-                    
-        #         # ĐIỀU KIỆN 2: Kiểm tra tham số bắt buộc
-        #         # Lấy danh sách params required của node đích
-        #         required_params = [
-        #             name for name, p in neighbor.parameters.items() 
-        #             if getattr(p, 'required', False)
-        #         ]
-        #         new_data_harvested = {i for i in new_data_harvested if i in required_params}
-        #         # Cập nhật pool dữ liệu cho riêng nhánh này
-        #         current_branch_pool = provided_pool.union(new_data_harvested)
-    
-        #         # Kiểm tra những gì Edge này có thể cung cấp dựa trên Pool hiện tại
-        #         mapping_available = {
-        #             p.value2 for p in edge.similar_parameters 
-        #             if p.value1 in current_branch_pool
-        #         }
-                
-        #         # Kiểm tra xem có đủ required params không
-        #         is_satisfied = all(rp in mapping_available for rp in required_params)
-
-        #         if is_satisfied:
-        #             has_valid_next = True
-        #             # Đệ quy đi sâu vào nhánh này
-        #             find_api_workflows_recursive(
-        #                 neighbor,
-        #                 path + [neighbor.uuid],
-        #                 current_branch_pool,
-        #                 adj_list,
-        #                 all_valid_paths
-        #             )
-        #         else:
-        #             # Debug: In ra lý do nhánh bị chặn
-        #             missing = set(required_params) - mapping_available
-        #             print(f"Blocked: {'->'.join(path)} -> {neighbor.uuid} thiếu {missing}")
-        #             pass
-
-        #     # 3. Nếu không còn nhánh nào đi tiếp được, lưu lại kết quả của nhánh này
-        #     if not has_valid_next:
-        #         all_valid_paths.append({
-        #             "path": path,
-        #             "final_pool": current_branch_pool
-        #         })
-
-        # # --- Cách sử dụng ---
-
-        # def start_traversal(nodes, edges, start_uuid):
-        #     node_map = {n.uuid: n for n in nodes}
-            
-        #     # Tiền xử lý: Nhóm edges theo from_node_uuid
-        #     adj_list = {}
-        #     for edge in edges:
-        #         adj_list.setdefault(edge.from_node.uuid, []).append(edge)
-                
-        #     all_results = []
-        #     if start_uuid in node_map:
-        #         find_api_workflows_recursive(
-        #             node_map[start_uuid], 
-        #             [start_uuid], 
-        #             set(), 
-        #             adj_list, 
-        #             all_results
-        #         )
-        #     return all_results
-        def find_api_workflows_recursive(
-            current_node: OperationNode,
+        started_nodes = { node.uuid: node for node in self.operation_graph.nodes.values() if node.degree == 0} # get all nodes no dependency
+        # Tiền xử lý: Nhóm edges theo from_node_uuid
+        adj_list = {}
+        for edge in self.operation_graph.edges:
+            adj_list.setdefault(edge.from_node.uuid, []).append(edge)
+        
+        def traversal(
+            current_node,
             path: List[str],
             provided_pool: Set[str],
-            adj_list: Dict[str, List[OperationEdge]],
-            all_valid_paths: List[Dict]
+            adj_list: Dict[str, List["OperationEdge"]],
+            all_valid_paths: List[Dict],
         ):
-            # 1. Thu hoạch dữ liệu thô từ node hiện tại
+            """
+            DFS traversal từ node gốc đến node lá, chỉ lưu các đường đi hợp lệ.
+            Một đường đi hợp lệ là khi mỗi node kế tiếp có đủ required parameters
+            từ các node trước đó.
+            """
+
+            # 1️⃣ Thu hoạch dữ liệu mà node hiện tại có thể cung cấp
+            current_uuid = current_node.uuid
+            # process current node
+            executor = Executor(api_url = self.base_url, 
+                strategy= Strategy.SMART_VALUE,
+                operation=current_node,
+                cache_dir=self.project_dir,
+                model=self.model
+            ) 
+            executor.exec()
+            possible_edges = adj_list.get(current_uuid, [])
             raw_harvested = {
-                p.value1 for edge in adj_list.get(current_node.uuid, []) 
+                p.value1
+                for edge in possible_edges
                 for p in edge.similar_parameters
             }
+            print("current ", current_uuid, " pool ", raw_harvested)
 
-            possible_edges = adj_list.get(current_node.uuid, [])
+            # Nếu node hiện tại là node lá (không có outgoing edge) → kết thúc DFS
+            if not possible_edges:
+                all_valid_paths.append({
+                    "path": path,
+                    "final_pool": provided_pool | raw_harvested
+                })
+                return
 
-            # --- LOGIC ƯU TIÊN ---
-            # Tính toán xem mỗi cạnh mang lại bao nhiêu tham số "mới" chưa từng có trong pool
+            # 2️⃣ Ưu tiên cạnh mang lại nhiều tham số mới hơn
             def get_priority(edge):
                 neighbor_required = {
-                    name for name, p in edge.to_node.parameters.items() 
-                    if getattr(p, 'required', False)
+                    name
+                    for name, p in edge.to_node.parameters.items()
                 }
-                # Tham số mới = (Những gì node hiện tại cấp) GIAO (Những gì neighbor cần) TRỪ ĐI (Những gì đã có)
-                new_params_count = len((raw_harvested & neighbor_required) - provided_pool)
+                new_raw_harvested = {p.value2 for p in edge.similar_parameters}
+                # Các tham số mới mà current node có thể cung cấp cho neighbor
+                new_params_count = len((new_raw_harvested & neighbor_required) - provided_pool)
                 return new_params_count
 
-            # Sắp xếp giảm dần theo số lượng tham số mới
-            sorted_edges = sorted(possible_edges, key=get_priority, reverse=True)
-            # ---------------------
+            # Tính priority cho từng edge
+            edge_priorities = [(edge, get_priority(edge)) for edge in possible_edges]
+
+            # Chỉ giữ các cạnh có priority > 0
+            valid_edges = [edge for edge, score in edge_priorities if score > 0]
+
+            # Sắp xếp giảm dần theo priority
+            sorted_edges = sorted(valid_edges, key=lambda e: get_priority(e), reverse=True)
 
             has_valid_next = False
-
+            # 3️⃣ Duyệt từng cạnh hợp lệ
             for edge in sorted_edges:
                 neighbor = edge.to_node
-                
+
+                # Tránh vòng lặp
                 if neighbor.uuid in path:
                     continue
-                    
+                
+                # Lấy tập tham số required của node kế tiếp
                 required_params = {
-                    name for name, p in neighbor.parameters.items() 
-                    if getattr(p, 'required', False)
+                    name
+                    for name, p in neighbor.parameters.items()
+                    if getattr(p, "required", False)
                 }
-                
-                useful_data = raw_harvested & required_params
+                mapped_outputs = {
+                        p.value2
+                        for p in edge.similar_parameters
+                        if p.value1 in raw_harvested
+                    }
+
+                # 3️⃣ Các dữ liệu hữu ích có thể cung cấp cho neighbor
+                useful_data = mapped_outputs & required_params
                 current_branch_pool = provided_pool | useful_data
-                
-                mapping_available = {
-                    p.value2 for p in edge.similar_parameters 
-                    if p.value1 in current_branch_pool
-                }
-                
-                if required_params.issubset(mapping_available):
+
+                # Nếu đủ dữ liệu để đi sang node kế → đi tiếp
+                if required_params.issubset(current_branch_pool):
                     has_valid_next = True
-                    find_api_workflows_recursive(
+                    traversal(
                         neighbor,
                         path + [neighbor.uuid],
-                        current_branch_pool,
+                        provided_pool | raw_harvested,
                         adj_list,
-                        all_valid_paths
+                        all_valid_paths,
                     )
 
+            # 4️⃣ Nếu node hiện tại không có neighbor hợp lệ → đây là node lá hợp lệ
             if not has_valid_next:
                 all_valid_paths.append({
                     "path": path,
                     "final_pool": provided_pool | raw_harvested
                 })
 
-        def start_traversal(nodes, edges, start_uuid):
-            node_map = {n.uuid: n for n in nodes}
-            
-            # Tiền xử lý: Nhóm edges theo from_node_uuid
-            adj_list = {}
-            for edge in edges:
-                adj_list.setdefault(edge.from_node.uuid, []).append(edge)
-                
-            all_results = []
-            if start_uuid in node_map:
-                find_api_workflows_recursive(
-                    node_map[start_uuid], 
-                    [start_uuid], 
-                    set(), 
-                    adj_list, 
-                    all_results
-                )
-            return all_results
-        results = []
-        for node in nodes:
-            results.extend(start_traversal( self.operation_graph.nodes.values(), self.operation_graph.edges, node.uuid))
-        def remove_duplicate_paths(data):
-            seen_paths = set()
-            unique_data = []
-            
-            for entry in data:
-                # Chuyển list thành tuple để có thể hash và so sánh
-                path_tuple = tuple(entry["path"])
-                if path_tuple not in seen_paths:
-                    unique_data.append(entry)
-                    seen_paths.add(path_tuple)
-                    
-            return unique_data
-
-        results = remove_duplicate_paths(results)
-        def is_subset(path_small, path_large):
-            """Kiểm tra xem path_small có phải là tập con của path_large hay không"""
-            # Cách 1: Kiểm tra đúng thứ tự (Sequence/Prefix)
-            # return all(x == y for x, y in zip(path_small, path_large))
-            
-            # Cách 2: Kiểm tra tập hợp (không quan trọng thứ tự)
-            return set(path_small).issubset(set(path_large))
-
-        def filter_subsets(data):
-            # Sắp xếp theo độ dài giảm dần để ưu tiên giữ lại các path dài trước
-            data.sort(key=lambda x: len(x['path']), reverse=True)
-            
-            unique_data = []
-            for i in range(len(data)):
-                is_sub = False
-                for j in range(len(unique_data)):
-                    # So sánh object hiện tại với các object dài hơn đã được giữ lại
-                    if is_subset(data[i]['path'], unique_data[j]['path']):
-                        is_sub = True
-                        break
-                if not is_sub:
-                    unique_data.append(data[i])
-                    
-            return unique_data
-        results = filter_subsets(results)
+        all_results = []
+        for start_uuid, start_props in started_nodes.items():
+            traversal(current_node=start_props, path=[start_uuid], provided_pool=set(), adj_list=adj_list, all_valid_paths=all_results)
         with open("demo.json", "w", encoding="utf-8") as f:
-            json.dump(results, f, indent=4, default=str)
-
+            json.dump(all_results, f, indent=4, default=str)
     
     def run_tests(self):
         parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
         parser.parse()
-        # endpoint_groups = build_endpoint_groups(os.path.join(self.cache_dir,"semantic_property_dependency_graph.json"))
-        # for endpoint_conf in parser.configurations:
         

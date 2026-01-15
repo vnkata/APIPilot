@@ -1,4 +1,5 @@
 import logging
+import random
 import re
 from api_testing.models.base_model import APITestingBaseLLMModel
 from google import genai
@@ -105,6 +106,7 @@ class GeminiModel(APITestingBaseLLMModel):
         Returns:
             A GenerativeModel instance.
         """
+        
         if self.should_use_vertexai():
             if not self.project or not self.location:
                 raise ValueError(
@@ -124,8 +126,8 @@ class GeminiModel(APITestingBaseLLMModel):
                     "or set it in your configuration."
                 )
             # Create client for Gemini API
-            self.client = genai.Client(api_key=self.api_key)
-
+            # self.client = genai.Client(api_key=self.api_key)
+            self.client = genai.Client(api_key=random.choice(self.api_key.split(",")))
         # Configure default model generation settings
         self.model_safety_settings = [
             types.SafetySetting(
@@ -148,7 +150,7 @@ class GeminiModel(APITestingBaseLLMModel):
         return self.client.models
 
     @retry(
-        wait=wait_fixed(20),
+        wait=wait_fixed(60),
         stop=stop_after_attempt(3),
         after=log_retry_error,
     )
@@ -161,7 +163,8 @@ class GeminiModel(APITestingBaseLLMModel):
 
         Returns:
             Generated text response or structured output as Pydantic model
-        """ 
+        """
+        self.model = self.load_model()
         configure_params =  {
             # "response_mime_type": "application/json",
             "safety_settings": self.model_safety_settings,
@@ -177,6 +180,7 @@ class GeminiModel(APITestingBaseLLMModel):
                 config=types.GenerateContentConfig(**configure_params),
             )
             cleaned = re.sub(r"^```json\s*|\s*```$", "", response.text.strip(), flags=re.MULTILINE)
+            print(cleaned)
             return schema.model_validate_json(cleaned), 0
         else:
             response = self.client.models.generate_content(

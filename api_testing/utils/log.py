@@ -8,6 +8,8 @@ _log_llm_model = 'default'
 
 def getLogger(name: str|None = None):
     global logger
+    if logger is None:
+        return configure_logging(name)
     if name:
         logger.name = name
     return logger

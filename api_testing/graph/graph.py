@@ -21,7 +21,7 @@ from api_testing.utils.graph import get_best_mathching_schema, is_nested_path_en
 
 @dataclass
 class OperationGraph:
-    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.5, cache_dir=None, skip_create_graph: bool = False):
+    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None, skip_create_graph: bool = False):
         self.spec_parser = spec_parser
         self.embedding_model = embedding_model
         self.model = model  # llm model
