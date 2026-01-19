@@ -17,6 +17,8 @@ class ConfigurationParser:
         self.configurations: List[OperationConfiguration] = []
         self.cache_file = os.path.join(
             cache_dir, "configuration.json")
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
         self.parameter_random_mapper = ParameterRandomMapper(llm=model)
         self.logger = getLogger(__name__)
         self.load_or_initialize()
@@ -43,6 +45,7 @@ class ConfigurationParser:
             }    
             # Standardize naming access for OperationProperties
             self.logger.debug("Conf for Prompt: " + operation.uuid)
+            print("Processing Operation:", operation.uuid)
             op_config = OperationConfiguration(
                 method= getattr(operation, "http_method", None),
                 endpoint= getattr(operation, "endpoint_path", None) 
@@ -61,7 +64,7 @@ class ConfigurationParser:
                     body_schemas.update(flattened_body)
                 
                 for property,details in body_schemas.items():
-                    item_details = ItemProperties(**details)
+                    item_details = ItemProperties.from_dict(details)
                     op_config.request_body[property] = self._process_field(item_details, path=property)
                     if op_config.request_body[property].type == "PENDING_GPT":
                         gpt_inferences["request_body"][property] = item_details
@@ -145,3 +148,8 @@ class ConfigurationParser:
         }
         results = self.parameter_random_mapper.exec(**params)
         return results
+    def export_debug_log(self, filepath: str):
+        output = [asdict(conf) for conf in self.configurations]
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(output, f, indent=4, default=str)
+        print(f"Debug log exported to: {filepath}")

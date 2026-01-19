@@ -6,11 +6,8 @@ _log_dir = "./logs"
 _log_level = logging.DEBUG
 _log_llm_model = 'default'
 
-def getLogger(name: str|None = None):
-    global logger
-    if name:
-        logger.name = name
-    return logger
+def getLogger(name: str = None):
+    return logging.getLogger(name or __name__)
 
 def configure_logging(class_name: str = __name__, log_dir=None, level=None, llm_model=None):
     

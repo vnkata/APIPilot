@@ -46,9 +46,7 @@
   "paths": {
     "/annotation": {
       "post": {
-        "tags": [
-          "annotation-controller"
-        ],
+        "tags": ["annotation-controller"],
         "summary": "Retrieves VEP annotation for the provided list of variants",
         "operationId": "fetchVariantAnnotationPOST",
         "parameters": [
@@ -138,9 +136,7 @@
     },
     "/annotation/dbsnp/": {
       "post": {
-        "tags": [
-          "annotation-controller"
-        ],
+        "tags": ["annotation-controller"],
         "summary": "Retrieves VEP annotation for the provided list of dbSNP ids",
         "operationId": "fetchVariantAnnotationByIdPOST",
         "parameters": [
@@ -230,9 +226,7 @@
     },
     "/annotation/dbsnp/{variantId}": {
       "get": {
-        "tags": [
-          "annotation-controller"
-        ],
+        "tags": ["annotation-controller"],
         "summary": "Retrieves VEP annotation for the give dbSNP id",
         "operationId": "fetchVariantAnnotationByIdGET",
         "parameters": [
@@ -313,9 +307,7 @@
     },
     "/annotation/genomic": {
       "post": {
-        "tags": [
-          "annotation-controller"
-        ],
+        "tags": ["annotation-controller"],
         "summary": "Retrieves VEP annotation for the provided list of genomic locations",
         "operationId": "fetchVariantAnnotationByGenomicLocationPOST",
         "parameters": [
@@ -405,9 +397,7 @@
     },
     "/annotation/genomic/{genomicLocation}": {
       "get": {
-        "tags": [
-          "annotation-controller"
-        ],
+        "tags": ["annotation-controller"],
         "summary": "Retrieves VEP annotation for the provided genomic location",
         "operationId": "fetchVariantAnnotationByGenomicLocationGET",
         "parameters": [
@@ -488,9 +478,7 @@
     },
     "/annotation/{variant}": {
       "get": {
-        "tags": [
-          "annotation-controller"
-        ],
+        "tags": ["annotation-controller"],
         "summary": "Retrieves VEP annotation for the provided variant",
         "operationId": "fetchVariantAnnotationGET",
         "parameters": [
@@ -571,9 +559,7 @@
     },
     "/ensembl/canonical-gene/entrez": {
       "post": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves canonical Ensembl Gene ID by Entrez Gene Ids",
         "operationId": "fetchCanonicalEnsemblGeneIdByEntrezGeneIdsPOST",
         "requestBody": {
@@ -610,9 +596,7 @@
     },
     "/ensembl/canonical-gene/entrez/{entrezGeneId}": {
       "get": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves Ensembl canonical gene id by Entrez Gene Id",
         "operationId": "fetchCanonicalEnsemblGeneIdByEntrezGeneIdGET",
         "parameters": [
@@ -642,9 +626,7 @@
     },
     "/ensembl/canonical-gene/hgnc": {
       "post": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves canonical Ensembl Gene ID by Hugo Symbols",
         "operationId": "fetchCanonicalEnsemblGeneIdByHugoSymbolsPOST",
         "requestBody": {
@@ -681,9 +663,7 @@
     },
     "/ensembl/canonical-gene/hgnc/{hugoSymbol}": {
       "get": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves Ensembl canonical gene id by Hugo Symbol",
         "operationId": "fetchCanonicalEnsemblGeneIdByHugoSymbolGET",
         "parameters": [
@@ -713,9 +693,7 @@
     },
     "/ensembl/canonical-transcript/hgnc": {
       "post": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves Ensembl canonical transcripts by Hugo Symbols",
         "operationId": "fetchCanonicalEnsemblTranscriptsByHugoSymbolsPOST",
         "parameters": [
@@ -763,9 +741,7 @@
     },
     "/ensembl/canonical-transcript/hgnc/{hugoSymbol}": {
       "get": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves Ensembl canonical transcript by Hugo Symbol",
         "operationId": "fetchCanonicalEnsemblTranscriptByHugoSymbolGET",
         "parameters": [
@@ -804,9 +780,7 @@
     },
     "/ensembl/transcript": {
       "get": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves Ensembl Transcripts by protein ID, and gene ID. Retrieves all transcripts in case no query parameter provided",
         "operationId": "fetchEnsemblTranscriptsGET",
         "parameters": [
@@ -852,9 +826,7 @@
         }
       },
       "post": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves Ensembl Transcripts by Ensembl transcript IDs, hugo Symbols, protein IDs, or gene IDs",
         "operationId": "fetchEnsemblTranscriptsByEnsemblFilterPOST",
         "requestBody": {
@@ -888,9 +860,7 @@
     },
     "/ensembl/transcript/{transcriptId}": {
       "get": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Retrieves the transcript by an Ensembl transcript ID",
         "operationId": "fetchEnsemblTranscriptByTranscriptIdGET",
         "parameters": [
@@ -920,9 +890,7 @@
     },
     "/ensembl/xrefs": {
       "get": {
-        "tags": [
-          "ensembl-controller"
-        ],
+        "tags": ["ensembl-controller"],
         "summary": "Perform lookups of Ensembl identifiers and retrieve their external references in other databases",
         "operationId": "fetchGeneXrefsGET",
         "parameters": [
@@ -955,9 +923,7 @@
     },
     "/pdb/header": {
       "post": {
-        "tags": [
-          "pdb-controller"
-        ],
+        "tags": ["pdb-controller"],
         "summary": "Retrieves PDB header info by a PDB id",
         "operationId": "fetchPdbHeaderPOST",
         "requestBody": {
@@ -994,9 +960,7 @@
     },
     "/pdb/header/{pdbId}": {
       "get": {
-        "tags": [
-          "pdb-controller"
-        ],
+        "tags": ["pdb-controller"],
         "summary": "Retrieves PDB header info by a PDB id",
         "operationId": "fetchPdbHeaderGET",
         "parameters": [
@@ -1026,9 +990,7 @@
     },
     "/pfam/domain": {
       "post": {
-        "tags": [
-          "pfam-controller"
-        ],
+        "tags": ["pfam-controller"],
         "summary": "Retrieves PFAM domains by PFAM domain accession IDs",
         "operationId": "fetchPfamDomainsByPfamAccessionPOST",
         "requestBody": {
@@ -1065,9 +1027,7 @@
     },
     "/pfam/domain/{pfamAccession}": {
       "get": {
-        "tags": [
-          "pfam-controller"
-        ],
+        "tags": ["pfam-controller"],
         "summary": "Retrieves a PFAM domain by a PFAM domain ID",
         "operationId": "fetchPfamDomainsByAccessionGET",
         "parameters": [
@@ -1097,9 +1057,7 @@
     },
     "/ptm/experimental": {
       "get": {
-        "tags": [
-          "ptm-controller"
-        ],
+        "tags": ["ptm-controller"],
         "summary": "Retrieves PTM entries by Ensembl Transcript ID",
         "operationId": "fetchPostTranslationalModificationsGET",
         "parameters": [
@@ -1129,9 +1087,7 @@
         }
       },
       "post": {
-        "tags": [
-          "ptm-controller"
-        ],
+        "tags": ["ptm-controller"],
         "summary": "Retrieves PTM entries by Ensembl Transcript IDs",
         "operationId": "fetchPostTranslationalModificationsByPtmFilterPOST",
         "requestBody": {
@@ -1165,9 +1121,7 @@
     },
     "/version": {
       "get": {
-        "tags": [
-          "info-controller"
-        ],
+        "tags": ["info-controller"],
         "summary": "Retrieve Genome Nexus Version",
         "operationId": "fetchVersionGET",
         "responses": {
@@ -1671,10 +1625,7 @@
         }
       },
       "EnsemblGene": {
-        "required": [
-          "geneId",
-          "hugoSymbol"
-        ],
+        "required": ["geneId", "hugoSymbol"],
         "type": "object",
         "properties": {
           "geneId": {
@@ -1706,11 +1657,7 @@
         }
       },
       "EnsemblTranscript": {
-        "required": [
-          "geneId",
-          "proteinId",
-          "transcriptId"
-        ],
+        "required": ["geneId", "proteinId", "transcriptId"],
         "type": "object",
         "properties": {
           "uniprotId": {
@@ -2549,11 +2496,7 @@
         }
       },
       "IntergenicConsequences": {
-        "required": [
-          "consequenceTerms",
-          "impact",
-          "variantAllele"
-        ],
+        "required": ["consequenceTerms", "impact", "variantAllele"],
         "type": "object",
         "properties": {
           "impact": {
@@ -2585,11 +2528,7 @@
           },
           "tumorForm": {
             "type": "string",
-            "enum": [
-              "SOLID",
-              "LIQUID",
-              "MIXED"
-            ]
+            "enum": ["SOLID", "LIQUID", "MIXED"]
           }
         },
         "description": "OncoTree Cancer Type"
@@ -2782,9 +2721,7 @@
         }
       },
       "NucleotideContext": {
-        "required": [
-          "seq"
-        ],
+        "required": ["seq"],
         "type": "object",
         "properties": {
           "hgvs": {
@@ -2828,10 +2765,7 @@
         }
       },
       "PdbHeader": {
-        "required": [
-          "pdbId",
-          "title"
-        ],
+        "required": ["pdbId", "title"],
         "type": "object",
         "properties": {
           "compound": {
@@ -2853,10 +2787,7 @@
         }
       },
       "PfamDomain": {
-        "required": [
-          "name",
-          "pfamAccession"
-        ],
+        "required": ["name", "pfamAccession"],
         "type": "object",
         "properties": {
           "description": {
@@ -2874,11 +2805,7 @@
         }
       },
       "PfamDomainRange": {
-        "required": [
-          "pfamDomainEnd",
-          "pfamDomainId",
-          "pfamDomainStart"
-        ],
+        "required": ["pfamDomainEnd", "pfamDomainId", "pfamDomainStart"],
         "type": "object",
         "properties": {
           "pfamDomainId": {
@@ -2994,10 +2921,7 @@
           },
           "referenceGenome": {
             "type": "string",
-            "enum": [
-              "GRCh37",
-              "GRCh38"
-            ]
+            "enum": ["GRCh37", "GRCh38"]
           },
           "svType": {
             "type": "string",
@@ -3254,9 +3178,7 @@
         }
       },
       "TranscriptConsequence": {
-        "required": [
-          "transcript_id"
-        ],
+        "required": ["transcript_id"],
         "type": "object",
         "properties": {
           "alphaMissense": {
@@ -3361,9 +3283,7 @@
         }
       },
       "TranscriptConsequenceSummary": {
-        "required": [
-          "transcriptId"
-        ],
+        "required": ["transcriptId"],
         "type": "object",
         "properties": {
           "alphaMissense": {
@@ -3491,22 +3411,13 @@
           },
           "tumorForm": {
             "type": "string",
-            "enum": [
-              "SOLID",
-              "LIQUID",
-              "MIXED"
-            ]
+            "enum": ["SOLID", "LIQUID", "MIXED"]
           }
         },
         "description": "OncoTree Detailed Cancer Type"
       },
       "UntranslatedRegion": {
-        "required": [
-          "end",
-          "start",
-          "strand",
-          "type"
-        ],
+        "required": ["end", "start", "strand", "type"],
         "type": "object",
         "properties": {
           "type": {
