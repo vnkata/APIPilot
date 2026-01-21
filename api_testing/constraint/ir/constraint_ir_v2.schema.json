@@ -1,0 +1,201 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://api-testing.local/schemas/constraint-ir-v2.schema.json",
+  "title": "Constraint IR v2",
+  "description": "Enhanced Constraint IR with Scope, Provenance, Conditions, and Request/Response selectors",
+  "type": "object",
+  "required": ["version", "operation_constraints"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "const": "v2",
+      "description": "IR schema version"
+    },
+    "operation_constraints": {
+      "type": "object",
+      "description": "Map of operation ID to constraints",
+      "patternProperties": {
+        ".*": {
+          "$ref": "#/$defs/OperationConstraints"
+        }
+      }
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Document-level metadata",
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "OperationConstraints": {
+      "type": "object",
+      "description": "Constraints for a single operation",
+      "properties": {
+        "constraints": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/Constraint"
+          }
+        }
+      },
+      "additionalProperties": false
+    },
+    "Constraint": {
+      "type": "object",
+      "description": "Single constraint with full metadata",
+      "required": ["id", "scope", "selectors", "predicates", "source"],
+      "properties": {
+        "id": {
+          "type": "string",
+          "description": "Unique constraint identifier"
+        },
+        "scope": {
+          "$ref": "#/$defs/Scope"
+        },
+        "selectors": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Selector"
+          }
+        },
+        "predicates": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "$ref": "#/$defs/Predicate"
+          }
+        },
+        "when": {
+          "oneOf": [{ "$ref": "#/$defs/Condition" }, { "type": "null" }]
+        },
+        "severity": {
+          "type": "string",
+          "enum": ["error", "warn", "info"],
+          "default": "error"
+        },
+        "source": {
+          "$ref": "#/$defs/Provenance"
+        },
+        "metadata": {
+          "type": "object",
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "Scope": {
+      "type": "object",
+      "description": "Defines where constraint applies",
+      "required": ["operation", "phase"],
+      "properties": {
+        "operation": {
+          "type": "string",
+          "description": "Operation identifier"
+        },
+        "phase": {
+          "type": "string",
+          "enum": ["request", "response"]
+        },
+        "location": {
+          "type": "string",
+          "enum": ["body", "query", "path", "header"],
+          "description": "Specific location within phase"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Selector": {
+      "type": "object",
+      "description": "Value selector",
+      "required": ["kind", "expr"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": ["jsonpath", "request_ref", "response_ref"]
+        },
+        "expr": {
+          "type": "string",
+          "description": "Selector expression"
+        },
+        "mode": {
+          "type": "string",
+          "enum": ["all", "any", "first"],
+          "default": "all"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Predicate": {
+      "type": "object",
+      "description": "Validation predicate reference",
+      "required": ["kind", "version"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "description": "Validator kind"
+        },
+        "version": {
+          "type": "string",
+          "pattern": "^v\\d+$",
+          "description": "Validator version"
+        },
+        "args": {
+          "type": "object",
+          "description": "Validator arguments"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Condition": {
+      "type": "object",
+      "description": "Conditional constraint application",
+      "required": ["lang", "expr"],
+      "properties": {
+        "lang": {
+          "type": "string",
+          "enum": ["cel", "python"],
+          "default": "cel"
+        },
+        "expr": {
+          "type": "string",
+          "description": "Condition expression"
+        }
+      },
+      "additionalProperties": false
+    },
+    "Provenance": {
+      "type": "object",
+      "description": "Constraint source and confidence",
+      "required": ["kind"],
+      "properties": {
+        "kind": {
+          "type": "string",
+          "enum": [
+            "schema_structural",
+            "schema_description",
+            "observed_payload",
+            "llm",
+            "manual"
+          ]
+        },
+        "confidence": {
+          "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
+          "default": 1.0
+        },
+        "evidence": {
+          "type": "string",
+          "description": "Evidence supporting this constraint"
+        },
+        "extracted_at": {
+          "type": "string",
+          "description": "ISO timestamp"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}

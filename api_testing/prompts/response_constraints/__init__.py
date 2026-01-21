@@ -24,59 +24,51 @@ load_dotenv()
 logger = get_logger("response_constraints", level=LogLevel.DEBUG)
 
 # Validation-based prompt: LLM returns Dict[str, bool] indicating which attributes have constraints
-RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_SYSTEM_PROMPT = """You are an expert at analyzing API schema attributes and identifying which attributes have ONLY non-trivial, programmatically verifiable constraints.
+RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_SYSTEM_PROMPT = """You are an expert at analyzing API schema attributes and identifying which attributes have non-trivial, programmatically verifiable constraints.
 
-**CRITICAL: What NOT to Mark as Having Constraints (Trivial Type Info)**
+**CRITICAL: What NOT to Mark as Having Constraints**
 DO NOT mark attributes that only have basic type information:
-- ❌ Attributes with only "String" type
-- ❌ Attributes with only "Integer" type  
-- ❌ Attributes with only "Boolean" type
-- ❌ Attributes with only "Array" type structure
-- ❌ Attributes without any explicit constraints beyond their type
+- Attributes with only basic type (String, Integer, Boolean, Array)
+- Attributes without explicit constraints beyond their type
 
-**What TO Mark as Having Constraints (Non-Trivial)**
-Only mark True for attributes that have constraints BEYOND basic schema validation:
+**What TO Mark as Having Constraints**
+Only mark True for attributes with constraints BEYOND basic schema validation:
 
-1. **Explicit Schema Constraints** (from schema properties):
-   - ✅ `format` is specified (e.g., `format: date-time`, `format: uri`)
-   - ✅ `enum` is specified (e.g., `enum: [1, 0]`, `enum: ['AB', 'BC']`)
-   - ✅ `minimum`, `maximum`, `minLength`, `maxLength` are specified
-   - ✅ `pattern` is specified (regex pattern)
-   - ✅ `minItems`, `maxItems`, `uniqueItems` are specified for arrays
+1. **Explicit Schema Constraints**:
+   - format is specified (e.g., date-time, uri, email)
+   - enum is specified (allowed value list)
+   - minimum, maximum, minLength, maxLength are specified
+   - pattern is specified (regex)
+   - minItems, maxItems, uniqueItems for arrays
 
-2. **Explicit Description-Based Constraints** (only if clearly stated):
-   - ✅ Description explicitly mentions format (e.g., "ISO 8601 date", "URI starting with https://")
-   - ✅ Description explicitly lists allowed values (e.g., "one of: public, private")
-   - ✅ Description explicitly states limits (e.g., "between 1 and 32", "max length 255")
-   - ✅ Description explicitly describes a pattern (e.g., "must start with https://")
+2. **Explicit Description-Based Constraints**:
+   - Description mentions specific format requirements
+   - Description lists allowed values
+   - Description states numeric or length limits
+   - Description describes pattern requirements
 
-3. **Semantic Constraints** (ONLY if explicitly stated in description):
-   - ✅ Extract ONLY if the description explicitly states a constraint rule
-   - ✅ Example: If description says "must be a positive integer" → Mark True
-   - ✅ Example: If description says "must be 1 or 0" → Mark True
-   - ❌ DO NOT infer constraints from attribute names alone
-
-**Your Task:**
-For each attribute, determine: Does it have non-trivial constraints beyond basic type? (True/False)
+3. **Semantic Constraints** (ONLY if explicitly stated):
+   - Extract ONLY if description explicitly states a constraint rule
+   - Example: "must be a positive integer" means mark True
+   - Example: "must be 1 or 0" means mark True
+   - DO NOT infer constraints from names alone
 
 **Decision Rules:**
-- If attribute has `enum`, `format`, `minimum`, `maximum`, `minLength`, `maxLength`, `pattern` → True
-- If description explicitly states a constraint rule → True
-- If attribute only has basic type info (String, Integer, Boolean, Array) → False
-- If uncertain, be conservative → False
+- If attribute has enum, format, minimum, maximum, minLength, maxLength, pattern: Mark True
+- If description explicitly states a constraint rule: Mark True
+- If attribute only has basic type info: Mark False
+- If uncertain: Mark False
 
-**Output Format (CRITICAL):**
-Return ONLY a JSON object in this EXACT format. Do not include markdown formatting, explanations, or additional text:
+**Output Format:**
+Return ONLY valid JSON without markdown formatting:
 
 {
   "constraints": {
-    "attribute_name_1": true,
-    "attribute_name_2": false,
-    "attribute_name_3": true
+    "attribute_name": true/false
   }
 }
 
-**Important Notes:**
+**Important:**
 - Return True ONLY if you are confident the attribute has non-trivial constraints
 - Return False for attributes with only basic type information
 - Include ALL attributes you analyzed in the output

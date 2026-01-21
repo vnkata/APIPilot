@@ -15,6 +15,7 @@ from api_testing.models.base_model import (
     APITestingBaseLLMModel,
 )
 from api_testing.models.specification_model import ItemProperties, OperationProperties
+from api_testing.constraint.config import ConstraintExtractionSettings
 from api_testing.prompts.response_constraints import ResponsePropertyConstraintMiner
 from api_testing.utils import flatten_json_schema
 from api_testing.utils.graph import is_nested_path_end_with
@@ -65,6 +66,7 @@ class StaticConstraintMiner:
         embedding_model: Optional[APITestingBaseEmbeddingModel] = None,
         cache_dir: Optional[str] = None,
         batch_size: int = 10,
+        settings: Optional[ConstraintExtractionSettings] = None,
     ) -> None:
         """Initialize StaticConstraintMiner.
 
@@ -74,6 +76,7 @@ class StaticConstraintMiner:
             embedding_model: Optional embedding model for semantic analysis
             cache_dir: Directory path for caching extracted constraints
             batch_size: Number of schemas to process in parallel (default: 10)
+            settings: ConstraintExtractionSettings instance (optional, will use defaults if not provided)
         """
         if spec_parser is None:
             raise ValueError("spec_parser is required")
@@ -86,6 +89,7 @@ class StaticConstraintMiner:
         self.model: Optional[APITestingBaseLLMModel] = model
         self.embedding_model: Optional[APITestingBaseEmbeddingModel] = embedding_model
         self.batch_size: int = batch_size
+        self.settings = settings  # Store settings to pass to builder
         self.cache_file = os.path.join(cache_dir, "static_constraint_miner.json")
         self.logger = get_logger(
             "static_constraint_miner",
@@ -340,48 +344,68 @@ class StaticConstraintMiner:
 
         return output
 
-    async def extract_and_save_constraint_ir(self) -> None:
-        """Generate Constraint IR and save to cache (non-breaking extension).
+    async def extract_and_save_constraint_ir(self):
+        """Primary entry point: Generate and save Constraint IR v2.
 
-        This method builds a Constraint IR document from operations and schemas,
-        then saves it to cache alongside the existing static_constraint_miner.json.
+        This is the main entry point for the constraint extraction pipeline.
+        It orchestrates all phases (structural, description, LLM coverage,
+        LLM extraction, cross-field, request-response) and produces:
 
-        The Constraint IR is used by the validation engine for runtime constraint validation.
+        1. Final constraint_ir.json
+        2. Intermediate outputs for each phase (if save_intermediate=True)
+        3. Summary.json with statistics and cache metrics
+
+        Returns:
+            ConstraintIRModel with all extracted constraints
+
+        Raises:
+            IOError: If constraint IR file cannot be written
         """
-        from api_testing.constraint.constraint_ir_builder import ConstraintIRBuilder
+        from api_testing.constraint.ir import ConstraintIRBuilder
 
-        self.logger.info("Building Constraint IR from operations")
+        self.logger.info(
+            "Starting constraint extraction pipeline",
+            operations_count=len(self.operations),
+            schemas_count=len(self.schemas),
+            use_llm=self.model is not None,
+        )
 
-        # Build Constraint IR using builder
+        # Build Constraint IR v2 using enhanced builder
         builder = ConstraintIRBuilder(
             operations=self.operations,
             schemas=self.schemas,
-            static_constraints_path=self.cache_file,  # Pass path to static_miner
-            llm_client=self.model,
-            embedding_model=self.embedding_model,
+            static_constraints_path=self.cache_file,
             cache_dir=os.path.dirname(self.cache_file),
-            logger_instance=self.logger,
+            settings=self.settings,  # Pass settings to builder
         )
 
         ir = await builder.build()
 
-        # Save to cache (separate file from static_constraint_miner.json)
+        # Save final IR
         ir_file = os.path.join(os.path.dirname(self.cache_file), "constraint_ir.json")
 
         try:
             with open(ir_file, "w", encoding="utf-8") as f:
                 json.dump(ir.model_dump(), f, indent=2, ensure_ascii=False)
 
-            self.logger.info(
-                "Constraint IR saved successfully",
-                file=ir_file,
-                operations_count=len(ir.operation_constraints),
-                total_checks=sum(
-                    len(oc.checks) for oc in ir.operation_constraints.values()
-                ),
+            total_constraints = sum(
+                len(oc.constraints) for oc in ir.operation_constraints.values()
             )
+
+            self.logger.info(
+                "Constraint IR extraction complete",
+                ir_file=ir_file,
+                version=ir.version,
+                operations=len(ir.operation_constraints),
+                total_constraints=total_constraints,
+            )
+
+            return ir
+
         except IOError as e:
             self.logger.error(
-                f"Failed to write constraint IR file: {ir_file}, error={str(e)}"
+                "Failed to write constraint IR file",
+                ir_file=ir_file,
+                error=str(e),
             )
             raise
