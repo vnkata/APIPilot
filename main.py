@@ -7,7 +7,7 @@ from api_testing.models.llms.AzureOpenAIModel import AzureOpenAIModel
 load_dotenv()
 def test_configuration_parser_debug_log(llm: AzureOpenAIModel):
     file_name = "Genome-nexus.json"
-    path = f"/Users/npt/Documents/NCKH/API-Testing/datasets/{file_name}"
+    path = f"C:\\Users\\Admin\\Desktop\\NCKH\\API-Testing\\datasets\\{file_name}"
     name = os.path.splitext(file_name)[0]
     print(f"[*] Initializing SpecificationParser for: {os.path.basename(path)}")
 
