@@ -1,0 +1,107 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "number.range",
+      "version": "v1",
+      "category": "number",
+      "description": "Validate number is within [min, max] range",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "integer"
+      ],
+      "examples": [
+        {
+          "args": {
+            "min": 0.0,
+            "max": 1.0
+          },
+          "valid": [
+            0.5
+          ],
+          "invalid": [
+            -0.1,
+            1.1
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "number.positive",
+      "version": "v1",
+      "category": "number",
+      "description": "Validate number is positive (> 0)",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "integer"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            0.1,
+            1.0
+          ],
+          "invalid": [
+            0.0,
+            -0.1
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "number.precision",
+      "version": "v1",
+      "category": "number",
+      "description": "Validate number has at most N decimal places",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "max_decimals"
+        ],
+        "properties": {
+          "max_decimals": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number"
+      ],
+      "examples": [
+        {
+          "args": {
+            "max_decimals": 2
+          },
+          "valid": [
+            1.23
+          ],
+          "invalid": [
+            1.234
+          ]
+        }
+      ],
+      "implemented": false
+    }
+  ]
+}

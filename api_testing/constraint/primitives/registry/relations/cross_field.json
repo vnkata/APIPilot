@@ -1,0 +1,352 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "cross.equals",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate two fields are equal",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "case_sensitive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "any"
+      ],
+      "examples": [
+        {
+          "args": {
+            "case_sensitive": true
+          },
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "cross.lt",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate first field < second field",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "string",
+        "date"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires 2 selectors, e.g. start_date < end_date"
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "cross.lte",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate first field <= second field",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "string",
+        "date"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "cross.gt",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate first field > second field",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "string",
+        "date"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "cross.gte",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate first field >= second field",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "string",
+        "date"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "comparison.less_than",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate first field < second field (alias for cross.lt)",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "comparison_type": {
+            "type": "string",
+            "enum": [
+              "numeric",
+              "date",
+              "string"
+            ],
+            "default": "numeric"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "integer",
+        "string",
+        "date"
+      ],
+      "examples": [
+        {
+          "args": {
+            "comparison_type": "date"
+          },
+          "note": "Requires 2 selectors, e.g. date < observedDate"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "comparison.less_than_or_equal",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate first field <= second field (alias for cross.lte)",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "comparison_type": {
+            "type": "string",
+            "enum": [
+              "numeric",
+              "date",
+              "string"
+            ],
+            "default": "numeric"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "integer",
+        "string",
+        "date"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "comparison.greater_than",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate first field > second field (alias for cross.gt)",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "comparison_type": {
+            "type": "string",
+            "enum": [
+              "numeric",
+              "date",
+              "string"
+            ],
+            "default": "numeric"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "integer",
+        "string",
+        "date"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "comparison.greater_than_or_equal",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate first field >= second field (alias for cross.gte)",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "comparison_type": {
+            "type": "string",
+            "enum": [
+              "numeric",
+              "date",
+              "string"
+            ],
+            "default": "numeric"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "integer",
+        "string",
+        "date"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "comparison.equals",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate two fields are equal (alias for cross.equals)",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "case_sensitive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "any"
+      ],
+      "examples": [
+        {
+          "args": {
+            "case_sensitive": true
+          },
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "comparison.not_equals",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate two fields are not equal",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "case_sensitive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "any"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires 2 selectors"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "request_response.path_param_matches_field",
+      "version": "v1",
+      "category": "cross-field",
+      "description": "Validate path parameter matches response field value",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "param_name": {
+            "type": "string"
+          },
+          "field_path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "param_name",
+          "field_path"
+        ],
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "any"
+      ],
+      "examples": [
+        {
+          "args": {
+            "param_name": "provinceId",
+            "field_path": "province.id"
+          },
+          "note": "Validates path param {provinceId} equals response.province.id"
+        }
+      ],
+      "implemented": false
+    }
+  ]
+}

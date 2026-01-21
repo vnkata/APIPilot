@@ -1,0 +1,146 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "date.iso_date",
+      "version": "v1",
+      "category": "date",
+      "description": "Validate string is valid ISO 8601 date (YYYY-MM-DD)",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            "2024-01-15"
+          ],
+          "invalid": [
+            "2024-13-01",
+            "not-a-date"
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "date.iso_datetime",
+      "version": "v1",
+      "category": "date",
+      "description": "Validate string is valid ISO 8601 datetime",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            "2024-01-15T10:30:00Z"
+          ],
+          "invalid": [
+            "2024-01-15"
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "date.range",
+      "version": "v1",
+      "category": "date",
+      "description": "Validate date is within [min, max] range",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "string"
+          },
+          "max": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "min": "2024-01-01",
+            "max": "2024-12-31"
+          },
+          "valid": [
+            "2024-06-15"
+          ],
+          "invalid": [
+            "2023-12-31"
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "date.past",
+      "version": "v1",
+      "category": "date",
+      "description": "Validate date is in the past",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            "2020-01-01"
+          ],
+          "invalid": [
+            "2099-01-01"
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "date.future",
+      "version": "v1",
+      "category": "date",
+      "description": "Validate date is in the future",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            "2099-01-01"
+          ],
+          "invalid": [
+            "2020-01-01"
+          ]
+        }
+      ],
+      "implemented": false
+    }
+  ]
+}

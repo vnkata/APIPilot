@@ -1,0 +1,79 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "object.required_keys",
+      "version": "v1",
+      "category": "object",
+      "description": "Validate object has required keys",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "keys"
+        ],
+        "properties": {
+          "keys": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "object"
+      ],
+      "examples": [
+        {
+          "args": {
+            "keys": [
+              "id",
+              "name"
+            ]
+          },
+          "valid": [
+            {
+              "id": 1,
+              "name": "test"
+            }
+          ],
+          "invalid": [
+            {
+              "id": 1
+            }
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "object.nonempty",
+      "version": "v1",
+      "category": "object",
+      "description": "Validate object has at least one key",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "object"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            {
+              "a": 1
+            }
+          ],
+          "invalid": [
+            {}
+          ]
+        }
+      ],
+      "implemented": false
+    }
+  ]
+}

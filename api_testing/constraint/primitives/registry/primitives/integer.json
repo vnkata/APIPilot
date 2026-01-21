@@ -1,0 +1,170 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "int.range",
+      "version": "v1",
+      "category": "integer",
+      "description": "Validate integer is within [min, max] range",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "integer"
+      ],
+      "examples": [
+        {
+          "args": {
+            "min": 1,
+            "max": 10
+          },
+          "valid": [
+            1,
+            5,
+            10
+          ],
+          "invalid": [
+            0,
+            11
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "int.enum",
+      "version": "v1",
+      "category": "integer",
+      "description": "Validate integer is in allowed enum values",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "values"
+        ],
+        "properties": {
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "integer"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "integer"
+      ],
+      "examples": [
+        {
+          "args": {
+            "values": [
+              0,
+              1
+            ]
+          },
+          "valid": [
+            0,
+            1
+          ],
+          "invalid": [
+            2,
+            -1
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "int.positive",
+      "version": "v1",
+      "category": "integer",
+      "description": "Validate integer is positive (> 0)",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "integer"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            1,
+            100
+          ],
+          "invalid": [
+            0,
+            -1
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "int.negative",
+      "version": "v1",
+      "category": "integer",
+      "description": "Validate integer is negative (< 0)",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "integer"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            -1,
+            -100
+          ],
+          "invalid": [
+            0,
+            1
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "int.nonzero",
+      "version": "v1",
+      "category": "integer",
+      "description": "Validate integer is non-zero",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "integer"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            1,
+            -1
+          ],
+          "invalid": [
+            0
+          ]
+        }
+      ],
+      "implemented": false
+    }
+  ]
+}

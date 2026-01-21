@@ -1,0 +1,40 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "boolean.const",
+      "version": "v1",
+      "category": "boolean",
+      "description": "Validate boolean has specific constant value",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {
+            "type": "boolean"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "boolean"
+      ],
+      "examples": [
+        {
+          "args": {
+            "value": true
+          },
+          "valid": [
+            true
+          ],
+          "invalid": [
+            false
+          ]
+        }
+      ],
+      "implemented": false
+    }
+  ]
+}

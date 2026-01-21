@@ -1,0 +1,154 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "array.length",
+      "version": "v1",
+      "category": "array",
+      "description": "Validate array length is within [min, max]",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array"
+      ],
+      "examples": [
+        {
+          "args": {
+            "min": 1,
+            "max": 5
+          },
+          "valid": [
+            [
+              1,
+              2
+            ]
+          ],
+          "invalid": [
+            [],
+            [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6
+            ]
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "array.unique",
+      "version": "v1",
+      "category": "array",
+      "description": "Validate array contains only unique items",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "invalid": [
+            [
+              1,
+              2,
+              2
+            ]
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "array.contains",
+      "version": "v1",
+      "category": "array",
+      "description": "Validate array contains specific value",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "value"
+        ],
+        "properties": {
+          "value": {}
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array"
+      ],
+      "examples": [
+        {
+          "args": {
+            "value": "target"
+          },
+          "valid": [
+            [
+              "a",
+              "target",
+              "b"
+            ]
+          ],
+          "invalid": [
+            [
+              "a",
+              "b"
+            ]
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "array.nonempty",
+      "version": "v1",
+      "category": "array",
+      "description": "Validate array is not empty",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            [
+              1
+            ]
+          ],
+          "invalid": [
+            []
+          ]
+        }
+      ],
+      "implemented": false
+    }
+  ]
+}

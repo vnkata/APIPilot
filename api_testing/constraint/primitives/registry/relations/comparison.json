@@ -1,0 +1,47 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "comparison.between",
+      "version": "v1",
+      "category": "comparison",
+      "description": "Validate value is between min and max (inclusive)",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "min",
+          "max"
+        ],
+        "properties": {
+          "min": {
+            "type": "number"
+          },
+          "max": {
+            "type": "number"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "number",
+        "integer"
+      ],
+      "examples": [
+        {
+          "args": {
+            "min": 0,
+            "max": 100
+          },
+          "valid": [
+            50
+          ],
+          "invalid": [
+            -1,
+            101
+          ]
+        }
+      ],
+      "implemented": true
+    }
+  ]
+}

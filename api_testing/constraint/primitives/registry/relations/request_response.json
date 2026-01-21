@@ -1,0 +1,401 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "forall_eq",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate all items in array equal a specific value (filter semantics)",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "expected"
+        ],
+        "properties": {
+          "expected": {}
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array"
+      ],
+      "examples": [
+        {
+          "args": {
+            "expected": "ACTIVE"
+          },
+          "note": "All items in array should equal 'ACTIVE'"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "exists",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate at least one item in array matches condition",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "match": {}
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array"
+      ],
+      "examples": [
+        {
+          "args": {
+            "match": "target"
+          },
+          "note": "At least one item should equal 'target'"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "len_le",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate array/string length is less than or equal to max (pagination)",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "max"
+        ],
+        "properties": {
+          "max": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array",
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "max": 10
+          },
+          "valid": [
+            [
+              1,
+              2,
+              3
+            ]
+          ],
+          "invalid": [
+            [
+              1,
+              2,
+              3,
+              4,
+              5,
+              6,
+              7,
+              8,
+              9,
+              10,
+              11
+            ]
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "len_eq",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate array/string length equals expected value",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "expected"
+        ],
+        "properties": {
+          "expected": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array",
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "expected": 5
+          },
+          "valid": [
+            [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          ],
+          "invalid": [
+            [
+              1,
+              2,
+              3
+            ]
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "len_ge",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate array/string length is greater than or equal to min",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "min"
+        ],
+        "properties": {
+          "min": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array",
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "min": 3
+          },
+          "valid": [
+            [
+              1,
+              2,
+              3,
+              4
+            ]
+          ],
+          "invalid": [
+            [
+              1,
+              2
+            ]
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "sorted_by",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate array is sorted by a specific field",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "key": {
+            "type": "string"
+          },
+          "direction": {
+            "type": "string",
+            "enum": [
+              "asc",
+              "desc"
+            ],
+            "default": "asc"
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "numeric",
+              "string",
+              "date"
+            ],
+            "default": "numeric"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "array"
+      ],
+      "examples": [
+        {
+          "args": {
+            "key": "createdAt",
+            "direction": "desc",
+            "type": "date"
+          },
+          "note": "Array should be sorted by createdAt field in descending order"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "implies",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate conditional constraint: if condition is true, then consequent must be true",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "any"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "note": "Requires [condition, consequent] pair, e.g. if expand=details then response.details exists"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "contains_substring",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate string contains substring (search semantics)",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "substring"
+        ],
+        "properties": {
+          "substring": {
+            "type": "string"
+          },
+          "case_sensitive": {
+            "type": "boolean",
+            "default": true
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "substring": "test",
+            "case_sensitive": false
+          },
+          "valid": [
+            "This is a TEST"
+          ],
+          "invalid": [
+            "No match"
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "date_in_range",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate date is within range [start_date, end_date]",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "start_date",
+          "end_date"
+        ],
+        "properties": {
+          "start_date": {
+            "type": "string"
+          },
+          "end_date": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "start_date": "2024-01-01",
+            "end_date": "2024-12-31"
+          },
+          "valid": [
+            "2024-06-15"
+          ],
+          "invalid": [
+            "2023-12-31"
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "field_exists",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate field exists in object (projection/expand semantics)",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "any"
+      ],
+      "examples": [
+        {
+          "args": {
+            "field": "details"
+          },
+          "note": "Field 'details' should exist in response"
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "field_absent",
+      "version": "v1",
+      "category": "request-response",
+      "description": "Validate field does not exist in object",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "field": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "any"
+      ],
+      "examples": [
+        {
+          "args": {
+            "field": "details"
+          },
+          "note": "Field 'details' should not exist in response"
+        }
+      ],
+      "implemented": true
+    }
+  ]
+}

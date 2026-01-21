@@ -1,0 +1,250 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "string.enum",
+      "version": "v1",
+      "category": "string",
+      "description": "Validate string is in allowed enum values",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "values"
+        ],
+        "properties": {
+          "values": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "values": [
+              "AB",
+              "BC"
+            ]
+          },
+          "valid": [
+            "AB"
+          ],
+          "invalid": [
+            "XX"
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "string.pattern",
+      "version": "v1",
+      "category": "string",
+      "description": "Validate string matches regex pattern",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "pattern"
+        ],
+        "properties": {
+          "pattern": {
+            "type": "string"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "pattern": "^https"
+          },
+          "valid": [
+            "https://example.com"
+          ],
+          "invalid": [
+            "http://example.com"
+          ]
+        }
+      ],
+      "implemented": true
+    },
+    {
+      "kind": "string.length",
+      "version": "v1",
+      "category": "string",
+      "description": "Validate string length is within [min, max]",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "min": {
+            "type": "integer"
+          },
+          "max": {
+            "type": "integer"
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "min": 3,
+            "max": 10
+          },
+          "valid": [
+            "abc",
+            "abcdefgh"
+          ],
+          "invalid": [
+            "ab",
+            "abcdefghijk"
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "string.uri",
+      "version": "v1",
+      "category": "string",
+      "description": "Validate string is valid URI with optional scheme restriction",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "allowed_schemes": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "allowed_schemes": [
+              "https"
+            ]
+          },
+          "valid": [
+            "https://example.com"
+          ],
+          "invalid": [
+            "http://example.com",
+            "not-a-uri"
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "string.email",
+      "version": "v1",
+      "category": "string",
+      "description": "Validate string is valid email address",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            "user@example.com"
+          ],
+          "invalid": [
+            "not-an-email"
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "string.uuid",
+      "version": "v1",
+      "category": "string",
+      "description": "Validate string is valid UUID",
+      "args_schema": {
+        "type": "object",
+        "properties": {
+          "version": {
+            "type": "integer",
+            "enum": [
+              1,
+              2,
+              3,
+              4,
+              5
+            ]
+          }
+        },
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {
+            "version": 4
+          },
+          "valid": [
+            "550e8400-e29b-41d4-a716-446655440000"
+          ],
+          "invalid": [
+            "not-a-uuid"
+          ]
+        }
+      ],
+      "implemented": false
+    },
+    {
+      "kind": "string.nonempty",
+      "version": "v1",
+      "category": "string",
+      "description": "Validate string is not empty after trimming",
+      "args_schema": {
+        "type": "object",
+        "properties": {},
+        "additionalProperties": false
+      },
+      "supported_types": [
+        "string"
+      ],
+      "examples": [
+        {
+          "args": {},
+          "valid": [
+            "abc",
+            " abc "
+          ],
+          "invalid": [
+            "",
+            "   "
+          ]
+        }
+      ],
+      "implemented": false
+    }
+  ]
+}
