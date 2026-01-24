@@ -8,6 +8,7 @@ Mines constraints from response schemas and request-response mappings.
 import asyncio
 import json
 import os
+from pydantic import BaseModel, Field
 from typing import Dict, List, Optional, Tuple, TypedDict
 from api_testing.dataset import SpecificationParser
 from api_testing.models.base_model import (
@@ -17,6 +18,9 @@ from api_testing.models.base_model import (
 from api_testing.models.specification_model import ItemProperties, OperationProperties
 from api_testing.constraint.config import ConstraintExtractionSettings
 from api_testing.prompts.response_constraints import ResponsePropertyConstraintMiner
+from api_testing.prompts.request_response_constraint.miner import (
+    RequestResponseConstraintMiner,
+)
 from api_testing.utils import flatten_json_schema
 from api_testing.utils.graph import is_nested_path_end_with
 from common.logger import get_logger, LogLevel
@@ -26,12 +30,46 @@ from common.logger import get_logger, LogLevel
 ConstraintDict = Dict[str, str]  # Maps attribute path to constraint description
 OperationConstraints = Dict[str, ConstraintDict]  # Maps operation UUID to constraints
 SchemaConstraints = Dict[str, ConstraintDict]  # Maps schema name to constraints
+RequestResponseConstraintsDict = Dict[
+    str, Dict[str, Dict[str, str]]
+]  # Nested request-response constraints
 
 
 class ResponsePropertiesConstraintsOutput(TypedDict):
     """Output format for response properties constraints."""
 
     response_properties_constraints: OperationConstraints
+
+
+# Pydantic models for unified output structure
+class OperationConstraintsData(BaseModel):
+    """Unified constraints data for a single operation.
+
+    Contains both response property constraints and request-response constraints.
+    """
+
+    response_properties_constraints: Dict[str, str] = Field(
+        default_factory=dict,
+        description="Maps response property paths to constraint descriptions",
+    )
+
+    request_response_constraints: Dict[str, Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Maps request parameters to response properties with constraint descriptions",
+    )
+
+
+class StaticConstraintMinerOutput(BaseModel):
+    """Complete output from StaticConstraintMiner.
+
+    Groups all constraints by operation UUID, with each operation containing
+    both response property constraints and request-response constraints.
+    """
+
+    operations: Dict[str, OperationConstraintsData] = Field(
+        default_factory=dict,
+        description="Maps operation UUIDs to their constraint data",
+    )
 
 
 class StaticConstraintMiner:
@@ -45,18 +83,21 @@ class StaticConstraintMiner:
         spec_parser: Parser for API specification
         model: LLM model for constraint extraction (deprecated, kept for compatibility)
         embedding_model: Embedding model (optional, for future use)
-        cache_file: Path to cache file for storing extracted constraints
+        cache_dir: Directory path for caching extracted constraints
+        cache_file: Path to main cache file (static_constraint_miner.json)
         logger: Logger instance
         operations: Dictionary of operation UUIDs to OperationProperties
         schemas: Dictionary of schema names to ItemProperties
         response_constraint: ResponsePropertyConstraintMiner extractor instance
+        request_response_constraint: RequestResponseConstraintMiner extractor instance
 
     Example:
         >>> miner = StaticConstraintMiner(
         ...     spec_parser=parser,
         ...     cache_dir="./cache"
         ... )
-        >>> await miner.response_properties_constraints()
+        >>> output = await miner.extract_all_constraints()
+        >>> print(output.operations["get-/api/v1/holidays"].response_properties_constraints)
     """
 
     def __init__(
@@ -75,7 +116,7 @@ class StaticConstraintMiner:
             model: Deprecated LLM model parameter (kept for backward compatibility)
             embedding_model: Optional embedding model for semantic analysis
             cache_dir: Directory path for caching extracted constraints
-            batch_size: Number of schemas to process in parallel (default: 10)
+            batch_size: Number of schemas/operations to process in parallel (default: 10)
             settings: ConstraintExtractionSettings instance (optional, will use defaults if not provided)
         """
         if spec_parser is None:
@@ -91,6 +132,13 @@ class StaticConstraintMiner:
         self.batch_size: int = batch_size
         self.settings = settings  # Store settings to pass to builder
         self.cache_file = os.path.join(cache_dir, "static_constraint_miner.json")
+        # Temp cache files for intermediate results
+        self._response_cache_file = os.path.join(
+            cache_dir, "_temp_response_constraints.json"
+        )
+        self._request_response_cache_file = os.path.join(
+            cache_dir, "_temp_request_response_constraints.json"
+        )
         self.logger = get_logger(
             "static_constraint_miner",
             level=LogLevel.DEBUG,
@@ -102,17 +150,132 @@ class StaticConstraintMiner:
             k: v for opt in self.operations.values() for k, v in opt.schemas.items()
         }
         self.response_constraint = ResponsePropertyConstraintMiner()
+        self.request_response_constraint = RequestResponseConstraintMiner()
 
-    async def extract_request_response_constraints(self) -> None:
-        """Implement mining constraints between request and response.
+    async def _extract_single_operation_request_response_constraints(
+        self, operation: OperationProperties
+    ) -> Tuple[str, Optional[Dict[str, Dict[str, str]]]]:
+        """Extract request-response constraints for a single operation.
 
-        This method is a placeholder for future implementation of
-        request-response constraint mining.
+        Args:
+            operation: OperationProperties object
 
-        Raises:
-            NotImplementedError: This method is not yet implemented
+        Returns:
+            Tuple of (operation_uuid, constraints_dict)
         """
-        raise NotImplementedError("request_response_constraints not yet implemented")
+        from common.llm.exceptions import LLMError
+
+        try:
+            self.logger.debug(f"Processing operation: {operation.uuid}")
+
+            # Extract request parameters
+            request_params: List[str] = []
+            if operation.parameters:
+                for param_name, param_props in operation.parameters.items():
+                    param_desc = param_props.to_human_readable()
+                    request_params.append(f"- {param_name}: {param_desc}")
+
+            if not request_params:
+                self.logger.debug(
+                    f"Skipping operation with no request params: {operation.uuid}"
+                )
+                return (operation.uuid, None)
+
+            # Extract response properties
+            response_props: List[str] = []
+            if operation.successful_responses:
+                flattened_responses = flatten_json_schema(
+                    operation.successful_responses.to_dict()
+                )
+                for prop_path, prop_data in flattened_responses.items():
+                    if prop_data:
+                        prop_desc = ItemProperties(**prop_data).to_human_readable()
+                        response_props.append(f"- {prop_path}: {prop_desc}")
+
+            if not response_props:
+                self.logger.debug(
+                    f"Skipping operation with no response props: {operation.uuid}"
+                )
+                return (operation.uuid, None)
+
+            # Extract constraints
+            result = await self.request_response_constraint.extract_constraints(
+                operation_name=operation.uuid,
+                method=operation.method,
+                path=operation.path,
+                request_params="\n".join(request_params),
+                response_properties="\n".join(response_props),
+            )
+
+            constraints_dict = result.constraints
+
+            self.logger.debug(
+                f"Extracted request-response constraints: operation={operation.uuid}, "
+                f"constraint_pairs={sum(len(v) for v in constraints_dict.values())}"
+            )
+
+            return (operation.uuid, constraints_dict)
+
+        except LLMError as e:
+            self.logger.error(
+                f"Failed to extract request-response constraints: operation={operation.uuid}, "
+                f"error={str(e)}"
+            )
+            return (operation.uuid, None)
+        except Exception as e:
+            self.logger.error(
+                f"Unexpected error extracting request-response constraints: "
+                f"operation={operation.uuid}, error={str(e)}, error_type={type(e).__name__}"
+            )
+            return (operation.uuid, None)
+
+    async def _extract_request_response_constraints_batch(
+        self, operations_batch: List[OperationProperties]
+    ) -> Dict[str, Dict[str, Dict[str, str]]]:
+        """Extract request-response constraints for a batch of operations.
+
+        Args:
+            operations_batch: List of operations to process
+
+        Returns:
+            Dictionary mapping operation UUIDs to request-response constraints
+        """
+        if not operations_batch:
+            return {}
+
+        self.logger.debug(
+            f"Processing batch of {len(operations_batch)} operations: "
+            f"{[op.uuid for op in operations_batch]}"
+        )
+
+        tasks = [
+            self._extract_single_operation_request_response_constraints(op)
+            for op in operations_batch
+        ]
+
+        results = await asyncio.gather(*tasks, return_exceptions=True)
+
+        batch_constraints: Dict[str, Dict[str, Dict[str, str]]] = {}
+        for i, result in enumerate(results):
+            operation = operations_batch[i]
+
+            if isinstance(result, Exception):
+                self.logger.error(
+                    f"Exception in batch processing: operation={operation.uuid}, "
+                    f"error={str(result)}, error_type={type(result).__name__}"
+                )
+                continue
+
+            op_uuid, constraints_dict = result
+            if constraints_dict is not None:
+                batch_constraints[op_uuid] = constraints_dict
+
+        self.logger.debug(
+            f"Batch completed: {len(batch_constraints)}/{len(operations_batch)} "
+            "operations processed successfully"
+        )
+
+        return batch_constraints
 
     async def _extract_single_schema_constraints(
         self, schema_name: str, schema: ItemProperties
@@ -233,50 +396,39 @@ class StaticConstraintMiner:
 
         return batch_constraints
 
-    async def extract_response_property_constraints(
+    async def _extract_response_constraints_internal(
         self,
-    ) -> ResponsePropertiesConstraintsOutput:
-        """Extract constraints among response properties.
+    ) -> OperationConstraints:
+        """Internal method to extract response property constraints.
 
-        Analyzes response schemas to identify constraints, rules, and
-        limitations that can be programmatically validated. Maps schema-level
-        constraints to operation-level constraints.
+        Returns operation-level constraints (not wrapped in TypedDict).
+        Uses temp cache file for intermediate results.
 
         Returns:
-            Dictionary with "response_properties_constraints" key containing
-            operation UUIDs mapped to constraint dictionaries
-
-        Raises:
-            LLMError: If constraint extraction fails
-            IOError: If cache file cannot be written
+            Dictionary mapping operation UUIDs to response property constraints
         """
+        # Load from temp cache if exists
+        if os.path.exists(self._response_cache_file):
+            self.logger.info(
+                f"Loading response constraints from temp cache: {self._response_cache_file}"
+            )
+            try:
+                with open(self._response_cache_file, "r", encoding="utf-8") as file:
+                    cached_data = json.load(file)
+                    return cached_data
+            except (json.JSONDecodeError, IOError) as e:
+                self.logger.warning(
+                    f"Failed to load temp cache, will regenerate: error={str(e)}"
+                )
 
         self.logger.info(
             f"Processing {len(self.schemas)} schemas for response properties constraints"
         )
 
-        # Load from cache if exists
-        if os.path.exists(self.cache_file):
-            self.logger.info(f"Loading constraints from cache: {self.cache_file}")
-            try:
-                with open(self.cache_file, "r", encoding="utf-8") as file:
-                    cached_data = json.load(file)
-                    return cached_data  # type: ignore
-            except (json.JSONDecodeError, IOError) as e:
-                self.logger.warning(
-                    "Failed to load cache, will regenerate",
-                    error=str(e),
-                    cache_file=self.cache_file,
-                )
-
         # Extract constraints for all schemas using batch processing
         schema_constraints: SchemaConstraints = {}
         schemas_list = list(self.schemas.items())
         total_schemas = len(schemas_list)
-
-        self.logger.info(
-            f"Processing {total_schemas} schemas in batches of {self.batch_size}"
-        )
 
         # Process schemas in batches
         for batch_start in range(0, total_schemas, self.batch_size):
@@ -286,11 +438,10 @@ class StaticConstraintMiner:
             total_batches = (total_schemas + self.batch_size - 1) // self.batch_size
 
             self.logger.info(
-                f"Processing batch {batch_num}/{total_batches} "
+                f"Processing response constraints batch {batch_num}/{total_batches} "
                 f"({batch_start + 1}-{batch_end} of {total_schemas} schemas)"
             )
 
-            # Extract constraints for this batch in parallel
             batch_results = await self._extract_schema_constraints_batch(batch)
             schema_constraints.update(batch_results)
 
@@ -299,12 +450,7 @@ class StaticConstraintMiner:
                 f"{len(batch_results)} schemas processed successfully"
             )
 
-        self.logger.info(
-            f"Completed processing all schemas: {len(schema_constraints)}/{total_schemas} "
-            "schemas extracted successfully"
-        )
-
-        # Convert from schema-level constraints to operation-level constraints
+        # Convert from schema-level to operation-level constraints
         final_constraints: OperationConstraints = {}
         for opt in self.operations.values():
             final_constraints[opt.uuid] = {}
@@ -326,23 +472,207 @@ class StaticConstraintMiner:
                     }
                     final_constraints[opt.uuid].update(attributes)
 
-        # Save to cache
-        output: ResponsePropertiesConstraintsOutput = {
-            "response_properties_constraints": final_constraints
-        }
+        # Save to temp cache
+        try:
+            with open(self._response_cache_file, "w", encoding="utf-8") as file:
+                json.dump(final_constraints, file, ensure_ascii=False, indent=2)
+            self.logger.info(
+                f"Saved response constraints to temp cache: {self._response_cache_file}"
+            )
+        except IOError as e:
+            self.logger.warning(
+                f"Failed to write temp cache file: {self._response_cache_file}, error={str(e)}"
+            )
+
+        return final_constraints
+
+    async def _extract_request_response_constraints_internal(
+        self,
+    ) -> RequestResponseConstraintsDict:
+        """Internal method to extract request-response constraints.
+
+        Returns nested dict mapping operation -> request_param -> response_property -> description.
+        Uses temp cache file for intermediate results.
+
+        Returns:
+            Dictionary mapping operation UUIDs to request-response constraints
+        """
+        # Load from temp cache if exists
+        if os.path.exists(self._request_response_cache_file):
+            self.logger.info(
+                f"Loading request-response constraints from temp cache: {self._request_response_cache_file}"
+            )
+            try:
+                with open(
+                    self._request_response_cache_file, "r", encoding="utf-8"
+                ) as file:
+                    return json.load(file)
+            except (json.JSONDecodeError, IOError) as e:
+                self.logger.warning(
+                    f"Failed to load temp cache, will regenerate: error={str(e)}"
+                )
+
+        self.logger.info(
+            f"Processing {len(self.operations)} operations for request-response constraints"
+        )
+
+        # Process operations in batches
+        all_constraints: RequestResponseConstraintsDict = {}
+        operations_list = list(self.operations.values())
+        total_operations = len(operations_list)
+
+        for batch_start in range(0, total_operations, self.batch_size):
+            batch_end = min(batch_start + self.batch_size, total_operations)
+            batch = operations_list[batch_start:batch_end]
+            batch_num = (batch_start // self.batch_size) + 1
+            total_batches = (total_operations + self.batch_size - 1) // self.batch_size
+
+            self.logger.info(
+                f"Processing request-response constraints batch {batch_num}/{total_batches} "
+                f"({batch_start + 1}-{batch_end} of {total_operations} operations)"
+            )
+
+            batch_results = await self._extract_request_response_constraints_batch(
+                batch
+            )
+            all_constraints.update(batch_results)
+
+            self.logger.info(
+                f"Batch {batch_num}/{total_batches} completed: "
+                f"{len(batch_results)} operations processed successfully"
+            )
+
+        # Save to temp cache
+        try:
+            with open(self._request_response_cache_file, "w", encoding="utf-8") as file:
+                json.dump(all_constraints, file, ensure_ascii=False, indent=2)
+            self.logger.info(
+                f"Saved request-response constraints to temp cache: {self._request_response_cache_file}"
+            )
+        except IOError as e:
+            self.logger.warning(
+                f"Failed to write temp cache file: {self._request_response_cache_file}, error={str(e)}"
+            )
+
+        return all_constraints
+
+    async def extract_all_constraints(
+        self,
+        force_refresh: bool = False,
+    ) -> StaticConstraintMinerOutput:
+        """Extract all constraints (response properties + request-response) and return unified output.
+
+        This is the primary entry point that:
+        1. Extracts response property constraints (with temp caching)
+        2. Extracts request-response constraints (with temp caching)
+        3. Merges both into unified operation-level structure
+        4. Saves to main cache file (static_constraint_miner.json)
+
+        Args:
+            force_refresh: If True, ignore main cache and re-extract all constraints
+
+        Returns:
+            StaticConstraintMinerOutput with unified constraints grouped by operation
+
+        Raises:
+            IOError: If cache file cannot be written
+        """
+        # Load from main cache if exists and not forcing refresh
+        if not force_refresh and os.path.exists(self.cache_file):
+            self.logger.info(
+                f"Loading all constraints from main cache: {self.cache_file}"
+            )
+            try:
+                with open(self.cache_file, "r", encoding="utf-8") as file:
+                    cached_data = json.load(file)
+                    return StaticConstraintMinerOutput(**cached_data)
+            except (json.JSONDecodeError, IOError) as e:
+                self.logger.warning(
+                    f"Failed to load main cache, will regenerate: error={str(e)}"
+                )
+
+        self.logger.info("Starting extraction of all constraints")
+
+        # Extract both types of constraints in parallel
+        response_task = self._extract_response_constraints_internal()
+        request_response_task = self._extract_request_response_constraints_internal()
+
+        response_constraints, request_response_constraints = await asyncio.gather(
+            response_task, request_response_task
+        )
+
+        # Merge into unified structure
+        unified_output = StaticConstraintMinerOutput()
+
+        for op_uuid in self.operations.keys():
+            unified_output.operations[op_uuid] = OperationConstraintsData(
+                response_properties_constraints=response_constraints.get(op_uuid, {}),
+                request_response_constraints=request_response_constraints.get(
+                    op_uuid, {}
+                ),
+            )
+
+        # Save to main cache
         try:
             with open(self.cache_file, "w", encoding="utf-8") as file:
-                json.dump(output, file, ensure_ascii=False, indent=4)
+                json.dump(
+                    unified_output.model_dump(), file, ensure_ascii=False, indent=2
+                )
+
+            total_ops = len(unified_output.operations)
+            total_response_constraints = sum(
+                len(op.response_properties_constraints)
+                for op in unified_output.operations.values()
+            )
+            total_request_response = sum(
+                sum(len(rp) for rp in op.request_response_constraints.values())
+                for op in unified_output.operations.values()
+            )
+
             self.logger.info(
-                f"Saved constraints to cache: cache_file={self.cache_file}, operations_count={len(final_constraints)}"
+                f"Saved unified constraints to main cache: {self.cache_file}, "
+                f"operations={total_ops}, "
+                f"response_constraints={total_response_constraints}, "
+                f"request_response_pairs={total_request_response}"
             )
         except IOError as e:
             self.logger.error(
-                f"Failed to write cache file: cache_file={self.cache_file}, error={str(e)}"
+                f"Failed to write main cache file: {self.cache_file}, error={str(e)}"
             )
             raise
 
-        return output
+        return unified_output
+
+    # Backward compatibility methods
+    async def extract_response_property_constraints(self) -> Dict:
+        """Backward compatible method for response property constraints.
+
+        Returns old format wrapped in TypedDict for compatibility.
+        Prefer using extract_all_constraints() for new code.
+        """
+        self.logger.warning(
+            "extract_response_property_constraints() is deprecated. "
+            "Use extract_all_constraints() instead."
+        )
+
+        response_constraints = await self._extract_response_constraints_internal()
+
+        return {"response_properties_constraints": response_constraints}
+
+    async def extract_request_response_constraints(
+        self,
+    ) -> RequestResponseConstraintsDict:
+        """Backward compatible method for request-response constraints.
+
+        Returns nested dict format for compatibility.
+        Prefer using extract_all_constraints() for new code.
+        """
+        self.logger.warning(
+            "extract_request_response_constraints() is deprecated. "
+            "Use extract_all_constraints() instead."
+        )
+
+        return await self._extract_request_response_constraints_internal()
 
     async def extract_and_save_constraint_ir(self):
         """Primary entry point: Generate and save Constraint IR v2.

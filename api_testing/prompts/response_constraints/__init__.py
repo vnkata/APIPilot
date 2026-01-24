@@ -199,10 +199,12 @@ class ResponsePropertyConstraintMiner:
 
         # Step 2: Extract validation result using StructuredOutputExtractor
         try:
-            validation_result = StructuredOutputExtractor.extract(
-                raw_text=raw_response,
-                model_class=ResponsePropertyConstraintsValidation,
-                strict=True,
+            validation_result: ResponsePropertyConstraintsValidation = (
+                StructuredOutputExtractor.extract(
+                    raw_text=raw_response,
+                    model_class=ResponsePropertyConstraintsValidation,
+                    strict=True,
+                )
             )
             logger.debug(
                 f"Validation extraction successful: schema={schema}, "

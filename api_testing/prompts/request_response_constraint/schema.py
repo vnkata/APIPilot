@@ -1,49 +1,58 @@
-"""
-Pydantic models for request-response constraint extraction.
+"""Pydantic models for request-response constraint extraction."""
 
-These models define the structure of constraints extracted between
-API request parameters and response properties.
-"""
-
-from typing import List, Optional
+from typing import Dict, List
 from pydantic import BaseModel, Field
+from dataclasses import dataclass
 
 
-class RequestResponseConstraintItem(BaseModel):
-    """Single request-response constraint mapping.
+@dataclass
+class ReqResConstraintVerdict(BaseModel):
+    parameter: str
+    description: str
+    property: str
 
-    Represents how a request parameter affects or corresponds to
-    a response property.
+    def to_dict(self):
+        return {
+            "parameter": self.parameter,
+            "description": self.description,
+            "property": self.property,
+        }
 
-    Attributes:
-        parameter: Parameter name(s), comma-separated if multiple
-        description: Constraint description in natural language
-        property: Response property name that corresponds to this parameter
+
+@dataclass
+class Verdict(BaseModel):
+    constraint: List[ReqResConstraintVerdict]
+
+    def to_dict(self):
+        return {"constraint": [item.to_dict() for item in self.constraint]}
+
+
+class RequestResponseConstraintValidation(BaseModel):
+    """Validation result from LLM indicating which request-response pairs have constraints.
+
+    Structure: {
+        "request_param_name": {
+            "response_property_path": true/false
+        }
+    }
     """
 
-    parameter: str = Field(description="Parameter name(s), comma-separated if multiple")
-    description: str = Field(description="Constraint description in natural language")
-    property: Optional[str] = Field(
-        default=None,
-        description="Response property name that corresponds to this parameter",
+    constraints: Dict[str, Dict[str, bool]] = Field(
+        description="Nested mapping from request parameter to response properties with constraint indicator"
     )
 
 
-class RequestResponseConstraintVerdict(BaseModel):
-    """Container for request-response constraint mappings.
+class RequestResponseConstraintOutput(BaseModel):
+    """Final output containing validated request-response constraints with descriptions.
 
-    Contains a list of constraints that map request parameters
-    to response properties.
-
-    Attributes:
-        constraint: List of constraint mappings
+    Structure: {
+        "request_param_name": {
+            "response_property_path": "description of the constraint relationship"
+        }
+    }
     """
 
-    constraint: List[RequestResponseConstraintItem] = Field(
-        description="List of parameter-to-response-property constraint mappings"
+    constraints: Dict[str, Dict[str, str]] = Field(
+        default_factory=dict,
+        description="Nested mapping from request parameter to response properties with constraint descriptions",
     )
-
-
-# Backward compatibility aliases
-ReqResConstraintVerdict = RequestResponseConstraintItem
-Verdict = RequestResponseConstraintVerdict
