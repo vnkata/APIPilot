@@ -5,7 +5,7 @@ These models define the structure of constraints extracted from
 response schema attributes.
 """
 
-from typing import Dict
+from typing import Dict, List
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -50,6 +50,18 @@ class ResponsePropertyConstraintsValidation(BaseModel):
                     f"Constraint value for '{key}' must be bool, got {type(value).__name__}"
                 )
         return v
+
+
+class ResponsePropertyConstraintsValidationV2(BaseModel):
+    """Validation result from LLM indicating which properties have constraints.
+
+    Optimized format: only list properties WITH constraints (no false values).
+    """
+
+    constrained_properties: List[str] = Field(
+        default_factory=list,
+        description="List of property paths that have validation constraints",
+    )
 
 
 class ResponsePropertyConstraintsOutput(BaseModel):

@@ -27,6 +27,17 @@ class Verdict(BaseModel):
         return {"constraint": [item.to_dict() for item in self.constraint]}
 
 
+class RequestResponsePair(BaseModel):
+    """A single request parameter and its related response properties."""
+
+    request_param: str = Field(description="Name of the request parameter")
+
+    response_properties: List[str] = Field(
+        default_factory=list,
+        description="List of response property paths constrained by this request parameter",
+    )
+
+
 class RequestResponseConstraintValidation(BaseModel):
     """Validation result from LLM indicating which request-response pairs have constraints.
 
@@ -39,6 +50,18 @@ class RequestResponseConstraintValidation(BaseModel):
 
     constraints: Dict[str, Dict[str, bool]] = Field(
         description="Nested mapping from request parameter to response properties with constraint indicator"
+    )
+
+
+class RequestResponseConstraintValidationV2(BaseModel):
+    """Validation result from LLM indicating request-response constraint pairs.
+
+    Optimized format: only list pairs that HAVE constraints (no false values).
+    """
+
+    request_response_pairs: List[RequestResponsePair] = Field(
+        default_factory=list,
+        description="List of request parameters and their constrained response properties",
     )
 
 
