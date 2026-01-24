@@ -8,8 +8,7 @@ Mines constraints from response schemas and request-response mappings.
 import asyncio
 import json
 import os
-from pydantic import BaseModel, Field
-from typing import Dict, List, Optional, Tuple, TypedDict
+from typing import Dict, List, Optional, Tuple
 from api_testing.dataset import SpecificationParser
 from api_testing.models.base_model import (
     APITestingBaseEmbeddingModel,
@@ -25,6 +24,11 @@ from api_testing.utils import flatten_json_schema
 from api_testing.utils.graph import is_nested_path_end_with
 from common.logger import get_logger, LogLevel
 
+from api_testing.constraint.ir.static_schemas import (
+    OperationConstraintsData,
+    StaticConstraintMinerOutput,
+)
+
 
 # Type aliases for constraint data structures
 ConstraintDict = Dict[str, str]  # Maps attribute path to constraint description
@@ -33,43 +37,6 @@ SchemaConstraints = Dict[str, ConstraintDict]  # Maps schema name to constraints
 RequestResponseConstraintsDict = Dict[
     str, Dict[str, Dict[str, str]]
 ]  # Nested request-response constraints
-
-
-class ResponsePropertiesConstraintsOutput(TypedDict):
-    """Output format for response properties constraints."""
-
-    response_properties_constraints: OperationConstraints
-
-
-# Pydantic models for unified output structure
-class OperationConstraintsData(BaseModel):
-    """Unified constraints data for a single operation.
-
-    Contains both response property constraints and request-response constraints.
-    """
-
-    response_properties_constraints: Dict[str, str] = Field(
-        default_factory=dict,
-        description="Maps response property paths to constraint descriptions",
-    )
-
-    request_response_constraints: Dict[str, Dict[str, str]] = Field(
-        default_factory=dict,
-        description="Maps request parameters to response properties with constraint descriptions",
-    )
-
-
-class StaticConstraintMinerOutput(BaseModel):
-    """Complete output from StaticConstraintMiner.
-
-    Groups all constraints by operation UUID, with each operation containing
-    both response property constraints and request-response constraints.
-    """
-
-    operations: Dict[str, OperationConstraintsData] = Field(
-        default_factory=dict,
-        description="Maps operation UUIDs to their constraint data",
-    )
 
 
 class StaticConstraintMiner:

@@ -213,6 +213,10 @@ class ConstraintIRBuilder:
     def _load_static_constraints(self, path: Optional[str]) -> Dict[str, Set[str]]:
         """Load static_constraint_miner.json to filter fields.
 
+        Supports both formats:
+        - New unified format: {"operations": {"op_uuid": {"response_properties_constraints": {...}}}}
+        - Old flat format: {"response_properties_constraints": {"op_uuid": {...}}}
+
         Args:
             path: Path to static_constraint_miner.json
 
@@ -230,11 +234,33 @@ class ConstraintIRBuilder:
                 data = json.load(f)
 
             result = {}
-            for op_uuid, constraints in data.get(
-                "response_properties_constraints", {}
-            ).items():
-                if isinstance(constraints, dict):
-                    result[op_uuid] = set(constraints.keys())
+
+            # Check format: new unified vs old flat
+            if "operations" in data:
+                # New unified format: {"operations": {"op_uuid": {"response_properties_constraints": {...}}}}
+                logger.info(
+                    "Detected new unified constraint format (operations-centric)"
+                )
+
+                for op_uuid, op_data in data["operations"].items():
+                    response_constraints = op_data.get(
+                        "response_properties_constraints", {}
+                    )
+                    if isinstance(response_constraints, dict):
+                        result[op_uuid] = set(response_constraints.keys())
+
+            elif "response_properties_constraints" in data:
+                # Old flat format: {"response_properties_constraints": {"op_uuid": {...}}}
+                logger.info("Detected old flat constraint format")
+
+                for op_uuid, constraints in data[
+                    "response_properties_constraints"
+                ].items():
+                    if isinstance(constraints, dict):
+                        result[op_uuid] = set(constraints.keys())
+            else:
+                logger.warning("Unknown constraint format in static constraints file")
+                return {}
 
             logger.info(
                 "Loaded static constraints filter",
