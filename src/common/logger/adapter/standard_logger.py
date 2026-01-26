@@ -3,16 +3,16 @@
 import sys
 import os
 import inspect
-from typing import Any, Optional, Dict
+from typing import Any, Optional, Dict, Union
 from pathlib import Path
 from loguru import logger as loguru_logger
 
 from common.logger.logger_interface import LoggerInterface, LogLevel
+from common.logger.models import LoggerConfig, FileHandlerConfig, PerLevelConfig
 from common.logger.utils.serialize_utils import (
     serialize_for_console,
     serialize_for_file,
 )
-
 
 
 class StandardLogger(LoggerInterface):
@@ -32,65 +32,140 @@ class StandardLogger(LoggerInterface):
 
     def __init__(
         self,
-        name: str = "restful-api-testing",
-        level: LogLevel = LogLevel.INFO,
+        config: Optional[LoggerConfig] = None,
+        # Legacy parameters for backward compatibility
+        name: Optional[str] = None,
+        level: Optional[LogLevel] = None,
         console_level: Optional[LogLevel] = None,
         file_level: Optional[LogLevel] = None,
-        use_colors: bool = True,
+        use_colors: Optional[bool] = None,
         log_file: Optional[str] = None,
     ):
-        self.name = name
-        self.context: Dict[str, Any] = {}
-        self.use_colors = use_colors
-        self.log_file = log_file
+        """
+        Initialize StandardLogger
 
-        # Set default levels
-        self._console_level = console_level or level
-        self._file_level = file_level or level if log_file else None
-        self._level = level
+        Args:
+            config: Pydantic LoggerConfig (preferred)
+            name: Logger name (legacy)
+            level: Base log level (legacy)
+            console_level: Console level (legacy)
+            file_level: File level (legacy)
+            use_colors: Use colored output (legacy)
+            log_file: Main log file path (legacy)
+        """
+        # Handle config - either passed directly or constructed from legacy params
+        if config is None:
+            config = LoggerConfig.create_simple(
+                name=name or "restful-api-testing",
+                level=level or LogLevel.INFO,
+                log_file=log_file,
+                console_level=console_level,
+                file_level=file_level,
+                use_colors=use_colors if use_colors is not None else True,
+            )
+
+        self.config = config
+        self.name = config.name
+        self.context: Dict[str, Any] = dict(config.initial_context)
+        self.use_colors = config.use_colors
+
+        # Store levels for compatibility
+        self._level = config.level
+        self._console_level = config.effective_console_level
+        self._file_level = config.effective_file_level
 
         # Remove default handler only once
         if not StandardLogger._default_handler_removed:
             loguru_logger.remove()
             StandardLogger._default_handler_removed = True
 
-        # Add console handler with colors
-        console_format = self._get_console_format(use_colors)
+        # Add console handler if enabled
+        if config.console_enabled:
+            self._add_console_handler()
+
+        # Add main file handler if enabled
+        if config.file_enabled and config.file_config:
+            self._add_main_file_handler(config.file_config)
+
+        # Add per-level file handlers if enabled
+        if config.per_level_config and config.per_level_config.enabled:
+            self._add_per_level_handlers(config.per_level_config)
+
+        # Bind logger name to context
+        self.logger = loguru_logger.bind(logger_name=self.name)
+
+    def _add_console_handler(self) -> None:
+        """Add console handler with colors"""
+        console_format = self._get_console_format(self.use_colors)
         loguru_logger.add(
             sys.stderr,
             format=console_format,
             level=self.LEVEL_MAP[self._console_level],
-            colorize=use_colors,
+            colorize=self.use_colors,
             backtrace=True,
             diagnose=True,
-            filter=lambda record: record["extra"].get("logger_name") == name,
+            filter=lambda record: record["extra"].get("logger_name") == self.name,
         )
 
-        # Add file handler if log file is specified
-        if log_file:
-            log_path = Path(log_file)
-            log_path.parent.mkdir(parents=True, exist_ok=True)
+    def _add_main_file_handler(self, file_config: FileHandlerConfig) -> None:
+        """Add main file handler"""
+        # Ensure directory exists
+        file_config.path.parent.mkdir(parents=True, exist_ok=True)
 
-            file_format = self._get_file_format()
-            loguru_logger.add(
-                log_file,
-                format=file_format,
-                level=(
-                    self.LEVEL_MAP[self._file_level]
-                    if self._file_level
-                    else self.LEVEL_MAP[level]
-                ),
-                rotation="10 MB",  # Rotate when file reaches 10MB
-                retention="30 days",  # Keep logs for 30 days
-                compression="zip",  # Compress rotated logs
-                backtrace=True,
-                diagnose=True,
-                enqueue=True,  # Thread-safe async logging
-                filter=lambda record: record["extra"].get("logger_name") == name,
+        file_format = (
+            self._get_file_format()
+            if file_config.format_type == "json"
+            else self._get_text_file_format()
+        )
+
+        loguru_logger.add(
+            str(file_config.path),
+            format=file_format,
+            level=self.LEVEL_MAP[file_config.level],
+            rotation=file_config.rotation,
+            retention=file_config.retention,
+            compression=file_config.compression,
+            backtrace=True,
+            diagnose=True,
+            enqueue=True,
+            filter=lambda record: record["extra"].get("logger_name") == self.name,
+        )
+
+    def _add_per_level_handlers(self, per_level_config: PerLevelConfig) -> None:
+        """Add per-level file handlers"""
+        # Ensure base directory exists
+        per_level_config.base_dir.mkdir(parents=True, exist_ok=True)
+
+        # Create handler for each level
+        for log_level in per_level_config.levels:
+            level_file = per_level_config.get_file_path(log_level)
+            level_file.parent.mkdir(parents=True, exist_ok=True)
+
+            file_format = (
+                self._get_file_format()
+                if per_level_config.format_type == "json"
+                else self._get_text_file_format()
             )
 
-        # Bind logger name to context
-        self.logger = loguru_logger.bind(logger_name=name)
+            # Filter to only log messages of this exact level
+            def level_filter(record, target_level=log_level):
+                return (
+                    record["extra"].get("logger_name") == self.name
+                    and record["level"].name == target_level.value
+                )
+
+            loguru_logger.add(
+                str(level_file),
+                format=file_format,
+                level=self.LEVEL_MAP[log_level],
+                rotation=per_level_config.rotation,
+                retention=per_level_config.retention,
+                compression=per_level_config.compression,
+                backtrace=True,
+                diagnose=True,
+                enqueue=True,
+                filter=level_filter,
+            )
 
     def _get_console_format(self, use_colors: bool) -> str:
         """Get console log format with caller information"""
@@ -127,6 +202,17 @@ class StandardLogger(LoggerInterface):
             '"message":"{message}"'
             "{extra[data_json]}"
             "}}"
+        )
+
+    def _get_text_file_format(self) -> str:
+        """Get text file format - human-readable without colors"""
+        return (
+            "{time:YYYY-MM-DD HH:mm:ss.SSS} | "
+            "{level: <8} | "
+            "[PID:{process}] [TID:{thread}] | "
+            "{extra[caller_file]}:{extra[caller_function]}:{extra[caller_line]} | "
+            "{message}"
+            "{extra[data_context]}"
         )
 
     def _get_caller_info(self) -> Dict[str, Any]:
@@ -360,13 +446,11 @@ class StandardLogger(LoggerInterface):
     def child(self, name: str, **kwargs) -> "StandardLogger":
         """Create a child logger with additional context"""
         child_name = f"{self.name}.{name}"
-        child = StandardLogger(
-            name=child_name,
-            level=self._level,
-            console_level=self._console_level,
-            file_level=self._file_level,
-            use_colors=self.use_colors,
-            log_file=self.log_file,
-        )
-        child.context = {**self.context, **kwargs}
+
+        # Create new config based on parent config
+        child_config = self.config.model_copy(deep=True)
+        child_config.name = child_name
+        child_config.initial_context = {**self.context, **kwargs}
+
+        child = StandardLogger(config=child_config)
         return child

@@ -97,12 +97,12 @@ Return ONLY valid JSON (no markdown):
 {
   "request_response_pairs": [
     {
-      "request_param": "federal",
-      "response_properties": ["holidays.federal"]
+      "request_param": "request_param_name_1",
+      "response_properties": ["response.property.path1", "response.property.path2"]
     },
     {
-      "request_param": "optional",
-      "response_properties": ["holidays.optional", "holidays.provinces.optional"]
+      "request_param": "another_request_param_2",
+      "response_properties": ["response.property.path1", "response.property.path2"]
     }
   ]
 }

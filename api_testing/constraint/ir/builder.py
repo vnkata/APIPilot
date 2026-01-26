@@ -15,10 +15,6 @@ from api_testing.constraint.ir.models import (
     ConstraintModel,
     OperationConstraintsModel,
     ConstraintIRModel,
-    PredicateModel,
-    ProvenanceModel,
-    ScopeModel,
-    SelectorModel,
 )
 from api_testing.constraint.ir.merge import merge_duplicate_constraints
 from api_testing.constraint.extractors import (
@@ -33,7 +29,6 @@ from api_testing.constraint.config import (
 from api_testing.utils import flatten_json_schema
 from api_testing.validation.selectors import (
     detect_array_paths_from_schema,
-    convert_to_jsonpath_with_arrays,
 )
 from common.logger import get_logger
 

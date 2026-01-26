@@ -23,7 +23,10 @@ Configuration aligns with user requirements:
 import os
 from datetime import datetime
 from typing import Optional
+from pathlib import Path
+
 from common.logger.logger_factory import LoggerFactory, LoggerType, LogLevel
+from common.logger.models import LoggerConfig, FileHandlerConfig, PerLevelConfig
 
 
 class Environment:
@@ -231,6 +234,72 @@ class LoggingConfig:
 
         return metadata_logger, detailed_logger
 
+    @classmethod
+    def create_logger_with_per_level(
+        cls,
+        name: str,
+        component: str,
+        service_name: Optional[str] = None,
+        level: Optional[LogLevel] = None,
+        per_level_dir: Optional[str] = None,
+        levels: Optional[list[LogLevel]] = None,
+        **context,
+    ):
+        """
+        Create logger with per-level file logging enabled
+
+        Args:
+            name: Logger name
+            component: Component type
+            service_name: Service name for context
+            level: Override default log level
+            per_level_dir: Directory for per-level logs (defaults to logs/levels/{service})
+            levels: Levels to create files for (defaults to all)
+            **context: Additional context
+
+        Returns:
+            Logger instance with per-level logging
+        """
+        # Determine main log file
+        main_log_file = cls.get_log_file(component, service_name, timestamp=False)
+
+        # Determine per-level directory
+        if per_level_dir is None:
+            if service_name:
+                per_level_dir = os.path.join(cls.BASE_LOG_DIR, service_name, "levels")
+            else:
+                per_level_dir = os.path.join(cls.BASE_LOG_DIR, "levels")
+
+        # Use environment-aware levels
+        file_level = level if level is not None else cls.get_file_level()
+        console_level = cls.get_console_level()
+
+        # Create config with per-level logging
+        config = LoggerConfig.with_per_level_logging(
+            name=name,
+            level=file_level,
+            log_file=main_log_file,
+            per_level_dir=per_level_dir,
+            console_level=console_level,
+            file_level=file_level,
+            use_colors=True,
+            levels=levels,
+        )
+
+        # Add context
+        base_context = {
+            "component": component,
+            "environment": Environment.get_environment(),
+        }
+        if service_name:
+            base_context["service"] = service_name
+        base_context.update(context)
+        config.initial_context = base_context
+
+        # Create logger using factory
+        logger = LoggerFactory.get_logger_with_config(config, cache=True)
+        return logger
+
 
 # Convenience functions for quick logger creation
 
@@ -265,6 +334,35 @@ def get_parameter_logger(service_name: str, **context):
 def get_gpt_loggers(service_name: str):
     """Get both GPT loggers (metadata + detailed)"""
     return LoggingConfig.create_gpt_logger(service_name)
+
+
+def get_logger_with_per_level(
+    name: str,
+    service_name: Optional[str] = None,
+    component: str = "main",
+    per_level_dir: Optional[str] = None,
+    **context,
+):
+    """
+    Get logger with per-level file logging enabled
+
+    Args:
+        name: Logger name
+        service_name: Service name
+        component: Component type
+        per_level_dir: Custom per-level directory
+        **context: Additional context
+
+    Returns:
+        Logger with per-level logging
+    """
+    return LoggingConfig.create_logger_with_per_level(
+        name=name,
+        component=component,
+        service_name=service_name,
+        per_level_dir=per_level_dir,
+        **context,
+    )
 
 
 # Helper for adding operation context

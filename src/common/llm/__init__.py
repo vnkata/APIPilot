@@ -122,6 +122,12 @@ from common.llm.helpers import (
     get_default_config,
 )
 
+# Extractors
+from common.llm.extractors import (
+    StructuredOutputExtractor,
+    ExtractionError,
+)
+
 __all__ = [
     # Client
     "LLMClient",
@@ -175,4 +181,7 @@ __all__ = [
     "ask_batch",
     "set_default_config",
     "get_default_config",
+    # Extractors
+    "StructuredOutputExtractor",
+    "ExtractionError",
 ]

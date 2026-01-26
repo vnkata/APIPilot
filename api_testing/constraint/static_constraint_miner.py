@@ -28,6 +28,7 @@ from api_testing.constraint.ir.static_schemas import (
     OperationConstraintsData,
     StaticConstraintMinerOutput,
 )
+from api_testing.constraint.assembler import ConstraintAssembler
 
 
 # Type aliases for constraint data structures
@@ -118,6 +119,7 @@ class StaticConstraintMiner:
         }
         self.response_constraint = ResponsePropertyConstraintMiner()
         self.request_response_constraint = RequestResponseConstraintMiner()
+        self.constraint_assembler = ConstraintAssembler()
 
     async def _extract_single_operation_request_response_constraints(
         self, operation: OperationProperties
@@ -139,6 +141,11 @@ class StaticConstraintMiner:
             request_params: List[str] = []
             if operation.parameters:
                 for param_name, param_props in operation.parameters.items():
+                    if param_props.schema is None:
+                        self.logger.warning(
+                            f"Operation '{operation.uuid}' has parameter '{param_name}' "
+                            f"without schema. Skipping constraint extraction for this parameter."
+                        )
                     param_desc = param_props.to_human_readable()
                     request_params.append(f"- {param_name}: {param_desc}")
 
@@ -189,6 +196,14 @@ class StaticConstraintMiner:
                 f"error={str(e)}"
             )
             return (operation.uuid, None)
+        except AttributeError as e:
+            self.logger.error(
+                f"AttributeError in operation '{operation.uuid}': {e}. "
+                f"This may indicate missing 'schema' in parameter definition. "
+                f"Check OpenAPI spec validity.",
+                exc_info=True,
+            )
+            return {}
         except Exception as e:
             self.logger.error(
                 f"Unexpected error extracting request-response constraints: "
@@ -572,11 +587,23 @@ class StaticConstraintMiner:
         unified_output = StaticConstraintMinerOutput()
 
         for op_uuid in self.operations.keys():
+            operation = self.operations[op_uuid]
+            response_props = response_constraints.get(op_uuid, {})
+            req_resp = request_response_constraints.get(op_uuid, {})
+
+            # Assemble unified constraints
+            unified_constraints = (
+                self.constraint_assembler.assemble_operation_constraints(
+                    operation=operation,
+                    response_properties_constraints=response_props,
+                    request_response_constraints=req_resp,
+                )
+            )
+
             unified_output.operations[op_uuid] = OperationConstraintsData(
-                response_properties_constraints=response_constraints.get(op_uuid, {}),
-                request_response_constraints=request_response_constraints.get(
-                    op_uuid, {}
-                ),
+                response_properties_constraints=response_props,
+                request_response_constraints=req_resp,
+                constraints=unified_constraints.to_dict(),
             )
 
         # Save to main cache

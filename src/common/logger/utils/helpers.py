@@ -7,6 +7,7 @@ from typing import Optional
 from pathlib import Path
 from common.logger.logger_factory import LoggerFactory, LoggerType
 from common.logger.logger_interface import LoggerInterface, LogLevel
+from common.logger.models import LoggerConfig
 from common.file.paths import get_project_log_dir, resolve_to_project_root
 
 
@@ -38,9 +39,16 @@ def get_logger(
     console_level: Optional[LogLevel] = None,
     file_level: Optional[LogLevel] = None,
     use_colors: bool = True,
+    enable_per_level: bool = True,
+    per_level_dir: Optional[str] = None,
 ) -> LoggerInterface:
     """
     Get a logger instance with simplified API.
+
+    By default, creates logger with:
+    - Console output (INFO level)
+    - Main log file (DEBUG level)
+    - Per-level log files (DEBUG.log, INFO.log, WARNING.log, ERROR.log, CRITICAL.log)
 
     Args:
         name: Logger name (auto-detected from caller if None)
@@ -50,14 +58,18 @@ def get_logger(
         console_level: Log level for console output (default: INFO if not specified)
         file_level: Log level for file output (default: DEBUG if not specified)
         use_colors: Whether to use colored output (default: True)
+        enable_per_level: Enable per-level file logging (default: True)
+        per_level_dir: Directory for per-level logs (default: logs/levels/)
 
     Returns:
         LoggerInterface instance
 
     Example:
         >>> from common.logger import get_logger, LogLevel
+        >>> # Simple usage with all defaults (console + file + per-level)
         >>> logger = get_logger(__name__)
         >>> logger.info("Hello world!")
+        >>> logger.error("Error goes to ERROR.log automatically!")
 
         >>> # With separate console/file levels
         >>> logger = get_logger(
@@ -65,6 +77,12 @@ def get_logger(
         ...     console_level=LogLevel.INFO,
         ...     file_level=LogLevel.DEBUG
         ... )
+
+        >>> # Disable per-level logging if needed
+        >>> logger = get_logger(__name__, enable_per_level=False)
+
+        >>> # Custom per-level directory
+        >>> logger = get_logger(__name__, per_level_dir="logs/custom_levels")
     """
     import inspect
 
@@ -91,15 +109,37 @@ def get_logger(
     if file_level is None:
         file_level = LogLevel.DEBUG
 
-    return LoggerFactory.get_logger(
-        name=name,
-        logger_type=LoggerType.STANDARD,
-        level=level,  # Kept for backward compatibility
-        console_level=console_level,
-        file_level=file_level,
-        log_file=log_file,
-        use_colors=use_colors,
-    )
+    # If per-level logging is enabled, use config-based approach
+    if enable_per_level:
+        # Auto-generate per-level directory if not provided
+        if per_level_dir is None:
+            per_level_dir = str(get_project_log_dir() / "levels")
+        else:
+            per_level_dir = str(resolve_to_project_root(per_level_dir))
+
+        # Create config with per-level logging
+        config = LoggerConfig.with_per_level_logging(
+            name=name,
+            level=level,
+            log_file=log_file,
+            console_level=console_level,
+            file_level=file_level,
+            use_colors=use_colors,
+            per_level_dir=per_level_dir,
+        )
+
+        return LoggerFactory.get_logger_with_config(config)
+    else:
+        # Use legacy approach without per-level logging
+        return LoggerFactory.get_logger(
+            name=name,
+            logger_type=LoggerType.STANDARD,
+            level=level,
+            console_level=console_level,
+            file_level=file_level,
+            log_file=log_file,
+            use_colors=use_colors,
+        )
 
 
 __all__ = ["get_logger"]
