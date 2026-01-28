@@ -3,8 +3,8 @@ from api_testing.inputs import RandomGeneratorFactory
 
 def test_random_input_generator_next_value():
     gen = RandomGeneratorFactory.create(
-        "RandomBooleanGenerator"
-        # ,mode ="country_code"
+        "RandomTextGenerator"
+        ,mode ="word"
         # ,card_type="mastercard"
     )
 
