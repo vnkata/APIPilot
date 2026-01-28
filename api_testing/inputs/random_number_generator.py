@@ -111,11 +111,23 @@ class RandomNumberGenerator(RandomGenerator):
 
         if strategy == FuzzStrategy.BOUNDARY:
             # Focus on integer limits and signs
+            try:
+                min_underflow = int(self.min) - 1   # Underflow (integer)
+            except (ValueError, OverflowError, TypeError):
+                # Fallback: if we cannot safely convert to int, just reuse the minimum
+                min_underflow = self.min
+
+            try:
+                max_overflow = int(self.max) + 1    # Overflow (integer)
+            except (ValueError, OverflowError, TypeError):
+                # Fallback: if we cannot safely convert to int, just reuse the maximum
+                max_overflow = self.max
+
             return self.rand.choice([
                 self.min,                           # Absolute minimum
                 self.max,                           # Absolute maximum
-                int(self.min) - 1,                  # Underflow
-                int(self.max) + 1,                  # Overflow
+                min_underflow,                      # Underflow
+                max_overflow,                       # Overflow
                 0,                                  # Zero
                 -1,                                 # Negative boundary
                 0.00000000001                       # Extremely small positive float
