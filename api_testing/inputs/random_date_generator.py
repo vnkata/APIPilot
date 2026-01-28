@@ -61,7 +61,6 @@ class RandomDateGenerator(RandomGenerator):
         # Define only the strategies implemented within this specific logic
         supported_strategies = [
             FuzzStrategy.EMPTY,
-            FuzzStrategy.BOUNDARY,
             FuzzStrategy.LOGIC_ERROR,
             FuzzStrategy.FORMAT_ERROR
         ]
@@ -72,20 +71,29 @@ class RandomDateGenerator(RandomGenerator):
         if strategy == FuzzStrategy.EMPTY:
             return self.rand.choice([None, ""])
 
-        if strategy == FuzzStrategy.BOUNDARY:
-            return self.rand.choice([
-                datetime(1970, 1, 1).strftime(self.format),
-                datetime(9999, 12, 31).strftime(self.format),
-                self.start_date.strftime(self.format)
-            ])
-
         if strategy == FuzzStrategy.LOGIC_ERROR:
-            # Invalid dates that might bypass simple regex but fail logic checks
-            return self.rand.choice(["2025-02-30", "2025-13-01", "0000-00-00"])
+            year = self.rand.randint(1900, 2100)
+            logic_clusters = [
+                f"{year}-02-{self.rand.randint(30, 31)}", # February 30th/31st
+                f"{year}-{self.rand.randint(13, 99)}-01", # Month out of range
+                f"{year}-01-{self.rand.randint(32, 99)}", # Day out of range
+                f"0000-{self.rand.randint(0, 99):02}-{self.rand.randint(0, 99):02}", # Year zero/invalid
+            ]
+            return self.rand.choice(logic_clusters)
 
+        # Mismatched standards and data types
         if strategy == FuzzStrategy.FORMAT_ERROR:
-            val = datetime.now()
-            # Mix of valid data in the wrong formats (timestamp vs ISO vs custom)
-            return self.rand.choice([val.timestamp(), val.isoformat(), "01-01-2025"])
+            val = self.next_value()
+            wrong_formats = [
+                str(val.timestamp()),
+                val.isoformat(),
+                val.strftime("%Y/%m/%d"),
+                val.strftime("%A, %d %B %Y"), # Full text format
+                "not-a-date-string",
+                self.rand.randint(-1000000, 1000000) # Raw integer as date
+            ]
+            return self.rand.choice(wrong_formats)
 
         return None
+    
+    
