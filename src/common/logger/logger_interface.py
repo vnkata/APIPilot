@@ -85,3 +85,6 @@ class LoggerInterface(ABC):
     def get_file_level(self) -> Optional[LogLevel]:
         """Get current file log level (None if no file logging)"""
         pass
+
+
+Logger = LoggerInterface  # Alias for easier imports

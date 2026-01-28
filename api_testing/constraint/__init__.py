@@ -14,7 +14,7 @@ Legacy:
 from .static_constraint_miner import StaticConstraintMiner
 
 # New v2 exports
-from api_testing.constraint.ir import (
+from api_testing.constraint.ir.core import (
     ConstraintIRModel,
     ConstraintModel,
     ScopeModel,
@@ -25,28 +25,28 @@ from api_testing.constraint.ir import (
     ConstraintIRBuilder,
     IRSchemaValidator,
 )
-from api_testing.constraint.extractors import (
+from api_testing.constraint.ir.extractors import (
     ResPropSingleStructuralExtractor,
     ResPropSingleDescriptionExtractor,
     ResPropSingleLLMExtractor,
     PredicatePromptBuilder,
     ResPropCrossFieldCoverageChecker,
 )
-from api_testing.constraint.primitives.registry_loader import ProposedPredicateManager
-from api_testing.constraint.primitives import (
+from api_testing.constraint.ir.primitives import ProposedPredicateManager
+from api_testing.constraint.ir.primitives import (
     PredicateRegistry,
     get_registry,
     get_predicate,
     VALIDATOR_REGISTRY,
     get_validator,
 )
-from api_testing.constraint.engine import (
+from api_testing.constraint.ir.engine import (
     ValidationEngine,
     SelectorEngine,
     CELEvaluator,
 )
-from api_testing.constraint.reporting import CSVReporter
-from api_testing.constraint.cache import SchemaConstraintCache
+from api_testing.constraint.ir.reporting import CSVReporter
+from api_testing.constraint.ir.cache import SchemaConstraintCache
 
 __all__ = [
     # Legacy
@@ -64,10 +64,8 @@ __all__ = [
     # Extractors
     "ResPropSingleStructuralExtractor",
     "ResPropSingleDescriptionExtractor",
-    "ResPropLLMCoverageChecker",
     "ResPropSingleLLMExtractor",
     "PredicatePromptBuilder",
-    "ResPropCrossFieldLLMExtractor",
     "ResPropCrossFieldCoverageChecker",
     "ProposedPredicateManager",
     # Primitives
