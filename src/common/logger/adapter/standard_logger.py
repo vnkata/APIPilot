@@ -8,7 +8,7 @@ from pathlib import Path
 from loguru import logger as loguru_logger
 
 from common.logger.logger_interface import LoggerInterface, LogLevel
-from common.logger.models import LoggerConfig, FileHandlerConfig, PerLevelConfig
+from common.logger.models import LoggerConfig
 from common.logger.utils.serialize_utils import (
     serialize_for_console,
     serialize_for_file,
@@ -32,20 +32,20 @@ class StandardLogger(LoggerInterface):
 
     def __init__(
         self,
-        config: Optional[LoggerConfig] = None,
+        config: Optional["LoggerConfig"] = None,
         # Legacy parameters for backward compatibility
-        name: Optional[str] = None,
-        level: Optional[LogLevel] = None,
-        console_level: Optional[LogLevel] = None,
-        file_level: Optional[LogLevel] = None,
-        use_colors: Optional[bool] = None,
-        log_file: Optional[str] = None,
+        name: str | None = None,
+        level: LogLevel | None = None,
+        console_level: LogLevel | None = None,
+        file_level: LogLevel | None = None,
+        use_colors: bool | None = None,
+        log_file: str | None = None,
     ):
         """
         Initialize StandardLogger
 
         Args:
-            config: Pydantic LoggerConfig (preferred)
+            config: LoggerConfig instance (preferred)
             name: Logger name (legacy)
             level: Base log level (legacy)
             console_level: Console level (legacy)
@@ -53,6 +53,9 @@ class StandardLogger(LoggerInterface):
             use_colors: Use colored output (legacy)
             log_file: Main log file path (legacy)
         """
+        # Import here to avoid circular dependency
+        from common.logger.models import LoggerConfig, FileHandlerConfig
+
         # Handle config - either passed directly or constructed from legacy params
         if config is None:
             config = LoggerConfig.create_simple(
@@ -73,6 +76,7 @@ class StandardLogger(LoggerInterface):
         self._level = config.level
         self._console_level = config.effective_console_level
         self._file_level = config.effective_file_level
+        self.log_file = str(config.file_config.path) if config.file_config else None
 
         # Remove default handler only once
         if not StandardLogger._default_handler_removed:
@@ -107,7 +111,7 @@ class StandardLogger(LoggerInterface):
             filter=lambda record: record["extra"].get("logger_name") == self.name,
         )
 
-    def _add_main_file_handler(self, file_config: FileHandlerConfig) -> None:
+    def _add_main_file_handler(self, file_config: "FileHandlerConfig") -> None:
         """Add main file handler"""
         # Ensure directory exists
         file_config.path.parent.mkdir(parents=True, exist_ok=True)
@@ -131,7 +135,7 @@ class StandardLogger(LoggerInterface):
             filter=lambda record: record["extra"].get("logger_name") == self.name,
         )
 
-    def _add_per_level_handlers(self, per_level_config: PerLevelConfig) -> None:
+    def _add_per_level_handlers(self, per_level_config: "PerLevelConfig") -> None:
         """Add per-level file handlers"""
         # Ensure base directory exists
         per_level_config.base_dir.mkdir(parents=True, exist_ok=True)

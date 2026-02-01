@@ -371,7 +371,7 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
                 f"Saved {result.success_count} items to cache: {self.cache_file}"
             )
 
-        except IOError as e:
+        except OSError as e:
             self.logger.warning(
                 f"Failed to write cache file: {self.cache_file}, error={str(e)}"
             )

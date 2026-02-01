@@ -1,10 +1,9 @@
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
-from common.logger.logger_interface import LoggerInterface, LogLevel
-from common.logger.models import LoggerConfig
-from common.logger.adapter.standard_logger import StandardLogger
 from common.logger.adapter.print_logger import PrintLogger
+from common.logger.adapter.standard_logger import StandardLogger
+from common.logger.logger_interface import LoggerInterface, LogLevel
 
 
 class LoggerType(Enum):
@@ -77,12 +76,12 @@ class LoggerFactory:
     @classmethod
     def get_logger_with_config(
         cls,
-        config: LoggerConfig,
+        config: "LoggerConfig",
         logger_type: LoggerType = LoggerType.STANDARD,
         cache: bool = True,
     ) -> LoggerInterface:
         """
-        Get or create a logger using Pydantic config
+        Get or create a logger using LoggerConfig
 
         Args:
             config: LoggerConfig instance
@@ -92,6 +91,8 @@ class LoggerFactory:
         Returns:
             Logger instance
         """
+        from common.logger.models import LoggerConfig
+
         cache_key = f"{config.name}_{logger_type.value}"
 
         if cache and cache_key in cls._instances:
