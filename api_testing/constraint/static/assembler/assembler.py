@@ -5,14 +5,15 @@ and request-response constraints into a structured format.
 """
 
 from typing import Dict, Optional
+
+from api_testing.constraint.static.assembler.classifier import BodyParamClassifier
 from api_testing.constraint.static.assembler.models import (
     ResponsePropertyConstraint,
     UnifiedConstraints,
 )
-from api_testing.constraint.static.assembler.classifier import BodyParamClassifier
 from api_testing.models.specification_model import (
-    ParameterProperties,
     OperationProperties,
+    ParameterProperties,
 )
 from common.logger import get_logger
 
@@ -148,7 +149,7 @@ class ConstraintAssembler:
 
     @staticmethod
     def _build_detail_section(
-            operation: OperationProperties,
+        operation: OperationProperties,
         response_properties_constraints: Dict[str, str],
         request_response_constraints: Dict[str, Dict[str, str]],
         detail_param_names: Optional[set] = None,

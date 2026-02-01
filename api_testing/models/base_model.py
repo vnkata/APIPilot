@@ -1,5 +1,7 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional, List
+from typing import Dict, List, Optional, Union
+
+from pydantic import BaseModel
 
 
 class APITestingBaseLLMModel(ABC):
@@ -17,20 +19,44 @@ class APITestingBaseLLMModel(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def generate(self, *args, **kwargs) -> str:
+    def generate(
+        self,
+        prompt: Union[str, List],
+        schema: Optional[BaseModel] = None,
+        system_prompt: Optional[str] = None,
+        **kwargs,
+    ) -> Union[str, Dict, BaseModel]:
         """Runs the model to output LLM response.
 
+        Args:
+            prompt: User prompt (string or message list)
+            schema: Optional Pydantic model for structured output
+            system_prompt: Optional system instruction
+            **kwargs: Additional model-specific parameters (temperature, max_tokens, etc.)
+
         Returns:
-            A string.
+            String if no schema provided, otherwise Dict or BaseModel instance
         """
         raise NotImplementedError
 
     @abstractmethod
-    async def a_generate(self, *args, **kwargs) -> str:
-        """Runs the model to output LLM response.
+    async def a_generate(
+        self,
+        prompt: Union[str, List],
+        schema: Optional[BaseModel] = None,
+        system_prompt: Optional[str] = None,
+        **kwargs,
+    ) -> Union[str, Dict, BaseModel]:
+        """Async version of generate().
+
+        Args:
+            prompt: User prompt (string or message list)
+            schema: Optional Pydantic model for structured output
+            system_prompt: Optional system instruction
+            **kwargs: Additional model-specific parameters (temperature, max_tokens, etc.)
 
         Returns:
-            A string.
+            String if no schema provided, otherwise Dict or BaseModel instance
         """
         raise NotImplementedError
 

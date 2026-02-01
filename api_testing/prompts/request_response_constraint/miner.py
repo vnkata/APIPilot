@@ -7,10 +7,9 @@ Extracts constraints between request parameters and response properties using va
 """
 
 import asyncio
-from typing import Dict
-from common.llm import ask
+from typing import Dict, Optional
+
 from common.llm.exceptions import LLMError
-from common.llm.extractors import StructuredOutputExtractor
 from common.logger import get_logger, LogLevel
 from api_testing.prompts.request_response_constraint.schema import (
     RequestResponseConstraintOutput,
@@ -51,9 +50,33 @@ class RequestResponseConstraintMiner:
     SYSTEM_PROMPT: str = REQUEST_RESPONSE_VALIDATION_SYSTEM_PROMPT_V2
     USER_PROMPT: str = REQUEST_RESPONSE_VALIDATION_USER_PROMPT_V2
 
-    def __init__(self) -> None:
-        """Initialize RequestResponseConstraintMiner."""
-        pass
+    def __init__(
+        self,
+        model: Optional["APITestingBaseLLMModel"] = None,
+        temperature: float = 0.1,
+        **llm_kwargs,
+    ) -> None:
+        """Initialize RequestResponseConstraintMiner.
+
+        Args:
+            model: LLM model instance. If None, uses factory default from env vars.
+            temperature: Sampling temperature for LLM calls (default: 0.1 for deterministic validation)
+            **llm_kwargs: Additional LLM parameters (max_tokens, etc.)
+        """
+        if model is None:
+            # Import here to avoid circular dependency
+            from api_testing.models.llms.factory import ModelFactory
+
+            self.model = ModelFactory.get_default()
+            logger.debug(
+                "Using factory default model for RequestResponseConstraintMiner"
+            )
+        else:
+            self.model = model
+            logger.debug(f"Using injected model: {self.model.get_model_name()}")
+
+        self.temperature = temperature
+        self.llm_kwargs = llm_kwargs
 
     def _generate_constraint_description(
         self,
@@ -107,7 +130,7 @@ class RequestResponseConstraintMiner:
 
         Steps:
         1. Call LLM to validate which request-response pairs have constraints
-        2. Extract validation result using StructuredOutputExtractor
+        2. Extract validation result using model's structured output capability
         3. For validated pairs, generate constraint descriptions
         4. Return nested Dict[str, Dict[str, str]]
 
@@ -132,7 +155,7 @@ class RequestResponseConstraintMiner:
             f"request_params={request_count}, response_properties={response_count}"
         )
 
-        # Step 1: Call LLM for validation
+        # Step 1: Call LLM for validation using injected model
         prompt = self.USER_PROMPT.format(
             operation_name=operation_name,
             method=method,
@@ -142,46 +165,39 @@ class RequestResponseConstraintMiner:
         )
 
         try:
-            raw_response = await ask(
-                prompt=prompt,
-                system=self.SYSTEM_PROMPT,
-                temperature=0.1,
+            validation_result: RequestResponseConstraintValidationV2 = (
+                await self.model.a_generate(
+                    prompt=prompt,
+                    system_prompt=self.SYSTEM_PROMPT,
+                    schema=RequestResponseConstraintValidationV2,
+                    temperature=self.temperature,
+                    **self.llm_kwargs,
+                )
             )
+
             logger.debug(
-                f"LLM validation response received: operation={operation_name}, "
-                f"response_length={len(raw_response)}"
+                f"Validation successful: operation={operation_name}, "
+                f"validated_params={len(validation_result.request_response_pairs)}"
             )
+
         except LLMError as e:
             logger.error(
                 f"LLM call failed for operation: {operation_name}, error={str(e)}"
             )
             raise
 
-        # Step 2: Extract validation result
-        try:
-            validation_result: RequestResponseConstraintValidationV2 = (
-                StructuredOutputExtractor.extract(
-                    raw_text=raw_response,
-                    model_class=RequestResponseConstraintValidationV2,
-                    strict=True,
-                )
-            )
-            logger.debug(
-                f"Validation extraction successful: operation={operation_name}, "
-                f"validated_params={len(validation_result.request_response_pairs)}"
-            )
         except Exception as e:
             logger.error(
-                f"Failed to extract validation result for operation: {operation_name}, "
-                f"error={str(e)}, raw_response_preview={raw_response[:200]}"
+                f"Unexpected error during validation for operation: {operation_name}, "
+                f"error={str(e)}"
             )
             raise LLMError(
-                f"Failed to extract validation result: {str(e)}",
-                provider="extractor",
-                model="validation",
+                f"Failed to validate request-response constraints: {str(e)}",
+                provider="validation",
+                model=self.model.get_model_name(),
             ) from e
 
-        # Step 3: Build final output with descriptions
+        # Step 2: Build final output with descriptions
         final_constraints: Dict[str, Dict[str, str]] = {}
 
         for pair in validation_result.request_response_pairs:

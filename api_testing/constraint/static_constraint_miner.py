@@ -8,10 +8,10 @@ Mines constraints from response schemas and request-response mappings.
 import asyncio
 import json
 import os
-from typing import TYPE_CHECKING, Dict, Optional
+from typing import Dict, Optional
 
-from api_testing.constraint.static.assembler import ConstraintAssembler
 from api_testing.constraint.ir.config import ConstraintExtractionSettings
+from api_testing.constraint.static.assembler import ConstraintAssembler
 from api_testing.constraint.static.extractors.models import (
     OperationConstraintsData,
     StaticConstraintMinerOutput,
@@ -23,15 +23,6 @@ from api_testing.models.base_model import (
 )
 from api_testing.models.specification_model import ItemProperties, OperationProperties
 from common.logger import LogLevel, get_logger
-
-# Lazy imports to avoid circular dependency
-if TYPE_CHECKING:
-    from api_testing.constraint.static.extractors.request_response_extractor import (
-        RequestResponseExtractor,
-    )
-    from api_testing.constraint.static.extractors.response_property_extractor import (
-        ResponsePropertyExtractor,
-    )
 
 
 class StaticConstraintMiner:
@@ -118,9 +109,10 @@ class StaticConstraintMiner:
             ResponsePropertyExtractor,
         )
 
-        # Initialize specialized extractors with shared logger
+        # Initialize specialized extractors with shared logger and model
         self.response_extractor = ResponsePropertyExtractor(
             spec_parser=spec_parser,
+            model=model,
             cache_dir=cache_dir,
             batch_size=batch_size,
             logger=self.logger,
@@ -128,6 +120,7 @@ class StaticConstraintMiner:
 
         self.request_response_extractor = RequestResponseExtractor(
             spec_parser=spec_parser,
+            model=model,
             cache_dir=cache_dir,
             batch_size=batch_size,
             logger=self.logger,

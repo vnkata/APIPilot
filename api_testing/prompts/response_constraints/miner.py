@@ -9,9 +9,9 @@ Extracts constraints from response schema attributes using validation-based appr
 import asyncio
 from typing import Dict, Optional
 
-from common.llm.extractors import StructuredOutputExtractor
 from dotenv import load_dotenv
 
+from api_testing.models.base_model import APITestingBaseLLMModel
 from api_testing.prompts.response_constraints.prompts import (
     RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_SYSTEM_PROMPT_V2,
     RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_USER_PROMPT_V2,
@@ -20,7 +20,6 @@ from api_testing.prompts.response_constraints.schema import (
     ResponsePropertyConstraintsOutput,
     ResponsePropertyConstraintsValidationV2,
 )
-from common.llm import ask
 from common.llm.exceptions import LLMError
 from common.logger import LogLevel, get_logger
 
@@ -56,14 +55,33 @@ class ResponsePropertyConstraintMiner:
     SYSTEM_PROMPT: str = RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_SYSTEM_PROMPT_V2
     USER_PROMPT: str = RESPONSE_PROPERTY_CONSTRAINTS_VALIDATION_USER_PROMPT_V2
 
-    def __init__(self, llm: Optional[object] = None) -> None:
+    def __init__(
+        self,
+        model: Optional["APITestingBaseLLMModel"] = None,
+        temperature: float = 0.1,
+        **llm_kwargs,
+    ) -> None:
         """Initialize ResponseConstraints extractor.
 
         Args:
-            llm: Deprecated parameter (kept for backward compatibility).
-                The class now uses common.llm directly.
+            model: LLM model instance. If None, uses factory default from env vars.
+            temperature: Sampling temperature for LLM calls (default: 0.1 for deterministic yes/no)
+            **llm_kwargs: Additional LLM parameters (max_tokens, etc.)
         """
-        pass
+        if model is None:
+            # Import here to avoid circular dependency
+            from api_testing.models.llms.factory import ModelFactory
+
+            self.model = ModelFactory.get_default()
+            logger.debug(
+                "Using factory default model for ResponsePropertyConstraintMiner"
+            )
+        else:
+            self.model = model
+            logger.debug(f"Using injected model: {self.model.get_model_name()}")
+
+        self.temperature = temperature
+        self.llm_kwargs = llm_kwargs
 
     def _parse_attributes_string(self, attributes: str) -> Dict[str, str]:
         """Parse attributes string to extract attribute names and their descriptions.
@@ -103,7 +121,7 @@ class ResponsePropertyConstraintMiner:
 
         Steps:
         1. Call LLM to validate which attributes have non-trivial constraints
-        2. Extract validation result using StructuredOutputExtractor
+        2. Extract validation result using model's structured output capability
         3. For attributes with constraints=True, use their description from attributes string
         4. Return Dict[str, str] with only validated attributes
 
@@ -124,50 +142,44 @@ class ResponsePropertyConstraintMiner:
             f"Validating constraints for schema: {schema}, attributes_count={attribute_count}"
         )
 
-        # Step 1: Call LLM for validation (NO response_model - raw text output)
+        # Step 1: Call LLM for validation using injected model
         prompt = self.USER_PROMPT.format(schema=schema, attributes=attributes)
+
         try:
-            raw_response = await ask(
-                prompt=prompt,
-                system=self.SYSTEM_PROMPT,
-                temperature=0.1,  # Lower temperature for yes/no decisions
+            validation_result: ResponsePropertyConstraintsValidationV2 = (
+                await self.model.a_generate(
+                    prompt=prompt,
+                    system_prompt=self.SYSTEM_PROMPT,
+                    schema=ResponsePropertyConstraintsValidationV2,
+                    temperature=self.temperature,
+                    **self.llm_kwargs,
+                )
             )
+
             logger.debug(
-                f"LLM validation response received: schema={schema}, "
-                f"response_length={len(raw_response)}"
+                f"Validation successful: schema={schema}, "
+                f"validated_count={len(validation_result.constrained_properties)}"
             )
+
         except LLMError as e:
             logger.error(f"LLM call failed for schema: {schema}, error={str(e)}")
             raise
 
-        # Step 2: Extract validation result using StructuredOutputExtractor
-        try:
-            validation_result: ResponsePropertyConstraintsValidationV2 = (
-                StructuredOutputExtractor.extract(
-                    raw_text=raw_response,
-                    model_class=ResponsePropertyConstraintsValidationV2,
-                    strict=True,
-                )
-            )
-            logger.debug(
-                f"Validation extraction successful: schema={schema}, "
-                f"validated_count={len(validation_result.constrained_properties)}"
-            )
         except Exception as e:
             logger.error(
-                f"Failed to extract validation result for schema: {schema}, "
-                f"error={str(e)}, raw_response_preview={raw_response[:200]}"
+                f"Unexpected error during validation for schema: {schema}, "
+                f"error={str(e)}"
             )
             raise LLMError(
-                f"Failed to extract validation result: {str(e)}",
-                provider="extractor",
-                model="validation",
+                f"Failed to validate constraints: {str(e)}",
+                provider="validation",
+                model=self.model.get_model_name(),
             ) from e
 
-        # Step 3: Parse attributes string to get descriptions
+        # Step 2: Parse attributes string to get descriptions
         attr_descriptions = self._parse_attributes_string(attributes)
 
-        # Step 4: Build final output - only attributes with constraints=True
+        # Step 3: Build final output - only attributes with constraints=True
         final_constraints: Dict[str, str] = {}
         for attr_name in validation_result.constrained_properties:
             # Get description from attributes string

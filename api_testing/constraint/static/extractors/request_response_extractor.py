@@ -5,18 +5,20 @@ for API operations.
 """
 
 import os
-from typing import Dict, List, Optional, Tuple
 
+from api_testing.constraint.static.extractors.base_extractor import (
+    BaseStaticExtractor,
+    handle_extraction_error,
+)
+from api_testing.constraint.static.extractors.models import RequestResponseConstraints
 from api_testing.dataset import SpecificationParser
+from api_testing.models.base_model import APITestingBaseLLMModel
 from api_testing.models.specification_model import OperationProperties
 from api_testing.prompts.request_response_constraint.miner import (
     RequestResponseConstraintMiner,
 )
 from api_testing.utils import flatten_json_schema
 from common.logger import Logger
-
-from api_testing.constraint.static.extractors.base_extractor import BaseStaticExtractor, handle_extraction_error
-from api_testing.constraint.static.extractors.models import RequestResponseConstraints
 
 
 class RequestResponseExtractor(
@@ -42,14 +44,16 @@ class RequestResponseExtractor(
         self,
         spec_parser: SpecificationParser,
         cache_dir: str,
+        model: APITestingBaseLLMModel | None = None,
         batch_size: int = 10,
-        logger: Optional[Logger] = None,
+        logger: Logger | None = None,
     ) -> None:
         """Initialize RequestResponseExtractor.
 
         Args:
             spec_parser: Parser containing parsed API specification
             cache_dir: Directory path for caching extracted constraints
+            model: LLM model instance (passed to miner, uses factory default if None)
             batch_size: Number of operations to process in parallel (default: 10)
             logger: Logger instance (shared from parent)
 
@@ -62,7 +66,7 @@ class RequestResponseExtractor(
         super().__init__(cache_dir=cache_dir, batch_size=batch_size, logger=logger)
 
         self.spec_parser = spec_parser
-        self.request_response_miner = RequestResponseConstraintMiner()
+        self.request_response_miner = RequestResponseConstraintMiner(model=model)
 
     @property
     def cache_file(self) -> str:
@@ -72,7 +76,7 @@ class RequestResponseExtractor(
     @handle_extraction_error(return_value=(None, None))
     async def _extract_single(
         self, operation: OperationProperties
-    ) -> Tuple[str, Optional[RequestResponseConstraints]]:
+    ) -> tuple[str, RequestResponseConstraints | None]:
         """Extract request-response constraints for a single operation.
 
         Args:
@@ -85,7 +89,7 @@ class RequestResponseExtractor(
         self.logger.debug(f"Processing operation: {operation_uuid}")
 
         # Extract request parameters
-        request_params: List[str] = []
+        request_params: list[str] = []
         if operation.parameters:
             for param_name, param_props in operation.parameters.items():
                 if param_props.schema is None:
@@ -105,7 +109,7 @@ class RequestResponseExtractor(
             return operation_uuid, None
 
         # Extract response properties
-        response_props: List[str] = []
+        response_props: list[str] = []
         if operation.successful_responses:
             flattened_responses = flatten_json_schema(
                 operation.successful_responses.to_dict()
@@ -136,7 +140,9 @@ class RequestResponseExtractor(
         )
 
         # Count total constraint pairs
-        total_pairs = sum(len(resp_props) for resp_props in constraints.constraints.values())
+        total_pairs = sum(
+            len(resp_props) for resp_props in constraints.constraints.values()
+        )
 
         self.logger.debug(
             f"Extracted request-response constraints: operation={operation_uuid}, "
@@ -147,8 +153,8 @@ class RequestResponseExtractor(
         return operation_uuid, constraints
 
     def _parse_cached_items(
-        self, cached_data: List[Dict]
-    ) -> List[RequestResponseConstraints]:
+        self, cached_data: list[dict]
+    ) -> list[RequestResponseConstraints]:
         """Parse cached request-response constraints.
 
         Args:

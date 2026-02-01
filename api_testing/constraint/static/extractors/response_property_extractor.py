@@ -5,21 +5,26 @@ to operation-level constraints.
 """
 
 import os
-from typing import Dict, List, Optional, Tuple
 
+from api_testing.constraint.static.extractors.base_extractor import (
+    BaseStaticExtractor,
+    handle_extraction_error,
+)
+from api_testing.constraint.static.extractors.models import (
+    OperationConstraints,
+    SchemaConstraints,
+)
 from api_testing.dataset import SpecificationParser
+from api_testing.models.base_model import APITestingBaseLLMModel
 from api_testing.models.specification_model import ItemProperties, OperationProperties
 from api_testing.prompts.response_constraints import ResponsePropertyConstraintMiner
 from api_testing.utils import flatten_json_schema
 from api_testing.utils.graph import is_nested_path_end_with
 from common.logger import Logger
 
-from api_testing.constraint.static.extractors.base_extractor import BaseStaticExtractor, handle_extraction_error
-from api_testing.constraint.static.extractors.models import OperationConstraints, SchemaConstraints
-
 
 class ResponsePropertyExtractor(
-    BaseStaticExtractor[Tuple[str, ItemProperties], SchemaConstraints]
+    BaseStaticExtractor[tuple[str, ItemProperties], SchemaConstraints]
 ):
     """Extracts response property constraints from API schemas.
 
@@ -40,14 +45,16 @@ class ResponsePropertyExtractor(
         self,
         spec_parser: SpecificationParser,
         cache_dir: str,
+        model: APITestingBaseLLMModel | None = None,
         batch_size: int = 10,
-        logger: Optional[Logger] = None,
+        logger: Logger | None = None,
     ) -> None:
         """Initialize ResponsePropertyExtractor.
 
         Args:
             spec_parser: Parser containing parsed API specification
             cache_dir: Directory path for caching extracted constraints
+            model: LLM model instance (passed to miner, uses factory default if None)
             batch_size: Number of schemas to process in parallel (default: 10)
             logger: Logger instance (shared from parent)
 
@@ -60,8 +67,8 @@ class ResponsePropertyExtractor(
         super().__init__(cache_dir=cache_dir, batch_size=batch_size, logger=logger)
 
         self.spec_parser = spec_parser
-        self.operations: Dict[str, OperationProperties] = spec_parser.operations
-        self.response_constraint_miner = ResponsePropertyConstraintMiner()
+        self.operations: dict[str, OperationProperties] = spec_parser.operations
+        self.response_constraint_miner = ResponsePropertyConstraintMiner(model=model)
 
     @property
     def cache_file(self) -> str:
@@ -70,8 +77,8 @@ class ResponsePropertyExtractor(
 
     @handle_extraction_error(return_value=(None, None))
     async def _extract_single(
-        self, item: Tuple[str, ItemProperties]
-    ) -> Tuple[str, Optional[SchemaConstraints]]:
+        self, item: tuple[str, ItemProperties]
+    ) -> tuple[str, SchemaConstraints | None]:
         """Extract constraints for a single schema.
 
         Args:
@@ -126,7 +133,7 @@ class ResponsePropertyExtractor(
 
         return (schema_name, constraints)
 
-    def _parse_cached_items(self, cached_data: List[Dict]) -> List[SchemaConstraints]:
+    def _parse_cached_items(self, cached_data: list[dict]) -> list[SchemaConstraints]:
         """Parse cached schema constraints.
 
         Args:
@@ -138,8 +145,8 @@ class ResponsePropertyExtractor(
         return [SchemaConstraints(**item) for item in cached_data]
 
     def convert_to_operation_level(
-        self, schema_constraints: List[SchemaConstraints]
-    ) -> Dict[str, OperationConstraints]:
+        self, schema_constraints: list[SchemaConstraints]
+    ) -> dict[str, OperationConstraints]:
         """Convert schema-level constraints to operation-level constraints.
 
         Maps each schema's constraints to operations that use them in responses,
@@ -165,11 +172,11 @@ class ResponsePropertyExtractor(
         )
 
         # Build lookup dictionary for fast access
-        schema_lookup: Dict[str, Dict[str, str]] = {
+        schema_lookup: dict[str, dict[str, str]] = {
             sc.schema_name: sc.constraints for sc in schema_constraints
         }
 
-        operation_constraints: Dict[str, OperationConstraints] = {}
+        operation_constraints: dict[str, OperationConstraints] = {}
 
         for operation in self.operations.values():
             operation_uuid = operation.uuid

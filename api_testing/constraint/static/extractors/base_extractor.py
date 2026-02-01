@@ -8,14 +8,18 @@ import asyncio
 import json
 import os
 from abc import ABC, abstractmethod
+from collections.abc import Callable
 from datetime import datetime
 from functools import wraps
-from typing import Any, Callable, Dict, Generic, List, Optional, Tuple, TypeVar
+from typing import Any, TypeVar
 
-from common.logger import Logger, LogLevel
 from pydantic import BaseModel
 
-from api_testing.constraint.static.extractors.models import CacheMetadata, ExtractionResult
+from api_testing.constraint.static.extractors.models import (
+    CacheMetadata,
+    ExtractionResult,
+)
+from common.logger import Logger, LogLevel
 
 TInput = TypeVar("TInput")
 TOutput = TypeVar("TOutput", bound=BaseModel)
@@ -73,7 +77,7 @@ def handle_extraction_error(
     return decorator
 
 
-class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
+class BaseStaticExtractor[TInput, TOutput: BaseModel](ABC):
     """Abstract base class for static constraint extractors.
 
     Provides shared functionality for batch processing, caching, and error handling.
@@ -93,7 +97,7 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
         self,
         cache_dir: str,
         batch_size: int = 10,
-        logger: Optional[Logger] = None,
+        logger: Logger | None = None,
     ) -> None:
         """Initialize base extractor.
 
@@ -138,7 +142,7 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
         pass
 
     @abstractmethod
-    async def _extract_single(self, item: TInput) -> Tuple[str, Optional[TOutput]]:
+    async def _extract_single(self, item: TInput) -> tuple[str, TOutput | None]:
         """Extract constraints for a single item.
 
         Must be implemented by subclasses with specific extraction logic.
@@ -156,7 +160,7 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
         pass
 
     async def _extract_batch(
-        self, items_batch: List[TInput]
+        self, items_batch: list[TInput]
     ) -> ExtractionResult[TOutput]:
         """Extract constraints for a batch of items in parallel.
 
@@ -182,8 +186,8 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
         results = await asyncio.gather(*tasks, return_exceptions=True)
 
         # Process results
-        successful: List[TOutput] = []
-        failed: List[Tuple[str, str]] = []
+        successful: list[TOutput] = []
+        failed: list[tuple[str, str]] = []
 
         for i, result in enumerate(results):
             if isinstance(result, Exception):
@@ -220,9 +224,9 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
 
     async def extract_all(
         self,
-        items: List[TInput],
+        items: list[TInput],
         force_refresh: bool = False,
-        item_identifier: Optional[Callable[[TInput], str]] = None,
+        item_identifier: Callable[[TInput], str] | None = None,
     ) -> ExtractionResult[TOutput]:
         """Extract constraints for all items with batching and caching.
 
@@ -246,8 +250,8 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
         self.logger.info(f"Processing {len(items)} items for constraint extraction")
 
         # Process items in batches
-        all_successful: List[TOutput] = []
-        all_failed: List[Tuple[str, str]] = []
+        all_successful: list[TOutput] = []
+        all_failed: list[tuple[str, str]] = []
         total_processed = 0
 
         for batch_start in range(0, len(items), self.batch_size):
@@ -297,7 +301,7 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
 
         return final_result
 
-    def _load_cache(self) -> Optional[ExtractionResult[TOutput]]:
+    def _load_cache(self) -> ExtractionResult[TOutput] | None:
         """Load cached extraction results.
 
         Returns:
@@ -307,7 +311,7 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
             return None
 
         try:
-            with open(self.cache_file, "r", encoding="utf-8") as file:
+            with open(self.cache_file, encoding="utf-8") as file:
                 cached_data = json.load(file)
 
             # Reconstruct ExtractionResult from cache
@@ -327,14 +331,14 @@ class BaseStaticExtractor(ABC, Generic[TInput, TOutput]):
 
             return result
 
-        except (json.JSONDecodeError, IOError, KeyError) as e:
+        except (OSError, json.JSONDecodeError, KeyError) as e:
             self.logger.warning(
                 f"Failed to load cache: {self.cache_file}, error={str(e)}"
             )
             return None
 
     @abstractmethod
-    def _parse_cached_items(self, cached_data: List[Dict]) -> List[TOutput]:
+    def _parse_cached_items(self, cached_data: list[dict]) -> list[TOutput]:
         """Parse cached items into output model instances.
 
         Must be implemented by subclasses to reconstruct their specific output type.

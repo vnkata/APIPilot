@@ -5,7 +5,7 @@ during static constraint extraction pipeline.
 """
 
 from datetime import datetime
-from typing import Dict, Generic, List, Optional, TypeVar, Any
+from typing import Any, Dict, Generic, List, Optional, TypeVar
 
 from pydantic import BaseModel, Field
 

@@ -77,7 +77,7 @@ class RequestResponseConstraint:
                         additional_information=self.extras,
                     )
                 )
-                response, _ = self.llm.generate(
+                response = self.llm.generate(
                     system_prompt=self.SYSTEM_PROMPT,
                     prompt=self.PROMPT.format(
                         endpoint=self.endpoint,
