@@ -1,13 +1,14 @@
 """Date validators."""
 
-from typing import Any, Dict, List
 from datetime import datetime
+from typing import Any, Dict, List
+
 from api_testing.constraint.ir.core import ViolationModel
 
 
 def date_iso_date_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate strings are valid ISO 8601 dates (YYYY-MM-DD)."""
     violations = []
 
@@ -55,8 +56,8 @@ def date_iso_date_v1(
 
 
 def date_iso_datetime_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate strings are valid ISO 8601 datetimes."""
     violations = []
 

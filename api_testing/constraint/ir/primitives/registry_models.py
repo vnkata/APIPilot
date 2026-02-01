@@ -7,8 +7,9 @@ Defines metadata for all validator primitives including:
 - Description and examples
 """
 
-from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Literal
+
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class PredicateArgsSchema(BaseModel):
@@ -17,8 +18,8 @@ class PredicateArgsSchema(BaseModel):
     model_config = ConfigDict(frozen=True, extra="allow")
 
     type: str = Field(default="object")
-    required: List[str] = Field(default_factory=list)
-    properties: Dict[str, Any] = Field(default_factory=dict)
+    required: list[str] = Field(default_factory=list)
+    properties: dict[str, Any] = Field(default_factory=dict)
     additionalProperties: bool = Field(default=False)
 
 
@@ -48,10 +49,10 @@ class PredicateMetadata(BaseModel):
     args_schema: PredicateArgsSchema = Field(
         ..., description="JSON Schema for arguments"
     )
-    supported_types: List[str] = Field(
+    supported_types: list[str] = Field(
         ..., description="Supported value types (e.g., ['integer', 'number'])"
     )
-    examples: List[Dict[str, Any]] = Field(
+    examples: list[dict[str, Any]] = Field(
         default_factory=list, description="Usage examples with args and test values"
     )
     implemented: bool = Field(
@@ -70,11 +71,11 @@ class PredicateRegistry(BaseModel):
     model_config = ConfigDict(frozen=False)
 
     version: str = Field(default="1.0", description="Registry version")
-    predicates: List[PredicateMetadata] = Field(
+    predicates: list[PredicateMetadata] = Field(
         default_factory=list, description="List of predicate metadata"
     )
 
-    def get(self, kind: str, version: str = "v1") -> Optional[PredicateMetadata]:
+    def get(self, kind: str, version: str = "v1") -> PredicateMetadata | None:
         """Get predicate metadata by kind and version."""
         ref = f"{kind}@{version}"
         for p in self.predicates:
@@ -82,11 +83,11 @@ class PredicateRegistry(BaseModel):
                 return p
         return None
 
-    def list_implemented(self) -> List[PredicateMetadata]:
+    def list_implemented(self) -> list[PredicateMetadata]:
         """Get all implemented predicates."""
         return [p for p in self.predicates if p.implemented]
 
-    def list_by_category(self, category: str) -> List[PredicateMetadata]:
+    def list_by_category(self, category: str) -> list[PredicateMetadata]:
         """Get predicates by category."""
         return [p for p in self.predicates if p.category == category]
 
@@ -122,7 +123,7 @@ class ProposedPredicateModel(BaseModel):
         default="pending_review", description="Review status"
     )
     proposed_at: str = Field(..., description="ISO timestamp of proposal")
-    field_context: Optional[str] = Field(
+    field_context: str | None = Field(
         default=None, description="Field path this was proposed for"
     )
 
@@ -133,7 +134,7 @@ class ProposedPredicateRegistry(BaseModel):
     model_config = ConfigDict(frozen=False)
 
     version: str = Field(default="1.0", description="Registry version")
-    predicates: List[ProposedPredicateModel] = Field(
+    predicates: list[ProposedPredicateModel] = Field(
         default_factory=list, description="List of proposed predicates"
     )
 

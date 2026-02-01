@@ -5,13 +5,12 @@ Detects pagination constraints where limit/pageSize parameters
 constrain the length of response arrays.
 """
 
-from typing import List, Optional
 
-from api_testing.models.specification_model import OperationProperties, ItemProperties
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
 from api_testing.constraint.ir.extractors.request_response.heuristics.base import (
     BaseHeuristicExtractor,
 )
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 
 
 class PaginationExtractor(BaseHeuristicExtractor):
@@ -30,8 +29,8 @@ class PaginationExtractor(BaseHeuristicExtractor):
     def extract(
         self,
         operation: OperationProperties,
-        response_schema: Optional[ItemProperties] = None,
-    ) -> List[CandidateConstraint]:
+        response_schema: ItemProperties | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract pagination constraints.
 
         Args:

@@ -8,22 +8,21 @@ Implements 3-step pipeline:
 """
 
 import json
-from typing import List, Optional
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-from api_testing.models.specification_model import OperationProperties, ItemProperties
 from api_testing.constraint.ir.config.settings import CrossFieldAnalyzerSettings
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
-from api_testing.constraint.ir.extractors.response_property.multi.heuristic_crossfield import (
-    ResPropHeuristicCrossFieldExtractor,
-)
 from api_testing.constraint.ir.extractors.response_property.multi.coverage_checker import (
     ResPropCrossFieldCoverageChecker,
+)
+from api_testing.constraint.ir.extractors.response_property.multi.heuristic_crossfield import (
+    ResPropHeuristicCrossFieldExtractor,
 )
 from api_testing.constraint.ir.extractors.response_property.multi.llm_extractor import (
     ResPropCrossFieldLLMExtractor,
 )
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -41,7 +40,7 @@ class CrossFieldResponseAnalyzer:
     def __init__(
         self,
         settings: CrossFieldAnalyzerSettings,
-        intermediate_dir: Optional[Path] = None,
+        intermediate_dir: Path | None = None,
     ):
         """Initialize analyzer.
 
@@ -81,7 +80,7 @@ class CrossFieldResponseAnalyzer:
             has_intermediate_dir=intermediate_dir is not None,
         )
 
-    def _get_operation_output_dir(self, operation_id: str) -> Optional[Path]:
+    def _get_operation_output_dir(self, operation_id: str) -> Path | None:
         """Get output directory for a specific operation.
 
         Args:
@@ -149,7 +148,7 @@ class CrossFieldResponseAnalyzer:
         self,
         operation: OperationProperties,
         response_schema: ItemProperties,
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Analyze response schema for cross-field relationships with intermediate saving.
 
         Args:
@@ -325,7 +324,7 @@ class CrossFieldResponseAnalyzer:
                     with open(error_filepath, "w", encoding="utf-8") as f:
                         json.dump(error_output, f, indent=2, ensure_ascii=False)
                 except Exception as save_error:
-                    logger.error(f"Failed to save error output", error=str(save_error))
+                    logger.error("Failed to save error output", error=str(save_error))
 
             logger.error(
                 "Cross-field analysis failed",

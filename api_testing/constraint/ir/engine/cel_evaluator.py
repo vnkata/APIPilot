@@ -4,8 +4,8 @@ CEL (Common Expression Language) evaluator for conditional constraints.
 Evaluates CEL expressions to determine if constraints should be applied.
 """
 
-from typing import Any, Dict
 import re
+from typing import Any, Dict
 
 from api_testing.constraint.ir.core import ConditionModel
 from common.logger import get_logger
@@ -33,7 +33,7 @@ class CELEvaluator:
     def evaluate(
         self,
         condition: ConditionModel,
-        context: Dict[str, Any],
+        context: dict[str, Any],
     ) -> bool:
         """Evaluate condition expression.
 
@@ -53,7 +53,7 @@ class CELEvaluator:
             return True  # Default to applying constraint
 
     @staticmethod
-    def _evaluate_cel(expr: str, context: Dict[str, Any]) -> bool:
+    def _evaluate_cel(expr: str, context: dict[str, Any]) -> bool:
         """Evaluate CEL expression (simplified).
 
         Args:
@@ -118,7 +118,7 @@ class CELEvaluator:
             return True
 
     @staticmethod
-    def _evaluate_python(expr: str, context: Dict[str, Any]) -> bool:
+    def _evaluate_python(expr: str, context: dict[str, Any]) -> bool:
         """Evaluate Python expression (restricted).
 
         Args:

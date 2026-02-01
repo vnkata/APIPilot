@@ -5,15 +5,16 @@ Detects sorting constraints where sort parameters specify
 the order of response arrays.
 """
 
-from typing import List, Optional, Tuple
 import re
 
-from api_testing.models.specification_model import OperationProperties, ItemProperties
-from api_testing.constraint.ir.extractors.common import CandidateConstraint
-from api_testing.constraint.ir.extractors.common import calculate_similarity
+from api_testing.constraint.ir.extractors.common import (
+    CandidateConstraint,
+    calculate_similarity,
+)
 from api_testing.constraint.ir.extractors.request_response.heuristics.base import (
     BaseHeuristicExtractor,
 )
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 
 
 class SortExtractor(BaseHeuristicExtractor):
@@ -32,8 +33,8 @@ class SortExtractor(BaseHeuristicExtractor):
     def extract(
         self,
         operation: OperationProperties,
-        response_schema: Optional[ItemProperties] = None,
-    ) -> List[CandidateConstraint]:
+        response_schema: ItemProperties | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract sort constraints.
 
         Args:
@@ -119,10 +120,10 @@ class SortExtractor(BaseHeuristicExtractor):
 
     @staticmethod
     def _parse_sort_info(
-            param_name: str,
-        param_description: Optional[str],
+        param_name: str,
+        param_description: str | None,
         item_fields: dict,
-    ) -> Optional[Tuple[str, str]]:
+    ) -> tuple[str, str] | None:
         """Parse sort field name and direction from parameter.
 
         Args:
@@ -169,9 +170,9 @@ class SortExtractor(BaseHeuristicExtractor):
 
     @staticmethod
     def _find_sortable_field(
-            field_name: str,
+        field_name: str,
         item_fields: dict,
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Find item fields that could be the sort field.
 
         Args:

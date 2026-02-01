@@ -1,12 +1,13 @@
 """Array validators."""
 
-from typing import Any, Dict, List
+from typing import Any
+
 from api_testing.constraint.ir.core import ViolationModel
 
 
 def array_length_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate array length is within [min, max]."""
     violations = []
     min_len = args.get("min")
@@ -55,8 +56,8 @@ def array_length_v1(
 
 
 def array_unique_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate array contains only unique items."""
     violations = []
 

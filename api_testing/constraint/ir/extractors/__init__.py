@@ -8,21 +8,6 @@ This module provides extractors for different types of constraints:
 """
 
 # Response property extractors
-from api_testing.constraint.ir.extractors.response_property import (
-    ResPropSingleStructuralExtractor,
-    ResPropSingleDescriptionExtractor,
-    ResPropSingleLLMExtractor,
-    ResPropSingleCoverageChecker,
-    SingleFieldResponseAnalyzer,
-    ResPropCrossFieldCoverageChecker,
-    CrossFieldResponseAnalyzer,
-)
-
-# Request-response extractors
-from api_testing.constraint.ir.extractors.request_response import (
-    RequestResponseAnalyzer,
-)
-
 # Common utilities
 from api_testing.constraint.ir.extractors.common import (
     CandidateConstraint,
@@ -32,6 +17,20 @@ from api_testing.constraint.ir.extractors.common import (
 # Prompt builder
 from api_testing.constraint.ir.extractors.prompt_builder import (
     PredicatePromptBuilder,
+)
+
+# Request-response extractors
+from api_testing.constraint.ir.extractors.request_response import (
+    RequestResponseAnalyzer,
+)
+from api_testing.constraint.ir.extractors.response_property import (
+    CrossFieldResponseAnalyzer,
+    ResPropCrossFieldCoverageChecker,
+    ResPropSingleCoverageChecker,
+    ResPropSingleDescriptionExtractor,
+    ResPropSingleLLMExtractor,
+    ResPropSingleStructuralExtractor,
+    SingleFieldResponseAnalyzer,
 )
 
 __all__ = [

@@ -6,22 +6,22 @@ Extracts constraints from natural language descriptions using:
 2. LLM fallback (for patterns not in catalog)
 """
 
-from typing import List, Dict, Optional
+from pydantic import BaseModel
 
-from api_testing.models.specification_model import ItemProperties
-from api_testing.constraint.ir.extractors.common import CandidateConstraint
-from api_testing.constraint.ir.extractors.common import match_patterns
+from api_testing.constraint.ir.extractors.common import (
+    CandidateConstraint,
+    match_patterns,
+)
 from api_testing.constraint.ir.extractors.prompt_builder import PredicatePromptBuilder
 from api_testing.constraint.ir.primitives import (
     get_predicate,
     validate_predicate_args,
 )
-from common.logger import get_logger
+from api_testing.models.specification_model import ItemProperties
 from common.llm import ask
-from common.llm.extractors import StructuredOutputExtractor
 from common.llm.exceptions import LLMError
-from pydantic import BaseModel
-
+from common.llm.extractors import StructuredOutputExtractor
+from common.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -31,13 +31,13 @@ class ResPropSinglePredicateOutput(BaseModel):
 
     kind: str
     version: str
-    args: Dict
+    args: dict
 
 
 class ResPropSingleDescriptionExtractionOutput(BaseModel):
     """LLM output for description extraction."""
 
-    predicates: List[ResPropSinglePredicateOutput]
+    predicates: list[ResPropSinglePredicateOutput]
 
 
 LLM_DESCRIPTION_USER_PROMPT = """Extract validation constraints from this description:
@@ -80,8 +80,8 @@ class ResPropSingleDescriptionExtractor:
         item_props: ItemProperties,
         field_path: str,
         operation_id: str,
-        array_paths: Optional[List[str]] = None,
-    ) -> List[CandidateConstraint]:
+        array_paths: list[str] | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract predicates from description.
 
         Args:
@@ -101,7 +101,7 @@ class ResPropSingleDescriptionExtractor:
         self._current_operation_id = operation_id
         self._current_array_paths = array_paths or []
 
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         try:
             # Phase 1: Try pattern matching (rule-based)
@@ -139,7 +139,7 @@ class ResPropSingleDescriptionExtractor:
         description: str,
         item_props: ItemProperties,
         field_path: str,
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Extract using pattern catalog (rule-based).
 
         Args:
@@ -150,7 +150,7 @@ class ResPropSingleDescriptionExtractor:
         Returns:
             List of CandidateConstraint instances
         """
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         # Match patterns
         matches = match_patterns(description, field_type=item_props.type)
@@ -183,7 +183,7 @@ class ResPropSingleDescriptionExtractor:
         description: str,
         item_props: ItemProperties,
         field_path: str,
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Extract using LLM (fallback).
 
         Args:
@@ -194,7 +194,7 @@ class ResPropSingleDescriptionExtractor:
         Returns:
             List of CandidateConstraint instances
         """
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         try:
             # Build prompt
@@ -286,11 +286,11 @@ class ResPropSingleDescriptionExtractor:
     def _make_predicate(
         self,
         kind: str,
-        args: Dict,
+        args: dict,
         confidence: float,
         evidence: str,
         field_path: str,
-    ) -> Optional[CandidateConstraint]:
+    ) -> CandidateConstraint | None:
         """Create CandidateConstraint instance.
 
         Args:

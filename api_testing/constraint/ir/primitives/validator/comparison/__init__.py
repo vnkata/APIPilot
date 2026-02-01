@@ -1,12 +1,13 @@
 """Comparison validators for cross-field and request-response constraints."""
 
 from typing import Any, Dict, List
+
 from api_testing.constraint.ir.core import ViolationModel
 
 
 def comparison_less_than_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate first value < second value.
 
     Args:
@@ -84,8 +85,8 @@ def comparison_less_than_v1(
 
 
 def comparison_less_than_or_equal_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate first value <= second value."""
     violations = []
     threshold = args.get("threshold")
@@ -155,8 +156,8 @@ def comparison_less_than_or_equal_v1(
 
 
 def comparison_greater_than_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate first value > second value."""
     violations = []
     threshold = args.get("threshold")
@@ -226,8 +227,8 @@ def comparison_greater_than_v1(
 
 
 def comparison_greater_than_or_equal_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate first value >= second value."""
     violations = []
     threshold = args.get("threshold")
@@ -297,8 +298,8 @@ def comparison_greater_than_or_equal_v1(
 
 
 def comparison_equals_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate values are equal."""
     violations = []
     expected = args.get("expected")
@@ -345,8 +346,8 @@ def comparison_equals_v1(
 
 
 def comparison_not_equals_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate values are not equal."""
     violations = []
     forbidden = args.get("forbidden")
@@ -393,8 +394,8 @@ def comparison_not_equals_v1(
 
 
 def comparison_between_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate value is between min and max (inclusive)."""
     violations = []
     min_val = args.get("min")

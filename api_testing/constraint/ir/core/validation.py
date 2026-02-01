@@ -7,15 +7,16 @@ Validates constraints against the predicate registry, ensuring that:
 - Proposed predicates are saved for review rather than included in production IR
 """
 
-from typing import List, Optional, Dict, Any
 from datetime import datetime
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 from api_testing.constraint.ir.core.models import ConstraintModel, PredicateModel
 from api_testing.constraint.ir.primitives.registry_loader import (
+    ProposedPredicateManager,
     get_predicate,
     validate_predicate_args,
-    ProposedPredicateManager,
 )
 from common.logger import get_logger
 
@@ -58,7 +59,7 @@ class ProposedPredicate(BaseModel):
 
     kind: str = Field(..., description="Proposed predicate kind")
     version: str = Field(default="v1", description="Version")
-    args: Dict[str, Any] = Field(default_factory=dict, description="Arguments")
+    args: dict[str, Any] = Field(default_factory=dict, description="Arguments")
     field_path: str = Field(..., description="Field context")
     evidence: str = Field(..., description="Evidence from specification")
     proposed_at: str = Field(
@@ -82,16 +83,16 @@ class ValidationResult(BaseModel):
 
     model_config = {"frozen": False}
 
-    valid_constraints: List[ConstraintModel] = Field(
+    valid_constraints: list[ConstraintModel] = Field(
         default_factory=list, description="Valid constraints ready for IR"
     )
-    invalid_constraints: List[InvalidConstraint] = Field(
+    invalid_constraints: list[InvalidConstraint] = Field(
         default_factory=list, description="Constraints that failed validation"
     )
-    proposed_predicates: List[ProposedPredicate] = Field(
+    proposed_predicates: list[ProposedPredicate] = Field(
         default_factory=list, description="New predicates needing human review"
     )
-    stats: Dict[str, int] = Field(
+    stats: dict[str, int] = Field(
         default_factory=dict, description="Validation statistics"
     )
 
@@ -125,7 +126,7 @@ class ConstraintIRValidator:
 
     def __init__(
         self,
-        proposal_manager: Optional[ProposedPredicateManager] = None,
+        proposal_manager: ProposedPredicateManager | None = None,
         strict_mode: bool = False,
     ):
         """Initialize validator.
@@ -139,7 +140,7 @@ class ConstraintIRValidator:
         self.logger = logger
 
     def validate_constraints(
-        self, constraints: List[ConstraintModel]
+        self, constraints: list[ConstraintModel]
     ) -> ValidationResult:
         """Validate all constraints against registry.
 
@@ -149,9 +150,9 @@ class ConstraintIRValidator:
         Returns:
             ValidationResult with separated valid/invalid/proposed
         """
-        valid: List[ConstraintModel] = []
-        invalid: List[InvalidConstraint] = []
-        proposed: List[ProposedPredicate] = []
+        valid: list[ConstraintModel] = []
+        invalid: list[InvalidConstraint] = []
+        proposed: list[ProposedPredicate] = []
 
         for constraint in constraints:
             # Validate each predicate in the constraint
@@ -222,7 +223,7 @@ class ConstraintIRValidator:
 
     def _validate_predicate(
         self, predicate: PredicateModel, field_path: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Validate a single predicate.
 
         Args:
@@ -273,7 +274,7 @@ class ConstraintIRValidator:
 
         return {"status": "valid"}
 
-    def _save_proposed_predicates(self, proposed: List[ProposedPredicate]) -> None:
+    def _save_proposed_predicates(self, proposed: list[ProposedPredicate]) -> None:
         """Save proposed predicates to file for review.
 
         Args:

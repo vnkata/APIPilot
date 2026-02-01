@@ -2,12 +2,13 @@
 
 import re
 from typing import Any, Dict, List
+
 from api_testing.constraint.ir.core import ViolationModel
 
 
 def string_enum_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate strings are in allowed enum values."""
     violations = []
     allowed = set(args.get("values", []))
@@ -44,8 +45,8 @@ def string_enum_v1(
 
 
 def string_pattern_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate strings match regex pattern."""
     violations = []
     pattern = args.get("pattern", "")
@@ -95,8 +96,8 @@ def string_pattern_v1(
 
 
 def string_length_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate string length is within [min, max]."""
     violations = []
     min_len = args.get("min")
@@ -145,8 +146,8 @@ def string_length_v1(
 
 
 def string_uri_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate strings are valid URIs with optional scheme restriction."""
     violations = []
     allowed_schemes = args.get("allowed_schemes", [])
@@ -197,8 +198,8 @@ def string_uri_v1(
 
 
 def string_email_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate strings are valid email addresses."""
     violations = []
 

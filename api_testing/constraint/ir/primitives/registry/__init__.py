@@ -7,14 +7,14 @@ from category-specific JSON files organized in primitives/ and relations/ subdir
 
 import json
 from pathlib import Path
-from typing import List, Dict
+from typing import Dict, List
 
 from common.logger import get_logger
 
 logger = get_logger(__name__)
 
 
-def load_merged_registry() -> Dict:
+def load_merged_registry() -> dict:
     """Load and merge all predicate registries from JSON files.
 
     Returns:
@@ -35,7 +35,7 @@ def load_merged_registry() -> Dict:
     if not relations_dir.exists():
         raise FileNotFoundError(f"Relations directory not found: {relations_dir}")
 
-    all_predicates: List[Dict] = []
+    all_predicates: list[dict] = []
     loaded_files = []
 
     # Load all JSON files from both directories
@@ -43,7 +43,7 @@ def load_merged_registry() -> Dict:
         list(primitives_dir.glob("*.json")) + list(relations_dir.glob("*.json"))
     ):
         try:
-            with open(json_file, "r", encoding="utf-8") as f:
+            with open(json_file, encoding="utf-8") as f:
                 data = json.load(f)
                 predicates = data.get("predicates", [])
                 all_predicates.extend(predicates)

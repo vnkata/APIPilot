@@ -6,7 +6,7 @@ descriptions with high precision.
 """
 
 import re
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Any
 
 
 class DescriptionPattern:
@@ -35,7 +35,7 @@ class DescriptionPattern:
         self.args_builder = args_builder
         self.confidence = confidence
 
-    def match(self, description: str) -> Optional[Tuple[Dict[str, Any], str]]:
+    def match(self, description: str) -> tuple[dict[str, Any], str] | None:
         """Try to match pattern against description.
 
         Args:
@@ -60,7 +60,7 @@ class DescriptionPattern:
 # ============================================================================
 
 
-def _build_range_args(match: re.Match) -> Dict:
+def _build_range_args(match: re.Match) -> dict:
     """Build range args from match."""
     return {
         "min": int(match.group(1)),
@@ -68,7 +68,7 @@ def _build_range_args(match: re.Match) -> Dict:
     }
 
 
-def _build_values_list_args(match: re.Match) -> Dict:
+def _build_values_list_args(match: re.Match) -> dict:
     """Build enum values from match."""
     values_str = match.group(1)
     # Parse values (handles ['A', 'B'] or [1, 2])
@@ -76,19 +76,19 @@ def _build_values_list_args(match: re.Match) -> Dict:
     return {"values": values}
 
 
-def _build_uri_scheme_args(match: re.Match) -> Dict:
+def _build_uri_scheme_args(match: re.Match) -> dict:
     """Build URI args with scheme restriction."""
     scheme = match.group(1) if match.lastindex >= 1 else "https"
     return {"allowed_schemes": [scheme]}
 
 
-def _build_pattern_args(match: re.Match) -> Dict:
+def _build_pattern_args(match: re.Match) -> dict:
     """Build pattern args."""
     pattern = match.group(1)
     return {"pattern": pattern}
 
 
-def _build_length_args(match: re.Match) -> Dict:
+def _build_length_args(match: re.Match) -> dict:
     """Build string length args."""
     if match.lastindex == 2:
         return {"min": int(match.group(1)), "max": int(match.group(2))}
@@ -270,7 +270,7 @@ BOOLEAN_PATTERNS = [
 # ============================================================================
 
 
-ALL_PATTERNS: List[DescriptionPattern] = (
+ALL_PATTERNS: list[DescriptionPattern] = (
     INTEGER_RANGE_PATTERNS
     + INTEGER_ENUM_PATTERNS
     + STRING_ENUM_PATTERNS
@@ -284,8 +284,8 @@ ALL_PATTERNS: List[DescriptionPattern] = (
 
 
 def match_patterns(
-    description: str, field_type: Optional[str] = None
-) -> List[Tuple[DescriptionPattern, Dict, str]]:
+    description: str, field_type: str | None = None
+) -> list[tuple[DescriptionPattern, dict, str]]:
     """Match description against all patterns.
 
     Args:

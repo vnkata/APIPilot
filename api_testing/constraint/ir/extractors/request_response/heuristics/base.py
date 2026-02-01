@@ -4,11 +4,11 @@ Base heuristic extractor protocol for request-response constraints.
 Defines the interface and common utilities for deterministic pattern-based extractors.
 """
 
-from typing import List, Protocol, Optional
 from abc import abstractmethod
+from typing import Protocol
 
-from api_testing.models.specification_model import OperationProperties, ItemProperties
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -30,8 +30,8 @@ class HeuristicExtractor(Protocol):
     def extract(
         self,
         operation: OperationProperties,
-        response_schema: Optional[ItemProperties] = None,
-    ) -> List[CandidateConstraint]:
+        response_schema: ItemProperties | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract candidate constraints from an operation.
 
         Args:
@@ -63,9 +63,9 @@ class BaseHeuristicExtractor:
 
     @staticmethod
     def _get_response_schema(
-            operation: OperationProperties,
-        provided_schema: Optional[ItemProperties] = None,
-    ) -> Optional[ItemProperties]:
+        operation: OperationProperties,
+        provided_schema: ItemProperties | None = None,
+    ) -> ItemProperties | None:
         """Get response schema, using provided or extracting from operation.
 
         Args:
@@ -82,9 +82,9 @@ class BaseHeuristicExtractor:
 
     @staticmethod
     def _find_array_in_schema(
-            schema: ItemProperties,
-        preferred_names: List[str] = None,
-    ) -> Optional[tuple]:
+        schema: ItemProperties,
+        preferred_names: list[str] = None,
+    ) -> tuple | None:
         """Find an array field in the schema.
 
         Args:

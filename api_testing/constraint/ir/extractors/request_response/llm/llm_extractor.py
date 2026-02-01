@@ -5,22 +5,21 @@ Handles unmatched parameters that heuristics couldn't process,
 with predicate mapping and suggestion support.
 """
 
-from typing import List, Dict, Optional
 from pydantic import BaseModel
 
-from api_testing.models.specification_model import OperationProperties
 from api_testing.constraint.ir.core.parameter_model import ParameterInfo
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
 from api_testing.constraint.ir.extractors.prompt_builder import PredicatePromptBuilder
 from api_testing.constraint.ir.primitives import (
+    ProposedPredicateManager,
     get_predicate,
     validate_predicate_args,
-    ProposedPredicateManager,
 )
-from common.logger import get_logger
+from api_testing.models.specification_model import OperationProperties
 from common.llm import ask
-from common.llm.extractors import StructuredOutputExtractor
 from common.llm.exceptions import LLMError
+from common.llm.extractors import StructuredOutputExtractor
+from common.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -32,7 +31,7 @@ class RequestResponsePredicateOutput(BaseModel):
     response_field: str
     kind: str
     version: str = "v1"
-    args: Dict = {}
+    args: dict = {}
     evidence: str
     confidence: float = 0.7
 
@@ -40,15 +39,15 @@ class RequestResponsePredicateOutput(BaseModel):
 class RequestResponseExtractionOutput(BaseModel):
     """LLM output for request-response extraction."""
 
-    predicates: List[RequestResponsePredicateOutput] = []
+    predicates: list[RequestResponsePredicateOutput] = []
 
 
 class RequestResponseSuggestionOutput(BaseModel):
     """LLM output for predicate suggestion."""
 
     needs_new_predicate: bool
-    proposed_predicate: Optional[Dict] = None
-    reasoning: Optional[str] = None
+    proposed_predicate: dict | None = None
+    reasoning: str | None = None
 
 
 REQRESP_EXTRACTION_USER_PROMPT = """Analyze unmatched request parameters and determine if they affect the response.
@@ -141,8 +140,8 @@ Return JSON:
     async def extract(
         self,
         operation: OperationProperties,
-        unmatched_params: List[ParameterInfo],
-    ) -> List[CandidateConstraint]:
+        unmatched_params: list[ParameterInfo],
+    ) -> list[CandidateConstraint]:
         """Extract request-response constraints for unmatched parameters.
 
         Args:
@@ -289,7 +288,7 @@ Return JSON:
 
     @staticmethod
     def _build_parameters_description(
-        params: List[ParameterInfo],
+        params: list[ParameterInfo],
     ) -> str:
         """Build readable parameters description for LLM.
 
@@ -318,7 +317,7 @@ Return JSON:
 
     def _build_response_description(
         self,
-        schema: Dict,
+        schema: dict,
     ) -> str:
         """Build readable response schema description for LLM.
 
@@ -348,9 +347,9 @@ Return JSON:
 
     def _flatten_schema(
         self,
-        schema: Dict,
+        schema: dict,
         prefix: str = "",
-    ) -> Dict[str, Dict]:
+    ) -> dict[str, dict]:
         """Flatten schema into field_path -> field_info mapping.
 
         Args:
@@ -391,7 +390,7 @@ Return JSON:
         response_field: str,
         kind: str,
         version: str,
-        args: Dict,
+        args: dict,
         evidence: str,
         confidence: float,
         operation_id: str,

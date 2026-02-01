@@ -1,0 +1,74 @@
+{
+  "version": "1.0",
+  "predicates": [
+    {
+      "kind": "integer.optional_observance",
+      "version": "v1",
+      "category": "integer",
+      "description": "Validates if the province optionally observes a given holiday.",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "province_id"
+        ],
+        "properties": {
+          "province_id": {
+            "type": "integer",
+            "description": "The ID of the province that may optionally observe the holiday."
+          }
+        }
+      },
+      "proposed_by": "llm",
+      "evidence": "Proposed for constraints: - The province must optionally observe a holiday",
+      "status": "pending_review",
+      "proposed_at": "2026-01-07T18:05:52.652601Z",
+      "field_context": "holidays.provinces.optional"
+    },
+    {
+      "kind": "string.public_holidays_url",
+      "version": "v1",
+      "category": "string",
+      "description": "Validates that the provided URL is accessible and points to a resource specifically related to public holidays for the specified region.",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to be validated for accessibility and relevance to public holidays."
+          }
+        }
+      },
+      "proposed_by": "llm",
+      "evidence": "Proposed for constraints: - The URL must be accessible and return a valid response.\n- The URL should point to a resource specifically related to public holidays for the specified region.",
+      "status": "pending_review",
+      "proposed_at": "2026-01-15T13:50:53.373908Z",
+      "field_context": "holidays.provinces.sourceLink"
+    },
+    {
+      "kind": "url.accessible_and_valid_format",
+      "version": "v1",
+      "category": "string",
+      "description": "Validates that the provided URL is accessible and returns a valid response in the expected format for public holidays data.",
+      "args_schema": {
+        "type": "object",
+        "required": [
+          "url"
+        ],
+        "properties": {
+          "url": {
+            "type": "string",
+            "description": "The URL to be validated for accessibility and content format."
+          }
+        }
+      },
+      "proposed_by": "llm",
+      "evidence": "Proposed for constraints: - The URL must be accessible and return a valid response.\n- The URL should point to a specific format of public holidays data, which may require additional validation on the content type or structure.",
+      "status": "pending_review",
+      "proposed_at": "2026-01-26T14:15:43.035789Z",
+      "field_context": "holidays.provinces.sourceLink"
+    }
+  ]
+}

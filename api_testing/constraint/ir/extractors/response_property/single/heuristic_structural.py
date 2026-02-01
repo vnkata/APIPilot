@@ -5,14 +5,12 @@ Deterministically extracts constraints from OpenAPI schema structural keywords.
 Maps JSON Schema properties directly to validation predicates with 100% confidence.
 """
 
-from typing import List, Dict, Optional
-
-from api_testing.models.specification_model import ItemProperties
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
 from api_testing.constraint.ir.primitives import (
     get_predicate,
     validate_predicate_args,
 )
+from api_testing.models.specification_model import ItemProperties
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -47,8 +45,8 @@ class ResPropSingleStructuralExtractor:
         item_props: ItemProperties,
         field_path: str,
         operation_id: str,
-        array_paths: Optional[List[str]] = None,
-    ) -> List[CandidateConstraint]:
+        array_paths: list[str] | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract predicates from ItemProperties.
 
         Args:
@@ -67,7 +65,7 @@ class ResPropSingleStructuralExtractor:
         self._current_operation_id = operation_id
         self._current_array_paths = array_paths or []
 
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         try:
             # Extract based on type
@@ -101,9 +99,9 @@ class ResPropSingleStructuralExtractor:
 
     def _extract_integer(
         self, item_props: ItemProperties, field_path: str
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Extract integer constraints."""
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         # Priority: binary format > enum > range
         # Binary format indicates 0/1 boolean-like integers
@@ -153,9 +151,9 @@ class ResPropSingleStructuralExtractor:
 
     def _extract_string(
         self, item_props: ItemProperties, field_path: str
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Extract string constraints."""
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         # Enum
         if item_props.enum and len(item_props.enum) > 0:
@@ -260,9 +258,9 @@ class ResPropSingleStructuralExtractor:
 
     def _extract_number(
         self, item_props: ItemProperties, field_path: str
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Extract number (float/double) constraints."""
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         # Range
         if item_props.minimum is not None or item_props.maximum is not None:
@@ -289,9 +287,9 @@ class ResPropSingleStructuralExtractor:
 
     def _extract_boolean(
         self, item_props: ItemProperties, field_path: str
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Extract boolean constraints."""
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         # Const value
         if item_props.default is not None and isinstance(item_props.default, bool):
@@ -308,9 +306,9 @@ class ResPropSingleStructuralExtractor:
 
     def _extract_array(
         self, item_props: ItemProperties, field_path: str
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Extract array constraints."""
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         # Length constraints
         if item_props.min_items is not None or item_props.max_items is not None:
@@ -349,10 +347,10 @@ class ResPropSingleStructuralExtractor:
     def _make_predicate(
         self,
         kind: str,
-        args: Dict,
+        args: dict,
         evidence: str,
         field_path: str,
-    ) -> Optional[CandidateConstraint]:
+    ) -> CandidateConstraint | None:
         """Create CandidateConstraint instance.
 
         Args:

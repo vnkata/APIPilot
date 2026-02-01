@@ -7,11 +7,10 @@ Detects deterministic patterns without LLM:
 - Timestamp relationships (created < updated)
 """
 
-from typing import List, Dict, Optional
 import re
 
-from api_testing.models.specification_model import ItemProperties
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
+from api_testing.models.specification_model import ItemProperties
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -68,8 +67,8 @@ class ResPropHeuristicCrossFieldExtractor:
     def extract(
         self,
         response_schema: ItemProperties,
-        operation_id: Optional[str] = None,
-    ) -> List[CandidateConstraint]:
+        operation_id: str | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract cross-field constraints using heuristics.
 
         Args:
@@ -111,7 +110,7 @@ class ResPropHeuristicCrossFieldExtractor:
         self,
         schema: ItemProperties,
         prefix: str = "",
-    ) -> Dict[str, Dict]:
+    ) -> dict[str, dict]:
         """Flatten schema into field_path -> field_info mapping.
 
         Args:
@@ -146,9 +145,9 @@ class ResPropHeuristicCrossFieldExtractor:
 
     def _extract_date_comparisons(
         self,
-        flattened: Dict[str, Dict],
-        operation_id: Optional[str],
-    ) -> List[CandidateConstraint]:
+        flattened: dict[str, dict],
+        operation_id: str | None,
+    ) -> list[CandidateConstraint]:
         """Extract date/time field comparisons.
 
         Args:
@@ -170,7 +169,7 @@ class ResPropHeuristicCrossFieldExtractor:
 
         # Check each pattern
         for start_pattern, end_pattern, relationship in self.date_patterns:
-            for field_a_path, field_a_info in date_fields.items():
+            for field_a_path, _field_a_info in date_fields.items():
                 field_a_name = field_a_path.split(".")[-1]
                 start_match = re.match(start_pattern, field_a_name, re.IGNORECASE)
 
@@ -180,7 +179,7 @@ class ResPropHeuristicCrossFieldExtractor:
                 base_name = start_match.group(1) if start_match.lastindex else ""
 
                 # Find matching end field
-                for field_b_path, field_b_info in date_fields.items():
+                for field_b_path, _field_b_info in date_fields.items():
                     if field_b_path == field_a_path:
                         continue
 
@@ -212,9 +211,9 @@ class ResPropHeuristicCrossFieldExtractor:
 
     def _extract_numeric_comparisons(
         self,
-        flattened: Dict[str, Dict],
-        operation_id: Optional[str],
-    ) -> List[CandidateConstraint]:
+        flattened: dict[str, dict],
+        operation_id: str | None,
+    ) -> list[CandidateConstraint]:
         """Extract numeric field comparisons.
 
         Args:
@@ -238,7 +237,7 @@ class ResPropHeuristicCrossFieldExtractor:
 
         # Check each pattern
         for min_pattern, max_pattern, relationship in self.numeric_patterns:
-            for field_a_path, field_a_info in numeric_fields.items():
+            for field_a_path, _field_a_info in numeric_fields.items():
                 field_a_name = field_a_path.split(".")[-1]
                 min_match = re.match(min_pattern, field_a_name, re.IGNORECASE)
 
@@ -248,7 +247,7 @@ class ResPropHeuristicCrossFieldExtractor:
                 base_name = min_match.group(1) if min_match.lastindex else ""
 
                 # Find matching max field
-                for field_b_path, field_b_info in numeric_fields.items():
+                for field_b_path, _field_b_info in numeric_fields.items():
                     if field_b_path == field_a_path:
                         continue
 
@@ -280,9 +279,9 @@ class ResPropHeuristicCrossFieldExtractor:
 
     def _extract_price_relationships(
         self,
-        flattened: Dict[str, Dict],
-        operation_id: Optional[str],
-    ) -> List[CandidateConstraint]:
+        flattened: dict[str, dict],
+        operation_id: str | None,
+    ) -> list[CandidateConstraint]:
         """Extract price-specific relationships.
 
         Args:
@@ -324,8 +323,8 @@ class ResPropHeuristicCrossFieldExtractor:
             ]
 
             # Match pairs at same nesting level
-            for field_a_path, field_a_info in field_a_candidates:
-                for field_b_path, field_b_info in field_b_candidates:
+            for field_a_path, _field_a_info in field_a_candidates:
+                for field_b_path, _field_b_info in field_b_candidates:
                     if field_a_path == field_b_path:
                         continue
 
@@ -350,7 +349,7 @@ class ResPropHeuristicCrossFieldExtractor:
         return candidates
 
     @staticmethod
-    def _is_date_field(field_info: Dict) -> bool:
+    def _is_date_field(field_info: dict) -> bool:
         """Check if field is a date/time field.
 
         Args:
@@ -380,7 +379,7 @@ class ResPropHeuristicCrossFieldExtractor:
         field_b: str,
         relationship: str,
         comparison_type: str,
-        operation_id: Optional[str],
+        operation_id: str | None,
         confidence: float,
         evidence: str,
     ) -> CandidateConstraint:

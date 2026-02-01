@@ -7,7 +7,8 @@ access to predicate information for validation and IR building.
 
 import json
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Optional
+
 from api_testing.constraint.ir.primitives.registry_models import (
     PredicateMetadata,
     PredicateRegistry,
@@ -21,7 +22,7 @@ class PredicateRegistryLoader:
     """Loader for predicate registry data."""
 
     _instance: Optional["PredicateRegistryLoader"] = None
-    _registry: Optional[PredicateRegistry] = None
+    _registry: PredicateRegistry | None = None
 
     def __new__(cls):
         """Singleton pattern for registry loader."""
@@ -48,7 +49,9 @@ class PredicateRegistryLoader:
                     new_location="registry/primitives/ and registry/relations/",
                 )
 
-            from api_testing.constraint.ir.primitives.registry import load_merged_registry
+            from api_testing.constraint.ir.primitives.registry import (
+                load_merged_registry,
+            )
 
             data = load_merged_registry()
             self._registry = PredicateRegistry(**data)
@@ -73,7 +76,7 @@ class PredicateRegistryLoader:
             self._load_registry()
         return self._registry  # type: ignore
 
-    def get(self, kind: str, version: str = "v1") -> Optional[PredicateMetadata]:
+    def get(self, kind: str, version: str = "v1") -> PredicateMetadata | None:
         """Get predicate metadata.
 
         Args:
@@ -85,15 +88,15 @@ class PredicateRegistryLoader:
         """
         return self.registry.get(kind, version)
 
-    def list_all(self) -> List[PredicateMetadata]:
+    def list_all(self) -> list[PredicateMetadata]:
         """List all predicates."""
         return self.registry.predicates
 
-    def list_implemented(self) -> List[PredicateMetadata]:
+    def list_implemented(self) -> list[PredicateMetadata]:
         """List only implemented predicates."""
         return self.registry.list_implemented()
 
-    def list_by_category(self, category: str) -> List[PredicateMetadata]:
+    def list_by_category(self, category: str) -> list[PredicateMetadata]:
         """List predicates by category."""
         return self.registry.list_by_category(category)
 
@@ -102,7 +105,7 @@ class PredicateRegistryLoader:
         meta = self.get(kind, version)
         return meta.implemented if meta else False
 
-    def validate_args(self, kind: str, version: str, args: Dict) -> bool:
+    def validate_args(self, kind: str, version: str, args: dict) -> bool:
         """Validate predicate arguments against schema.
 
         Args:
@@ -135,8 +138,8 @@ class PredicateRegistryLoader:
             return False
 
     def validate_and_categorize(
-        self, predicate_kind: str, version: str, args: Dict
-    ) -> tuple[bool, Optional[str], Optional[str]]:
+        self, predicate_kind: str, version: str, args: dict
+    ) -> tuple[bool, str | None, str | None]:
         """Validate predicate and return (is_valid, error_msg, category).
 
         Categorizes predicate validation result into three states:
@@ -195,12 +198,12 @@ def get_registry() -> PredicateRegistry:
     return _loader.registry
 
 
-def get_predicate(kind: str, version: str = "v1") -> Optional[PredicateMetadata]:
+def get_predicate(kind: str, version: str = "v1") -> PredicateMetadata | None:
     """Get predicate metadata."""
     return _loader.get(kind, version)
 
 
-def validate_predicate_args(kind: str, version: str, args: Dict) -> bool:
+def validate_predicate_args(kind: str, version: str, args: dict) -> bool:
     """Validate predicate arguments."""
     return _loader.validate_args(kind, version, args)
 
@@ -211,7 +214,7 @@ class ProposedPredicateManager:
     Handles saving and loading proposed predicates to/from proposed_predicates.json.
     """
 
-    def __init__(self, registry_dir: Optional[Path] = None):
+    def __init__(self, registry_dir: Path | None = None):
         """Initialize manager.
 
         Args:
@@ -222,9 +225,9 @@ class ProposedPredicateManager:
 
         self.proposed_file = registry_dir / "proposed_predicates.json"
         self.logger = logger
-        self._registry: Optional[Dict] = None
+        self._registry: dict | None = None
 
-    def load(self) -> Dict:
+    def load(self) -> dict:
         """Load proposed predicates from file.
 
         Returns:
@@ -246,7 +249,7 @@ class ProposedPredicateManager:
             )
             return {"version": "1.0", "predicates": []}
 
-    def save(self, data: Dict) -> bool:
+    def save(self, data: dict) -> bool:
         """Save proposed predicates to file.
 
         Args:
@@ -279,9 +282,9 @@ class ProposedPredicateManager:
         version: str,
         category: str,
         description: str,
-        args_schema: Dict,
+        args_schema: dict,
         evidence: str,
-        field_context: Optional[str] = None,
+        field_context: str | None = None,
         proposed_by: str = "llm",
     ) -> bool:
         """Add a new predicate proposal.
@@ -333,7 +336,7 @@ class ProposedPredicateManager:
         data["predicates"].append(proposal)
         return self.save(data)
 
-    def get_proposals(self, status: Optional[str] = None) -> List[Dict]:
+    def get_proposals(self, status: str | None = None) -> list[dict]:
         """Get all proposals, optionally filtered by status.
 
         Args:
@@ -350,7 +353,7 @@ class ProposedPredicateManager:
 
         return proposals
 
-    def get_proposed(self) -> List[Dict]:
+    def get_proposed(self) -> list[dict]:
         """Get all proposed predicates pending review.
 
         Returns:
@@ -361,11 +364,11 @@ class ProposedPredicateManager:
     def save_proposed(
         self,
         predicate_kind: str,
-        args_schema: Dict,
+        args_schema: dict,
         description: str,
         evidence: str,
         proposed_by: str = "llm",
-        field_context: Optional[str] = None,
+        field_context: str | None = None,
     ) -> bool:
         """Save newly proposed predicate for review.
 

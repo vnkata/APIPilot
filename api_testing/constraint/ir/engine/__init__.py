@@ -8,8 +8,8 @@ Components:
 - Request/response context management
 """
 
-from api_testing.constraint.ir.engine.selectors import SelectorEngine, SelectorMatch
 from api_testing.constraint.ir.engine.cel_evaluator import CELEvaluator
+from api_testing.constraint.ir.engine.selectors import SelectorEngine, SelectorMatch
 from api_testing.constraint.ir.engine.validation_engine import ValidationEngine
 
 __all__ = [

@@ -6,7 +6,8 @@ Validates Constraint IR documents against the JSON Schema meta-schema.
 
 import json
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
+from typing import Any
+
 from jsonschema import Draft202012Validator
 from jsonschema.exceptions import ValidationError as SchemaValidationError
 
@@ -29,7 +30,7 @@ class IRSchemaValidator:
         self.validator = Draft202012Validator(self.schema)
 
     @staticmethod
-    def _load_schema(version: str) -> Dict[str, Any]:
+    def _load_schema(version: str) -> dict[str, Any]:
         """Load JSON Schema for specified version.
 
         Args:
@@ -49,7 +50,7 @@ class IRSchemaValidator:
         with open(schema_path, encoding="utf-8") as f:
             return json.load(f)
 
-    def validate(self, ir_dict: Dict[str, Any]) -> Tuple[bool, List[str]]:
+    def validate(self, ir_dict: dict[str, Any]) -> tuple[bool, list[str]]:
         """Validate IR document against schema.
 
         Args:
@@ -75,7 +76,7 @@ class IRSchemaValidator:
             )
             return (False, errors)
 
-    def validate_strict(self, ir_dict: Dict[str, Any]) -> None:
+    def validate_strict(self, ir_dict: dict[str, Any]) -> None:
         """Validate IR and raise exception if invalid.
 
         Args:

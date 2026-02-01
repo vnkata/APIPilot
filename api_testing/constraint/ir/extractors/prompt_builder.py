@@ -5,7 +5,6 @@ Dynamically generates LLM prompts with predicate lists from registry,
 ensuring single source of truth and eliminating hard-coded predicates.
 """
 
-from typing import List, Dict, Optional
 from api_testing.constraint.ir.primitives import get_registry
 from api_testing.constraint.ir.primitives.registry_models import PredicateMetadata
 from common.logger import get_logger
@@ -27,7 +26,7 @@ class PredicatePromptBuilder:
     CROSS_FIELD_EXTRACTION_PROMPT_V1 = "v1"
     REQUEST_RESPONSE_EXTRACTION_PROMPT_V1 = "v1"
 
-    def __init__(self, include_all: bool = True, category_filter: Optional[str] = None):
+    def __init__(self, include_all: bool = True, category_filter: str | None = None):
         """Initialize prompt builder.
 
         Args:
@@ -37,7 +36,7 @@ class PredicatePromptBuilder:
         self.include_all = include_all
         self.category_filter = category_filter
         self.registry = get_registry()
-        self._cached_predicate_list: Optional[str] = None
+        self._cached_predicate_list: str | None = None
 
     def build_predicate_list(self, format_style: str = "compact") -> str:
         """Generate formatted list of available predicates.
@@ -68,7 +67,7 @@ class PredicatePromptBuilder:
         else:
             return self._format_detailed(predicates)
 
-    def _format_compact(self, predicates: List[PredicateMetadata]) -> str:
+    def _format_compact(self, predicates: list[PredicateMetadata]) -> str:
         """Format predicates in compact style for prompts.
 
         Format: "- kind@version: {args_schema}"
@@ -81,7 +80,7 @@ class PredicatePromptBuilder:
 
         return "\n".join(lines)
 
-    def _format_detailed(self, predicates: List[PredicateMetadata]) -> str:
+    def _format_detailed(self, predicates: list[PredicateMetadata]) -> str:
         """Format predicates with descriptions and examples."""
         lines = []
         for pred in predicates:
@@ -95,7 +94,7 @@ class PredicatePromptBuilder:
         return "\n".join(lines)
 
     @staticmethod
-    def _format_args_schema(properties: Dict) -> str:
+    def _format_args_schema(properties: dict) -> str:
         """Format args schema as compact dict notation."""
         if not properties:
             return "{}"
@@ -121,7 +120,7 @@ class PredicatePromptBuilder:
         return self.build_predicate_list(format_style="compact")
 
     def build_coverage_check_prompt(
-        self, field_path: str, field_description: str, existing_constraints: List[Dict]
+        self, field_path: str, field_description: str, existing_constraints: list[dict]
     ) -> str:
         """Build prompt for coverage checker (COVERAGE_CHECK_PROMPT_V1).
 
@@ -175,7 +174,7 @@ IMPORTANT:
         return prompt
 
     def build_single_field_extraction_prompt(
-        self, field_path: str, field_description: str, missing_constraints: List[str]
+        self, field_path: str, field_description: str, missing_constraints: list[str]
     ) -> str:
         """Build prompt for single-field LLM extraction (SINGLE_FIELD_EXTRACTION_PROMPT_V1).
 
@@ -222,7 +221,7 @@ IMPORTANT:
         return prompt
 
     def build_cross_field_extraction_prompt(
-        self, field_pairs: List[tuple], schema_summary: str
+        self, field_pairs: list[tuple], schema_summary: str
     ) -> str:
         """Build prompt for cross-field LLM extraction (CROSS_FIELD_EXTRACTION_PROMPT_V1).
 

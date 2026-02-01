@@ -8,29 +8,28 @@ Implements 3-step pipeline:
 """
 
 import json
-from typing import List, Optional, Dict
 from collections import defaultdict
-from pathlib import Path
 from datetime import datetime
+from pathlib import Path
 
-from api_testing.models.specification_model import OperationProperties
 from api_testing.constraint.ir.config.settings import RequestResponseAnalyzerSettings
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
+from api_testing.constraint.ir.extractors.request_response.coverage_checker import (
+    RequestResponseCoverageChecker,
+)
 from api_testing.constraint.ir.extractors.request_response.heuristics import (
     EchoIdentityExtractor,
     FilterExtractor,
     PaginationExtractor,
-    SortExtractor,
     ProjectionExpandExtractor,
-    SearchExtractor,
     RangeExtractor,
-)
-from api_testing.constraint.ir.extractors.request_response.coverage_checker import (
-    RequestResponseCoverageChecker,
+    SearchExtractor,
+    SortExtractor,
 )
 from api_testing.constraint.ir.extractors.request_response.llm import (
     RequestResponseLLMExtractor,
 )
+from api_testing.models.specification_model import OperationProperties
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -48,7 +47,7 @@ class RequestResponseAnalyzer:
     def __init__(
         self,
         settings: RequestResponseAnalyzerSettings,
-        intermediate_dir: Optional[Path] = None,
+        intermediate_dir: Path | None = None,
     ):
         """Initialize analyzer.
 
@@ -99,7 +98,7 @@ class RequestResponseAnalyzer:
             has_intermediate_dir=intermediate_dir is not None,
         )
 
-    def _get_operation_output_dir(self, operation_id: str) -> Optional[Path]:
+    def _get_operation_output_dir(self, operation_id: str) -> Path | None:
         """Get output directory for a specific operation.
 
         Args:
@@ -166,7 +165,7 @@ class RequestResponseAnalyzer:
     async def analyze(
         self,
         operation: OperationProperties,
-    ) -> List[CandidateConstraint]:
+    ) -> list[CandidateConstraint]:
         """Analyze operation for request-response constraints with intermediate saving.
 
         Args:
@@ -381,7 +380,7 @@ class RequestResponseAnalyzer:
                     with open(error_filepath, "w", encoding="utf-8") as f:
                         json.dump(error_output, f, indent=2, ensure_ascii=False)
                 except Exception as save_error:
-                    logger.error(f"Failed to save error output", error=str(save_error))
+                    logger.error("Failed to save error output", error=str(save_error))
 
             logger.error(
                 "Request-response analysis failed",
@@ -393,8 +392,8 @@ class RequestResponseAnalyzer:
 
     def _deduplicate_candidates(
         self,
-        candidates: List[CandidateConstraint],
-    ) -> List[CandidateConstraint]:
+        candidates: list[CandidateConstraint],
+    ) -> list[CandidateConstraint]:
         """Deduplicate and merge candidate constraints.
 
         Args:
@@ -407,7 +406,7 @@ class RequestResponseAnalyzer:
             return []
 
         # Group by canonical key
-        groups: Dict[str, List[CandidateConstraint]] = defaultdict(list)
+        groups: dict[str, list[CandidateConstraint]] = defaultdict(list)
 
         for candidate in candidates:
             key = candidate.canonical_key()

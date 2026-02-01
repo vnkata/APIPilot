@@ -5,7 +5,6 @@ Caches constraint extraction results at the schema level to avoid redundant
 extraction when multiple operations use the same schema.
 """
 
-from typing import Dict, List, Optional
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -32,12 +31,12 @@ class SchemaConstraintCache:
 
     def __init__(self) -> None:
         """Initialize empty cache."""
-        self._cache: Dict[str, List[Dict]] = {}
+        self._cache: dict[str, list[dict]] = {}
         self._hits: int = 0
         self._misses: int = 0
         logger.debug("Initialized SchemaConstraintCache")
 
-    def get(self, schema_name: str) -> Optional[List[Dict]]:
+    def get(self, schema_name: str) -> list[dict] | None:
         """Get cached predicates for a schema.
 
         Args:
@@ -59,7 +58,7 @@ class SchemaConstraintCache:
         logger.debug("Schema cache MISS", schema_name=schema_name)
         return None
 
-    def set(self, schema_name: str, predicates: List[Dict]) -> None:
+    def set(self, schema_name: str, predicates: list[dict]) -> None:
         """Cache predicates for a schema.
 
         Args:
@@ -73,7 +72,7 @@ class SchemaConstraintCache:
             predicates_count=len(predicates),
         )
 
-    def get_stats(self) -> Dict[str, int]:
+    def get_stats(self) -> dict[str, int]:
         """Get cache statistics.
 
         Returns:

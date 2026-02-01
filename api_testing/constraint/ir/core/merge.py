@@ -5,8 +5,8 @@ Handles merging duplicate constraints that have the same scope, selectors,
 and predicate kind but come from different sources.
 """
 
-from typing import List, Dict, Tuple
 from collections import defaultdict
+
 from api_testing.constraint.ir.core.models import ConstraintModel, ProvenanceModel
 from common.logger import get_logger
 
@@ -14,8 +14,8 @@ logger = get_logger(__name__)
 
 
 def merge_duplicate_constraints(
-    constraints: List[ConstraintModel],
-) -> List[ConstraintModel]:
+    constraints: list[ConstraintModel],
+) -> list[ConstraintModel]:
     """Merge duplicate constraints with multiple provenance sources.
 
     Duplicates are defined as constraints with:
@@ -41,7 +41,7 @@ def merge_duplicate_constraints(
     logger.debug("Starting constraint deduplication", total=len(constraints))
 
     # Group by (scope, selectors, predicate_kinds)
-    grouped: Dict[Tuple, List[ConstraintModel]] = defaultdict(list)
+    grouped: dict[tuple, list[ConstraintModel]] = defaultdict(list)
 
     for constraint in constraints:
         key = _make_constraint_key(constraint)
@@ -69,7 +69,7 @@ def merge_duplicate_constraints(
     return merged
 
 
-def _make_constraint_key(constraint: ConstraintModel) -> Tuple:
+def _make_constraint_key(constraint: ConstraintModel) -> tuple:
     """Create a hashable key for constraint grouping.
 
     Args:
@@ -86,9 +86,7 @@ def _make_constraint_key(constraint: ConstraintModel) -> Tuple:
     )
 
     # Selectors key (order matters)
-    selectors_key = tuple(
-        (s.kind, s.expr, s.mode) for s in constraint.selectors
-    )
+    selectors_key = tuple((s.kind, s.expr, s.mode) for s in constraint.selectors)
 
     # Predicate kinds key (order matters)
     predicate_kinds_key = tuple(p.kind for p in constraint.predicates)
@@ -96,7 +94,7 @@ def _make_constraint_key(constraint: ConstraintModel) -> Tuple:
     return (scope_key, selectors_key, predicate_kinds_key)
 
 
-def _merge_constraint_group(group: List[ConstraintModel]) -> ConstraintModel:
+def _merge_constraint_group(group: list[ConstraintModel]) -> ConstraintModel:
     """Merge multiple constraints into one.
 
     Args:

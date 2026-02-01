@@ -5,16 +5,13 @@ Uses LLM-driven decision approach: shows LLM existing constraints and asks
 if they sufficiently cover the description requirements.
 """
 
-from typing import List, Dict
-
-from api_testing.models.specification_model import ItemProperties
 from api_testing.constraint.ir.extractors.common import CoverageCheckResult
 from api_testing.constraint.ir.extractors.prompt_builder import PredicatePromptBuilder
-from common.logger import get_logger
+from api_testing.models.specification_model import ItemProperties
 from common.llm import ask
-from common.llm.extractors import StructuredOutputExtractor
 from common.llm.exceptions import LLMError
-
+from common.llm.extractors import StructuredOutputExtractor
+from common.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -35,8 +32,8 @@ class ResPropSingleCoverageChecker:
         self,
         item_props: ItemProperties,
         field_path: str,
-        existing_predicates: List[Dict],
-    ) -> List[str]:
+        existing_predicates: list[dict],
+    ) -> list[str]:
         """Check if extracted constraints sufficiently cover the description.
 
         Uses LLM-driven decision instead of fixed thresholds.
@@ -117,7 +114,6 @@ class ResPropSingleCoverageChecker:
                 error_type=type(e).__name__,
             )
             return []  # Best-effort: continue without coverage check
-
 
 
 __all__ = ["ResPropSingleCoverageChecker"]

@@ -5,27 +5,26 @@ Implements unified 3-phase pipeline for extracting constraints on individual res
 """
 
 import json
-from typing import List, Optional, Set, Union
-from pathlib import Path
-from datetime import datetime
 from collections import defaultdict
+from datetime import datetime
+from pathlib import Path
 
-from api_testing.models.specification_model import ItemProperties
+from api_testing.constraint.ir.cache import SchemaConstraintCache
 from api_testing.constraint.ir.config.settings import SingleFieldAnalyzerSettings
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
-from api_testing.constraint.ir.extractors.response_property.single.heuristic_structural import (
-    ResPropSingleStructuralExtractor,
+from api_testing.constraint.ir.extractors.response_property.single.coverage_checker import (
+    ResPropSingleCoverageChecker,
 )
 from api_testing.constraint.ir.extractors.response_property.single.heuristic_description import (
     ResPropSingleDescriptionExtractor,
 )
-from api_testing.constraint.ir.extractors.response_property.single.coverage_checker import (
-    ResPropSingleCoverageChecker,
+from api_testing.constraint.ir.extractors.response_property.single.heuristic_structural import (
+    ResPropSingleStructuralExtractor,
 )
 from api_testing.constraint.ir.extractors.response_property.single.llm_extractor import (
     ResPropSingleLLMExtractor,
 )
-from api_testing.constraint.ir.cache import SchemaConstraintCache
+from api_testing.models.specification_model import ItemProperties
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -57,8 +56,8 @@ class SingleFieldResponseAnalyzer:
     def __init__(
         self,
         settings: SingleFieldAnalyzerSettings,
-        intermediate_dir: Optional[Path] = None,
-        schema_cache: Optional[SchemaConstraintCache] = None,
+        intermediate_dir: Path | None = None,
+        schema_cache: SchemaConstraintCache | None = None,
     ):
         """Initialize analyzer with extractors.
 
@@ -117,7 +116,7 @@ class SingleFieldResponseAnalyzer:
             has_cache=schema_cache is not None,
         )
 
-    def _get_operation_output_dir(self, operation_id: str) -> Optional[Path]:
+    def _get_operation_output_dir(self, operation_id: str) -> Path | None:
         """Get output directory for a specific operation.
 
         Args:
@@ -139,7 +138,7 @@ class SingleFieldResponseAnalyzer:
         self,
         operation_id: str,
         phase_name: str,
-        data: List[CandidateConstraint],
+        data: list[CandidateConstraint],
         stats: dict,
     ) -> None:
         """Save intermediate output with metadata wrapper.
@@ -179,9 +178,9 @@ class SingleFieldResponseAnalyzer:
     def _save_coverage_intermediate(
         self,
         operation_id: str,
-        missing: List[str],
+        missing: list[str],
         field_path: str,
-        description: Optional[str],
+        description: str | None,
     ) -> None:
         """Save coverage check intermediate output.
 
@@ -216,15 +215,15 @@ class SingleFieldResponseAnalyzer:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=2, ensure_ascii=False)
         except Exception as e:
-            logger.error(f"Failed to save coverage output", error=str(e))
+            logger.error("Failed to save coverage output", error=str(e))
 
     async def analyze(
         self,
         item_props: ItemProperties,
         field_path: str,
         operation_id: str,
-        array_paths: Optional[Union[List[str], Set[str]]] = None,
-    ) -> List[CandidateConstraint]:
+        array_paths: list[str] | set[str] | None = None,
+    ) -> list[CandidateConstraint]:
         """Run complete 3-phase pipeline with intermediate saving.
 
         Args:
@@ -237,7 +236,7 @@ class SingleFieldResponseAnalyzer:
             List of CandidateConstraint instances
         """
         # Normalize array_paths to list for downstream compatibility
-        array_paths_list: List[str] = list(array_paths) if array_paths else []
+        array_paths_list: list[str] = list(array_paths) if array_paths else []
         logger.debug(
             "Analyzing single field",
             field_path=field_path,
@@ -258,7 +257,7 @@ class SingleFieldResponseAnalyzer:
 
         try:
             # Phase 1: Heuristic extraction (if enabled)
-            predicates: List[CandidateConstraint] = []
+            predicates: list[CandidateConstraint] = []
             if self.settings.heuristic.enabled:
                 predicates = await self.extract_heuristic(
                     item_props, field_path, operation_id, array_paths_list
@@ -291,7 +290,7 @@ class SingleFieldResponseAnalyzer:
                 )
 
             # Phase 2: Coverage check (if enabled and description exists)
-            missing: List[str] = []
+            missing: list[str] = []
             if self.settings.coverage_check.enabled and item_props.description:
                 missing = await self.check_coverage(
                     item_props, field_path, predicates, operation_id
@@ -389,15 +388,15 @@ class SingleFieldResponseAnalyzer:
             with open(error_filepath, "w", encoding="utf-8") as f:
                 json.dump(error_output, f, indent=2, ensure_ascii=False)
         except Exception as save_error:
-            logger.error(f"Failed to save error output", error=str(save_error))
+            logger.error("Failed to save error output", error=str(save_error))
 
     async def extract_heuristic(
         self,
         item_props: ItemProperties,
         field_path: str,
         operation_id: str,
-        array_paths: Optional[List[str]] = None,
-    ) -> List[CandidateConstraint]:
+        array_paths: list[str] | None = None,
+    ) -> list[CandidateConstraint]:
         """Phase 1: Structural + Description heuristics.
 
         Args:
@@ -409,7 +408,7 @@ class SingleFieldResponseAnalyzer:
         Returns:
             List of CandidateConstraint instances
         """
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
         errors = []
 
         # Structural constraints (if enabled)
@@ -462,9 +461,9 @@ class SingleFieldResponseAnalyzer:
         self,
         item_props: ItemProperties,
         field_path: str,
-        existing: List[CandidateConstraint],
+        existing: list[CandidateConstraint],
         operation_id: str,
-    ) -> List[str]:
+    ) -> list[str]:
         """Phase 2: Check if constraints are sufficient.
 
         Args:
@@ -523,10 +522,10 @@ class SingleFieldResponseAnalyzer:
         self,
         item_props: ItemProperties,
         field_path: str,
-        missing: List[str],
+        missing: list[str],
         operation_id: str,
-        array_paths: Optional[List[str]] = None,
-    ) -> List[CandidateConstraint]:
+        array_paths: list[str] | None = None,
+    ) -> list[CandidateConstraint]:
         """Phase 3: LLM extraction for missing constraints.
 
         Args:

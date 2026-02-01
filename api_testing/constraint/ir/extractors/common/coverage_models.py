@@ -4,7 +4,6 @@ Common models for coverage checking.
 Defines Pydantic models for LLM-driven coverage check responses.
 """
 
-from typing import List
 from pydantic import BaseModel, Field
 
 
@@ -30,7 +29,7 @@ class CoverageCheckResult(BaseModel):
     is_sufficient: bool = Field(
         ..., description="True if existing constraints are sufficient"
     )
-    missing_constraints: List[str] = Field(
+    missing_constraints: list[str] = Field(
         default_factory=list,
         description="Natural language descriptions of missing constraints",
     )

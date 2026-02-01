@@ -1,12 +1,13 @@
 """Number validators."""
 
 from typing import Any, Dict, List
+
 from api_testing.constraint.ir.core import ViolationModel
 
 
 def number_range_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate numbers are within [min, max] range."""
     violations = []
     min_val = args.get("min")
@@ -54,8 +55,8 @@ def number_range_v1(
 
 
 def number_positive_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate numbers are positive (> 0)."""
     violations = []
 

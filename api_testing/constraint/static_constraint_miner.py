@@ -8,7 +8,6 @@ Mines constraints from response schemas and request-response mappings.
 import asyncio
 import json
 import os
-from typing import Dict, Optional
 
 from api_testing.constraint.ir.config import ConstraintExtractionSettings
 from api_testing.constraint.static.assembler import ConstraintAssembler
@@ -53,12 +52,12 @@ class StaticConstraintMiner:
 
     def __init__(
         self,
-        spec_parser: Optional[SpecificationParser] = None,
-        model: Optional[APITestingBaseLLMModel] = None,
-        embedding_model: Optional[APITestingBaseEmbeddingModel] = None,
-        cache_dir: Optional[str] = None,
+        spec_parser: SpecificationParser | None = None,
+        model: APITestingBaseLLMModel | None = None,
+        embedding_model: APITestingBaseEmbeddingModel | None = None,
+        cache_dir: str | None = None,
         batch_size: int = 10,
-        settings: Optional[ConstraintExtractionSettings] = None,
+        settings: ConstraintExtractionSettings | None = None,
     ) -> None:
         """Initialize StaticConstraintMiner.
 
@@ -81,8 +80,8 @@ class StaticConstraintMiner:
             raise ValueError("batch_size must be at least 1")
 
         self.spec_parser: SpecificationParser = spec_parser
-        self.model: Optional[APITestingBaseLLMModel] = model
-        self.embedding_model: Optional[APITestingBaseEmbeddingModel] = embedding_model
+        self.model: APITestingBaseLLMModel | None = model
+        self.embedding_model: APITestingBaseEmbeddingModel | None = embedding_model
         self.batch_size: int = batch_size
         self.settings = settings
         self.cache_dir = cache_dir
@@ -96,8 +95,8 @@ class StaticConstraintMiner:
         )
 
         # Extract operations and schemas from spec
-        self.operations: Dict[str, OperationProperties] = self.spec_parser.operations
-        self.schemas: Dict[str, ItemProperties] = {
+        self.operations: dict[str, OperationProperties] = self.spec_parser.operations
+        self.schemas: dict[str, ItemProperties] = {
             k: v for opt in self.operations.values() for k, v in opt.schemas.items()
         }
 
@@ -154,14 +153,14 @@ class StaticConstraintMiner:
         if not force_refresh and os.path.exists(self.cache_file):
             self.logger.info(f"Loading from main cache: {self.cache_file}")
             try:
-                with open(self.cache_file, "r", encoding="utf-8") as file:
+                with open(self.cache_file, encoding="utf-8") as file:
                     cached_data = json.load(file)
                     output = StaticConstraintMinerOutput(**cached_data)
                     self.logger.info(
                         f"Loaded {len(output.operations)} operations from main cache"
                     )
                     return output
-            except (json.JSONDecodeError, IOError) as e:
+            except (OSError, json.JSONDecodeError) as e:
                 self.logger.warning(
                     f"Failed to load main cache: {self.cache_file}, error={str(e)}"
                 )
@@ -252,12 +251,12 @@ class StaticConstraintMiner:
             self.logger.info(
                 f"Saved {len(unified_output.operations)} operations to main cache: {self.cache_file}"
             )
-        except IOError as e:
+        except OSError as e:
             error_msg = (
                 f"Failed to write main cache file: {self.cache_file}, error={str(e)}"
             )
             self.logger.error(error_msg)
-            raise IOError(error_msg) from e
+            raise OSError(error_msg) from e
 
         return unified_output
 
@@ -319,7 +318,7 @@ class StaticConstraintMiner:
 
             return ir
 
-        except IOError as e:
+        except OSError as e:
             self.logger.error(
                 "Failed to write constraint IR file",
                 ir_file=ir_file,

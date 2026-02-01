@@ -5,14 +5,14 @@ Detects patterns where path/query parameters echo back in the response,
 e.g., GET /users/{id} → response.id or GET /items?userId=X → response.userId
 """
 
-from typing import List, Optional
-
-from api_testing.models.specification_model import OperationProperties, ItemProperties
-from api_testing.constraint.ir.extractors.common import CandidateConstraint
-from api_testing.constraint.ir.extractors.common import calculate_similarity
+from api_testing.constraint.ir.extractors.common import (
+    CandidateConstraint,
+    calculate_similarity,
+)
 from api_testing.constraint.ir.extractors.request_response.heuristics.base import (
     BaseHeuristicExtractor,
 )
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 
 
 class EchoIdentityExtractor(BaseHeuristicExtractor):
@@ -31,8 +31,8 @@ class EchoIdentityExtractor(BaseHeuristicExtractor):
     def extract(
         self,
         operation: OperationProperties,
-        response_schema: Optional[ItemProperties] = None,
-    ) -> List[CandidateConstraint]:
+        response_schema: ItemProperties | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract echo/identity constraints.
 
         Args:
@@ -163,11 +163,11 @@ class EchoIdentityExtractor(BaseHeuristicExtractor):
 
     @staticmethod
     def _find_matching_fields(
-            param_name: str,
-        param_type: Optional[str],
+        param_name: str,
+        param_type: str | None,
         response_fields: dict,
         confidence_penalty: float = 0.0,
-    ) -> List[tuple]:
+    ) -> list[tuple]:
         """Find response fields that match a parameter.
 
         Args:

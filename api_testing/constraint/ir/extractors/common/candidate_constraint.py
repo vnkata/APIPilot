@@ -5,9 +5,10 @@ Represents constraints before they are converted to the final IR format,
 allowing for scoring, merging, and deduplication.
 """
 
-from typing import Dict, List, Optional, Any, TYPE_CHECKING
-from pydantic import BaseModel, Field
 from datetime import datetime
+from typing import TYPE_CHECKING, Any
+
+from pydantic import BaseModel, Field
 
 if TYPE_CHECKING:
     pass
@@ -26,7 +27,7 @@ class Evidence(BaseModel):
         ...,
         description="Specific location in source (e.g., 'parameter.userId.description')",
     )
-    snippet: Optional[str] = Field(None, description="Relevant text snippet")
+    snippet: str | None = Field(None, description="Relevant text snippet")
     confidence: float = Field(
         default=1.0, ge=0.0, le=1.0, description="Confidence score for this evidence"
     )
@@ -44,16 +45,16 @@ class CandidateConstraint(BaseModel):
         ..., description="Predicate kind (e.g., 'comparison.equals', 'forall_eq')"
     )
     predicate_version: str = Field(default="v1", description="Predicate version")
-    predicate_args: Dict[str, Any] = Field(
+    predicate_args: dict[str, Any] = Field(
         default_factory=dict, description="Predicate arguments"
     )
 
     # Selectors
-    selectors: List[str] = Field(
+    selectors: list[str] = Field(
         default_factory=list,
         description="Selector expressions (JSONPath, request_ref, response_ref)",
     )
-    selector_types: List[str] = Field(
+    selector_types: list[str] = Field(
         default_factory=list,
         description="Selector types (jsonpath, request_ref, response_ref)",
     )
@@ -68,13 +69,13 @@ class CandidateConstraint(BaseModel):
     )
 
     # Single-field specific (optional for backwards compatibility)
-    field_path: Optional[str] = Field(
+    field_path: str | None = Field(
         default=None,
         description="Dot-notation field path for single-field constraints",
     )
 
     # Evidence and confidence
-    evidence: List[Evidence] = Field(
+    evidence: list[Evidence] = Field(
         default_factory=list, description="Evidence supporting this constraint"
     )
     confidence: float = Field(
@@ -82,7 +83,7 @@ class CandidateConstraint(BaseModel):
     )
 
     # Metadata
-    tags: List[str] = Field(
+    tags: list[str] = Field(
         default_factory=list,
         description="Tags for categorization (e.g., 'filter', 'pagination')",
     )
@@ -95,7 +96,7 @@ class CandidateConstraint(BaseModel):
     )
 
     # Additional metadata
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
 
@@ -104,15 +105,15 @@ class CandidateConstraint(BaseModel):
         cls,
         field_path: str,
         predicate_kind: str,
-        predicate_args: Dict[str, Any],
+        predicate_args: dict[str, Any],
         operation_id: str,
         extractor_name: str,
         evidence_source: str,
         evidence_snippet: str,
         confidence: float = 1.0,
         predicate_version: str = "v1",
-        tags: Optional[List[str]] = None,
-        array_paths: Optional[List[str]] = None,
+        tags: list[str] | None = None,
+        array_paths: list[str] | None = None,
     ) -> "CandidateConstraint":
         """Factory method for creating single-field constraints.
 
@@ -167,7 +168,7 @@ class CandidateConstraint(BaseModel):
         self,
         source: str,
         location: str,
-        snippet: Optional[str] = None,
+        snippet: str | None = None,
         confidence: float = 1.0,
     ):
         """Add evidence to this candidate.
@@ -262,10 +263,10 @@ class CandidateConstraint(BaseModel):
         """
         from api_testing.constraint.ir.core import (
             ConstraintModel,
-            ScopeModel,
-            SelectorModel,
             PredicateModel,
             ProvenanceModel,
+            ScopeModel,
+            SelectorModel,
         )
 
         # Build selectors

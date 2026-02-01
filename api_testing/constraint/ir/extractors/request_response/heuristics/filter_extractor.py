@@ -5,14 +5,14 @@ Detects patterns where query parameters filter response arrays,
 e.g., GET /items?status=ACTIVE → all response items have status=ACTIVE
 """
 
-from typing import List, Optional
-
-from api_testing.models.specification_model import OperationProperties, ItemProperties
-from api_testing.constraint.ir.extractors.common import CandidateConstraint
-from api_testing.constraint.ir.extractors.common import calculate_similarity
+from api_testing.constraint.ir.extractors.common import (
+    CandidateConstraint,
+    calculate_similarity,
+)
 from api_testing.constraint.ir.extractors.request_response.heuristics.base import (
     BaseHeuristicExtractor,
 )
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 
 
 class FilterExtractor(BaseHeuristicExtractor):
@@ -31,8 +31,8 @@ class FilterExtractor(BaseHeuristicExtractor):
     def extract(
         self,
         operation: OperationProperties,
-        response_schema: Optional[ItemProperties] = None,
-    ) -> List[CandidateConstraint]:
+        response_schema: ItemProperties | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract filter constraints.
 
         Args:
@@ -115,7 +115,7 @@ class FilterExtractor(BaseHeuristicExtractor):
                     "filter" in param.description.lower()
                     or "by" in param.description.lower()
                 ):
-                    evidence_snippet += f" (description mentions filtering)"
+                    evidence_snippet += " (description mentions filtering)"
 
                 candidate.add_evidence(
                     source="heuristic",
@@ -135,11 +135,11 @@ class FilterExtractor(BaseHeuristicExtractor):
 
     @staticmethod
     def _find_matching_item_fields(
-            param_name: str,
-        param_type: Optional[str],
-        param_description: Optional[str],
+        param_name: str,
+        param_type: str | None,
+        param_description: str | None,
         item_fields: dict,
-    ) -> List[tuple]:
+    ) -> list[tuple]:
         """Find item fields that match a filter parameter.
 
         Args:

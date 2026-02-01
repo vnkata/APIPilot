@@ -6,7 +6,6 @@ Provides functions to compare field names across different naming conventions
 """
 
 import re
-from typing import Tuple
 
 
 def normalize_name(name: str) -> str:
@@ -172,7 +171,7 @@ def levenshtein_distance(s1: str, s2: str) -> int:
 
 def find_best_match(
     target_name: str, candidate_names: list, threshold: float = 0.6
-) -> Tuple[str, float]:
+) -> tuple[str, float]:
     """Find the best matching name from a list of candidates.
 
     Args:

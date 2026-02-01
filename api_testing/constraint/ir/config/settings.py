@@ -7,10 +7,10 @@ Uses pydantic_settings for configuration management with:
 - Environment variable overrides (highest priority)
 """
 
+from pathlib import Path
+
 from pydantic import BaseModel, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict, YamlConfigSettingsSource
-from typing import Optional
-from pathlib import Path
 
 
 class HeuristicStepSettings(BaseModel):
@@ -381,11 +381,11 @@ class ConstraintExtractionSettings(BaseSettings):
 
 
 # Singleton pattern for settings
-_settings_instance: Optional[ConstraintExtractionSettings] = None
+_settings_instance: ConstraintExtractionSettings | None = None
 
 
 def get_constraint_settings(
-    config_file: Optional[Path] = None, reload: bool = False
+    config_file: Path | None = None, reload: bool = False
 ) -> ConstraintExtractionSettings:
     """Get or create constraint extraction settings instance.
 

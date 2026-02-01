@@ -4,13 +4,12 @@ Search extractor for q/query/search parameter patterns.
 Detects search constraints (with low confidence due to fuzzy semantics).
 """
 
-from typing import List, Optional
 
-from api_testing.models.specification_model import OperationProperties, ItemProperties
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
 from api_testing.constraint.ir.extractors.request_response.heuristics.base import (
     BaseHeuristicExtractor,
 )
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 
 
 class SearchExtractor(BaseHeuristicExtractor):
@@ -28,8 +27,8 @@ class SearchExtractor(BaseHeuristicExtractor):
     def extract(
         self,
         operation: OperationProperties,
-        response_schema: Optional[ItemProperties] = None,
-    ) -> List[CandidateConstraint]:
+        response_schema: ItemProperties | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract search constraints.
 
         Args:

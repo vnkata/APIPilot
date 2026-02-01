@@ -15,12 +15,12 @@ from typing import Any, Dict, List, Optional
 from api_testing.constraint.ir.core import (
     ConstraintIRModel,
     ConstraintModel,
+    IRSchemaValidator,
     ValidationResultModel,
     ViolationModel,
 )
-from api_testing.constraint.ir.core import IRSchemaValidator
-from api_testing.constraint.ir.engine.selectors import SelectorEngine
 from api_testing.constraint.ir.engine.cel_evaluator import CELEvaluator
+from api_testing.constraint.ir.engine.selectors import SelectorEngine
 from api_testing.constraint.ir.primitives import get_validator
 from common.logger import get_logger
 
@@ -88,8 +88,8 @@ class ValidationEngine:
         operation_id: str,
         response_body: Any,
         status_code: int = 200,
-        request_ctx: Optional[Dict] = None,
-        response_ctx: Optional[Dict] = None,
+        request_ctx: dict | None = None,
+        response_ctx: dict | None = None,
     ) -> ValidationResultModel:
         """Validate response against constraints.
 
@@ -106,7 +106,7 @@ class ValidationEngine:
         # Get constraints for operation
         op_constraints = self.ir.operation_constraints.get(operation_id)
         if not op_constraints:
-            logger.debug(f"No constraints for operation", operation_id=operation_id)
+            logger.debug("No constraints for operation", operation_id=operation_id)
             return ValidationResultModel(
                 operation_id=operation_id,
                 violations=[],
@@ -204,9 +204,9 @@ class ValidationEngine:
         self,
         constraint: ConstraintModel,
         response_body: Any,
-        request_ctx: Dict,
-        response_ctx: Dict,
-    ) -> List[ViolationModel]:
+        request_ctx: dict,
+        response_ctx: dict,
+    ) -> list[ViolationModel]:
         """Execute a single constraint.
 
         Args:

@@ -7,65 +7,59 @@ comparison/, request_response/.
 """
 
 # Import from subdirectories
-from api_testing.constraint.ir.primitives.validator.int import (
-    int_range_v1,
-    int_enum_v1,
-    int_positive_v1,
-)
-
-from api_testing.constraint.ir.primitives.validator.string import (
-    string_enum_v1,
-    string_pattern_v1,
-    string_length_v1,
-    string_uri_v1,
-    string_email_v1,
-)
-
-from api_testing.constraint.ir.primitives.validator.date import (
-    date_iso_date_v1,
-    date_iso_datetime_v1,
-)
-
-from api_testing.constraint.ir.primitives.validator.number import (
-    number_range_v1,
-    number_positive_v1,
-)
-
-from api_testing.constraint.ir.primitives.validator.boolean import (
-    boolean_const_v1,
-)
-
 from api_testing.constraint.ir.primitives.validator.array import (
     array_length_v1,
     array_unique_v1,
 )
+from api_testing.constraint.ir.primitives.validator.boolean import (
+    boolean_const_v1,
+)
 
 # Import comparison validators
 from api_testing.constraint.ir.primitives.validator.comparison import (
-    comparison_less_than_v1,
-    comparison_less_than_or_equal_v1,
-    comparison_greater_than_v1,
-    comparison_greater_than_or_equal_v1,
-    comparison_equals_v1,
-    comparison_not_equals_v1,
     comparison_between_v1,
+    comparison_equals_v1,
+    comparison_greater_than_or_equal_v1,
+    comparison_greater_than_v1,
+    comparison_less_than_or_equal_v1,
+    comparison_less_than_v1,
+    comparison_not_equals_v1,
+)
+from api_testing.constraint.ir.primitives.validator.date import (
+    date_iso_date_v1,
+    date_iso_datetime_v1,
+)
+from api_testing.constraint.ir.primitives.validator.int import (
+    int_enum_v1,
+    int_positive_v1,
+    int_range_v1,
+)
+from api_testing.constraint.ir.primitives.validator.number import (
+    number_positive_v1,
+    number_range_v1,
 )
 
 # Import request_response validators
 from api_testing.constraint.ir.primitives.validator.request_response import (
-    forall_eq_v1,
-    exists_v1,
-    len_le_v1,
-    len_eq_v1,
-    len_ge_v1,
-    sorted_by_v1,
-    implies_v1,
     contains_substring_v1,
     date_in_range_v1,
-    field_exists_v1,
+    exists_v1,
     field_absent_v1,
+    field_exists_v1,
+    forall_eq_v1,
+    implies_v1,
+    len_eq_v1,
+    len_ge_v1,
+    len_le_v1,
+    sorted_by_v1,
 )
-
+from api_testing.constraint.ir.primitives.validator.string import (
+    string_email_v1,
+    string_enum_v1,
+    string_length_v1,
+    string_pattern_v1,
+    string_uri_v1,
+)
 
 # ============================================================================
 # Registry

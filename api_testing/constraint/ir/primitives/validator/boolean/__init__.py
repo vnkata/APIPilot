@@ -1,12 +1,13 @@
 """Boolean validators."""
 
 from typing import Any, Dict, List
+
 from api_testing.constraint.ir.core import ViolationModel
 
 
 def boolean_const_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate booleans have specific constant value."""
     violations = []
     expected_value = args.get("value")

@@ -4,28 +4,27 @@ Constraint IR Builder.
 Orchestrates the complete extraction pipeline and builds the final IR document.
 """
 
-import os
 import json
-from pathlib import Path
-from typing import Dict, List, Optional, Set
+import os
 from datetime import datetime
+from pathlib import Path
 
-from api_testing.models.specification_model import OperationProperties, ItemProperties
-from api_testing.constraint.ir.core.models import (
-    ConstraintModel,
-    OperationConstraintsModel,
-    ConstraintIRModel,
-)
-from api_testing.constraint.ir.core.merge import merge_duplicate_constraints
-from api_testing.constraint.ir.extractors import (
-    CrossFieldResponseAnalyzer,
-    RequestResponseAnalyzer,
-)
 from api_testing.constraint.ir.cache import SchemaConstraintCache
 from api_testing.constraint.ir.config import (
     ConstraintExtractionSettings,
     get_constraint_settings,
 )
+from api_testing.constraint.ir.core.merge import merge_duplicate_constraints
+from api_testing.constraint.ir.core.models import (
+    ConstraintIRModel,
+    ConstraintModel,
+    OperationConstraintsModel,
+)
+from api_testing.constraint.ir.extractors import (
+    CrossFieldResponseAnalyzer,
+    RequestResponseAnalyzer,
+)
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 from api_testing.utils import flatten_json_schema
 from api_testing.validation.selectors import (
     detect_array_paths_from_schema,
@@ -49,11 +48,11 @@ class ConstraintIRBuilder:
 
     def __init__(
         self,
-        operations: Dict[str, OperationProperties],
-        schemas: Dict[str, ItemProperties],
-        static_constraints_path: Optional[str] = None,
-        cache_dir: Optional[str] = None,
-        settings: Optional[ConstraintExtractionSettings] = None,
+        operations: dict[str, OperationProperties],
+        schemas: dict[str, ItemProperties],
+        static_constraints_path: str | None = None,
+        cache_dir: str | None = None,
+        settings: ConstraintExtractionSettings | None = None,
     ):
         """Initialize IR builder.
 
@@ -206,7 +205,7 @@ class ConstraintIRBuilder:
         }
 
     @staticmethod
-    def _load_static_constraints(path: Optional[str]) -> Dict[str, Set[str]]:
+    def _load_static_constraints(path: str | None) -> dict[str, set[str]]:
         """Load static_constraint_miner.json to filter fields.
 
         Supports both formats:
@@ -409,7 +408,7 @@ class ConstraintIRBuilder:
 
     async def _build_operation_constraints(
         self, operation: OperationProperties
-    ) -> List[ConstraintModel]:
+    ) -> list[ConstraintModel]:
         """Build constraints for a single operation.
 
         Args:
@@ -493,8 +492,8 @@ class ConstraintIRBuilder:
         item_props: ItemProperties,
         field_path: str,
         op_uuid: str,
-        array_paths: Optional[List[str]] = None,
-    ) -> List:
+        array_paths: list[str] | None = None,
+    ) -> list:
         """Run complete extraction pipeline for a field.
 
         Uses schema-level caching to avoid redundant extraction when
@@ -521,7 +520,7 @@ class ConstraintIRBuilder:
         # - Coverage check
         # - LLM extraction
         # - Intermediate output saving (per operation_id)
-        all_candidates: List[CandidateConstraint] = (
+        all_candidates: list[CandidateConstraint] = (
             await self.single_field_analyzer.analyze(
                 item_props, field_path, op_uuid, array_paths
             )
@@ -561,7 +560,7 @@ class ConstraintIRBuilder:
 
     async def _add_crossfield_response_constraints(
         self,
-        operation_constraints: Dict[str, OperationConstraintsModel],
+        operation_constraints: dict[str, OperationConstraintsModel],
     ) -> None:
         """Add cross-field response constraints using refactored analyzer.
 
@@ -638,7 +637,7 @@ class ConstraintIRBuilder:
 
     async def _add_request_response_constraints(
         self,
-        operation_constraints: Dict[str, OperationConstraintsModel],
+        operation_constraints: dict[str, OperationConstraintsModel],
     ) -> None:
         """Add request-response constraints using new analyzer.
 

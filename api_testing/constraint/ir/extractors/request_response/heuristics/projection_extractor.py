@@ -4,14 +4,15 @@ Projection/Expand extractor for fields/include/expand parameter patterns.
 Detects conditional field presence based on projection parameters.
 """
 
-from typing import List, Optional
 
-from api_testing.models.specification_model import OperationProperties, ItemProperties
-from api_testing.constraint.ir.extractors.common import CandidateConstraint
-from api_testing.constraint.ir.extractors.common import calculate_similarity
+from api_testing.constraint.ir.extractors.common import (
+    CandidateConstraint,
+    calculate_similarity,
+)
 from api_testing.constraint.ir.extractors.request_response.heuristics.base import (
     BaseHeuristicExtractor,
 )
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 
 
 class ProjectionExpandExtractor(BaseHeuristicExtractor):
@@ -30,8 +31,8 @@ class ProjectionExpandExtractor(BaseHeuristicExtractor):
     def extract(
         self,
         operation: OperationProperties,
-        response_schema: Optional[ItemProperties] = None,
-    ) -> List[CandidateConstraint]:
+        response_schema: ItemProperties | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract projection/expand constraints.
 
         Args:
@@ -151,7 +152,7 @@ class ProjectionExpandExtractor(BaseHeuristicExtractor):
     def _find_matching_fields(
             field_value: str,
         response_fields: dict,
-    ) -> List[tuple]:
+    ) -> list[tuple]:
         """Find response fields matching a projection value.
 
         Args:

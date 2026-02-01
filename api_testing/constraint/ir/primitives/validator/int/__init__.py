@@ -1,12 +1,13 @@
 """Integer validators."""
 
 from typing import Any, Dict, List
+
 from api_testing.constraint.ir.core import ViolationModel
 
 
 def int_range_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate integers are within [min, max] range."""
     violations = []
     min_val = args.get("min")
@@ -54,8 +55,8 @@ def int_range_v1(
 
 
 def int_enum_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate integers are in allowed enum values."""
     violations = []
     allowed = set(args.get("values", []))
@@ -90,8 +91,8 @@ def int_enum_v1(
 
 
 def int_positive_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate integers are positive (> 0)."""
     violations = []
 

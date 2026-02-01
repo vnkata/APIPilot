@@ -8,21 +8,21 @@ Defines the complete Constraint IR v2 architecture with:
 - Comprehensive validation
 """
 
+from api_testing.constraint.ir.core.builder import ConstraintIRBuilder
 from api_testing.constraint.ir.core.models import (
-    SelectorModel,
     ConditionModel,
-    ProvenanceModel,
-    ScopeModel,
-    PredicateModel,
+    ConstraintIRModel,
     ConstraintModel,
     OperationConstraintsModel,
-    ConstraintIRModel,
-    ViolationModel,
+    PredicateModel,
+    ProvenanceModel,
+    ScopeModel,
+    SelectorModel,
     ValidationResultModel,
+    ViolationModel,
 )
-from api_testing.constraint.ir.core.validator import IRSchemaValidator
-from api_testing.constraint.ir.core.builder import ConstraintIRBuilder
 from api_testing.constraint.ir.core.parameter_model import ParameterInfo
+from api_testing.constraint.ir.core.validator import IRSchemaValidator
 
 __all__ = [
     "SelectorModel",

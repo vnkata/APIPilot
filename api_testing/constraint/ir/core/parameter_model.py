@@ -4,7 +4,8 @@ Parameter information models for request-response constraint extraction.
 Provides structured types for parameter extraction and matching.
 """
 
-from typing import Any, Optional, Literal
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
 
 
@@ -20,17 +21,15 @@ class ParameterInfo(BaseModel):
         ..., description="Where the parameter appears"
     )
     required: bool = Field(default=False, description="Whether parameter is required")
-    schema_type: Optional[str] = Field(
+    schema_type: str | None = Field(
         None, description="Parameter data type (string, integer, etc.)"
     )
-    format: Optional[str] = Field(
-        None, description="Parameter format (date, uuid, etc.)"
-    )
-    description: Optional[str] = Field(
+    format: str | None = Field(None, description="Parameter format (date, uuid, etc.)")
+    description: str | None = Field(
         None, description="Parameter description from OpenAPI spec"
     )
-    enum: Optional[list] = Field(None, description="Allowed enum values if specified")
-    default: Optional[Any] = Field(None, description="Default value if specified")
+    enum: list | None = Field(None, description="Allowed enum values if specified")
+    default: Any | None = Field(None, description="Default value if specified")
 
     # Additional metadata
     metadata: dict = Field(default_factory=dict, description="Additional metadata")
@@ -43,7 +42,7 @@ class ParameterInfo(BaseModel):
             return parts[0]
         return parts[0] + "".join(p.capitalize() for p in parts[1:])
 
-    def is_type_compatible(self, field_type: Optional[str]) -> bool:
+    def is_type_compatible(self, field_type: str | None) -> bool:
         """Check if this parameter is type-compatible with a field type.
 
         Args:

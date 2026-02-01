@@ -1,13 +1,14 @@
 """Request-response validators for complex validation patterns."""
 
-from typing import Any, Dict, List
 from datetime import datetime
+from typing import Any, Dict, List
+
 from api_testing.constraint.ir.core import ViolationModel
 
 
 def forall_eq_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate all items in array equal a specific value.
 
     Args:
@@ -48,8 +49,8 @@ def forall_eq_v1(
 
 
 def exists_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate at least one item in array matches condition.
 
     Args:
@@ -91,8 +92,8 @@ def exists_v1(
 
 
 def len_le_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate array length is less than or equal to max."""
     violations = []
     max_len = args.get("max")
@@ -140,8 +141,8 @@ def len_le_v1(
 
 
 def len_eq_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate array length equals expected."""
     violations = []
     expected_len = args.get("expected")
@@ -189,8 +190,8 @@ def len_eq_v1(
 
 
 def len_ge_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate array length is greater than or equal to min."""
     violations = []
     min_len = args.get("min")
@@ -238,8 +239,8 @@ def len_ge_v1(
 
 
 def sorted_by_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate array is sorted by a specific field.
 
     Args:
@@ -315,8 +316,8 @@ def sorted_by_v1(
 
 
 def implies_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate conditional constraint: if condition is true, then consequent must be true.
 
     Args:
@@ -347,7 +348,7 @@ def implies_v1(
                 ViolationModel(
                     constraint_id=ctx.get("constraint_id", "unknown"),
                     predicate_ref="implies@v1",
-                    message=f"Condition is true but consequent is false",
+                    message="Condition is true but consequent is false",
                     path=ctx.get("path", ""),
                     value=value,
                     expected="If condition then consequent",
@@ -358,8 +359,8 @@ def implies_v1(
 
 
 def contains_substring_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate string contains substring.
 
     Args:
@@ -416,8 +417,8 @@ def contains_substring_v1(
 
 
 def date_in_range_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate date is within range [start_date, end_date].
 
     Args:
@@ -502,8 +503,8 @@ def date_in_range_v1(
 
 
 def field_exists_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate field exists in object.
 
     Args:
@@ -531,8 +532,8 @@ def field_exists_v1(
 
 
 def field_absent_v1(
-    values: List[Any], args: Dict[str, Any], ctx: Dict
-) -> List[ViolationModel]:
+    values: list[Any], args: dict[str, Any], ctx: dict
+) -> list[ViolationModel]:
     """Validate field does not exist in object.
 
     Args:

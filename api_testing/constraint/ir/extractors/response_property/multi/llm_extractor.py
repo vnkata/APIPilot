@@ -5,24 +5,24 @@ Extracts cross-field relationships that heuristics couldn't detect,
 with predicate mapping and suggestion support.
 """
 
-from typing import List, Dict, Optional
+
 from pydantic import BaseModel
 
-from api_testing.models.specification_model import ItemProperties
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
 from api_testing.constraint.ir.extractors.prompt_builder import PredicatePromptBuilder
-from api_testing.constraint.ir.primitives import (
-    get_predicate,
-    validate_predicate_args,
-    ProposedPredicateManager,
-)
 from api_testing.constraint.ir.extractors.response_property.multi.coverage_checker import (
     MissingRelationship,
 )
-from common.logger import get_logger
+from api_testing.constraint.ir.primitives import (
+    ProposedPredicateManager,
+    get_predicate,
+    validate_predicate_args,
+)
+from api_testing.models.specification_model import ItemProperties
 from common.llm import ask
-from common.llm.extractors import StructuredOutputExtractor
 from common.llm.exceptions import LLMError
+from common.llm.extractors import StructuredOutputExtractor
+from common.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -34,22 +34,22 @@ class ResPropCrossFieldPredicateOutput(BaseModel):
     field_b: str
     kind: str
     version: str = "v1"
-    args: Dict = {}
+    args: dict = {}
     evidence: str
 
 
 class ResPropCrossFieldExtractionOutput(BaseModel):
     """LLM output for cross-field extraction."""
 
-    predicates: List[ResPropCrossFieldPredicateOutput] = []
+    predicates: list[ResPropCrossFieldPredicateOutput] = []
 
 
 class ResPropCrossFieldSuggestionOutput(BaseModel):
     """LLM output for predicate suggestion."""
 
     needs_new_predicate: bool
-    proposed_predicate: Optional[Dict] = None
-    reasoning: Optional[str] = None
+    proposed_predicate: dict | None = None
+    reasoning: str | None = None
 
 
 RES_PROP_CROSSFIELD_EXTRACTION_USER_PROMPT = """Extract cross-field constraints for the following missing relationships.
@@ -132,9 +132,9 @@ Return JSON:
     async def extract(
         self,
         response_schema: ItemProperties,
-        missing_relationships: List[MissingRelationship],
-        operation_id: Optional[str] = None,
-    ) -> List[CandidateConstraint]:
+        missing_relationships: list[MissingRelationship],
+        operation_id: str | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract cross-field constraints for missing relationships.
 
         Args:
@@ -255,7 +255,7 @@ Return JSON:
         self,
         schema: ItemProperties,
         prefix: str = "",
-    ) -> Dict[str, Dict]:
+    ) -> dict[str, dict]:
         """Flatten schema into field_path -> field_info mapping."""
         result = {}
 
@@ -278,7 +278,7 @@ Return JSON:
         return result
 
     @staticmethod
-    def _build_schema_description(flattened: Dict[str, Dict]) -> str:
+    def _build_schema_description(flattened: dict[str, dict]) -> str:
         """Build readable schema description for LLM."""
         lines = []
 
@@ -301,7 +301,7 @@ Return JSON:
 
     @staticmethod
     def _build_missing_description(
-            missing: List[MissingRelationship],
+            missing: list[MissingRelationship],
     ) -> str:
         """Build description of missing relationships."""
         lines = []
@@ -320,9 +320,9 @@ Return JSON:
         field_b: str,
         kind: str,
         version: str,
-        args: Dict,
+        args: dict,
         evidence: str,
-        operation_id: Optional[str],
+        operation_id: str | None,
     ) -> CandidateConstraint:
         """Create a candidate constraint."""
         candidate = CandidateConstraint(
@@ -356,7 +356,7 @@ Return JSON:
         field_a: str,
         field_b: str,
         evidence: str,
-        flattened: Dict[str, Dict],
+        flattened: dict[str, dict],
     ) -> None:
         """Suggest a new predicate for unmappable constraint.
 

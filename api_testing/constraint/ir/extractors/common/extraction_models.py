@@ -5,8 +5,10 @@ Provides type-safe containers for predicates with metadata throughout
 the extraction process, improving IDE support and runtime validation.
 """
 
-from typing import Any, Dict, List, Literal, Optional
+from typing import Any, Literal
+
 from pydantic import BaseModel, Field
+
 from api_testing.constraint.ir.core import PredicateModel, ProvenanceModel
 
 
@@ -33,7 +35,7 @@ class PredicateWithMetadata(BaseModel):
     predicate: PredicateModel = Field(..., description="Validation predicate")
     provenance: ProvenanceModel = Field(..., description="Source and confidence")
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dict for compatibility with existing code.
 
         Returns:
@@ -45,7 +47,7 @@ class PredicateWithMetadata(BaseModel):
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "PredicateWithMetadata":
+    def from_dict(cls, data: dict[str, Any]) -> "PredicateWithMetadata":
         """Deserialize from dict.
 
         Args:
@@ -89,7 +91,7 @@ class ExtractionResult(BaseModel):
 
     model_config = {"frozen": False}
 
-    predicates: List[PredicateWithMetadata] = Field(
+    predicates: list[PredicateWithMetadata] = Field(
         default_factory=list, description="Predicates extracted in this phase"
     )
     phase: Literal["heuristic", "coverage", "llm"] = Field(
@@ -97,10 +99,10 @@ class ExtractionResult(BaseModel):
         description="Extraction phase: heuristic (rules), coverage (check sufficiency), llm (fill gaps)",
     )
     field_path: str = Field(..., description="Dot-notation field path")
-    stats: Dict[str, Any] = Field(
+    stats: dict[str, Any] = Field(
         default_factory=dict, description="Phase-specific statistics and metadata"
     )
-    errors: List[str] = Field(
+    errors: list[str] = Field(
         default_factory=list,
         description="Non-fatal errors encountered during extraction",
     )
@@ -110,7 +112,7 @@ class ExtractionResult(BaseModel):
         """Whether extraction succeeded (has predicates or no fatal errors)."""
         return len(self.predicates) > 0 or len(self.errors) == 0
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dict for intermediate output.
 
         Returns:
@@ -152,14 +154,14 @@ class CoverageCheckResult(BaseModel):
     is_sufficient: bool = Field(
         ..., description="Whether existing predicates cover all requirements"
     )
-    missing_requirements: List[str] = Field(
+    missing_requirements: list[str] = Field(
         default_factory=list,
         description="Requirements from description not yet covered",
     )
-    reasoning: Optional[str] = Field(
+    reasoning: str | None = Field(
         default=None, description="Explanation of why requirements are missing"
     )
-    existing_summary: Optional[str] = Field(
+    existing_summary: str | None = Field(
         default=None, description="Summary of constraints already extracted"
     )
 

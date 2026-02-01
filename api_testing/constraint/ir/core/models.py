@@ -4,9 +4,9 @@ Enhanced Constraint IR models with Scope, Provenance, and Conditions.
 Implements the complete IR v2 architecture as per CONSTRAINTS_TO_IR_TO_ENGINE_PROPOSAL.md.
 """
 
-from typing import Any, Dict, List, Literal, Optional
-from pydantic import BaseModel, Field, ConfigDict
+from typing import Any, Literal
 
+from pydantic import BaseModel, ConfigDict, Field
 
 # ============================================================================
 # Selector Models
@@ -83,11 +83,11 @@ class ProvenanceModel(BaseModel):
     confidence: float = Field(
         default=1.0, ge=0.0, le=1.0, description="Confidence score (0.0-1.0)"
     )
-    evidence: Optional[str] = Field(
+    evidence: str | None = Field(
         default=None,
         description="Evidence supporting this constraint (e.g., spec snippet, observation count)",
     )
-    extracted_at: Optional[str] = Field(
+    extracted_at: str | None = Field(
         default=None, description="ISO timestamp when constraint was extracted"
     )
 
@@ -112,7 +112,7 @@ class ScopeModel(BaseModel):
     phase: Literal["request", "response"] = Field(
         ..., description="Request or response validation"
     )
-    location: Optional[Literal["body", "query", "path", "header"]] = Field(
+    location: Literal["body", "query", "path", "header"] | None = Field(
         default=None, description="Specific location within phase (optional for body)"
     )
 
@@ -136,7 +136,7 @@ class PredicateModel(BaseModel):
     version: str = Field(
         ..., pattern=r"^v\d+$", description="Validator version (e.g., 'v1')"
     )
-    args: Dict[str, Any] = Field(
+    args: dict[str, Any] = Field(
         default_factory=dict, description="Validator-specific arguments"
     )
 
@@ -254,21 +254,21 @@ class ConstraintModel(BaseModel):
 
     id: str = Field(..., description="Unique constraint identifier")
     scope: ScopeModel = Field(..., description="Where this constraint applies")
-    selectors: List[SelectorModel] = Field(
+    selectors: list[SelectorModel] = Field(
         min_length=1,
         description="Value selectors (can be multiple for cross-field constraints)",
     )
-    predicates: List[PredicateModel] = Field(
+    predicates: list[PredicateModel] = Field(
         min_length=1, description="Validation predicates to apply"
     )
-    when: Optional[ConditionModel] = Field(
+    when: ConditionModel | None = Field(
         default=None, description="Optional condition for applying constraint"
     )
     severity: Literal["error", "warn", "info"] = Field(
         default="error", description="Violation severity"
     )
     source: ProvenanceModel = Field(..., description="Provenance information")
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict, description="Additional metadata"
     )
 
@@ -318,7 +318,7 @@ class OperationConstraintsModel(BaseModel):
 
     model_config = ConfigDict(frozen=False)
 
-    constraints: List[ConstraintModel] = Field(
+    constraints: list[ConstraintModel] = Field(
         default_factory=list, description="List of constraints for this operation"
     )
 
@@ -338,10 +338,10 @@ class ConstraintIRModel(BaseModel):
     model_config = ConfigDict(frozen=False)
 
     version: str = Field(default="v2", description="IR schema version")
-    operation_constraints: Dict[str, OperationConstraintsModel] = Field(
+    operation_constraints: dict[str, OperationConstraintsModel] = Field(
         default_factory=dict, description="Map of operation ID to constraints"
     )
-    metadata: Dict[str, Any] = Field(
+    metadata: dict[str, Any] = Field(
         default_factory=dict,
         description="Document-level metadata (tool version, created_at, etc.)",
     )
@@ -362,7 +362,7 @@ class ViolationModel(BaseModel):
     message: str = Field(..., description="Human-readable error message")
     path: str = Field(..., description="Path to violated field")
     value: Any = Field(..., description="Actual value that violated constraint")
-    expected: Optional[Any] = Field(
+    expected: Any | None = Field(
         default=None, description="Expected value or constraint"
     )
     severity: Literal["error", "warn", "info"] = Field(
@@ -376,7 +376,7 @@ class ValidationResultModel(BaseModel):
     model_config = ConfigDict(frozen=False)
 
     operation_id: str = Field(..., description="Operation that was validated")
-    violations: List[ViolationModel] = Field(
+    violations: list[ViolationModel] = Field(
         default_factory=list, description="List of violations found"
     )
     constraints_evaluated: int = Field(

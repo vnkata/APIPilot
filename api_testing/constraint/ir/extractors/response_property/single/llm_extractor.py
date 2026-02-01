@@ -5,22 +5,20 @@ Final fallback extractor that uses LLM to extract constraints
 that weren't captured by structural or description extractors.
 """
 
-from typing import List, Dict, Optional
 from pydantic import BaseModel
 
-from api_testing.models.specification_model import ItemProperties
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
+from api_testing.constraint.ir.extractors.prompt_builder import PredicatePromptBuilder
 from api_testing.constraint.ir.primitives import (
+    ProposedPredicateManager,
     get_predicate,
     validate_predicate_args,
 )
-from api_testing.constraint.ir.primitives import ProposedPredicateManager
-from api_testing.constraint.ir.extractors.prompt_builder import PredicatePromptBuilder
-from common.logger import get_logger
+from api_testing.models.specification_model import ItemProperties
 from common.llm import ask
-from common.llm.extractors import StructuredOutputExtractor
 from common.llm.exceptions import LLMError
-
+from common.llm.extractors import StructuredOutputExtractor
+from common.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -30,21 +28,21 @@ class LLMPredicateOutput(BaseModel):
 
     kind: str
     version: str
-    args: Dict
+    args: dict
     evidence: str
 
 
 class LLMExtractionOutput(BaseModel):
     """LLM extraction output."""
 
-    predicates: List[LLMPredicateOutput]
+    predicates: list[LLMPredicateOutput]
 
 
 class LLMSuggestionOutput(BaseModel):
     """LLM predicate suggestion output."""
 
     needs_new_predicate: bool
-    proposed_predicate: Dict = None
+    proposed_predicate: dict = None
     reasoning: str = None
 
 
@@ -93,10 +91,10 @@ class ResPropSingleLLMExtractor:
         self,
         item_props: ItemProperties,
         field_path: str,
-        missing_constraints: List[str],
+        missing_constraints: list[str],
         operation_id: str,
-        array_paths: Optional[List[str]] = None,
-    ) -> List[CandidateConstraint]:
+        array_paths: list[str] | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract predicates for missing constraints using LLM.
 
         Args:
@@ -116,7 +114,7 @@ class ResPropSingleLLMExtractor:
         self._current_operation_id = operation_id
         self._current_array_paths = array_paths or []
 
-        predicates: List[CandidateConstraint] = []
+        predicates: list[CandidateConstraint] = []
 
         try:
             # Build prompt
@@ -237,10 +235,10 @@ class ResPropSingleLLMExtractor:
         self,
         kind: str,
         version: str,
-        args: Dict,
+        args: dict,
         evidence: str,
         field_path: str,
-    ) -> Optional[CandidateConstraint]:
+    ) -> CandidateConstraint | None:
         """Create CandidateConstraint instance.
 
         Args:
@@ -281,7 +279,7 @@ class ResPropSingleLLMExtractor:
         self,
         item_props: ItemProperties,
         field_path: str,
-        missing_constraints: List[str],
+        missing_constraints: list[str],
     ) -> None:
         """Try to suggest a new predicate for unmatched constraints.
 

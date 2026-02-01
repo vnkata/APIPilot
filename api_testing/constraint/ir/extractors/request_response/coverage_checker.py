@@ -4,12 +4,11 @@ Coverage checker for request-response constraints.
 Identifies request parameters that weren't matched by heuristic extractors.
 """
 
-from typing import List, Set
 import re
 
-from api_testing.models.specification_model import OperationProperties
 from api_testing.constraint.ir.core.parameter_model import ParameterInfo
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
+from api_testing.models.specification_model import OperationProperties
 from common.logger import get_logger
 
 logger = get_logger(__name__)
@@ -29,8 +28,8 @@ class RequestResponseCoverageChecker:
     def find_unmatched_parameters(
         self,
         operation: OperationProperties,
-        extracted_candidates: List[CandidateConstraint],
-    ) -> List[ParameterInfo]:
+        extracted_candidates: list[CandidateConstraint],
+    ) -> list[ParameterInfo]:
         """Find request parameters not covered by extracted constraints.
 
         Args:
@@ -106,8 +105,8 @@ class RequestResponseCoverageChecker:
 
     def _extract_covered_params(
         self,
-        candidates: List[CandidateConstraint],
-    ) -> Set[str]:
+        candidates: list[CandidateConstraint],
+    ) -> set[str]:
         """Extract parameter names from candidate selectors.
 
         Args:

@@ -4,18 +4,17 @@ Range extractor for startDate/endDate, minValue/maxValue parameter pairs.
 Detects range constraints where paired parameters define bounds.
 """
 
-from typing import List, Optional, Tuple
 import re
 
-from api_testing.models.specification_model import OperationProperties, ItemProperties
-from api_testing.constraint.ir.extractors.common import CandidateConstraint
 from api_testing.constraint.ir.extractors.common import (
-    calculate_similarity,
+    CandidateConstraint,
     are_related_by_naming,
+    calculate_similarity,
 )
 from api_testing.constraint.ir.extractors.request_response.heuristics.base import (
     BaseHeuristicExtractor,
 )
+from api_testing.models.specification_model import ItemProperties, OperationProperties
 
 
 class RangeExtractor(BaseHeuristicExtractor):
@@ -34,8 +33,8 @@ class RangeExtractor(BaseHeuristicExtractor):
     def extract(
         self,
         operation: OperationProperties,
-        response_schema: Optional[ItemProperties] = None,
-    ) -> List[CandidateConstraint]:
+        response_schema: ItemProperties | None = None,
+    ) -> list[CandidateConstraint]:
         """Extract range constraints.
 
         Args:
@@ -165,7 +164,7 @@ class RangeExtractor(BaseHeuristicExtractor):
         return candidates
 
     @staticmethod
-    def _find_range_pairs(query_params) -> List[Tuple]:
+    def _find_range_pairs(query_params) -> list[tuple]:
         """Find pairs of range parameters (start/end, min/max).
 
         Args:
@@ -219,7 +218,7 @@ class RangeExtractor(BaseHeuristicExtractor):
     def _find_range_field(
             base_name: str,
         item_fields: dict,
-    ) -> List[Tuple[str, float]]:
+    ) -> list[tuple[str, float]]:
         """Find item fields matching the range base name.
 
         Args:

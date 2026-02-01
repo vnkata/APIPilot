@@ -5,15 +5,15 @@ Uses LLM to determine if heuristic extraction is complete or if
 additional relationships exist that weren't detected.
 """
 
-from typing import List, Dict
+
 from pydantic import BaseModel
 
-from api_testing.models.specification_model import ItemProperties
 from api_testing.constraint.ir.extractors.common import CandidateConstraint
-from common.logger import get_logger
+from api_testing.models.specification_model import ItemProperties
 from common.llm import ask
-from common.llm.extractors import StructuredOutputExtractor
 from common.llm.exceptions import LLMError
+from common.llm.extractors import StructuredOutputExtractor
+from common.logger import get_logger
 
 logger = get_logger(__name__)
 
@@ -31,7 +31,7 @@ class CrossFieldCoverageOutput(BaseModel):
     """LLM output for cross-field coverage check."""
 
     is_complete: bool
-    missing_relationships: List[MissingRelationship] = []
+    missing_relationships: list[MissingRelationship] = []
 
 
 CROSSFIELD_COVERAGE_SYSTEM_PROMPT = """You are a constraint completeness checker for API response schemas.
@@ -95,8 +95,8 @@ class ResPropCrossFieldCoverageChecker:
     async def check(
         self,
         response_schema: ItemProperties,
-        heuristic_results: List[CandidateConstraint],
-    ) -> List[MissingRelationship]:
+        heuristic_results: list[CandidateConstraint],
+    ) -> list[MissingRelationship]:
         """Check coverage of heuristic extraction.
 
         Args:
@@ -179,7 +179,7 @@ class ResPropCrossFieldCoverageChecker:
         self,
         schema: ItemProperties,
         prefix: str = "",
-    ) -> Dict[str, Dict]:
+    ) -> dict[str, dict]:
         """Flatten schema into field_path -> field_info mapping.
 
         Args:
@@ -212,7 +212,7 @@ class ResPropCrossFieldCoverageChecker:
         return result
 
     @staticmethod
-    def _build_schema_description(flattened: Dict[str, Dict]) -> str:
+    def _build_schema_description(flattened: dict[str, dict]) -> str:
         """Build readable schema description for LLM.
 
         Args:
@@ -242,7 +242,7 @@ class ResPropCrossFieldCoverageChecker:
 
     @staticmethod
     def _build_detected_description(
-            candidates: List[CandidateConstraint],
+            candidates: list[CandidateConstraint],
     ) -> str:
         """Build description of detected relationships.
 

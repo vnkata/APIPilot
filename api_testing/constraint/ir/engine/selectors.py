@@ -7,8 +7,9 @@ Supports:
 - Response reference selectors
 """
 
-from typing import Any, List, Optional, Dict
 from dataclasses import dataclass
+from typing import Any, Dict, List, Optional
+
 from jsonpath_ng import parse as jsonpath_parse
 from jsonpath_ng.exceptions import JsonPathParserError
 
@@ -31,15 +32,15 @@ class SelectorEngine:
 
     def __init__(self):
         """Initialize selector engine."""
-        self._jsonpath_cache: Dict[str, Any] = {}
+        self._jsonpath_cache: dict[str, Any] = {}
 
     def select(
         self,
         selector: SelectorModel,
-        response_body: Optional[Any] = None,
-        request_ctx: Optional[Dict] = None,
-        response_ctx: Optional[Dict] = None,
-    ) -> List[SelectorMatch]:
+        response_body: Any | None = None,
+        request_ctx: dict | None = None,
+        response_ctx: dict | None = None,
+    ) -> list[SelectorMatch]:
         """Evaluate selector and return matches.
 
         Args:
@@ -68,7 +69,7 @@ class SelectorEngine:
         self,
         selector: SelectorModel,
         data: Any,
-    ) -> List[SelectorMatch]:
+    ) -> list[SelectorMatch]:
         """Select values using JSONPath.
 
         Args:
@@ -122,8 +123,8 @@ class SelectorEngine:
     def _select_request_ref(
         self,
         selector: SelectorModel,
-        request_ctx: Dict,
-    ) -> List[SelectorMatch]:
+        request_ctx: dict,
+    ) -> list[SelectorMatch]:
         """Select value from request context.
 
         Supports references like:
@@ -178,8 +179,8 @@ class SelectorEngine:
     def _select_response_ref(
         self,
         selector: SelectorModel,
-        response_ctx: Dict,
-    ) -> List[SelectorMatch]:
+        response_ctx: dict,
+    ) -> list[SelectorMatch]:
         """Select value from response context.
 
         Supports references like:
