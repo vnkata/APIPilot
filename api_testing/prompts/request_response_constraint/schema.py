@@ -1,8 +1,8 @@
 """Pydantic models for request-response constraint extraction."""
 
-from typing import Dict, List
-from pydantic import BaseModel, Field
 from dataclasses import dataclass
+
+from pydantic import BaseModel, Field
 
 
 @dataclass
@@ -21,7 +21,7 @@ class ReqResConstraintVerdict(BaseModel):
 
 @dataclass
 class Verdict(BaseModel):
-    constraint: List[ReqResConstraintVerdict]
+    constraint: list[ReqResConstraintVerdict]
 
     def to_dict(self):
         return {"constraint": [item.to_dict() for item in self.constraint]}
@@ -32,7 +32,7 @@ class RequestResponsePair(BaseModel):
 
     request_param: str = Field(description="Name of the request parameter")
 
-    response_properties: List[str] = Field(
+    response_properties: list[str] = Field(
         default_factory=list,
         description="List of response property paths constrained by this request parameter",
     )
@@ -48,7 +48,7 @@ class RequestResponseConstraintValidation(BaseModel):
     }
     """
 
-    constraints: Dict[str, Dict[str, bool]] = Field(
+    constraints: dict[str, dict[str, bool]] = Field(
         description="Nested mapping from request parameter to response properties with constraint indicator"
     )
 
@@ -59,7 +59,7 @@ class RequestResponseConstraintValidationV2(BaseModel):
     Optimized format: only list pairs that HAVE constraints (no false values).
     """
 
-    request_response_pairs: List[RequestResponsePair] = Field(
+    request_response_pairs: list[RequestResponsePair] = Field(
         default_factory=list,
         description="List of request parameters and their constrained response properties",
     )
@@ -75,7 +75,7 @@ class RequestResponseConstraintOutput(BaseModel):
     }
     """
 
-    constraints: Dict[str, Dict[str, str]] = Field(
+    constraints: dict[str, dict[str, str]] = Field(
         default_factory=dict,
         description="Nested mapping from request parameter to response properties with constraint descriptions",
     )

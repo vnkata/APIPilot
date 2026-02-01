@@ -10,7 +10,7 @@ Only mark True for request-response pairs that have a **verifiable, programmatic
 
 2. **Sorting/Ordering Constraints**:
    - Request parameter controls response order (e.g., `sort=name` → response sorted by name field)
-   
+
 3. **Pagination Constraints**:
    - Request parameter limits response size (e.g., `limit=10` → max 10 items in response)
    - Offset/page parameter affects which subset is returned

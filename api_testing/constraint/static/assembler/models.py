@@ -3,7 +3,6 @@
 Defines strongly-typed models for the new unified constraints format.
 """
 
-from typing import Dict
 from pydantic import BaseModel, Field
 
 
@@ -27,7 +26,7 @@ class ResponsePropertyConstraint(BaseModel):
         ... )
     """
 
-    request: Dict[str, str] = Field(
+    request: dict[str, str] = Field(
         default_factory=dict,
         description="Request parameter constraints (param_name -> enhanced_description)",
     )
@@ -68,11 +67,11 @@ class UnifiedConstraints(BaseModel):
         ... )
     """
 
-    body: Dict[str, str] = Field(
+    body: dict[str, str] = Field(
         default_factory=dict,
         description="Request parameters affecting entire response body structure",
     )
-    detail: Dict[str, ResponsePropertyConstraint] = Field(
+    detail: dict[str, ResponsePropertyConstraint] = Field(
         default_factory=dict,
         description="Response property constraints with request relationships",
     )
@@ -83,7 +82,7 @@ class UnifiedConstraints(BaseModel):
         frozen = False
         extra = "forbid"
 
-    def to_dict(self) -> Dict:
+    def to_dict(self) -> dict:
         """Convert to JSON-serializable dict.
 
         Returns:

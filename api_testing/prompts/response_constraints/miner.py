@@ -7,7 +7,6 @@ Extracts constraints from response schema attributes using validation-based appr
 """
 
 import asyncio
-from typing import Dict, Optional
 
 from dotenv import load_dotenv
 
@@ -57,7 +56,7 @@ class ResponsePropertyConstraintMiner:
 
     def __init__(
         self,
-        model: Optional["APITestingBaseLLMModel"] = None,
+        model: APITestingBaseLLMModel | None = None,
         temperature: float = 0.1,
         **llm_kwargs,
     ) -> None:
@@ -83,7 +82,7 @@ class ResponsePropertyConstraintMiner:
         self.temperature = temperature
         self.llm_kwargs = llm_kwargs
 
-    def _parse_attributes_string(self, attributes: str) -> Dict[str, str]:
+    def _parse_attributes_string(self, attributes: str) -> dict[str, str]:
         """Parse attributes string to extract attribute names and their descriptions.
 
         Args:
@@ -94,7 +93,7 @@ class ResponsePropertyConstraintMiner:
             Dictionary mapping attribute names to their full descriptions
             Example: {"id": "an integer, minimum: 1", "name": "a string"}
         """
-        attr_dict: Dict[str, str] = {}
+        attr_dict: dict[str, str] = {}
 
         # Split by lines and process each attribute
         lines = attributes.strip().split("\n")
@@ -115,7 +114,7 @@ class ResponsePropertyConstraintMiner:
         return attr_dict
 
     async def extract_response_property_constraints(
-        self, schema: str, attributes: str, flattened_schema: Optional[Dict] = None
+        self, schema: str, attributes: str, flattened_schema: dict | None = None
     ) -> ResponsePropertyConstraintsOutput:
         """Extract constraints using validation-based approach.
 
@@ -180,7 +179,7 @@ class ResponsePropertyConstraintMiner:
         attr_descriptions = self._parse_attributes_string(attributes)
 
         # Step 3: Build final output - only attributes with constraints=True
-        final_constraints: Dict[str, str] = {}
+        final_constraints: dict[str, str] = {}
         for attr_name in validation_result.constrained_properties:
             # Get description from attributes string
             description = attr_descriptions.get(attr_name, "")

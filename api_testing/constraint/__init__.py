@@ -11,42 +11,43 @@ Legacy:
 - StaticConstraintMiner: Updated to use new IR builder
 """
 
-from .static_constraint_miner import StaticConstraintMiner
+from api_testing.constraint.ir.cache import SchemaConstraintCache
 
 # New v2 exports
 from api_testing.constraint.ir.core import (
-    ConstraintIRModel,
-    ConstraintModel,
-    ScopeModel,
-    SelectorModel,
-    PredicateModel,
-    ProvenanceModel,
     ConditionModel,
     ConstraintIRBuilder,
+    ConstraintIRModel,
+    ConstraintModel,
     IRSchemaValidator,
-)
-from api_testing.constraint.ir.extractors import (
-    ResPropSingleStructuralExtractor,
-    ResPropSingleDescriptionExtractor,
-    ResPropSingleLLMExtractor,
-    PredicatePromptBuilder,
-    ResPropCrossFieldCoverageChecker,
-)
-from api_testing.constraint.ir.primitives import ProposedPredicateManager
-from api_testing.constraint.ir.primitives import (
-    PredicateRegistry,
-    get_registry,
-    get_predicate,
-    VALIDATOR_REGISTRY,
-    get_validator,
+    PredicateModel,
+    ProvenanceModel,
+    ScopeModel,
+    SelectorModel,
 )
 from api_testing.constraint.ir.engine import (
-    ValidationEngine,
-    SelectorEngine,
     CELEvaluator,
+    SelectorEngine,
+    ValidationEngine,
+)
+from api_testing.constraint.ir.extractors import (
+    PredicatePromptBuilder,
+    ResPropCrossFieldCoverageChecker,
+    ResPropSingleDescriptionExtractor,
+    ResPropSingleLLMExtractor,
+    ResPropSingleStructuralExtractor,
+)
+from api_testing.constraint.ir.primitives import (
+    VALIDATOR_REGISTRY,
+    PredicateRegistry,
+    ProposedPredicateManager,
+    get_predicate,
+    get_registry,
+    get_validator,
 )
 from api_testing.constraint.ir.reporting import CSVReporter
-from api_testing.constraint.ir.cache import SchemaConstraintCache
+
+from .static_constraint_miner import StaticConstraintMiner
 
 __all__ = [
     # Legacy

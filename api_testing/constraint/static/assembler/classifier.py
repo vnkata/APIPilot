@@ -4,7 +4,6 @@ Provides heuristic-based classification to identify parameters that
 affect entire response structure (body-level) vs specific fields.
 """
 
-from typing import Set, Dict, Optional
 from api_testing.models.specification_model import ParameterProperties
 
 
@@ -23,7 +22,7 @@ class BodyParamClassifier:
     """
 
     # Heuristic patterns for body-level parameters
-    PAGINATION_PATTERNS: Set[str] = {
+    PAGINATION_PATTERNS: set[str] = {
         "limit",
         "offset",
         "page",
@@ -36,7 +35,7 @@ class BodyParamClassifier:
         "max_results",
     }
 
-    SORTING_PATTERNS: Set[str] = {
+    SORTING_PATTERNS: set[str] = {
         "sort",
         "order",
         "order_by",
@@ -46,7 +45,7 @@ class BodyParamClassifier:
         "desc",
     }
 
-    SEARCH_PATTERNS: Set[str] = {
+    SEARCH_PATTERNS: set[str] = {
         "q",
         "query",
         "search",
@@ -57,7 +56,7 @@ class BodyParamClassifier:
         "filters",
     }
 
-    PROJECTION_PATTERNS: Set[str] = {
+    PROJECTION_PATTERNS: set[str] = {
         "fields",
         "select",
         "include",
@@ -67,7 +66,7 @@ class BodyParamClassifier:
         "only",
     }
 
-    def __init__(self, custom_body_patterns: Optional[Set[str]] = None) -> None:
+    def __init__(self, custom_body_patterns: set[str] | None = None) -> None:
         """Initialize classifier with optional custom patterns.
 
         Args:
@@ -115,8 +114,8 @@ class BodyParamClassifier:
         return False
 
     def classify_parameters(
-        self, parameters: Dict[str, ParameterProperties]
-    ) -> tuple[Dict[str, ParameterProperties], Dict[str, ParameterProperties]]:
+        self, parameters: dict[str, ParameterProperties]
+    ) -> tuple[dict[str, ParameterProperties], dict[str, ParameterProperties]]:
         """Classify parameters into body and detail categories.
 
         Args:
@@ -136,8 +135,8 @@ class BodyParamClassifier:
             >>> "userId" in detail
             True
         """
-        body_params: Dict[str, ParameterProperties] = {}
-        detail_params: Dict[str, ParameterProperties] = {}
+        body_params: dict[str, ParameterProperties] = {}
+        detail_params: dict[str, ParameterProperties] = {}
 
         for param_name, param_props in parameters.items():
             if self.is_body_param(param_name):
@@ -147,7 +146,7 @@ class BodyParamClassifier:
 
         return body_params, detail_params
 
-    def get_param_category_hint(self, param_name: str) -> Optional[str]:
+    def get_param_category_hint(self, param_name: str) -> str | None:
         """Get category hint for a parameter.
 
         Args:

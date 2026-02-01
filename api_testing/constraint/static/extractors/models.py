@@ -5,7 +5,7 @@ during static constraint extraction pipeline.
 """
 
 from datetime import datetime
-from typing import Any, Dict, Generic, List, Optional, TypeVar
+from typing import Any, TypeVar
 
 from pydantic import BaseModel, Field
 
@@ -27,7 +27,7 @@ class SchemaConstraints(BaseModel):
     """
 
     schema_name: str = Field(..., description="Name of the schema")
-    constraints: Dict[str, str] = Field(
+    constraints: dict[str, str] = Field(
         default_factory=dict,
         description="Attribute path to constraint description mapping",
     )
@@ -56,7 +56,7 @@ class OperationConstraints(BaseModel):
     """
 
     operation_uuid: str = Field(..., description="UUID of the operation")
-    constraints: Dict[str, str] = Field(
+    constraints: dict[str, str] = Field(
         default_factory=dict,
         description="Response property path to constraint description mapping",
     )
@@ -90,7 +90,7 @@ class RequestResponseConstraints(BaseModel):
     """
 
     operation_uuid: str = Field(..., description="UUID of the operation")
-    constraints: Dict[str, Dict[str, str]] = Field(
+    constraints: dict[str, dict[str, str]] = Field(
         default_factory=dict,
         description=(
             "Request parameter -> Response property -> Constraint description mapping"
@@ -107,7 +107,7 @@ class RequestResponseConstraints(BaseModel):
 T = TypeVar("T", bound=BaseModel)
 
 
-class ExtractionResult(BaseModel, Generic[T]):
+class ExtractionResult[T: BaseModel](BaseModel):
     """Result of batch extraction with success/failure tracking.
 
     Generic wrapper for extraction results that tracks both successful
@@ -124,10 +124,10 @@ class ExtractionResult(BaseModel, Generic[T]):
         ... )
     """
 
-    successful: List[T] = Field(
+    successful: list[T] = Field(
         default_factory=list, description="Successfully extracted items"
     )
-    failed: List[tuple[str, str]] = Field(
+    failed: list[tuple[str, str]] = Field(
         default_factory=list,
         description="Failed items as (identifier, error_message) tuples",
     )
@@ -176,7 +176,7 @@ class CacheMetadata(BaseModel):
         default_factory=datetime.now, description="Timestamp when cache was created"
     )
     item_count: int = Field(..., description="Number of items in cache", ge=0)
-    cache_version: Optional[str] = Field(
+    cache_version: str | None = Field(
         default=None, description="Optional cache format version"
     )
 
@@ -186,6 +186,7 @@ class CacheMetadata(BaseModel):
         frozen = False
         extra = "forbid"
 
+
 class OperationConstraintsData(BaseModel):
     """Unified constraints data for a single operation.
 
@@ -193,17 +194,17 @@ class OperationConstraintsData(BaseModel):
     plus the new unified constraints structure.
     """
 
-    response_properties_constraints: Dict[str, str] = Field(
+    response_properties_constraints: dict[str, str] = Field(
         default_factory=dict,
         description="Maps response property paths to constraint descriptions (legacy)",
     )
 
-    request_response_constraints: Dict[str, Dict[str, str]] = Field(
+    request_response_constraints: dict[str, dict[str, str]] = Field(
         default_factory=dict,
         description="Maps request parameters to response properties with constraint descriptions (legacy)",
     )
 
-    constraints: Optional[Dict[str, Any]] = Field(
+    constraints: dict[str, Any] | None = Field(
         default=None,
         description="Unified constraint structure with body and detail sections",
     )
@@ -216,7 +217,7 @@ class StaticConstraintMinerOutput(BaseModel):
     both response property constraints and request-response constraints.
     """
 
-    operations: Dict[str, OperationConstraintsData] = Field(
+    operations: dict[str, OperationConstraintsData] = Field(
         default_factory=dict,
         description="Maps operation UUIDs to their constraint data",
     )
@@ -229,5 +230,5 @@ __all__ = [
     "ExtractionResult",
     "CacheMetadata",
     "OperationConstraintsData",
-    "StaticConstraintMinerOutput"
+    "StaticConstraintMinerOutput",
 ]

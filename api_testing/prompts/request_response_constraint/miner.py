@@ -7,19 +7,20 @@ Extracts constraints between request parameters and response properties using va
 """
 
 import asyncio
-from typing import Dict, Optional
 
-from common.llm.exceptions import LLMError
-from common.logger import get_logger, LogLevel
-from api_testing.prompts.request_response_constraint.schema import (
-    RequestResponseConstraintOutput,
-    RequestResponseConstraintValidationV2,
-)
+from dotenv import load_dotenv
+
+from api_testing.models.base_model import APITestingBaseLLMModel
 from api_testing.prompts.request_response_constraint.prompts import (
     REQUEST_RESPONSE_VALIDATION_SYSTEM_PROMPT_V2,
     REQUEST_RESPONSE_VALIDATION_USER_PROMPT_V2,
 )
-from dotenv import load_dotenv
+from api_testing.prompts.request_response_constraint.schema import (
+    RequestResponseConstraintOutput,
+    RequestResponseConstraintValidationV2,
+)
+from common.llm.exceptions import LLMError
+from common.logger import LogLevel, get_logger
 
 load_dotenv()
 
@@ -52,7 +53,7 @@ class RequestResponseConstraintMiner:
 
     def __init__(
         self,
-        model: Optional["APITestingBaseLLMModel"] = None,
+        model: APITestingBaseLLMModel | None = None,
         temperature: float = 0.1,
         **llm_kwargs,
     ) -> None:
@@ -198,7 +199,7 @@ class RequestResponseConstraintMiner:
             ) from e
 
         # Step 2: Build final output with descriptions
-        final_constraints: Dict[str, Dict[str, str]] = {}
+        final_constraints: dict[str, dict[str, str]] = {}
 
         for pair in validation_result.request_response_pairs:
             request_param = pair.request_param

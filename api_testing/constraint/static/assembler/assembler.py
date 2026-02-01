@@ -4,8 +4,6 @@ Assembles unified constraint data by combining response property constraints
 and request-response constraints into a structured format.
 """
 
-from typing import Dict, Optional
-
 from api_testing.constraint.static.assembler.classifier import BodyParamClassifier
 from api_testing.constraint.static.assembler.models import (
     ResponsePropertyConstraint,
@@ -30,7 +28,7 @@ class ConstraintAssembler:
         classifier: BodyParamClassifier for categorizing parameters
     """
 
-    def __init__(self, classifier: Optional[BodyParamClassifier] = None) -> None:
+    def __init__(self, classifier: BodyParamClassifier | None = None) -> None:
         """Initialize ConstraintAssembler.
 
         Args:
@@ -41,8 +39,8 @@ class ConstraintAssembler:
     def assemble_operation_constraints(
         self,
         operation: OperationProperties,
-        response_properties_constraints: Dict[str, str],
-        request_response_constraints: Dict[str, Dict[str, str]],
+        response_properties_constraints: dict[str, str],
+        request_response_constraints: dict[str, dict[str, str]],
     ) -> UnifiedConstraints:
         """Assemble unified constraints for a single operation.
 
@@ -106,9 +104,9 @@ class ConstraintAssembler:
 
     def _build_body_section(
         self,
-        body_params: Dict[str, ParameterProperties],
-        request_response_constraints: Dict[str, Dict[str, str]],
-    ) -> Dict[str, str]:
+        body_params: dict[str, ParameterProperties],
+        request_response_constraints: dict[str, dict[str, str]],
+    ) -> dict[str, str]:
         """Build body section with simple string descriptions.
 
         Args:
@@ -118,7 +116,7 @@ class ConstraintAssembler:
         Returns:
             Dict mapping param name to description string
         """
-        body_section: Dict[str, str] = {}
+        body_section: dict[str, str] = {}
 
         for param_name, param_props in body_params.items():
             # Use parameter description if available
@@ -150,10 +148,10 @@ class ConstraintAssembler:
     @staticmethod
     def _build_detail_section(
         operation: OperationProperties,
-        response_properties_constraints: Dict[str, str],
-        request_response_constraints: Dict[str, Dict[str, str]],
-        detail_param_names: Optional[set] = None,
-    ) -> Dict[str, ResponsePropertyConstraint]:
+        response_properties_constraints: dict[str, str],
+        request_response_constraints: dict[str, dict[str, str]],
+        detail_param_names: set | None = None,
+    ) -> dict[str, ResponsePropertyConstraint]:
         """Build detail section with response-centric view and enhanced descriptions.
 
         For each response property, includes all request parameters that
@@ -170,14 +168,14 @@ class ConstraintAssembler:
         Returns:
             Dict mapping response property path to ResponsePropertyConstraint
         """
-        detail_section: Dict[str, ResponsePropertyConstraint] = {}
+        detail_section: dict[str, ResponsePropertyConstraint] = {}
         operation_id = (
             operation.operation_id
             or f"{operation.http_method}-{operation.endpoint_path}"
         )
 
         # Cache parameter descriptions to avoid redundant to_human_readable() calls
-        param_descriptions_cache: Dict[str, str] = {}
+        param_descriptions_cache: dict[str, str] = {}
 
         def get_param_description(parameter_name: str) -> str:
             """Get cached parameter description or generate it."""
@@ -200,7 +198,7 @@ class ConstraintAssembler:
             return param_info
 
         # Build reverse mapping: response_property -> dict of param constraints
-        property_to_params: Dict[str, Dict[str, str]] = {}
+        property_to_params: dict[str, dict[str, str]] = {}
 
         for param_name, affected_properties in request_response_constraints.items():
             # Filter to detail-level params only (if detail_param_names provided)

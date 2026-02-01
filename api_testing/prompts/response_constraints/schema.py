@@ -5,7 +5,6 @@ These models define the structure of constraints extracted from
 response schema attributes.
 """
 
-from typing import Dict, List
 from pydantic import BaseModel, Field, field_validator
 
 
@@ -25,7 +24,7 @@ class ResponsePropertyConstraintsValidation(BaseModel):
             False = only basic type validation
     """
 
-    constraints: Dict[str, bool] = Field(
+    constraints: dict[str, bool] = Field(
         description=(
             "Map of attribute names to boolean flags. "
             "True = attribute has non-trivial constraints (enum, format, range, pattern, etc.), "
@@ -42,7 +41,7 @@ class ResponsePropertyConstraintsValidation(BaseModel):
 
     @field_validator("constraints")
     @classmethod
-    def validate_constraints_structure(cls, v: Dict[str, bool]) -> Dict[str, bool]:
+    def validate_constraints_structure(cls, v: dict[str, bool]) -> dict[str, bool]:
         """Validate that constraints dict contains only boolean values."""
         for key, value in v.items():
             if not isinstance(value, bool):
@@ -58,7 +57,7 @@ class ResponsePropertyConstraintsValidationV2(BaseModel):
     Optimized format: only list properties WITH constraints (no false values).
     """
 
-    constrained_properties: List[str] = Field(
+    constrained_properties: list[str] = Field(
         default_factory=list,
         description="List of property paths that have validation constraints",
     )
@@ -77,7 +76,7 @@ class ResponsePropertyConstraintsOutput(BaseModel):
             Does NOT include basic type information (String, Integer, Boolean, Array).
     """
 
-    constraints: Dict[str, str] = Field(
+    constraints: dict[str, str] = Field(
         description=(
             "Map of response property names to non-trivial constraint descriptions. "
             "Each key is an attribute name, each value is a concise constraint description "
@@ -103,8 +102,8 @@ class ResponsePropertyConstraintsOutput(BaseModel):
     @field_validator("constraints")
     @classmethod
     def validate_constraints_not_empty_when_expected(
-        cls, v: Dict[str, str]
-    ) -> Dict[str, str]:
+        cls, v: dict[str, str]
+    ) -> dict[str, str]:
         """Validate that constraints dict is properly structured.
 
         Note: We don't enforce non-empty here because empty constraints
