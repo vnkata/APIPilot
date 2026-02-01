@@ -6,9 +6,10 @@ Run with: python -m common.llm.examples
 """
 
 import asyncio
-from pydantic import BaseModel, Field
+from typing import Literal
+
 from dotenv import load_dotenv
-from typing import List, Literal
+from pydantic import BaseModel, Field
 
 from common.logger.utils.helpers import get_logger
 
@@ -35,7 +36,7 @@ async def example_basic_ask():
         system="You are a physics professor. Be concise.",
         temperature=0.5,
     )
-    logger.info(f"Explanation:", answer=answer)
+    logger.info("Explanation:", answer=answer)
 
 
 # =============================================================================
@@ -51,7 +52,7 @@ class Person(BaseModel):
 
 async def example_structured_output():
     """Extract structured data using Pydantic models."""
-    from common.llm import ask, INSTRUCTOR_AVAILABLE
+    from common.llm import INSTRUCTOR_AVAILABLE, ask
 
     logger.info("=== Example 2: Structured Output ===")
 
@@ -127,7 +128,7 @@ async def example_batch_processing():
         if isinstance(result, Exception):
             logger.error(f"Prompt {i} failed: {result}")
         else:
-            logger.info(f"Q{i+1}: {prompts[i][:30]}... → {result[:50]}...")
+            logger.info(f"Q{i + 1}: {prompts[i][:30]}... → {result[:50]}...")
 
     # Batch structured responses
     class Sentiment(BaseModel):
@@ -148,7 +149,7 @@ async def example_batch_processing():
     )
 
     logger.info("Sentiment analysis results:")
-    for text, sentiment in zip(texts, sentiments):
+    for text, sentiment in zip(texts, sentiments, strict=False):
         if isinstance(sentiment, Exception):
             logger.error(f"Failed: {sentiment}")
         else:
@@ -159,8 +160,9 @@ async def example_batch_processing():
 
 async def example_batch_processing_versus_sequential():
     """Compare batch processing vs sequential calls."""
-    from common.llm import ask, ask_batch
     import time
+
+    from common.llm import ask, ask_batch
 
     logger.info("=== Example 4b: Batch vs Sequential ===")
 
@@ -188,8 +190,8 @@ async def example_batch_processing_versus_sequential():
     logger.info(f"Batch took {time_batch:.2f}s")
 
     # Log results
-    for i, (seq, batch) in enumerate(zip(results_seq, results_batch)):
-        logger.info(f"Q{i+1}: Seq='{seq}' | Batch='{batch}'")
+    for i, (seq, batch) in enumerate(zip(results_seq, results_batch, strict=False)):
+        logger.info(f"Q{i + 1}: Seq='{seq}' | Batch='{batch}'")
 
 
 # =============================================================================
@@ -240,7 +242,7 @@ async def example_conversation_history():
 # =============================================================================
 async def example_global_config():
     """Use global default configuration."""
-    from common.llm import ask, set_default_config, LLMConfig
+    from common.llm import LLMConfig, ask, set_default_config
 
     logger.info("=== Example 6: Global Configuration ===")
 
@@ -313,7 +315,7 @@ async def example_data_extraction():
         attendees: int
 
     class EventList(BaseModel):
-        events: List[Event]
+        events: list[Event]
 
     text = """
     Upcoming tech events:
@@ -360,12 +362,12 @@ async def example_error_handling():
     successes = 0
     failures = 0
 
-    for i, (prompt, result) in enumerate(zip(prompts, results)):
+    for i, (_prompt, result) in enumerate(zip(prompts, results, strict=False)):
         if isinstance(result, Exception):
-            logger.error(f"Request {i+1} failed: {result}")
+            logger.error(f"Request {i + 1} failed: {result}")
             failures += 1
         else:
-            logger.info(f"Request {i+1} succeeded: {result[:50]}...")
+            logger.info(f"Request {i + 1} succeeded: {result[:50]}...")
             successes += 1
 
     logger.info(f"Summary: {successes} successes, {failures} failures")
@@ -376,7 +378,7 @@ async def example_error_handling():
 # =============================================================================
 async def example_providers():
     """Use different models and providers."""
-    from common.llm import ask, LLMConfig, LLMProvider, ModelPresets
+    from common.llm import ask
 
     logger.info("=== Example 10: Providers & Models ===")
 
@@ -397,8 +399,9 @@ async def example_providers():
 # =============================================================================
 async def example_caching():
     """Demonstrate response caching."""
-    from common.llm import ask
     import time
+
+    from common.llm import ask
 
     logger.info("=== Example 11: Caching ===")
 
@@ -417,7 +420,7 @@ async def example_caching():
     time2 = time.time() - start
     logger.info(f"Second call (cached): {time2:.3f}s")
     logger.info("Answer", answer=answer2)
-    logger.info(f"Speedup: {time1/time2:.1f}x faster")
+    logger.info(f"Speedup: {time1 / time2:.1f}x faster")
 
     # Third call - hits cache again
     start = time.time()
@@ -425,7 +428,7 @@ async def example_caching():
     time3 = time.time() - start
     logger.info(f"Third call: {time3:.3f}s")
     logger.info("Answer", answer=answer3)
-    logger.info(f"Speedup: {time1/time3:.1f}x faster")
+    logger.info(f"Speedup: {time1 / time3:.1f}x faster")
 
 
 # =============================================================================

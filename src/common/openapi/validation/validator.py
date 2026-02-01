@@ -7,7 +7,7 @@ using the openapi-core library with OAS 3.0/3.1 support.
 
 import hashlib
 import json
-from typing import Any, Optional
+from typing import Any
 
 from openapi_core import OpenAPI as OpenAPICoreApp
 from openapi_core.validation.exceptions import ValidationError as CoreValidationError
@@ -69,9 +69,9 @@ class SpecValidator:
         self,
         method: str,
         path: str,
-        headers: Optional[dict] = None,
-        query: Optional[dict] = None,
-        body: Optional[Any] = None,
+        headers: dict | None = None,
+        query: dict | None = None,
+        body: Any | None = None,
     ) -> str:
         """
         Generate cache key for validation result
@@ -102,9 +102,9 @@ class SpecValidator:
         self,
         method: str,
         path: str,
-        headers: Optional[dict[str, str]] = None,
-        query: Optional[dict[str, Any]] = None,
-        body: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        query: dict[str, Any] | None = None,
+        body: Any | None = None,
     ) -> RequestValidationResult:
         """
         Validate HTTP request against spec
@@ -122,7 +122,6 @@ class SpecValidator:
         Raises:
             RequestValidationError: If validation encounters unexpected error
         """
-        from openapi_core.protocols import Request as CoreRequest
 
         try:
             # Create request-like object for openapi-core
@@ -176,8 +175,8 @@ class SpecValidator:
         method: str,
         path: str,
         status_code: int,
-        headers: Optional[dict[str, str]] = None,
-        body: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        body: Any | None = None,
     ) -> ResponseValidationResult:
         """
         Validate HTTP response against spec
@@ -195,8 +194,6 @@ class SpecValidator:
         Raises:
             ResponseValidationError: If validation encounters unexpected error
         """
-        from openapi_core.protocols import Request as CoreRequest
-        from openapi_core.protocols import Response as CoreResponse
 
         try:
             # Create request/response objects for openapi-core
@@ -243,9 +240,9 @@ class SpecValidator:
         self,
         method: str,
         path: str,
-        headers: Optional[dict[str, str]] = None,
-        query: Optional[dict[str, Any]] = None,
-        body: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        query: dict[str, Any] | None = None,
+        body: Any | None = None,
     ) -> RequestWrapper:
         """Build request object compatible with openapi-core"""
         return RequestWrapper(
@@ -265,8 +262,8 @@ class SpecValidator:
     def _build_response(
         self,
         status_code: int,
-        headers: Optional[dict[str, str]] = None,
-        body: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        body: Any | None = None,
     ) -> Any:
         """Build response object compatible with openapi-core"""
 

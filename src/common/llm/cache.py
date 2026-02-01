@@ -7,9 +7,9 @@ Uses similarity matching to find cached responses for semantically similar queri
 
 import hashlib
 import json
-from typing import Any, Dict, List, Optional
-from datetime import datetime
 import threading
+from datetime import datetime
+from typing import Any
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -20,8 +20,8 @@ logger = get_logger(__name__)
 
 # Sentence Transformers (optional for semantic cache)
 try:
-    from sentence_transformers import SentenceTransformer
     import numpy as np
+    from sentence_transformers import SentenceTransformer
 
     EMBEDDINGS_AVAILABLE = True
 except ImportError:
@@ -39,13 +39,13 @@ class CacheEntry(BaseModel):
     messages_hash: str
     response: str
     model: str
-    usage: Dict[str, int] = Field(default_factory=dict)
-    embedding: Optional[List[float]] = None
+    usage: dict[str, int] = Field(default_factory=dict)
+    embedding: list[float] | None = None
     created_at: datetime = Field(default_factory=datetime.now)
     access_count: int = 0
     last_accessed: datetime = Field(default_factory=datetime.now)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Serialize to dict for storage."""
         return {
             "key": self.key,
@@ -60,7 +60,7 @@ class CacheEntry(BaseModel):
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "CacheEntry":
+    def from_dict(cls, data: dict[str, Any]) -> "CacheEntry":
         """Deserialize from dict."""
         return cls(
             key=data["key"],
@@ -145,7 +145,7 @@ class LLMCache:
 
         # Initialize embedding model for semantic cache
         self._embedding_model = None
-        self._embeddings_index: Dict[str, List[float]] = {}
+        self._embeddings_index: dict[str, list[float]] = {}
         self._index_lock = threading.Lock()
 
         if self.enable_semantic:
@@ -165,14 +165,12 @@ class LLMCache:
             logger.warning(f"Failed to load embedding model: {e}")
             self.enable_semantic = False
 
-    def _generate_hash(self, messages: List[Dict[str, Any]], model: str) -> str:
+    def _generate_hash(self, messages: list[dict[str, Any]], model: str) -> str:
         """Generate hash key from messages and model."""
         content = json.dumps({"messages": messages, "model": model}, sort_keys=True)
         return hashlib.sha256(content.encode()).hexdigest()[:32]
 
-    def _generate_embedding(
-        self, messages: List[Dict[str, Any]]
-    ) -> Optional[List[float]]:
+    def _generate_embedding(self, messages: list[dict[str, Any]]) -> list[float] | None:
         """Generate embedding for messages."""
         if not self._embedding_model:
             return None
@@ -188,7 +186,7 @@ class LLMCache:
             logger.debug(f"Failed to generate embedding: {e}")
             return None
 
-    def _cosine_similarity(self, a: List[float], b: List[float]) -> float:
+    def _cosine_similarity(self, a: list[float], b: list[float]) -> float:
         """Calculate cosine similarity between two vectors."""
         if not np:
             return 0.0
@@ -203,14 +201,14 @@ class LLMCache:
 
     def _find_semantic_match(
         self,
-        embedding: List[float],
+        embedding: list[float],
         model: str,
-    ) -> Optional[CacheEntry]:
+    ) -> CacheEntry | None:
         """Find semantically similar cached entry."""
         if not self.enable_semantic or not embedding:
             return None
 
-        best_match: Optional[CacheEntry] = None
+        best_match: CacheEntry | None = None
         best_similarity = 0.0
 
         with self._index_lock:
@@ -238,9 +236,9 @@ class LLMCache:
 
     def get(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         model: str,
-    ) -> Optional[CacheEntry]:
+    ) -> CacheEntry | None:
         """
         Get cached response for messages.
 
@@ -286,10 +284,10 @@ class LLMCache:
 
     def set(
         self,
-        messages: List[Dict[str, Any]],
+        messages: list[dict[str, Any]],
         model: str,
         response: str,
-        usage: Optional[Dict[str, int]] = None,
+        usage: dict[str, int] | None = None,
     ) -> str:
         """
         Cache a response.
@@ -346,7 +344,7 @@ class LLMCache:
         self._cache.clear()
         logger.info("LLM cache cleared")
 
-    def get_stats(self) -> Dict[str, Any]:
+    def get_stats(self) -> dict[str, Any]:
         """Get cache statistics."""
         base_stats = self._cache.get_stats()
         return {
@@ -362,7 +360,7 @@ class LLMCache:
 
 
 # Global cache instance (lazy initialization)
-_global_cache: Optional[LLMCache] = None
+_global_cache: LLMCache | None = None
 
 
 def get_llm_cache(

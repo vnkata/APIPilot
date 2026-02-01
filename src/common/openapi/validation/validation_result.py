@@ -3,7 +3,7 @@ Validation result dataclasses for request/response validation
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -25,7 +25,7 @@ class RequestValidationResult:
     headers: dict[str, str] = field(default_factory=dict)
     """Validated headers"""
 
-    body: Optional[Any] = None
+    body: Any | None = None
     """Validated request body"""
 
     @property
@@ -47,7 +47,7 @@ class ResponseValidationResult:
     headers: dict[str, str] = field(default_factory=dict)
     """Validated response headers"""
 
-    data: Optional[Any] = None
+    data: Any | None = None
     """Validated response body data"""
 
     @property

@@ -4,7 +4,6 @@ Configuration for OpenAPI client
 
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass(frozen=True)
@@ -40,7 +39,7 @@ class OpenAPIConfig:
     max_retries: int = 3
 
     # Paths
-    cache_dir: Optional[Path] = field(default=None)
+    cache_dir: Path | None = field(default=None)
 
     def __post_init__(self) -> None:
         # Ensure cache_dir is Path if provided as string

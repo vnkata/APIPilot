@@ -4,7 +4,7 @@ LLM Client Exceptions
 Custom exceptions for LLM operations with detailed error context.
 """
 
-from typing import Any, Optional, Dict
+from typing import Any
 
 
 class LLMError(Exception):
@@ -14,10 +14,10 @@ class LLMError(Exception):
         self,
         message: str,
         *,
-        provider: Optional[str] = None,
-        model: Optional[str] = None,
-        request_id: Optional[str] = None,
-        details: Optional[Dict[str, Any]] = None,
+        provider: str | None = None,
+        model: str | None = None,
+        request_id: str | None = None,
+        details: dict[str, Any] | None = None,
     ):
         self.message = message
         self.provider = provider
@@ -50,7 +50,7 @@ class LLMTimeoutError(LLMError):
         self,
         message: str = "Request timed out",
         *,
-        timeout_seconds: Optional[float] = None,
+        timeout_seconds: float | None = None,
         **kwargs,
     ):
         self.timeout_seconds = timeout_seconds
@@ -66,7 +66,7 @@ class LLMRateLimitError(LLMError):
         self,
         message: str = "Rate limit exceeded",
         *,
-        retry_after: Optional[float] = None,
+        retry_after: float | None = None,
         **kwargs,
     ):
         self.retry_after = retry_after
@@ -88,8 +88,8 @@ class LLMValidationError(LLMError):
         self,
         message: str,
         *,
-        validation_errors: Optional[list] = None,
-        raw_response: Optional[str] = None,
+        validation_errors: list | None = None,
+        raw_response: str | None = None,
         **kwargs,
     ):
         self.validation_errors = validation_errors or []
@@ -104,7 +104,7 @@ class LLMContentFilterError(LLMError):
         self,
         message: str = "Content filtered by safety system",
         *,
-        filter_reason: Optional[str] = None,
+        filter_reason: str | None = None,
         **kwargs,
     ):
         self.filter_reason = filter_reason
@@ -120,8 +120,8 @@ class LLMContextLengthError(LLMError):
         self,
         message: str = "Context length exceeded",
         *,
-        max_tokens: Optional[int] = None,
-        requested_tokens: Optional[int] = None,
+        max_tokens: int | None = None,
+        requested_tokens: int | None = None,
         **kwargs,
     ):
         self.max_tokens = max_tokens
@@ -138,8 +138,8 @@ class LLMToolCallError(LLMError):
         self,
         message: str,
         *,
-        tool_name: Optional[str] = None,
-        tool_args: Optional[Dict[str, Any]] = None,
+        tool_name: str | None = None,
+        tool_args: dict[str, Any] | None = None,
         **kwargs,
     ):
         self.tool_name = tool_name
@@ -162,7 +162,7 @@ class LLMStreamError(LLMError):
         self,
         message: str = "Stream interrupted",
         *,
-        partial_content: Optional[str] = None,
+        partial_content: str | None = None,
         **kwargs,
     ):
         self.partial_content = partial_content

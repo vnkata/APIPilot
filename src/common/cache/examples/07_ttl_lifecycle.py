@@ -10,6 +10,7 @@ Topics:
 """
 
 import time
+
 from common.cache import CacheFactory, CacheType
 from common.cache.utils.decorators import cache_result
 from common.logger import get_logger
@@ -51,7 +52,7 @@ def example_1_ttl_expiration():
     time.sleep(0.5)
     result2 = fetch_volatile_data(1)
     logger.info(f"✓ Result: {result2}")
-    logger.info(f"  Same timestamp = same cached result\n")
+    logger.info("  Same timestamp = same cached result\n")
 
     # Wait for expiration
     logger.info("▶ Waiting 2.5 seconds for TTL to expire...")
@@ -61,7 +62,7 @@ def example_1_ttl_expiration():
     logger.info("✓ Retrieving after TTL expired [CACHE MISS]")
     result3 = fetch_volatile_data(1)
     logger.info(f"✓ Result: {result3}")
-    logger.info(f"  Different timestamp = fresh computation\n")
+    logger.info("  Different timestamp = fresh computation\n")
 
     print()
 
@@ -141,7 +142,7 @@ def example_4_ttl_monitoring():
         time.sleep(1)
         value = cache.get("monitor:key")
         status = "✓ Valid" if value else "✗ Expired"
-        logger.info(f"  After {i+1}s: {status}")
+        logger.info(f"  After {i + 1}s: {status}")
 
     print()
 

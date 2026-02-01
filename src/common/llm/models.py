@@ -33,13 +33,13 @@ class ChatMessage(BaseModel):
 
     role: MessageRole
     content: str
-    name: Optional[str] = None
-    tool_call_id: Optional[str] = None
-    tool_calls: Optional[List[Dict[str, Any]]] = None
+    name: str | None = None
+    tool_call_id: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
 
-    def to_openai_dict(self) -> Dict[str, Any]:
+    def to_openai_dict(self) -> dict[str, Any]:
         """Convert to OpenAI-compatible dict format."""
-        msg: Dict[str, Any] = {
+        msg: dict[str, Any] = {
             "role": self.role if isinstance(self.role, str) else self.role.value,
             "content": self.content,
         }
@@ -52,7 +52,7 @@ class ChatMessage(BaseModel):
         return msg
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "ChatMessage":
+    def from_dict(cls, data: dict[str, Any]) -> "ChatMessage":
         """Create from dict format."""
         role = data.get("role", "user")
         if isinstance(role, str):
@@ -76,10 +76,10 @@ class ToolDefinition(BaseModel):
 
     name: str
     description: str
-    parameters: Dict[str, Any]  # JSON Schema - inherently dynamic
+    parameters: dict[str, Any]  # JSON Schema - inherently dynamic
     strict: bool = False  # Enforce strict schema validation
 
-    def to_openai_dict(self) -> Dict[str, Any]:
+    def to_openai_dict(self) -> dict[str, Any]:
         """Convert to OpenAI tools format."""
         return {
             "type": "function",
@@ -101,7 +101,7 @@ class ToolCall(BaseModel):
     name: str
     arguments: str  # JSON string
 
-    def parse_arguments(self) -> Dict[str, Any]:
+    def parse_arguments(self) -> dict[str, Any]:
         """Parse arguments JSON string to dict."""
         import json
 
@@ -121,8 +121,8 @@ class TokenUsage(BaseModel):
     total_tokens: int = 0
 
     # Optional detailed breakdown (if available)
-    cached_tokens: Optional[int] = None
-    reasoning_tokens: Optional[int] = None
+    cached_tokens: int | None = None
+    reasoning_tokens: int | None = None
 
 
 class LLMResponse(BaseModel):
@@ -133,17 +133,17 @@ class LLMResponse(BaseModel):
     content: str
     model: str
     usage: TokenUsage
-    finish_reason: Optional[str] = None
-    tool_calls: Optional[List[ToolCall]] = None
-    request_id: Optional[str] = None
+    finish_reason: str | None = None
+    tool_calls: list[ToolCall] | None = None
+    request_id: str | None = None
     created_at: datetime = Field(default_factory=datetime.now)
 
     # Raw response for debugging (dynamic JSON)
-    raw_response: Optional[Dict[str, Any]] = None
+    raw_response: dict[str, Any] | None = None
 
     # Cache info
     cached: bool = False
-    cache_key: Optional[str] = None
+    cache_key: str | None = None
 
     @property
     def has_tool_calls(self) -> bool:
@@ -158,12 +158,12 @@ class StreamChunk(BaseModel):
 
     content: str
     delta: str  # Just the new content in this chunk
-    finish_reason: Optional[str] = None
-    tool_calls: Optional[List[Dict[str, Any]]] = None
+    finish_reason: str | None = None
+    tool_calls: list[dict[str, Any]] | None = None
 
     # Streaming metadata
     chunk_index: int = 0
-    request_id: Optional[str] = None
+    request_id: str | None = None
 
 
 class ResponseFormat(str, Enum):
@@ -180,24 +180,24 @@ class CompletionParams(BaseModel):
     model_config = ConfigDict(strict=True, frozen=True)
 
     temperature: float = 0.7
-    top_p: Optional[float] = None
-    max_tokens: Optional[int] = None
+    top_p: float | None = None
+    max_tokens: int | None = None
     frequency_penalty: float = 0.0
     presence_penalty: float = 0.0
-    stop: Optional[List[str]] = None
-    seed: Optional[int] = None
+    stop: list[str] | None = None
+    seed: int | None = None
 
     # Response format
-    response_format: Optional[ResponseFormat] = None
-    json_schema: Optional[Dict[str, Any]] = None  # JSON Schema - dynamic
+    response_format: ResponseFormat | None = None
+    json_schema: dict[str, Any] | None = None  # JSON Schema - dynamic
 
     # Tool calling
-    tools: Optional[List[ToolDefinition]] = None
-    tool_choice: Optional[Union[str, Dict[str, Any]]] = None
+    tools: list[ToolDefinition] | None = None
+    tool_choice: str | dict[str, Any] | None = None
 
-    def to_api_params(self) -> Dict[str, Any]:
+    def to_api_params(self) -> dict[str, Any]:
         """Convert to API-compatible dict, excluding None values."""
-        params: Dict[str, Any] = {
+        params: dict[str, Any] = {
             "temperature": self.temperature,
             "frequency_penalty": self.frequency_penalty,
             "presence_penalty": self.presence_penalty,
@@ -241,11 +241,11 @@ class RetryConfig(BaseModel):
 
 
 # Type aliases for convenience
-MessageList = List[Union[ChatMessage, Dict[str, Any]]]
-ToolChoice = Union[Literal["auto", "none", "required"], Dict[str, Any]]
+MessageList = list[ChatMessage | dict[str, Any]]
+ToolChoice = Union[Literal["auto", "none", "required"], dict[str, Any]]
 
 
-def normalize_messages(messages: MessageList) -> List[Dict[str, Any]]:
+def normalize_messages(messages: MessageList) -> list[dict[str, Any]]:
     """Convert messages to OpenAI-compatible format."""
     result = []
     for msg in messages:

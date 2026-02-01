@@ -1,11 +1,11 @@
 # common/cache/in_memory_cache.py
 
-import time
-import threading
-import sys
 import re
-from typing import Any, Optional, Dict, List
+import sys
+import threading
+import time
 from collections import OrderedDict
+from typing import Any
 
 from common.cache.cache_interface import CacheInterface, CacheStats
 
@@ -13,7 +13,7 @@ from common.cache.cache_interface import CacheInterface, CacheStats
 class CacheEntry:
     """Internal cache entry with TTL support"""
 
-    def __init__(self, value: Any, ttl: Optional[int] = None):
+    def __init__(self, value: Any, ttl: int | None = None):
         self.value = value
         self.created_at = time.time()
         self.ttl = ttl
@@ -25,7 +25,7 @@ class CacheEntry:
             return False
         return time.time() > self.expires_at
 
-    def get_remaining_ttl(self) -> Optional[int]:
+    def get_remaining_ttl(self) -> int | None:
         """Get remaining TTL in seconds"""
         if self.expires_at is None:
             return None
@@ -38,8 +38,8 @@ class InMemoryCache(CacheInterface):
 
     def __init__(
         self,
-        max_size: Optional[int] = None,
-        default_ttl: Optional[int] = None,
+        max_size: int | None = None,
+        default_ttl: int | None = None,
         cleanup_interval: int = 60,
         enable_lru: bool = True,
     ):
@@ -135,7 +135,7 @@ class InMemoryCache(CacheInterface):
             self._stats.record_hit()
             return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """Store value in cache"""
         try:
             with self._lock:
@@ -192,7 +192,7 @@ class InMemoryCache(CacheInterface):
 
             return True
 
-    def keys(self, pattern: Optional[str] = None) -> List[str]:
+    def keys(self, pattern: str | None = None) -> list[str]:
         """Get list of cache keys"""
         with self._lock:
             # Remove expired entries first
@@ -213,7 +213,7 @@ class InMemoryCache(CacheInterface):
         """Get cache statistics"""
         return self._stats
 
-    def get_ttl(self, key: str) -> Optional[int]:
+    def get_ttl(self, key: str) -> int | None:
         """Get remaining TTL for a key"""
         with self._lock:
             entry = self._cache.get(key)
@@ -254,7 +254,7 @@ class InMemoryCache(CacheInterface):
             self._remove_expired_entries()
             return len(self._cache)
 
-    def get_memory_usage(self) -> Dict[str, Any]:
+    def get_memory_usage(self) -> dict[str, Any]:
         """Get memory usage information"""
         with self._lock:
             total_size = 0

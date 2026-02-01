@@ -13,7 +13,7 @@ Features:
 
 import json
 import re
-from typing import Dict, Generic, List, Optional, Type, TypeVar
+from typing import TypeVar
 
 from pydantic import BaseModel, ValidationError
 
@@ -31,7 +31,7 @@ class ExtractionError(LLMValidationError):
     pass
 
 
-class StructuredOutputExtractor(Generic[T]):
+class StructuredOutputExtractor[T: BaseModel]:
     """Generic extractor for Pydantic models from raw LLM text.
 
     Supports multiple JSON formats with robust fallback strategies:
@@ -99,7 +99,7 @@ class StructuredOutputExtractor(Generic[T]):
         return text
 
     @staticmethod
-    def _find_json_in_text(text: str) -> List[str]:
+    def _find_json_in_text(text: str) -> list[str]:
         """Find JSON string(s) in text using multiple extraction strategies.
 
         Tries patterns in order of specificity:
@@ -114,7 +114,7 @@ class StructuredOutputExtractor(Generic[T]):
         Returns:
             List of extracted JSON strings (empty if none found)
         """
-        candidates: List[str] = []
+        candidates: list[str] = []
 
         # Strategy 1: Markdown code block with greedy matching (best for nested)
         match = StructuredOutputExtractor.MARKDOWN_GREEDY_PATTERN.search(text)
@@ -161,7 +161,7 @@ class StructuredOutputExtractor(Generic[T]):
         return candidates
 
     @staticmethod
-    def _parse_json(json_str: str, attempt: int = 1) -> Optional[Dict]:
+    def _parse_json(json_str: str, attempt: int = 1) -> dict | None:
         """Parse JSON string with error handling and cleanup attempts.
 
         Args:
@@ -196,7 +196,8 @@ class StructuredOutputExtractor(Generic[T]):
             end_line = min(len(lines), e.lineno + 2) if e.lineno else len(lines)
             context_lines = lines[start_line:end_line]
             context = "\n".join(
-                f"  {i+start_line+1}: {line}" for i, line in enumerate(context_lines)
+                f"  {i + start_line + 1}: {line}"
+                for i, line in enumerate(context_lines)
             )
 
             logger.error(
@@ -219,7 +220,7 @@ class StructuredOutputExtractor(Generic[T]):
             ) from e
 
     @staticmethod
-    def extract(raw_text: str, model_class: Type[T], strict: bool = True) -> T:
+    def extract(raw_text: str, model_class: type[T], strict: bool = True) -> T:
         """Extract and validate Pydantic model from raw text.
 
         Uses multiple extraction strategies and tries all candidates:
@@ -268,7 +269,7 @@ class StructuredOutputExtractor(Generic[T]):
         )
 
         # Step 2 & 3: Try parsing and validating each candidate
-        errors: List[str] = []
+        errors: list[str] = []
 
         for attempt, json_str in enumerate(candidates, start=1):
             try:

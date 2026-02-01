@@ -145,7 +145,7 @@ def example_generate_from_schema():
     # Generate from Holiday schema (if exists)
     if "Holiday" in schemas:
         schema = client.get_schema_info("Holiday")
-        logger.info(f"Generating data from 'Holiday' schema:")
+        logger.info("Generating data from 'Holiday' schema:")
         logger.info(f"  Properties: {list(schema.properties.keys())}")
 
         try:

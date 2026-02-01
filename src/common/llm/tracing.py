@@ -4,19 +4,20 @@ LLM Observability Module
 OpenTelemetry tracing + Langfuse integration for LLM operations.
 """
 
-from contextlib import contextmanager
-from typing import Any, Dict, Generator, Optional
 import time
+from collections.abc import Generator
+from contextlib import contextmanager
+from typing import Any, Dict, Optional
 
 # OpenTelemetry imports (optional)
 try:
     from opentelemetry import trace
-    from opentelemetry.trace import Status, StatusCode
     from opentelemetry.instrumentation.httpx import HTTPXClientInstrumentor
-    from opentelemetry.sdk.trace import TracerProvider
-    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
     from opentelemetry.sdk._logs import LoggerProvider
     from opentelemetry.sdk.resources import Resource
+    from opentelemetry.sdk.trace import TracerProvider
+    from opentelemetry.sdk.trace.export import BatchSpanProcessor, ConsoleSpanExporter
+    from opentelemetry.trace import Status, StatusCode
 
     OTEL_AVAILABLE = True
 except ImportError:
@@ -38,9 +39,10 @@ except ImportError:
     LANGFUSE_AVAILABLE = False
     Langfuse = None  # type: ignore
 
-from common.logger.utils.helpers import get_logger
 import json
 from pathlib import Path
+
+from common.logger.utils.helpers import get_logger
 
 logger = get_logger(__name__)
 
@@ -128,9 +130,9 @@ class LLMTracer:
         enable_otel: bool = True,
         enable_langfuse: bool = False,
         enable_httpx_instrumentation: bool = False,
-        langfuse_public_key: Optional[str] = None,
-        langfuse_secret_key: Optional[str] = None,
-        langfuse_host: Optional[str] = None,
+        langfuse_public_key: str | None = None,
+        langfuse_secret_key: str | None = None,
+        langfuse_host: str | None = None,
         langfuse_connection_timeout: float = 2.0,
         langfuse_enable_health_check: bool = True,
         service_name: str = "llm-client",
@@ -297,7 +299,7 @@ class LLMTracer:
         self,
         public_key: str,
         secret_key: str,
-        host: Optional[str],
+        host: str | None,
     ) -> None:
         """
         Initialize Langfuse observability.
@@ -322,8 +324,8 @@ class LLMTracer:
             # Test connection to Langfuse by checking if the host is reachable
             # This helps determine if OpenTelemetry should be enabled
             # We test health endpoint first, then OTLP endpoint
-            import urllib.request
             import urllib.error
+            import urllib.request
             from urllib.parse import urljoin
 
             available = False
@@ -400,9 +402,9 @@ class LLMTracer:
         self,
         name: str,
         *,
-        attributes: Optional[Dict[str, Any]] = None,
-        input: Optional[Any] = None,
-        model: Optional[str] = None,
+        attributes: dict[str, Any] | None = None,
+        input: Any | None = None,
+        model: str | None = None,
     ) -> Generator[Optional["SpanContext"], None, None]:
         """
         Create a traced span for an operation.
@@ -514,7 +516,6 @@ class LLMTracer:
             # Finalize Langfuse LLM data before ending
             if langfuse_generation and context:
                 try:
-
                     # Batch all LLM updates into single update() call
                     context.finalize_llm_data()
 
@@ -548,10 +549,10 @@ class LLMTracer:
         *,
         model: str,
         messages: list,
-        response: Optional[str] = None,
-        usage: Optional[Dict[str, int]] = None,
-        error: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None,
+        response: str | None = None,
+        usage: dict[str, int] | None = None,
+        error: str | None = None,
+        metadata: dict[str, Any] | None = None,
     ) -> None:
         """
         Log an LLM call with full details for Langfuse.
@@ -603,13 +604,13 @@ class SpanContext:
     def __init__(self, name: str, tracer: LLMTracer):
         self.name = name
         self._tracer = tracer
-        self._otel_span: Optional[Any] = None
-        self._langfuse_generation: Optional[Any] = None
-        self._attributes: Dict[str, Any] = {}
+        self._otel_span: Any | None = None
+        self._langfuse_generation: Any | None = None
+        self._attributes: dict[str, Any] = {}
         # Internal state for batching LLM data updates
-        self._llm_output: Optional[str] = None
-        self._llm_usage: Optional[Dict[str, int]] = None
-        self._llm_model: Optional[str] = None
+        self._llm_output: str | None = None
+        self._llm_usage: dict[str, int] | None = None
+        self._llm_model: str | None = None
         self._llm_data_finalized: bool = False
 
     def set_attribute(self, key: str, value: Any) -> None:
@@ -628,12 +629,12 @@ class SpanContext:
             except Exception as e:
                 logger.warning(f"Failed to update Langfuse generation metadata: {e}")
 
-    def set_attributes(self, attributes: Dict[str, Any]) -> None:
+    def set_attributes(self, attributes: dict[str, Any]) -> None:
         """Set multiple attributes."""
         for key, value in attributes.items():
             self.set_attribute(key, value)
 
-    def add_event(self, name: str, attributes: Optional[Dict[str, Any]] = None) -> None:
+    def add_event(self, name: str, attributes: dict[str, Any] | None = None) -> None:
         """Add an event to the span."""
         if self._otel_span:
             try:
@@ -682,7 +683,7 @@ class SpanContext:
         """
         self._llm_output = response
 
-    def set_llm_usage(self, usage: Dict[str, int]) -> None:
+    def set_llm_usage(self, usage: dict[str, int]) -> None:
         """
         Set token usage for Langfuse generation.
 
@@ -720,11 +721,10 @@ class SpanContext:
         """
 
         if self._llm_data_finalized or not self._langfuse_generation:
-
             return
 
         try:
-            update_kwargs: Dict[str, Any] = {}
+            update_kwargs: dict[str, Any] = {}
 
             if self._llm_output is not None:
                 update_kwargs["output"] = self._llm_output
@@ -763,7 +763,7 @@ def _sanitize_attribute(value: Any) -> Any:
 
 
 # Global tracer instance (lazy initialization)
-_global_tracer: Optional[LLMTracer] = None
+_global_tracer: LLMTracer | None = None
 
 
 def get_tracer(

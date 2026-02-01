@@ -6,7 +6,7 @@ ensuring consistent directory locations regardless of where scripts are executed
 """
 
 from pathlib import Path
-from typing import Union
+
 from common.file.utils import find_project_root
 
 
@@ -48,7 +48,7 @@ def get_project_cache_dir() -> Path:
     return cache_dir
 
 
-def resolve_to_project_root(path: Union[str, Path]) -> Path:
+def resolve_to_project_root(path: str | Path) -> Path:
     """
     Resolve a path relative to project root, or return as-is if absolute.
 

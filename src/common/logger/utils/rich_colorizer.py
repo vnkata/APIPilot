@@ -60,7 +60,6 @@ class RichColorizer:
 
         This preserves the existing formatting while adding colors
         """
-        import re
 
         # ANSI color codes (semantic coloring)
         CYAN = "\033[36m"  # Keys
@@ -161,7 +160,7 @@ class RichColorizer:
 
 
 # Global singleton instance
-_colorizer: Optional[RichColorizer] = None
+_colorizer: RichColorizer | None = None
 
 
 def get_colorizer() -> RichColorizer:

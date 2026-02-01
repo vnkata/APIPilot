@@ -1,9 +1,9 @@
 # common/cache/cache_interface.py
 
-from abc import ABC, abstractmethod
-from typing import Any, Optional, Dict, List
-from enum import Enum
 import time
+from abc import ABC, abstractmethod
+from enum import Enum
+from typing import Any, Dict, List, Optional
 
 
 class CacheStatus(Enum):
@@ -73,7 +73,7 @@ class CacheInterface(ABC):
         pass
 
     @abstractmethod
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """
         Store value in cache
 
@@ -124,7 +124,7 @@ class CacheInterface(ABC):
         pass
 
     @abstractmethod
-    def keys(self, pattern: Optional[str] = None) -> List[str]:
+    def keys(self, pattern: str | None = None) -> list[str]:
         """
         Get list of cache keys
 
@@ -147,7 +147,7 @@ class CacheInterface(ABC):
         pass
 
     @abstractmethod
-    def get_ttl(self, key: str) -> Optional[int]:
+    def get_ttl(self, key: str) -> int | None:
         """
         Get remaining TTL for a key
 
@@ -184,7 +184,7 @@ class CacheInterface(ABC):
         pass
 
     @abstractmethod
-    def get_memory_usage(self) -> Dict[str, Any]:
+    def get_memory_usage(self) -> dict[str, Any]:
         """
         Get memory usage information
 

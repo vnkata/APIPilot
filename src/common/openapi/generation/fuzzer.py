@@ -5,8 +5,9 @@ This module provides wrappers around Schemathesis for automated
 API testing and fuzzing.
 """
 
+from collections.abc import Callable, Iterator
 from pathlib import Path
-from typing import Any, Callable, Iterator, Optional, Union
+from typing import Any
 
 import schemathesis
 import schemathesis.openapi
@@ -30,8 +31,8 @@ class SchemaFuzzer:
 
     def __init__(
         self,
-        spec_path: Union[str, Path],
-        base_url: Optional[str] = None,
+        spec_path: str | Path,
+        base_url: str | None = None,
     ) -> None:
         """
         Initialize schema fuzzer
@@ -52,7 +53,7 @@ class SchemaFuzzer:
     def from_dict(
         cls,
         spec_dict: dict[str, Any],
-        base_url: Optional[str] = None,
+        base_url: str | None = None,
     ) -> "SchemaFuzzer":
         """
         Create fuzzer from spec dict
@@ -77,8 +78,8 @@ class SchemaFuzzer:
 
     def generate_cases(
         self,
-        endpoint: Optional[str] = None,
-        method: Optional[str] = None,
+        endpoint: str | None = None,
+        method: str | None = None,
         count: int = 10,
     ) -> Iterator[Case]:
         """
@@ -122,7 +123,7 @@ class SchemaFuzzer:
                             yield case
                         except Exception as e:
                             logger.warning(
-                                f"Failed to generate case {i+1} for "
+                                f"Failed to generate case {i + 1} for "
                                 f"{method.upper()} {endpoint}: {e}"
                             )
                             continue
@@ -150,7 +151,7 @@ class SchemaFuzzer:
                             yield case
                         except Exception as e:
                             logger.warning(
-                                f"Failed to generate case {i+1} for "
+                                f"Failed to generate case {i + 1} for "
                                 f"{method_name.upper()} {path}: {e}"
                             )
                             continue
@@ -159,8 +160,8 @@ class SchemaFuzzer:
 
     def generate_test_cases(
         self,
-        endpoint: Optional[str] = None,
-        method: Optional[str] = None,
+        endpoint: str | None = None,
+        method: str | None = None,
         count: int = 10,
     ) -> list[dict[str, Any]]:
         """
@@ -208,8 +209,8 @@ class SchemaFuzzer:
 
     def create_pytest_strategy(
         self,
-        endpoint: Optional[str] = None,
-        method: Optional[str] = None,
+        endpoint: str | None = None,
+        method: str | None = None,
     ) -> Any:
         """
         Create Hypothesis strategy for pytest parametrization
@@ -289,7 +290,7 @@ class SchemaFuzzer:
                         "method": case.method,
                     }
                 )
-                logger.warning(f"Fuzz test {i+1} failed: {e}")
+                logger.warning(f"Fuzz test {i + 1} failed: {e}")
 
         results = {
             "endpoint": endpoint,
@@ -301,7 +302,7 @@ class SchemaFuzzer:
         }
 
         logger.info(
-            f"Fuzzing complete: {passed} passed, {failed} failed out of {passed+failed}"
+            f"Fuzzing complete: {passed} passed, {failed} failed out of {passed + failed}"
         )
 
         return results

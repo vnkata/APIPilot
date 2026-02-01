@@ -8,15 +8,16 @@ This module provides robust parsing of OpenAPI specs with:
 - Streaming parser for large specs
 """
 
+from collections.abc import Iterator
 from functools import lru_cache
 from pathlib import Path
-from typing import Any, Iterator, Optional, Union
+from typing import Any
 
 from prance import ResolvingParser
 from prance.util.url import ResolutionError
 
-from common.cache.utils.decorators import cache_result
 from common.cache.cache_factory import CacheType
+from common.cache.utils.decorators import cache_result
 from common.logger.utils.helpers import get_logger
 from common.openapi.config import OpenAPIConfig
 from common.openapi.exceptions import RefResolutionError, SpecLoadError, SpecParseError
@@ -51,8 +52,8 @@ class SpecParser:
 
     def parse(
         self,
-        source: Union[str, Path, dict],
-        resolve_refs: Optional[bool] = None,
+        source: str | Path | dict,
+        resolve_refs: bool | None = None,
         auto_convert_swagger: bool = True,
     ) -> SpecDict:
         """
@@ -206,8 +207,8 @@ class SpecParser:
 
     def parse_to_model(
         self,
-        source: Union[str, Path],
-        resolve_refs: Optional[bool] = None,
+        source: str | Path,
+        resolve_refs: bool | None = None,
         auto_convert_swagger: bool = True,
     ) -> OpenAPI:
         """
@@ -244,7 +245,7 @@ class SpecParser:
                 details={"source": str(source), "error": str(e)},
             ) from e
 
-    def parse_streaming(self, source: Union[str, Path]) -> Iterator[tuple[str, Any]]:
+    def parse_streaming(self, source: str | Path) -> Iterator[tuple[str, Any]]:
         """
         Stream parse large OpenAPI specs (1MB+) incrementally
 
@@ -292,7 +293,7 @@ class SpecParser:
                 details={"source": str(source), "error": str(e)},
             ) from e
 
-    def parse_stream(self, source: Union[str, Path]) -> SpecDict:
+    def parse_stream(self, source: str | Path) -> SpecDict:
         """
         Parse OpenAPI spec using streaming for large files (alias for backward compatibility)
 

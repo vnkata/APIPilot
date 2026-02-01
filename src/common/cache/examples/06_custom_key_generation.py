@@ -10,6 +10,7 @@ Topics:
 """
 
 import json
+
 from common.cache import CacheType
 from common.cache.utils.decorators import cache_result
 from common.logger import get_logger

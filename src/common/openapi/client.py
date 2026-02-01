@@ -6,7 +6,7 @@ orchestrating parsing, validation, introspection, test generation, and HTTP call
 """
 
 from pathlib import Path
-from typing import Any, Optional, Union
+from typing import Any
 
 from common.logger.utils.helpers import get_logger
 from common.openapi.config import DEFAULT_CONFIG, OpenAPIConfig
@@ -55,8 +55,8 @@ class OpenAPIClient:
     def __init__(
         self,
         spec_dict: SpecDict,
-        spec_model: Optional[OpenAPI] = None,
-        config: Optional[OpenAPIConfig] = None,
+        spec_model: OpenAPI | None = None,
+        config: OpenAPIConfig | None = None,
     ) -> None:
         """
         Initialize OpenAPI client
@@ -74,12 +74,12 @@ class OpenAPIClient:
 
         # Lazy-load Pydantic model if not provided
         self._spec_model = spec_model
-        self._parser: Optional[SpecParser] = None
-        self._introspector: Optional[SpecIntrospector] = None
-        self._validator: Optional[SpecValidator] = None
-        self._test_generator: Optional[TestDataGenerator] = None
-        self._mock_generator: Optional[MockGenerator] = None
-        self._http_client: Optional[DynamicHTTPClient] = None
+        self._parser: SpecParser | None = None
+        self._introspector: SpecIntrospector | None = None
+        self._validator: SpecValidator | None = None
+        self._test_generator: TestDataGenerator | None = None
+        self._mock_generator: MockGenerator | None = None
+        self._http_client: DynamicHTTPClient | None = None
 
         logger.info(
             f"OpenAPIClient initialized: {self.spec_dict.get('info', {}).get('title', 'Unknown')}"
@@ -88,8 +88,8 @@ class OpenAPIClient:
     @classmethod
     def from_file(
         cls,
-        file_path: Union[str, Path],
-        config: Optional[OpenAPIConfig] = None,
+        file_path: str | Path,
+        config: OpenAPIConfig | None = None,
     ) -> "OpenAPIClient":
         """
         Create client from local OpenAPI file
@@ -123,7 +123,7 @@ class OpenAPIClient:
     def from_url(
         cls,
         url: str,
-        config: Optional[OpenAPIConfig] = None,
+        config: OpenAPIConfig | None = None,
     ) -> "OpenAPIClient":
         """
         Create client from remote OpenAPI URL
@@ -154,7 +154,7 @@ class OpenAPIClient:
     def from_dict(
         cls,
         spec_dict: SpecDict,
-        config: Optional[OpenAPIConfig] = None,
+        config: OpenAPIConfig | None = None,
     ) -> "OpenAPIClient":
         """
         Create client from pre-loaded spec dict
@@ -224,15 +224,15 @@ class OpenAPIClient:
     # === Convenience methods (delegate to sub-clients) ===
 
     # Introspection
-    def get_endpoints(self, tags: Optional[list[str]] = None) -> list[EndpointInfo]:
+    def get_endpoints(self, tags: list[str] | None = None) -> list[EndpointInfo]:
         """Get all endpoints (optionally filtered by tags)"""
         return self.introspector.get_endpoints(tags=tags)
 
     def find_operation(
         self,
-        path: Optional[str] = None,
-        method: Optional[str] = None,
-        operation_id: Optional[str] = None,
+        path: str | None = None,
+        method: str | None = None,
+        operation_id: str | None = None,
     ) -> EndpointInfo:
         """Find operation by path+method or operationId"""
         return self.introspector.find_operation(
@@ -260,9 +260,9 @@ class OpenAPIClient:
         self,
         method: str,
         path: str,
-        headers: Optional[dict[str, str]] = None,
-        query: Optional[dict[str, Any]] = None,
-        body: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        query: dict[str, Any] | None = None,
+        body: Any | None = None,
     ) -> Any:  # Returns RequestValidationResult
         """Validate HTTP request against spec"""
         return self.validator.validate_request(method, path, headers, query, body)
@@ -272,8 +272,8 @@ class OpenAPIClient:
         method: str,
         path: str,
         status_code: int,
-        headers: Optional[dict[str, str]] = None,
-        body: Optional[Any] = None,
+        headers: dict[str, str] | None = None,
+        body: Any | None = None,
     ) -> Any:  # Returns ResponseValidationResult
         """Validate HTTP response against spec"""
         return self.validator.validate_response(
@@ -310,7 +310,7 @@ class OpenAPIClient:
         self,
         path: str,
         method: str,
-        location: Optional[str] = None,
+        location: str | None = None,
     ) -> dict[str, Any]:
         """Generate parameter values for endpoint"""
         endpoint = self.find_operation(path=path, method=method)

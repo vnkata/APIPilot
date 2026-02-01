@@ -1,6 +1,6 @@
 import sys
-from typing import Any, Dict, Optional
 from datetime import datetime
+from typing import Any
 
 from common.logger.logger_interface import LoggerInterface, LogLevel
 
@@ -36,7 +36,7 @@ class PrintLogger(LoggerInterface):
     ):
         self.name = name
         self.level = level
-        self.context: Dict[str, Any] = {}
+        self.context: dict[str, Any] = {}
         self.use_colors = use_colors and sys.stdout.isatty()
 
     def _should_log(self, level: LogLevel) -> bool:
@@ -155,7 +155,7 @@ class PrintLogger(LoggerInterface):
         """Get current console log level"""
         return self.level
 
-    def get_file_level(self) -> Optional[LogLevel]:
+    def get_file_level(self) -> LogLevel | None:
         """Get current file log level (None for PrintLogger)"""
         return None
 

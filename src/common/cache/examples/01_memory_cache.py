@@ -99,7 +99,7 @@ def example_3_memory_cache_statistics():
     for i in range(10):
         cache.set(f"key_{i}", f"value_{i}")
 
-    logger.info(f"✓ Stored 10 values")
+    logger.info("✓ Stored 10 values")
 
     # Perform hits and misses
     for i in range(5):
@@ -110,7 +110,7 @@ def example_3_memory_cache_statistics():
 
     # Get statistics
     stats = cache.get_stats()
-    logger.info(f"✓ Cache Stats:")
+    logger.info("✓ Cache Stats:")
     logger.info(f"  - Hits: {stats.hits}")
     logger.info(f"  - Misses: {stats.misses}")
     logger.info(f"  - Hit Rate: {stats.get_hit_rate():.2%}")

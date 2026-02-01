@@ -30,12 +30,12 @@ class EndpointInfo:
 
     path: str
     method: str
-    operation_id: Optional[str]
-    summary: Optional[str]
-    description: Optional[str]
+    operation_id: str | None
+    summary: str | None
+    description: str | None
     tags: list[str]
     parameters: list[Parameter]
-    request_body: Optional[RequestBody]
+    request_body: RequestBody | None
     responses: dict[str, Response]
     deprecated: bool = False
 
@@ -46,7 +46,7 @@ class SchemaInfo:
 
     name: str
     schema: Schema
-    description: Optional[str]
+    description: str | None
     properties: dict[str, Schema]
     required: list[str]
 
@@ -70,9 +70,9 @@ class SpecIntrospector:
             spec: Parsed OpenAPI specification model
         """
         self.spec = spec
-        self._endpoint_cache: Optional[list[EndpointInfo]] = None
+        self._endpoint_cache: list[EndpointInfo] | None = None
 
-    def get_endpoints(self, tags: Optional[list[str]] = None) -> list[EndpointInfo]:
+    def get_endpoints(self, tags: list[str] | None = None) -> list[EndpointInfo]:
         """
         Get all endpoints in specification
 
@@ -143,9 +143,9 @@ class SpecIntrospector:
 
     def find_operation(
         self,
-        path: Optional[str] = None,
-        method: Optional[str] = None,
-        operation_id: Optional[str] = None,
+        path: str | None = None,
+        method: str | None = None,
+        operation_id: str | None = None,
     ) -> EndpointInfo:
         """
         Find operation by path+method or operationId
@@ -292,7 +292,7 @@ class SpecIntrospector:
             tags.update(endpoint.tags)
         return sorted(tags)
 
-    def get_base_url(self) -> Optional[str]:
+    def get_base_url(self) -> str | None:
         """
         Get first server base URL
 
@@ -322,7 +322,7 @@ class SpecIntrospector:
         }
 
     # Alias methods for test compatibility
-    def get_endpoint(self, path: str, method: str) -> Optional[EndpointInfo]:
+    def get_endpoint(self, path: str, method: str) -> EndpointInfo | None:
         """Get single endpoint by path and method (alias for find_operation)"""
         try:
             return self.find_operation(path=path, method=method)
@@ -341,7 +341,7 @@ class SpecIntrospector:
         except OperationNotFoundError:
             return []
 
-    def get_request_body_schema(self, path: str, method: str) -> Optional[dict]:
+    def get_request_body_schema(self, path: str, method: str) -> dict | None:
         """Get request body schema for endpoint"""
         try:
             endpoint = self.find_operation(path=path, method=method)
@@ -356,7 +356,7 @@ class SpecIntrospector:
 
     def get_response_schema(
         self, path: str, method: str, status_code: str
-    ) -> Optional[dict]:
+    ) -> dict | None:
         """Get response schema for endpoint and status code"""
         try:
             endpoint = self.find_operation(path=path, method=method)
@@ -382,7 +382,7 @@ class SpecIntrospector:
             return list(self.spec.components.securitySchemes.keys())
         return []
 
-    def get_operation_by_id(self, operation_id: str) -> Optional[EndpointInfo]:
+    def get_operation_by_id(self, operation_id: str) -> EndpointInfo | None:
         """Get operation by operationId (alias for find_operation)"""
         try:
             return self.find_operation(operation_id=operation_id)

@@ -10,34 +10,28 @@ Main API:
 """
 
 import asyncio
+from collections.abc import AsyncGenerator, Generator
 from contextlib import contextmanager
 from typing import (
     Any,
-    AsyncGenerator,
-    Dict,
-    Generator,
-    List,
-    Optional,
-    Type,
     TypeVar,
-    Union,
     overload,
 )
 
 from pydantic import BaseModel
 
-from common.llm.config import LLMConfig
 from common.llm.client import LLMClient
+from common.llm.config import LLMConfig
 from common.llm.models import StreamChunk
+from common.logger.logger_interface import LoggerInterface, LogLevel
 from common.logger.utils.helpers import get_logger
-from common.logger.logger_interface import LogLevel, LoggerInterface
 
 logger = get_logger(__name__)
 
 T = TypeVar("T", bound=BaseModel)
 
 # Global default configuration
-_default_config: Optional[LLMConfig] = None
+_default_config: LLMConfig | None = None
 
 
 def set_default_config(config: LLMConfig) -> None:
@@ -59,14 +53,14 @@ def set_default_config(config: LLMConfig) -> None:
     )
 
 
-def get_default_config() -> Optional[LLMConfig]:
+def get_default_config() -> LLMConfig | None:
     """Get current global default configuration."""
     return _default_config
 
 
 def _resolve_log_level(
-    func_param: Optional[LogLevel],
-    config: Optional[LLMConfig],
+    func_param: LogLevel | None,
+    config: LLMConfig | None,
     default: LogLevel = LogLevel.INFO,
 ) -> LogLevel:
     """
@@ -127,16 +121,16 @@ async def ask(
     prompt: str,
     *,
     response_model: None = None,
-    system: Optional[str] = None,
-    history: Optional[List[Dict[str, str]]] = None,
+    system: str | None = None,
+    history: list[dict[str, str]] | None = None,
     model: str = "gpt-4o-mini",
     temperature: float = 0.7,
-    max_tokens: Optional[int] = None,
-    enable_cache: Optional[bool] = None,
-    enable_tracing: Optional[bool] = None,
-    enable_langfuse: Optional[bool] = None,
-    config: Optional[LLMConfig] = None,
-    log_level: Optional[LogLevel] = None,
+    max_tokens: int | None = None,
+    enable_cache: bool | None = None,
+    enable_tracing: bool | None = None,
+    enable_langfuse: bool | None = None,
+    config: LLMConfig | None = None,
+    log_level: LogLevel | None = None,
     **kwargs,
 ) -> str:
     """Ask with text response."""
@@ -144,42 +138,42 @@ async def ask(
 
 
 @overload
-async def ask(
+async def ask[T: BaseModel](
     prompt: str,
     *,
-    response_model: Type[T],
-    system: Optional[str] = None,
-    history: Optional[List[Dict[str, str]]] = None,
+    response_model: type[T],
+    system: str | None = None,
+    history: list[dict[str, str]] | None = None,
     model: str = "gpt-4o-mini",
     temperature: float = 0.7,
-    max_tokens: Optional[int] = None,
-    enable_cache: Optional[bool] = None,
-    enable_tracing: Optional[bool] = None,
-    enable_langfuse: Optional[bool] = None,
-    config: Optional[LLMConfig] = None,
-    log_level: Optional[LogLevel] = None,
+    max_tokens: int | None = None,
+    enable_cache: bool | None = None,
+    enable_tracing: bool | None = None,
+    enable_langfuse: bool | None = None,
+    config: LLMConfig | None = None,
+    log_level: LogLevel | None = None,
     **kwargs,
 ) -> T:
     """Ask with structured response."""
     ...
 
 
-async def ask(
+async def ask[T: BaseModel](
     prompt: str,
     *,
-    response_model: Optional[Type[T]] = None,
-    system: Optional[str] = None,
-    history: Optional[List[Dict[str, str]]] = None,
+    response_model: type[T] | None = None,
+    system: str | None = None,
+    history: list[dict[str, str]] | None = None,
     model: str = "gpt-4o-mini",
     temperature: float = 0.7,
-    max_tokens: Optional[int] = None,
-    enable_cache: Optional[bool] = None,
-    enable_tracing: Optional[bool] = None,
-    enable_langfuse: Optional[bool] = None,
-    config: Optional[LLMConfig] = None,
-    log_level: Optional[LogLevel] = None,
+    max_tokens: int | None = None,
+    enable_cache: bool | None = None,
+    enable_tracing: bool | None = None,
+    enable_langfuse: bool | None = None,
+    config: LLMConfig | None = None,
+    log_level: LogLevel | None = None,
     **kwargs,
-) -> Union[str, T]:
+) -> str | T:
     """
     Universal LLM ask method with type-safe overloads.
 
@@ -299,7 +293,7 @@ async def ask(
     resolved_log_level = _resolve_log_level(log_level, config, LogLevel.INFO)
 
     # Build message list
-    messages: List[Dict[str, Any]] = []
+    messages: list[dict[str, Any]] = []
 
     # Add history if provided
     if history:
@@ -340,16 +334,16 @@ async def ask(
 async def ask_stream(
     prompt: str,
     *,
-    system: Optional[str] = None,
-    history: Optional[List[Dict[str, str]]] = None,
+    system: str | None = None,
+    history: list[dict[str, str]] | None = None,
     model: str = "gpt-4o-mini",
     temperature: float = 0.7,
-    max_tokens: Optional[int] = None,
-    enable_cache: Optional[bool] = None,
-    enable_tracing: Optional[bool] = None,
-    enable_langfuse: Optional[bool] = None,
-    config: Optional[LLMConfig] = None,
-    log_level: Optional[LogLevel] = None,
+    max_tokens: int | None = None,
+    enable_cache: bool | None = None,
+    enable_tracing: bool | None = None,
+    enable_langfuse: bool | None = None,
+    config: LLMConfig | None = None,
+    log_level: LogLevel | None = None,
     **kwargs,
 ) -> AsyncGenerator[StreamChunk, None]:
     """
@@ -435,7 +429,7 @@ async def ask_stream(
     resolved_log_level = _resolve_log_level(log_level, config, LogLevel.INFO)
 
     # Build message list
-    messages: List[Dict[str, Any]] = []
+    messages: list[dict[str, Any]] = []
 
     if history:
         messages.extend(history)
@@ -458,21 +452,21 @@ async def ask_stream(
                 yield chunk
 
 
-async def ask_batch(
-    prompts: List[str],
+async def ask_batch[T: BaseModel](
+    prompts: list[str],
     *,
-    response_model: Optional[Type[T]] = None,
-    system: Optional[str] = None,
+    response_model: type[T] | None = None,
+    system: str | None = None,
     model: str = "gpt-4o-mini",
     temperature: float = 0.7,
-    max_tokens: Optional[int] = None,
-    enable_cache: Optional[bool] = None,
-    enable_tracing: Optional[bool] = None,
-    enable_langfuse: Optional[bool] = None,
-    config: Optional[LLMConfig] = None,
-    log_level: Optional[LogLevel] = None,
+    max_tokens: int | None = None,
+    enable_cache: bool | None = None,
+    enable_tracing: bool | None = None,
+    enable_langfuse: bool | None = None,
+    config: LLMConfig | None = None,
+    log_level: LogLevel | None = None,
     **kwargs,
-) -> List[Union[str, T, Exception]]:
+) -> list[str | T | Exception]:
     """
     Batch process multiple prompts concurrently with I/O parallelism.
 

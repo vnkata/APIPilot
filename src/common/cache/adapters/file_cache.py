@@ -1,15 +1,15 @@
 # common/cache/file_cache.py
 
-import os
-import json
-import pickle
-import time
-import threading
-import re
 import glob
 import hashlib
+import json
+import os
+import pickle
+import re
+import threading
+import time
 from pathlib import Path
-from typing import Any, Optional, Dict, List, Union
+from typing import Any
 
 from common.cache.cache_interface import CacheInterface, CacheStats
 from common.file.paths import resolve_to_project_root
@@ -18,7 +18,7 @@ from common.file.paths import resolve_to_project_root
 class FileCacheEntry:
     """File cache entry with metadata"""
 
-    def __init__(self, value: Any, ttl: Optional[int] = None):
+    def __init__(self, value: Any, ttl: int | None = None):
         self.value = value
         self.created_at = time.time()
         self.ttl = ttl
@@ -30,14 +30,14 @@ class FileCacheEntry:
             return False
         return time.time() > self.expires_at
 
-    def get_remaining_ttl(self) -> Optional[int]:
+    def get_remaining_ttl(self) -> int | None:
         """Get remaining TTL in seconds"""
         if self.expires_at is None:
             return None
         remaining = int(self.expires_at - time.time())
         return max(0, remaining)
 
-    def to_dict(self) -> Dict[str, Any]:
+    def to_dict(self) -> dict[str, Any]:
         """Convert to dictionary for serialization"""
         return {
             "value": self.value,
@@ -47,7 +47,7 @@ class FileCacheEntry:
         }
 
     @classmethod
-    def from_dict(cls, data: Dict[str, Any]) -> "FileCacheEntry":
+    def from_dict(cls, data: dict[str, Any]) -> "FileCacheEntry":
         """Create from dictionary"""
         entry = cls.__new__(cls)
         entry.value = data["value"]
@@ -64,8 +64,8 @@ class FileCache(CacheInterface):
         self,
         cache_dir: str = ".cache",
         serialization: str = "json",  # "json" or "pickle"
-        file_extension: Optional[str] = None,
-        max_files: Optional[int] = None,
+        file_extension: str | None = None,
+        max_files: int | None = None,
         cleanup_interval: int = 300,  # 5 minutes
         create_subdirs: bool = True,
         safe_filenames: bool = True,
@@ -187,7 +187,7 @@ class FileCache(CacheInterface):
 
         return FileCacheEntry.from_dict(entry_data)
 
-    def _load_entry(self, file_path: Union[str, Path]) -> Optional[FileCacheEntry]:
+    def _load_entry(self, file_path: str | Path) -> FileCacheEntry | None:
         """Load cache entry from file"""
         try:
             with open(file_path, "rb") as f:
@@ -264,7 +264,7 @@ class FileCache(CacheInterface):
             self._stats.record_hit()
             return entry.value
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """Store value in cache"""
         with self._lock:
             try:
@@ -338,7 +338,7 @@ class FileCache(CacheInterface):
 
             return True
 
-    def keys(self, pattern: Optional[str] = None) -> List[str]:
+    def keys(self, pattern: str | None = None) -> list[str]:
         """Get list of cache keys"""
         with self._lock:
             # Remove expired files first
@@ -384,7 +384,7 @@ class FileCache(CacheInterface):
         """Get cache statistics"""
         return self._stats
 
-    def get_ttl(self, key: str) -> Optional[int]:
+    def get_ttl(self, key: str) -> int | None:
         """Get remaining TTL for a key"""
         with self._lock:
             file_path = self._get_file_path(key)
@@ -449,7 +449,7 @@ class FileCache(CacheInterface):
 
             return valid_files
 
-    def get_memory_usage(self) -> Dict[str, Any]:
+    def get_memory_usage(self) -> dict[str, Any]:
         """Get disk usage information"""
         with self._lock:
             total_size = 0

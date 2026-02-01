@@ -5,12 +5,13 @@ This module provides a Request protocol implementation
 to enable request validation with openapi-core.
 """
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field
-from typing import Any, Mapping, Optional
+from typing import Any
 from urllib.parse import urlparse
 
 try:
-    from openapi_core.datatypes import RequestParameters, ImmutableMultiDict, Headers
+    from openapi_core.datatypes import Headers, ImmutableMultiDict, RequestParameters
 except ImportError:
     # Fallback for older openapi-core versions
     @dataclass
@@ -42,11 +43,11 @@ class RequestWrapper:
         self,
         method: str,
         path: str,
-        body: Optional[bytes] = None,
-        query: Optional[Mapping[str, Any]] = None,
-        headers: Optional[Mapping[str, str]] = None,
-        cookies: Optional[Mapping[str, str]] = None,
-        path_params: Optional[Mapping[str, Any]] = None,
+        body: bytes | None = None,
+        query: Mapping[str, Any] | None = None,
+        headers: Mapping[str, str] | None = None,
+        cookies: Mapping[str, str] | None = None,
+        path_params: Mapping[str, Any] | None = None,
         host_url: str = "http://localhost",
         content_type: str = "application/json",
     ) -> None:
@@ -104,7 +105,7 @@ class RequestWrapper:
         return self._path
 
     @property
-    def body(self) -> Optional[bytes]:
+    def body(self) -> bytes | None:
         """Request body as bytes"""
         return self._body
 

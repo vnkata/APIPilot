@@ -3,12 +3,13 @@ Simplified logger API for quick usage
 """
 
 import re
-from typing import Optional
 from pathlib import Path
+from typing import Optional
+
+from common.file.paths import get_project_log_dir, resolve_to_project_root
 from common.logger.logger_factory import LoggerFactory, LoggerType
 from common.logger.logger_interface import LoggerInterface, LogLevel
 from common.logger.models import LoggerConfig
-from common.file.paths import get_project_log_dir, resolve_to_project_root
 
 
 def _sanitize_logger_name_for_filename(name: str) -> str:
@@ -33,14 +34,14 @@ def _sanitize_logger_name_for_filename(name: str) -> str:
 
 
 def get_logger(
-    name: Optional[str] = None,
+    name: str | None = None,
     level: LogLevel = LogLevel.INFO,
-    log_file: Optional[str] = None,
-    console_level: Optional[LogLevel] = None,
-    file_level: Optional[LogLevel] = None,
+    log_file: str | None = None,
+    console_level: LogLevel | None = None,
+    file_level: LogLevel | None = None,
     use_colors: bool = True,
     enable_per_level: bool = True,
-    per_level_dir: Optional[str] = None,
+    per_level_dir: str | None = None,
 ) -> LoggerInterface:
     """
     Get a logger instance with simplified API.

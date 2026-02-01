@@ -11,6 +11,7 @@ Topics:
 """
 
 import hashlib
+
 from common.cache import CacheType
 from common.cache.utils.decorators import cache_result
 from common.logger import get_logger
@@ -107,13 +108,13 @@ def example_1_llm_caching():
     logger.info("▶ First call: call_llm(prompt)")
     response1 = call_llm(prompt)
     logger.info(f"✓ Response: {response1[:50]}...")
-    logger.info(f"  Cost: $0.003, Tokens: 150\n")
+    logger.info("  Cost: $0.003, Tokens: 150\n")
 
     # Second call - returns from cache
     logger.info("▶ Second call: same prompt [REDIS CACHE]")
     response2 = call_llm(prompt)
     logger.info(f"✓ Response: {response2[:50]}...")
-    logger.info(f"  Cost: $0.00 (cached!)\n")
+    logger.info("  Cost: $0.00 (cached!)\n")
 
     print()
 
@@ -155,7 +156,7 @@ def example_3_embedding_caching():
     logger.info("▶ First embedding computation")
     embedding1 = get_embedding(text)
     logger.info(f"✓ Embedding dimensions: {len(embedding1)}")
-    logger.info(f"  Cached to: .cache/embeddings/\n")
+    logger.info("  Cached to: .cache/embeddings/\n")
 
     # Second embedding - retrieved from cache
     logger.info("▶ Second embedding (same text) [FILE CACHE]")
@@ -185,7 +186,7 @@ def example_4_batch_embeddings():
     logger.info(f"  Total dimensions: {len(embeddings1) * len(embeddings1[0])}\n")
 
     # Second batch - returns from memory cache
-    logger.info(f"▶ Same batch [MEMORY CACHE]")
+    logger.info("▶ Same batch [MEMORY CACHE]")
     embeddings2 = get_embeddings_batch(texts)
     logger.info(f"✓ Retrieved: {len(embeddings2)} embeddings (instant)\n")
 
@@ -219,11 +220,11 @@ def example_5_cost_savings():
     logger.info(f"Scenario: {queries:,} queries per day")
     logger.info(f"Cache hit rate: {cache_hit_rate:.0%}\n")
 
-    logger.info(f"Without caching:")
+    logger.info("Without caching:")
     logger.info(f"  Calls: {queries:,}")
     logger.info(f"  Cost: ${cost_no_cache:.2f}\n")
 
-    logger.info(f"With caching (80% hit rate):")
+    logger.info("With caching (80% hit rate):")
     logger.info(f"  Cache misses: {int(cache_misses):,}")
     logger.info(f"  Cost: ${cost_with_cache:.2f}\n")
 

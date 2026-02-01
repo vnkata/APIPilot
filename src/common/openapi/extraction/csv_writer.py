@@ -6,7 +6,6 @@ Writes extracted constraints to CSV files with proper formatting.
 
 import csv
 from pathlib import Path
-from typing import Any
 
 from common.logger.utils.helpers import get_logger
 from common.openapi.extraction.models import EndpointConstraint, PropertyConstraint
@@ -108,9 +107,7 @@ class ConstraintCSVWriter:
                     writer.writerow(constraint.to_csv_row())
                     rows_written += 1
 
-            logger.info(
-                f"Wrote {rows_written} property constraints to {output_path}"
-            )
+            logger.info(f"Wrote {rows_written} property constraints to {output_path}")
             return rows_written
 
         except Exception as e:
@@ -188,7 +185,7 @@ class ConstraintCSVWriter:
             IOError: If file cannot be read
         """
         try:
-            with open(csv_path, "r", newline="", encoding="utf-8") as f:
+            with open(csv_path, newline="", encoding="utf-8") as f:
                 reader = csv.DictReader(f)
                 row_count = sum(1 for _ in reader)
 

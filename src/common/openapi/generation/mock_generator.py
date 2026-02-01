@@ -7,7 +7,7 @@ Generates realistic mock responses based on OpenAPI spec for:
 - API documentation examples
 """
 
-from typing import Any, Dict, List
+from typing import Any
 
 from common.logger import get_logger
 from common.openapi.generation.test_generator import TestDataGenerator
@@ -77,7 +77,7 @@ class MockGenerator:
             logger.error(f"Failed to generate mock response: {e}")
             raise
 
-    def generate_request(self, path: str, method: str) -> Dict[str, Any]:
+    def generate_request(self, path: str, method: str) -> dict[str, Any]:
         """
         Generate mock request body
 
@@ -105,7 +105,7 @@ class MockGenerator:
             logger.error(f"Failed to generate mock request: {e}")
             raise
 
-    def generate_parameters(self, path: str, method: str) -> Dict[str, Any]:
+    def generate_parameters(self, path: str, method: str) -> dict[str, Any]:
         """
         Generate mock parameters (query, path, header)
 
@@ -135,7 +135,7 @@ class MockGenerator:
 
     def generate_error_response(
         self, path: str, method: str, status_code: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate mock error response
 
@@ -191,7 +191,7 @@ class MockGenerator:
         method: str,
         status_code: str = "200",
         batch_size: int = 10,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """
         Generate batch of mock responses
 
@@ -223,7 +223,7 @@ class MockGenerator:
 
     def generate_all_responses_for_endpoint(
         self, path: str, method: str
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """
         Generate all possible responses for endpoint (all status codes)
 
@@ -271,7 +271,7 @@ class MockGenerator:
 
     def generate_mock_server_data(
         self, include_errors: bool = False
-    ) -> Dict[str, Dict[str, Any]]:
+    ) -> dict[str, dict[str, Any]]:
         """
         Generate complete mock data for all endpoints
 

@@ -118,10 +118,10 @@ def example_1_spec_loading():
     logger.info(f"▶ Loading spec: {spec_name}")
     spec1 = load_openapi_spec(spec_name)
     logger.info(f"✓ Loaded: {spec1['info']['title']} v{spec1['info']['version']}")
-    logger.info(f"  Cached to: .cache/openapi_specs/\n")
+    logger.info("  Cached to: .cache/openapi_specs/\n")
 
     # Second load - retrieves from disk cache
-    logger.info(f"▶ Loading same spec [FILE CACHE]")
+    logger.info("▶ Loading same spec [FILE CACHE]")
     spec2 = load_openapi_spec(spec_name)
     logger.info(f"✓ Retrieved: {spec2['info']['title']}")
     logger.info(f"  Paths: {list(spec2.get('paths', {}).keys())}\n")
@@ -142,10 +142,10 @@ def example_2_spec_parsing():
     parsed1 = parse_openapi_spec(spec_name)
     logger.info(f"✓ Title: {parsed1['title']}")
     logger.info(f"  Endpoints: {parsed1['endpoint_count']}")
-    logger.info(f"  Cached in memory for 1 hour\n")
+    logger.info("  Cached in memory for 1 hour\n")
 
     # Second parse - returns from memory cache
-    logger.info(f"▶ Parsing same spec [MEMORY CACHE]")
+    logger.info("▶ Parsing same spec [MEMORY CACHE]")
     parsed2 = parse_openapi_spec(spec_name)
     logger.info(f"✓ Title: {parsed2['title']} (instant)\n")
 
@@ -197,9 +197,9 @@ def example_4_cache_hits_performance():
     time2 = time.time() - start
     logger.info(f"  Time: {time2:.3f}s")
     if time2 > 0:
-        logger.info(f"  Speedup: {time1/time2:.1f}x faster with caching\n")
+        logger.info(f"  Speedup: {time1 / time2:.1f}x faster with caching\n")
     else:
-        logger.info(f"  Speedup: Instant (cached)\n")
+        logger.info("  Speedup: Instant (cached)\n")
 
     print()
 
@@ -277,33 +277,33 @@ def example_7_real_world_workflow():
     logger.info("")
 
     parsed = parse_openapi_spec("PetStore")
-    logger.info(f"2. CACHE MISS → Load & Parse")
-    logger.info(f"   ├─ Load from file (or remote)")
-    logger.info(f"   ├─ Parse specification")
-    logger.info(f"   └─ Store in L1 (memory) and L2 (file)")
+    logger.info("2. CACHE MISS → Load & Parse")
+    logger.info("   ├─ Load from file (or remote)")
+    logger.info("   ├─ Parse specification")
+    logger.info("   └─ Store in L1 (memory) and L2 (file)")
     logger.info("")
 
     logger.info("3. GENERATE TESTS")
-    logger.info(f"   ├─ Read from L1 cache (instant)")
-    logger.info(f"   ├─ Generate mock requests")
-    logger.info(f"   └─ Generate test cases")
+    logger.info("   ├─ Read from L1 cache (instant)")
+    logger.info("   ├─ Generate mock requests")
+    logger.info("   └─ Generate test cases")
     logger.info("")
 
     logger.info("4. SUBSEQUENT REQUESTS: Same API")
-    logger.info(f"   ├─ Check L1 memory cache → HIT")
-    logger.info(f"   └─ Instant access to parsed spec")
+    logger.info("   ├─ Check L1 memory cache → HIT")
+    logger.info("   └─ Instant access to parsed spec")
     logger.info("")
 
     logger.info("5. AFTER 1 HOUR")
-    logger.info(f"   ├─ L1 memory TTL expires")
-    logger.info(f"   ├─ Reload from L2 file cache (fast)")
-    logger.info(f"   └─ Store in L1 again")
+    logger.info("   ├─ L1 memory TTL expires")
+    logger.info("   ├─ Reload from L2 file cache (fast)")
+    logger.info("   └─ Store in L1 again")
     logger.info("")
 
     logger.info("6. AFTER 24 HOURS")
-    logger.info(f"   ├─ L2 file TTL expires")
-    logger.info(f"   ├─ Reload from original source")
-    logger.info(f"   └─ Get latest changes\n")
+    logger.info("   ├─ L2 file TTL expires")
+    logger.info("   ├─ Reload from original source")
+    logger.info("   └─ Get latest changes\n")
 
     print()
 

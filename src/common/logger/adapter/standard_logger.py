@@ -1,14 +1,14 @@
 # common/logger/standard_logger.py
 
-import sys
-import os
 import inspect
-from typing import Any, Optional, Dict, Union
-from pathlib import Path
+import os
+import sys
+from typing import Any, Optional
+
 from loguru import logger as loguru_logger
 
 from common.logger.logger_interface import LoggerInterface, LogLevel
-from common.logger.models import LoggerConfig
+from common.logger.models import FileHandlerConfig, LoggerConfig, PerLevelConfig
 from common.logger.utils.serialize_utils import (
     serialize_for_console,
     serialize_for_file,
@@ -54,7 +54,7 @@ class StandardLogger(LoggerInterface):
             log_file: Main log file path (legacy)
         """
         # Import here to avoid circular dependency
-        from common.logger.models import LoggerConfig, FileHandlerConfig
+        from common.logger.models import LoggerConfig
 
         # Handle config - either passed directly or constructed from legacy params
         if config is None:
@@ -69,7 +69,7 @@ class StandardLogger(LoggerInterface):
 
         self.config = config
         self.name = config.name
-        self.context: Dict[str, Any] = dict(config.initial_context)
+        self.context: dict[str, Any] = dict(config.initial_context)
         self.use_colors = config.use_colors
 
         # Store levels for compatibility
@@ -219,7 +219,7 @@ class StandardLogger(LoggerInterface):
             "{extra[data_context]}"
         )
 
-    def _get_caller_info(self) -> Dict[str, Any]:
+    def _get_caller_info(self) -> dict[str, Any]:
         """Get caller information from stack frame"""
         try:
             # Go up the stack to find the actual caller
@@ -251,7 +251,7 @@ class StandardLogger(LoggerInterface):
                 "caller_function": caller_frame.f_code.co_name,
                 "caller_line": caller_frame.f_lineno,
             }
-        except Exception as e:
+        except Exception:
             # Fallback if stack inspection fails
             return {
                 "caller_file": "error",
@@ -426,7 +426,7 @@ class StandardLogger(LoggerInterface):
         """Get current console log level"""
         return self._console_level
 
-    def get_file_level(self) -> Optional[LogLevel]:
+    def get_file_level(self) -> LogLevel | None:
         """Get current file log level (None if no file logging)"""
         return self._file_level
 
@@ -443,7 +443,7 @@ class StandardLogger(LoggerInterface):
         """Clear all context"""
         self.context.clear()
 
-    def get_context(self) -> Dict[str, Any]:
+    def get_context(self) -> dict[str, Any]:
         """Get current context"""
         return self.context.copy()
 

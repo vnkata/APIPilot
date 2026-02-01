@@ -1,9 +1,10 @@
 from enum import Enum
-from typing import Any, Dict, Optional
+from typing import Any
 
 from common.logger.adapter.print_logger import PrintLogger
 from common.logger.adapter.standard_logger import StandardLogger
 from common.logger.logger_interface import LoggerInterface, LogLevel
+from common.logger.models import LoggerConfig
 
 
 class LoggerType(Enum):
@@ -16,7 +17,7 @@ class LoggerType(Enum):
 class LoggerFactory:
     """Factory for creating logger instances"""
 
-    _instances: Dict[str, LoggerInterface] = {}
+    _instances: dict[str, LoggerInterface] = {}
 
     @classmethod
     def get_logger(
@@ -24,10 +25,10 @@ class LoggerFactory:
         name: str = "restful-api-testing",
         logger_type: LoggerType = LoggerType.STANDARD,
         level: LogLevel = LogLevel.INFO,
-        console_level: Optional[LogLevel] = None,
-        file_level: Optional[LogLevel] = None,
+        console_level: LogLevel | None = None,
+        file_level: LogLevel | None = None,
         use_colors: bool = True,
-        log_file: Optional[str] = None,
+        log_file: str | None = None,
         **kwargs: Any,
     ) -> LoggerInterface:
         """
@@ -91,8 +92,6 @@ class LoggerFactory:
         Returns:
             Logger instance
         """
-        from common.logger.models import LoggerConfig
-
         cache_key = f"{config.name}_{logger_type.value}"
 
         if cache and cache_key in cls._instances:
@@ -120,10 +119,10 @@ class LoggerFactory:
         name: str,
         logger_type: LoggerType = LoggerType.STANDARD,
         level: LogLevel = LogLevel.INFO,
-        console_level: Optional[LogLevel] = None,
-        file_level: Optional[LogLevel] = None,
+        console_level: LogLevel | None = None,
+        file_level: LogLevel | None = None,
         use_colors: bool = True,
-        log_file: Optional[str] = None,
+        log_file: str | None = None,
         **kwargs: Any,
     ) -> LoggerInterface:
         """

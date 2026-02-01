@@ -10,8 +10,8 @@ Provides smart serialization for complex data types with:
 """
 
 import json
-from typing import Any, Dict, Optional, Set
 from enum import Enum
+from typing import Any, Dict, Optional, Set
 
 
 class SerializationMode(Enum):
@@ -44,9 +44,9 @@ class DataSerializer:
         cls,
         obj: Any,
         mode: SerializationMode = SerializationMode.CONSOLE,
-        max_chars: Optional[int] = None,
+        max_chars: int | None = None,
         _depth: int = 0,
-        _seen: Optional[Set[int]] = None,
+        _seen: set[int] | None = None,
     ) -> str:
         """
         Serialize an object to string with smart formatting
@@ -158,9 +158,9 @@ class DataSerializer:
         cls,
         obj: Any,
         mode: SerializationMode,
-        max_chars: Optional[int],
+        max_chars: int | None,
         depth: int,
-        seen: Set[int],
+        seen: set[int],
     ) -> str:
         """Serialize Pydantic model (v1 or v2)"""
         try:
@@ -201,11 +201,11 @@ class DataSerializer:
     @classmethod
     def _serialize_dict(
         cls,
-        obj: Dict[str, Any],
+        obj: dict[str, Any],
         mode: SerializationMode,
-        max_chars: Optional[int],
+        max_chars: int | None,
         depth: int,
-        seen: Set[int],
+        seen: set[int],
     ) -> str:
         """Serialize dictionary with smart truncation"""
         if not obj:
@@ -262,9 +262,9 @@ class DataSerializer:
         cls,
         obj: Any,
         mode: SerializationMode,
-        max_chars: Optional[int],
+        max_chars: int | None,
         depth: int,
-        seen: Set[int],
+        seen: set[int],
     ) -> str:
         """Serialize list/tuple with smart truncation"""
         is_tuple = isinstance(obj, tuple)
@@ -338,7 +338,7 @@ class DataSerializer:
         return f"{preview}... <truncated: {remaining_chars} more chars, {type_hint}>"
 
 
-def serialize_for_console(obj: Any, max_chars: Optional[int] = None) -> str:
+def serialize_for_console(obj: Any, max_chars: int | None = None) -> str:
     """
     Serialize object for console output (pretty-print)
 
@@ -352,7 +352,7 @@ def serialize_for_console(obj: Any, max_chars: Optional[int] = None) -> str:
     return DataSerializer.serialize(obj, SerializationMode.CONSOLE, max_chars)
 
 
-def serialize_for_file(obj: Any, max_chars: Optional[int] = None) -> str:
+def serialize_for_file(obj: Any, max_chars: int | None = None) -> str:
     """
     Serialize object for file output (compact JSON)
 
@@ -368,10 +368,10 @@ def serialize_for_file(obj: Any, max_chars: Optional[int] = None) -> str:
 
 # Convenience function for kwargs serialization
 def serialize_kwargs(
-    kwargs: Dict[str, Any],
+    kwargs: dict[str, Any],
     mode: SerializationMode = SerializationMode.CONSOLE,
-    max_chars: Optional[int] = None,
-) -> Dict[str, str]:
+    max_chars: int | None = None,
+) -> dict[str, str]:
     """
     Serialize all values in kwargs dict
 

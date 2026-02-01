@@ -131,7 +131,7 @@ def example_fuzz_with_edge_cases():
         schema = client.spec.components.schemas.get(schema_name)
 
         if schema:
-            logger.info(f"\n  Schema properties:")
+            logger.info("\n  Schema properties:")
             if hasattr(schema, "properties") and schema.properties:
                 for prop_name in list(schema.properties.keys())[:5]:
                     logger.info(f"    - {prop_name}")
@@ -192,10 +192,10 @@ def example_validate_fuzzed_data():
                     invalid_count += 1
                     logger.warning(f"  Case {case_num}: ✗ Error - {e}")
 
-            logger.info(f"\n✓ Validation summary:")
+            logger.info("\n✓ Validation summary:")
             logger.info(f"  Valid: {valid_count}")
             logger.info(f"  Invalid: {invalid_count}")
-            logger.info(f"\n  [INFO] Fuzzing helps find edge cases and validation gaps")
+            logger.info("\n  [INFO] Fuzzing helps find edge cases and validation gaps")
     except Exception as e:
         logger.error(f"Failed to validate fuzzed data: {e}")
         return

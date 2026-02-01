@@ -9,32 +9,32 @@ from __future__ import annotations
 
 import json
 import uuid
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
-from openai import APIError, APIConnectionError, RateLimitError, APITimeoutError
+from openai import APIConnectionError, APIError, APITimeoutError, RateLimitError
 from openai.types.chat import ChatCompletion
 from tenacity import (
+    before_sleep_log,
     retry,
     retry_if_exception_type,
     stop_after_attempt,
     wait_exponential_jitter,
-    before_sleep_log,
 )
 
-from common.llm.models import (
-    LLMResponse,
-    TokenUsage,
-    ToolCall,
-    RetryConfig,
-)
 from common.llm.exceptions import (
-    LLMError,
-    LLMConnectionError,
-    LLMTimeoutError,
-    LLMRateLimitError,
     LLMAuthenticationError,
+    LLMConnectionError,
     LLMContentFilterError,
     LLMContextLengthError,
+    LLMError,
+    LLMRateLimitError,
+    LLMTimeoutError,
+)
+from common.llm.models import (
+    LLMResponse,
+    RetryConfig,
+    TokenUsage,
+    ToolCall,
 )
 from common.logger.utils.helpers import get_logger
 
@@ -50,10 +50,10 @@ def generate_request_id() -> str:
 
 
 def build_headers(
-    config: "LLMConfig",
-    request_id: Optional[str] = None,
-    idempotency_key: Optional[str] = None,
-) -> Dict[str, str]:
+    config: LLMConfig,
+    request_id: str | None = None,
+    idempotency_key: str | None = None,
+) -> dict[str, str]:
     """Build headers for API request."""
     headers = dict(config.default_headers)
     rid = request_id or generate_request_id()
@@ -112,7 +112,7 @@ def map_api_exception(
 
 def parse_completion_response(
     completion: ChatCompletion,
-    request_id: Optional[str] = None,
+    request_id: str | None = None,
 ) -> LLMResponse:
     """Parse ChatCompletion to LLMResponse."""
     choice = completion.choices[0]
@@ -161,7 +161,7 @@ def parse_completion_response(
 
 
 def create_retry_decorator(
-    config: Optional[RetryConfig] = None,
+    config: RetryConfig | None = None,
     max_retries: int = 3,
     min_wait: float = 1.0,
     max_wait: float = 30.0,
@@ -190,7 +190,7 @@ def create_retry_decorator(
     )
 
 
-def parse_json_response(content: str, request_id: Optional[str] = None) -> Any:
+def parse_json_response(content: str, request_id: str | None = None) -> Any:
     """Parse JSON content from LLM response."""
     from common.llm.exceptions import LLMValidationError
 
@@ -206,14 +206,14 @@ def parse_json_response(content: str, request_id: Optional[str] = None) -> Any:
 
 def build_api_params(
     model: str,
-    messages: List[Dict[str, Any]],
+    messages: list[dict[str, Any]],
     temperature: float,
-    max_tokens: Optional[int] = None,
+    max_tokens: int | None = None,
     stream: bool = False,
     **kwargs,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """Build API parameters dict."""
-    params: Dict[str, Any] = {
+    params: dict[str, Any] = {
         "model": model,
         "messages": messages,
         "temperature": temperature,

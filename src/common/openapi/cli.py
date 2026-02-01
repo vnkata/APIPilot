@@ -9,7 +9,6 @@ Provides CLI commands for:
 
 import json
 from pathlib import Path
-from typing import Optional
 
 import typer
 from rich.console import Console
@@ -94,7 +93,7 @@ def convert(
     input_path: Path = typer.Argument(
         ..., help="Path to Swagger 2.0 specification", exists=True
     ),
-    output_path: Optional[Path] = typer.Option(
+    output_path: Path | None = typer.Option(
         None, "--output", "-o", help="Output path (default: stdout)"
     ),
 ):
@@ -132,12 +131,12 @@ def mock(
     spec_path: Path = typer.Argument(
         ..., help="Path to OpenAPI specification", exists=True
     ),
-    endpoint: Optional[str] = typer.Option(
+    endpoint: str | None = typer.Option(
         None, "--endpoint", "-e", help="Endpoint path (e.g., /users)"
     ),
     method: str = typer.Option("GET", "--method", "-m", help="HTTP method"),
     count: int = typer.Option(1, "--count", "-c", help="Number of mock items"),
-    output: Optional[Path] = typer.Option(
+    output: Path | None = typer.Option(
         None, "--output", "-o", help="Output file (default: stdout)"
     ),
 ):
@@ -163,7 +162,7 @@ def mock(
             # All endpoints
             result = client.mock_generator.generate_mock_server_data()
 
-        console.print(f"✓ Generated mock data")
+        console.print("✓ Generated mock data")
 
         # Output
         if output:
@@ -184,7 +183,7 @@ def fuzz(
     spec_path: Path = typer.Argument(
         ..., help="Path to OpenAPI specification", exists=True
     ),
-    endpoint: Optional[str] = typer.Option(
+    endpoint: str | None = typer.Option(
         None, "--endpoint", "-e", help="Endpoint path (e.g., /users)"
     ),
     method: str = typer.Option("GET", "--method", "-m", help="HTTP method"),
@@ -285,7 +284,7 @@ def info(
         # Servers
         servers = client.introspector.get_servers()
         if servers:
-            console.print(f"\n[bold]Servers:[/bold]")
+            console.print("\n[bold]Servers:[/bold]")
             for server in servers[:3]:
                 console.print(f"  - {server}")
 

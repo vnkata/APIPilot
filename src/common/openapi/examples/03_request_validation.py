@@ -36,7 +36,7 @@ def example_validate_get_request():
             result = client.validate_request(
                 method="GET", path="/holidays", query={"year": 2024}
             )
-            logger.info(f"  ✓ Request valid!")
+            logger.info("  ✓ Request valid!")
             logger.info(f"    Parsed query: {result.get('query', {})}")
         except Exception as e:
             logger.error(f"  ✗ Validation failed: {e}")
@@ -91,7 +91,7 @@ def example_validate_post_request():
                 result = client.validate_request(
                     method="POST", path=endpoint.path, body=test_body
                 )
-                logger.info(f"  ✓ Request valid!")
+                logger.info("  ✓ Request valid!")
             except Exception as e:
                 logger.info(f"  [INFO] {e}")
     except Exception as e:
@@ -135,7 +135,7 @@ def example_validate_path_parameters():
                 result = client.validate_request(
                     method=endpoint.method, path=actual_path
                 )
-                logger.info(f"  ✓ Path parameter valid!")
+                logger.info("  ✓ Path parameter valid!")
             except Exception as e:
                 logger.info(f"  Note: {e}")
     except Exception as e:

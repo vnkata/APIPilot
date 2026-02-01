@@ -1,11 +1,10 @@
 from pathlib import Path
-from typing import Optional
 
 # Cache project root to avoid repeated directory traversal
-_project_root_cache: Optional[Path] = None
+_project_root_cache: Path | None = None
 
 
-def find_project_root(start_path: Optional[Path] = None) -> Path:
+def find_project_root(start_path: Path | None = None) -> Path:
     """
     Find the project root directory by looking for 'pyproject.toml', '.git', or 'requirements.txt'.
 

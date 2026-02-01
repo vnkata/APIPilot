@@ -5,7 +5,7 @@ Data models for logger configuration using Pydantic.
 from __future__ import annotations
 
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 from pydantic import BaseModel, Field
 
@@ -32,7 +32,7 @@ class PerLevelConfig(BaseModel):
     base_dir: Path = Field(
         default=Path("logs/levels"), description="Base directory for level files"
     )
-    levels: List[LogLevel] = Field(
+    levels: list[LogLevel] = Field(
         default_factory=lambda: [
             LogLevel.DEBUG,
             LogLevel.INFO,
@@ -62,27 +62,27 @@ class LoggerConfig(BaseModel):
 
     # Console settings
     console_enabled: bool = Field(default=True, description="Enable console logging")
-    console_level: Optional[LogLevel] = Field(
+    console_level: LogLevel | None = Field(
         default=None, description="Console log level (defaults to base level)"
     )
     use_colors: bool = Field(default=True, description="Use colored output")
 
     # File settings
     file_enabled: bool = Field(default=False, description="Enable file logging")
-    file_config: Optional[FileHandlerConfig] = Field(
+    file_config: FileHandlerConfig | None = Field(
         default=None, description="Main file handler config"
     )
-    file_level: Optional[LogLevel] = Field(
+    file_level: LogLevel | None = Field(
         default=None, description="File log level (defaults to base level)"
     )
 
     # Per-level file settings
-    per_level_config: Optional[PerLevelConfig] = Field(
+    per_level_config: PerLevelConfig | None = Field(
         default=None, description="Per-level file handler config"
     )
 
     # Context
-    initial_context: Dict[str, Any] = Field(
+    initial_context: dict[str, Any] = Field(
         default_factory=dict, description="Initial context for all logs"
     )
 
@@ -101,9 +101,9 @@ class LoggerConfig(BaseModel):
         cls,
         name: str = "app",
         level: LogLevel = LogLevel.INFO,
-        log_file: Optional[str] = None,
-        console_level: Optional[LogLevel] = None,
-        file_level: Optional[LogLevel] = None,
+        log_file: str | None = None,
+        console_level: LogLevel | None = None,
+        file_level: LogLevel | None = None,
         use_colors: bool = True,
     ) -> LoggerConfig:
         """
@@ -220,12 +220,12 @@ class LoggerConfig(BaseModel):
         cls,
         name: str = "app",
         level: LogLevel = LogLevel.INFO,
-        log_file: Optional[str] = None,
+        log_file: str | None = None,
         per_level_dir: str = "logs/levels",
-        console_level: Optional[LogLevel] = None,
-        file_level: Optional[LogLevel] = None,
+        console_level: LogLevel | None = None,
+        file_level: LogLevel | None = None,
         use_colors: bool = True,
-        levels: Optional[List[LogLevel]] = None,
+        levels: list[LogLevel] | None = None,
     ) -> LoggerConfig:
         """
         Create config with per-level file logging enabled.

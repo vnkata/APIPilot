@@ -3,7 +3,7 @@
 import json
 import pickle
 import time
-from typing import Any, Optional, Dict, List
+from typing import Any
 
 from common.cache.cache_interface import CacheInterface, CacheStats
 from common.logger import LoggerFactory, LoggerType, LogLevel
@@ -36,24 +36,24 @@ class RedisCache(CacheInterface):
         host: str = "localhost",
         port: int = 6379,
         db: int = 0,
-        password: Optional[str] = None,
-        socket_timeout: Optional[float] = None,
-        socket_connect_timeout: Optional[float] = None,
+        password: str | None = None,
+        socket_timeout: float | None = None,
+        socket_connect_timeout: float | None = None,
         socket_keepalive: bool = False,
-        socket_keepalive_options: Optional[Dict] = None,
-        connection_pool: Optional[Any] = None,
-        unix_socket_path: Optional[str] = None,
+        socket_keepalive_options: dict | None = None,
+        connection_pool: Any | None = None,
+        unix_socket_path: str | None = None,
         encoding: str = "utf-8",
         encoding_errors: str = "strict",
         decode_responses: bool = False,
         retry_on_timeout: bool = False,
         ssl: bool = False,
-        ssl_keyfile: Optional[str] = None,
-        ssl_certfile: Optional[str] = None,
+        ssl_keyfile: str | None = None,
+        ssl_certfile: str | None = None,
         ssl_cert_reqs: str = "required",
-        ssl_ca_certs: Optional[str] = None,
+        ssl_ca_certs: str | None = None,
         ssl_check_hostname: bool = False,
-        max_connections: Optional[int] = None,
+        max_connections: int | None = None,
         serialization: str = "json",  # "json" or "pickle"
         key_prefix: str = "",
     ):
@@ -213,7 +213,7 @@ class RedisCache(CacheInterface):
             self._stats.record_miss()
             return default
 
-    def set(self, key: str, value: Any, ttl: Optional[int] = None) -> bool:
+    def set(self, key: str, value: Any, ttl: int | None = None) -> bool:
         """Store value in cache"""
         start_time = time.time()
         try:
@@ -314,7 +314,7 @@ class RedisCache(CacheInterface):
             logger.error(f"Error checking key existence for {key}: {e}")
             return False
 
-    def keys(self, pattern: Optional[str] = None) -> List[str]:
+    def keys(self, pattern: str | None = None) -> list[str]:
         """Get list of cache keys"""
         try:
             if pattern:
@@ -346,7 +346,7 @@ class RedisCache(CacheInterface):
         """Get cache statistics"""
         return self._stats
 
-    def get_ttl(self, key: str) -> Optional[int]:
+    def get_ttl(self, key: str) -> int | None:
         """Get remaining TTL for a key"""
         try:
             redis_key = self._make_key(key)
@@ -404,7 +404,7 @@ class RedisCache(CacheInterface):
             logger.error(f"Error getting cache size: {e}")
             return 0
 
-    def get_memory_usage(self) -> Dict[str, Any]:
+    def get_memory_usage(self) -> dict[str, Any]:
         """Get memory usage information"""
         try:
             info = self.redis_client.info("memory")
@@ -441,7 +441,7 @@ class RedisCache(CacheInterface):
             logger.error(f"Error pinging Redis: {e}")
             return False
 
-    def get_redis_info(self) -> Dict[str, Any]:
+    def get_redis_info(self) -> dict[str, Any]:
         """Get Redis server information"""
         try:
             info = dict(self.redis_client.info())

@@ -3,13 +3,13 @@ Custom exceptions for OpenAPI client operations
 """
 
 import json
-from typing import Any, Optional
+from typing import Any
 
 
 class OpenAPIError(Exception):
     """Base exception for all OpenAPI-related errors"""
 
-    def __init__(self, message: str, details: Optional[dict[str, Any]] = None) -> None:
+    def __init__(self, message: str, details: dict[str, Any] | None = None) -> None:
         super().__init__(message)
         self.message = message
         self.details = details or {}
@@ -39,7 +39,7 @@ class OpenAPIError(Exception):
             "type": self.__class__.__name__,
         }
 
-    def to_json(self, indent: Optional[int] = 2) -> str:
+    def to_json(self, indent: int | None = 2) -> str:
         """
         Convert exception to JSON string
 
@@ -101,7 +101,7 @@ class OperationNotFoundError(OpenAPIError):
         self,
         path: str,
         method: str,
-        available_paths: Optional[list[str]] = None,
+        available_paths: list[str] | None = None,
     ) -> None:
         message = f"Operation not found: {method.upper()} {path}"
         details = {"path": path, "method": method.upper()}
@@ -116,7 +116,7 @@ class SchemaNotFoundError(OpenAPIError):
     """Requested schema/component not found in specification"""
 
     def __init__(
-        self, schema_name: str, available_schemas: Optional[list[str]] = None
+        self, schema_name: str, available_schemas: list[str] | None = None
     ) -> None:
         message = f"Schema not found: {schema_name}"
         details = {"schema_name": schema_name}

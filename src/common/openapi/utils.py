@@ -4,7 +4,7 @@ Utility functions for OpenAPI operations
 
 import json
 from pathlib import Path
-from typing import Any, Union
+from typing import Any
 from urllib.parse import urlparse
 
 import yaml
@@ -54,7 +54,7 @@ def detect_format(file_path: Path) -> str:
         )
 
 
-def load_spec_from_file(file_path: Union[str, Path]) -> dict[str, Any]:
+def load_spec_from_file(file_path: str | Path) -> dict[str, Any]:
     """
     Load OpenAPI specification from local file (JSON or YAML)
 

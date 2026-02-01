@@ -8,9 +8,9 @@ Demonstrates:
 - Accessing spec metadata
 """
 
+from common import find_project_root
 from common.logger import get_logger
 from common.openapi import OpenAPIClient
-from common import find_project_root
 
 project_root = find_project_root()
 
@@ -80,7 +80,7 @@ def example_parse_swagger_2():
 
         logger.info(f"\n✓ Title: {client.spec.info.title}")
         logger.info(f"✓ OpenAPI Version: {client.spec.openapi}")
-        logger.info(f"✓ Auto-converted from Swagger 2.0 ✓")
+        logger.info("✓ Auto-converted from Swagger 2.0 ✓")
 
         endpoints = client.get_endpoints()
         logger.info(f"✓ Total Endpoints: {len(endpoints)}")

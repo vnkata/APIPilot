@@ -6,7 +6,7 @@ from OpenAPI specifications.
 """
 
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Any
 
 
 @dataclass
@@ -18,19 +18,19 @@ class PropertyConstraint:
     property_name: str
     property_path: str  # e.g., "user.profile.email" for nested properties
     type_: str
-    format_: Optional[str] = None
-    minimum: Optional[float] = None
-    maximum: Optional[float] = None
-    exclusive_minimum: Optional[float] = None
-    exclusive_maximum: Optional[float] = None
-    min_length: Optional[int] = None
-    max_length: Optional[int] = None
-    pattern: Optional[str] = None
-    enum_values: Optional[list[Any]] = None
-    description: Optional[str] = None
+    format_: str | None = None
+    minimum: float | None = None
+    maximum: float | None = None
+    exclusive_minimum: float | None = None
+    exclusive_maximum: float | None = None
+    min_length: int | None = None
+    max_length: int | None = None
+    pattern: str | None = None
+    enum_values: list[Any] | None = None
+    description: str | None = None
     is_required: bool = False
-    default_value: Optional[Any] = None
-    validation_notes: Optional[str] = None
+    default_value: Any | None = None
+    validation_notes: str | None = None
 
     def to_csv_row(self) -> dict[str, Any]:
         """Convert to CSV row dictionary"""
@@ -71,11 +71,11 @@ class EndpointConstraint:
     spec_name: str
     endpoint_path: str
     http_method: str
-    request_body_component: Optional[str]
-    response_component: Optional[str]
+    request_body_component: str | None
+    response_component: str | None
     response_status_code: str
-    constraint_notes: Optional[str] = None
-    validation_notes: Optional[str] = None
+    constraint_notes: str | None = None
+    validation_notes: str | None = None
 
     def to_csv_row(self) -> dict[str, Any]:
         """Convert to CSV row dictionary"""

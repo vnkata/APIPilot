@@ -12,22 +12,31 @@ API:
 
 from __future__ import annotations
 
+from collections.abc import AsyncGenerator
 from typing import (
     Any,
-    AsyncGenerator,
-    Dict,
-    List,
-    Optional,
-    Type,
     TypeVar,
-    Union,
 )
 
 import httpx
-from openai import AsyncOpenAI, APIError
+from openai import APIError, AsyncOpenAI
 from pydantic import BaseModel
 
+from common.llm._internal import (
+    build_api_params,
+    build_headers,
+    create_retry_decorator,
+    generate_request_id,
+    map_api_exception,
+    parse_completion_response,
+)
+from common.llm.cache import LLMCache, get_llm_cache
 from common.llm.config import LLMConfig
+from common.llm.exceptions import (
+    LLMError,
+    LLMStreamError,
+    LLMValidationError,
+)
 from common.llm.models import (
     CompletionParams,
     LLMResponse,
@@ -39,27 +48,13 @@ from common.llm.models import (
     ToolDefinition,
     normalize_messages,
 )
-from common.llm.exceptions import (
-    LLMError,
-    LLMStreamError,
-    LLMValidationError,
-)
-from common.llm._internal import (
-    generate_request_id,
-    build_headers,
-    map_api_exception,
-    parse_completion_response,
-    create_retry_decorator,
-    build_api_params,
-)
 from common.llm.tracing import LLMTracer, get_tracer
-from common.llm.cache import LLMCache, get_llm_cache
-from common.logger.utils.helpers import get_logger, LogLevel
+from common.logger.utils.helpers import LogLevel, get_logger
 
 # Instructor for structured outputs (optional)
 try:
     import instructor
-    from instructor import Mode, AsyncInstructor
+    from instructor import AsyncInstructor, Mode
 
     INSTRUCTOR_AVAILABLE = True
 except ImportError:
@@ -83,9 +78,9 @@ class _InstructorTracingHook:
     def __init__(self):
         """Initialize hook handler with empty state."""
         self.raw_response = None
-        self.usage: Optional[Dict[str, int]] = None
-        self.model: Optional[str] = None
-        self.validation_errors: List[str] = []
+        self.usage: dict[str, int] | None = None
+        self.model: str | None = None
+        self.validation_errors: list[str] = []
         self.retry_count = 0
 
     def handle_completion_response(self, response: Any) -> None:
@@ -202,10 +197,10 @@ class LLMClient:
 
     def __init__(
         self,
-        config: Optional[LLMConfig] = None,
+        config: LLMConfig | None = None,
         *,
-        tracer: Optional[LLMTracer] = None,
-        cache: Optional[LLMCache] = None,
+        tracer: LLMTracer | None = None,
+        cache: LLMCache | None = None,
     ):
         """
         Initialize LLM client.
@@ -218,8 +213,8 @@ class LLMClient:
         self.config = config or LLMConfig()
         self._tracer = tracer
         self._cache = cache
-        self._client: Optional[AsyncOpenAI] = None
-        self._instructor_client: Optional[Any] = None
+        self._client: AsyncOpenAI | None = None
+        self._instructor_client: Any | None = None
         self._initialized = False
 
     async def _ensure_initialized(self) -> None:
@@ -283,14 +278,14 @@ class LLMClient:
         self,
         messages: MessageList,
         *,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        params: Optional[CompletionParams] = None,
-        tools: Optional[List[ToolDefinition]] = None,
-        tool_choice: Optional[Union[str, Dict[str, Any]]] = None,
-        response_format: Optional[ResponseFormat] = None,
-        retry: Optional[RetryConfig] = None,
-        request_id: Optional[str] = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        params: CompletionParams | None = None,
+        tools: list[ToolDefinition] | None = None,
+        tool_choice: str | dict[str, Any] | None = None,
+        response_format: ResponseFormat | None = None,
+        retry: RetryConfig | None = None,
+        request_id: str | None = None,
         skip_cache: bool = False,
         **kwargs,
     ) -> LLMResponse:
@@ -446,10 +441,10 @@ class LLMClient:
         self,
         messages: MessageList,
         *,
-        temperature: Optional[float] = None,
-        max_tokens: Optional[int] = None,
-        params: Optional[CompletionParams] = None,
-        request_id: Optional[str] = None,
+        temperature: float | None = None,
+        max_tokens: int | None = None,
+        params: CompletionParams | None = None,
+        request_id: str | None = None,
         **kwargs,
     ) -> AsyncGenerator[StreamChunk, None]:
         """
@@ -522,9 +517,7 @@ class LLMClient:
                     )
 
                     async for chunk in stream:
-
                         if not chunk.choices:
-
                             # Check for usage in chunks without choices (OpenAI sends usage in final chunk)
                             if hasattr(chunk, "usage") and chunk.usage:
                                 final_usage = {
@@ -613,10 +606,10 @@ class LLMClient:
     async def structured(
         self,
         messages: MessageList,
-        response_model: Type[T],
+        response_model: type[T],
         *,
-        max_retries: Optional[int] = None,
-        request_id: Optional[str] = None,
+        max_retries: int | None = None,
+        request_id: str | None = None,
         **kwargs,
     ) -> T:
         """
@@ -690,7 +683,6 @@ class LLMClient:
                     )
 
                     self._instructor_client.on("parse:error", hook.handle_parse_error)
-                    hooks_registered = True
                     logger.debug(
                         "Instructor hooks registered for structured output tracing"
                     )
@@ -725,8 +717,6 @@ class LLMClient:
                         if span:
                             # Serialize Pydantic model to JSON for Langfuse output
                             try:
-                                import json
-
                                 # Use model_dump_json() for proper JSON serialization
                                 output_json = result.model_dump_json(indent=2)
                                 span.set_llm_output(output_json)
@@ -798,7 +788,6 @@ class LLMClient:
                 return result
 
         except Exception as e:
-
             # Map to appropriate exception type
             if "validation" in str(e).lower():
                 raise LLMValidationError(
@@ -830,7 +819,7 @@ class LLMClient:
         self._initialized = False
         logger.debug("LLM client closed")
 
-    async def __aenter__(self) -> "LLMClient":
+    async def __aenter__(self) -> LLMClient:
         """Async context manager entry."""
         await self._ensure_initialized()
         return self
@@ -851,7 +840,7 @@ async def quick_chat(
     prompt: str,
     *,
     model: str = "gpt-4o-mini",
-    system: Optional[str] = None,
+    system: str | None = None,
     **kwargs,
 ) -> str:
     """
@@ -866,7 +855,7 @@ async def quick_chat(
     Returns:
         Response content string
     """
-    messages: List[Dict[str, Any]] = []
+    messages: list[dict[str, Any]] = []
     if system:
         messages.append({"role": "system", "content": system})
     messages.append({"role": "user", "content": prompt})

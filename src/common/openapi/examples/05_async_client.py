@@ -36,7 +36,7 @@ async def example_basic_async_client():
 
     # Use async context manager
     async with AsyncDynamicHTTPClient(client.spec) as http:
-        logger.info(f"✓ Async client created")
+        logger.info("✓ Async client created")
         logger.info(f"  Base URL: {http.base_url}")
         logger.info(f"  Retry enabled: {http.enable_retry}")
 
@@ -140,7 +140,7 @@ async def example_async_by_operation_id():
         logger.info(f"Path: {endpoint.method.upper()} {endpoint.path}")
 
         async with AsyncDynamicHTTPClient(client.spec) as http:
-            logger.info(f"\n✓ Can call by operation ID:")
+            logger.info("\n✓ Can call by operation ID:")
             logger.info(
                 f"  await http.request_by_operation_id('{endpoint.operation_id}')"
             )

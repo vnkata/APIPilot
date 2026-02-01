@@ -5,7 +5,7 @@ This module provides a typed HTTP client that automatically
 configures requests based on OpenAPI operation definitions.
 """
 
-from typing import Any, Optional
+from typing import Any
 
 import httpx
 
@@ -34,8 +34,8 @@ class DynamicHTTPClient:
     def __init__(
         self,
         spec: OpenAPI,
-        base_url: Optional[str] = None,
-        config: Optional[OpenAPIConfig] = None,
+        base_url: str | None = None,
+        config: OpenAPIConfig | None = None,
         enable_retry: bool = True,
     ) -> None:
         """
@@ -74,10 +74,10 @@ class DynamicHTTPClient:
         self,
         path: str,
         method: str,
-        path_params: Optional[dict[str, Any]] = None,
-        query_params: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, str]] = None,
-        body: Optional[Any] = None,
+        path_params: dict[str, Any] | None = None,
+        query_params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        body: Any | None = None,
         **kwargs: Any,
     ) -> httpx.Response:
         """
@@ -126,10 +126,10 @@ class DynamicHTTPClient:
         self,
         path: str,
         method: str,
-        path_params: Optional[dict[str, Any]],
-        query_params: Optional[dict[str, Any]],
-        headers: Optional[dict[str, str]],
-        body: Optional[Any],
+        path_params: dict[str, Any] | None,
+        query_params: dict[str, Any] | None,
+        headers: dict[str, str] | None,
+        body: Any | None,
         **kwargs: Any,
     ) -> httpx.Response:
         """Execute request with retry logic"""
@@ -141,10 +141,10 @@ class DynamicHTTPClient:
         self,
         path: str,
         method: str,
-        path_params: Optional[dict[str, Any]],
-        query_params: Optional[dict[str, Any]],
-        headers: Optional[dict[str, str]],
-        body: Optional[Any],
+        path_params: dict[str, Any] | None,
+        query_params: dict[str, Any] | None,
+        headers: dict[str, str] | None,
+        body: Any | None,
         **kwargs: Any,
     ) -> httpx.Response:
         """Execute HTTP request without retry"""
@@ -178,10 +178,10 @@ class DynamicHTTPClient:
     def request_by_operation_id(
         self,
         operation_id: str,
-        path_params: Optional[dict[str, Any]] = None,
-        query_params: Optional[dict[str, Any]] = None,
-        headers: Optional[dict[str, str]] = None,
-        body: Optional[Any] = None,
+        path_params: dict[str, Any] | None = None,
+        query_params: dict[str, Any] | None = None,
+        headers: dict[str, str] | None = None,
+        body: Any | None = None,
         **kwargs: Any,
     ) -> httpx.Response:
         """
@@ -214,9 +214,7 @@ class DynamicHTTPClient:
             **kwargs,
         )
 
-    def _build_url(
-        self, path: str, path_params: Optional[dict[str, Any]] = None
-    ) -> str:
+    def _build_url(self, path: str, path_params: dict[str, Any] | None = None) -> str:
         """
         Build full URL with path parameter substitution
 

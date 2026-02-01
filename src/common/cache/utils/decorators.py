@@ -1,13 +1,14 @@
 # common/cache/decorators.py
 
+import asyncio
 import functools
 import hashlib
 import json
-import asyncio
-from typing import Any, Optional, Callable, Union
+from collections.abc import Callable
+from typing import Any
 
-from common.cache.cache_interface import CacheInterface
 from common.cache.cache_factory import CacheFactory, CacheType
+from common.cache.cache_interface import CacheInterface
 from common.logger import LoggerFactory, LoggerType, LogLevel
 
 # Create logger for cache decorators
@@ -16,7 +17,7 @@ logger = LoggerFactory.get_logger(
 )
 
 
-def _normalize_cache_type(cache_type: Union[str, CacheType]) -> CacheType:
+def _normalize_cache_type(cache_type: str | CacheType) -> CacheType:
     """
     Convert string cache type to CacheType enum.
 
@@ -48,17 +49,17 @@ def _normalize_cache_type(cache_type: Union[str, CacheType]) -> CacheType:
 
 
 def cache_result(
-    cache: Optional[CacheInterface] = None,
-    ttl: Optional[int] = None,
+    cache: CacheInterface | None = None,
+    ttl: int | None = None,
     key_prefix: str = "",
     include_args: bool = True,
     include_kwargs: bool = True,
-    exclude_args: Optional[list] = None,
-    exclude_kwargs: Optional[list] = None,
-    cache_type: Union[str, CacheType] = CacheType.REDIS,
+    exclude_args: list | None = None,
+    exclude_kwargs: list | None = None,
+    cache_type: str | CacheType = CacheType.REDIS,
     cache_name: str = "decorator_cache",
-    key_fn: Optional[Callable[[Callable, tuple, dict], str]] = None,
-    on_error: Optional[Callable[[str, Exception], None]] = None,
+    key_fn: Callable[[Callable, tuple, dict], str] | None = None,
+    on_error: Callable[[str, Exception], None] | None = None,
     **cache_kwargs,
 ):
     """
@@ -405,11 +406,11 @@ def _serialize_for_key(obj: Any) -> str:
 
 
 def cache_property(
-    cache: Optional[CacheInterface] = None,
-    ttl: Optional[int] = None,
-    cache_type: Union[str, CacheType] = CacheType.MEMORY,
+    cache: CacheInterface | None = None,
+    ttl: int | None = None,
+    cache_type: str | CacheType = CacheType.MEMORY,
     cache_name: str = "property_cache",
-    on_error: Optional[Callable[[str, Exception], None]] = None,
+    on_error: Callable[[str, Exception], None] | None = None,
     **cache_kwargs,
 ):
     """
@@ -482,12 +483,12 @@ class cached_method:
 
     def __init__(
         self,
-        cache: Optional[CacheInterface] = None,
-        ttl: Optional[int] = None,
-        cache_type: Union[str, CacheType] = CacheType.MEMORY,
+        cache: CacheInterface | None = None,
+        ttl: int | None = None,
+        cache_type: str | CacheType = CacheType.MEMORY,
         cache_name: str = "method_cache",
         include_self: bool = False,
-        on_error: Optional[Callable[[str, Exception], None]] = None,
+        on_error: Callable[[str, Exception], None] | None = None,
         **cache_kwargs,
     ):
         self.cache = cache

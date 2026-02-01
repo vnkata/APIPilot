@@ -8,8 +8,8 @@ Demonstrates:
 - Comparing formats
 """
 
-from pathlib import Path
 import json
+from pathlib import Path
 
 from common.logger import get_logger
 from common.openapi import OpenAPIClient
@@ -114,7 +114,7 @@ def example_automatic_conversion():
     # Show available operations
     endpoints = client.get_endpoints()
     if endpoints:
-        logger.info(f"\n  Sample operations:")
+        logger.info("\n  Sample operations:")
         for endpoint in endpoints[:3]:
             logger.info(f"    {endpoint.method.upper()} {endpoint.path}")
 

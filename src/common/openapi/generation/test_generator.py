@@ -5,7 +5,7 @@ This module generates test data from OpenAPI schemas using
 hypothesis and schemathesis for property-based testing.
 """
 
-from typing import Any, Optional, Union
+from typing import Any
 
 from hypothesis_jsonschema import from_schema
 
@@ -42,7 +42,7 @@ class TestDataGenerator:
         self,
         schema: Schema,
         count: int = 1,
-    ) -> Union[Any, list[Any]]:
+    ) -> Any | list[Any]:
         """
         Generate test data from a schema
 
@@ -169,8 +169,8 @@ class TestDataGenerator:
 
     def generate_response_body(
         self,
-        endpoint: Union[EndpointInfo, str],
-        status_code: Union[str, None] = "200",
+        endpoint: EndpointInfo | str,
+        status_code: str | None = "200",
         media_type: str = "application/json",
         count: int = 1,
     ) -> list[Any]:
@@ -249,8 +249,8 @@ class TestDataGenerator:
 
     def generate_parameters(
         self,
-        endpoint: Union[EndpointInfo, str],
-        location: Optional[str] = None,
+        endpoint: EndpointInfo | str,
+        location: str | None = None,
     ) -> dict[str, Any]:
         """
         Generate parameter values for endpoint

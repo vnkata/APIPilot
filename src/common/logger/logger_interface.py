@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
-from typing import Any, Optional
 from enum import Enum
+from typing import Any
 
 
 class LogLevel(Enum):
@@ -82,7 +82,7 @@ class LoggerInterface(ABC):
         pass
 
     @abstractmethod
-    def get_file_level(self) -> Optional[LogLevel]:
+    def get_file_level(self) -> LogLevel | None:
         """Get current file log level (None if no file logging)"""
         pass
 

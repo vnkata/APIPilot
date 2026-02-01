@@ -9,7 +9,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from functools import lru_cache
-from typing import Any, Optional
+from typing import Any
 
 import jsonschema
 from openapi_core import Spec
@@ -181,7 +181,7 @@ class SchemaValidator:
             logger.warning(f"Validation failed for inline schema: {errors}")
             return ValidationResult(valid=False, errors=errors, data=data)
 
-    def get_schema(self, schema_name: str) -> Optional[dict[str, Any]]:
+    def get_schema(self, schema_name: str) -> dict[str, Any] | None:
         """
         Retrieve schema definition by name
 

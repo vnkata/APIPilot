@@ -1,12 +1,12 @@
 # common/cache/cache_factory.py
 
-from typing import Optional, Dict, Any
 from enum import Enum
+from typing import Any, Dict, Optional
 
-from common.cache.cache_interface import CacheInterface
+from common.cache.adapters.file_cache import FileCache
 from common.cache.adapters.in_memory_cache import InMemoryCache
 from common.cache.adapters.redis_cache import RedisCache
-from common.cache.adapters.file_cache import FileCache
+from common.cache.cache_interface import CacheInterface
 from common.logger import LoggerFactory, LoggerType, LogLevel
 
 # Create logger for cache factory
@@ -26,7 +26,7 @@ class CacheType(Enum):
 class CacheFactory:
     """Factory for creating cache instances"""
 
-    _instances: Dict[str, CacheInterface] = {}
+    _instances: dict[str, CacheInterface] = {}
 
     @classmethod
     def get_cache(
@@ -218,8 +218,8 @@ class CacheFactory:
     @classmethod
     def create_memory_cache(
         cls,
-        max_size: Optional[int] = None,
-        default_ttl: Optional[int] = None,
+        max_size: int | None = None,
+        default_ttl: int | None = None,
         cleanup_interval: int = 60,
         enable_lru: bool = True,
     ) -> InMemoryCache:
@@ -248,7 +248,7 @@ class CacheFactory:
         host: str = "localhost",
         port: int = 6379,
         db: int = 0,
-        password: Optional[str] = None,
+        password: str | None = None,
         serialization: str = "json",
         key_prefix: str = "",
         **redis_kwargs,
@@ -283,8 +283,8 @@ class CacheFactory:
         cls,
         cache_dir: str = ".cache",
         serialization: str = "json",
-        file_extension: Optional[str] = None,
-        max_files: Optional[int] = None,
+        file_extension: str | None = None,
+        max_files: int | None = None,
         cleanup_interval: int = 300,
         create_subdirs: bool = True,
         safe_filenames: bool = True,
@@ -323,7 +323,7 @@ class CacheFactory:
         cls._instances.clear()
 
     @classmethod
-    def get_cache_instance_info(cls) -> Dict[str, str]:
+    def get_cache_instance_info(cls) -> dict[str, str]:
         """Get information about cached instances"""
         info = {
             key: type(instance).__name__ for key, instance in cls._instances.items()
@@ -332,7 +332,7 @@ class CacheFactory:
         return info
 
     @classmethod
-    def health_check_all_caches(cls) -> Dict[str, bool]:
+    def health_check_all_caches(cls) -> dict[str, bool]:
         """Perform health check on all cached instances"""
         results = {}
         for cache_key, cache_instance in cls._instances.items():

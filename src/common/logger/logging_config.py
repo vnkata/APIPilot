@@ -22,7 +22,7 @@ Configuration aligns with user requirements:
 
 import os
 from datetime import datetime
-from typing import Optional
+
 from common.logger.logger_factory import LoggerFactory, LoggerType, LogLevel
 
 
@@ -91,7 +91,7 @@ class LoggingConfig:
     }
 
     @classmethod
-    def get_log_dir(cls, service_name: Optional[str] = None) -> str:
+    def get_log_dir(cls, service_name: str | None = None) -> str:
         """
         Get the log directory for a specific service.
 
@@ -113,7 +113,7 @@ class LoggingConfig:
 
     @classmethod
     def get_log_file(
-        cls, component: str, service_name: Optional[str] = None, timestamp: bool = True
+        cls, component: str, service_name: str | None = None, timestamp: bool = True
     ) -> str:
         """
         Get the log file path for a component.
@@ -142,8 +142,8 @@ class LoggingConfig:
         cls,
         name: str,
         component: str,
-        service_name: Optional[str] = None,
-        level: Optional[LogLevel] = None,
+        service_name: str | None = None,
+        level: LogLevel | None = None,
         **context,
     ):
         """
@@ -189,7 +189,7 @@ class LoggingConfig:
         return logger
 
     @classmethod
-    def create_gpt_logger(cls, service_name: Optional[str] = None):
+    def create_gpt_logger(cls, service_name: str | None = None):
         """
         Create specialized logger for GPT calls with dual output:
         - Main GPT log: Metadata only (model, tokens, timing)

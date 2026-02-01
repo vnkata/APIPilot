@@ -5,8 +5,8 @@ Pydantic-settings based configuration with environment variable support.
 Supports multiple providers via OpenAI-compatible protocol.
 """
 
-from typing import Any, Dict, Optional
 from enum import Enum
+from typing import Any, Dict, Optional
 
 from pydantic import AliasChoices, Field, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
@@ -25,7 +25,7 @@ class LLMProvider(str, Enum):
     CUSTOM = "custom"
 
     @property
-    def default_base_url(self) -> Optional[str]:
+    def default_base_url(self) -> str | None:
         """Get default base URL for provider."""
         urls = {
             LLMProvider.OPENAI: None,  # SDK default
@@ -62,25 +62,25 @@ class LLMConfig(BaseSettings):
         default="gpt-4o-mini",
         description="Model identifier",
     )
-    api_key: Optional[str] = Field(
+    api_key: str | None = Field(
         default=None,
         description="API key (falls back to OPENAI_API_KEY env var)",
     )
-    base_url: Optional[str] = Field(
+    base_url: str | None = Field(
         default=None,
         description="Base URL for API (None uses provider default)",
     )
 
     # Azure-specific (optional)
-    azure_endpoint: Optional[str] = Field(
+    azure_endpoint: str | None = Field(
         default=None,
         description="Azure OpenAI endpoint URL",
     )
-    azure_deployment: Optional[str] = Field(
+    azure_deployment: str | None = Field(
         default=None,
         description="Azure deployment name",
     )
-    api_version: Optional[str] = Field(
+    api_version: str | None = Field(
         default="2024-02-01",
         description="API version (Azure)",
     )
@@ -116,22 +116,22 @@ class LLMConfig(BaseSettings):
         le=2.0,
         description="Default temperature for completions",
     )
-    default_max_tokens: Optional[int] = Field(
+    default_max_tokens: int | None = Field(
         default=None,
         ge=1,
         description="Default max tokens (None for model default)",
     )
 
     # Headers
-    default_headers: Dict[str, str] = Field(
+    default_headers: dict[str, str] = Field(
         default_factory=dict,
         description="Default headers for all requests",
     )
-    organization: Optional[str] = Field(
+    organization: str | None = Field(
         default=None,
         description="OpenAI organization ID",
     )
-    project: Optional[str] = Field(
+    project: str | None = Field(
         default=None,
         description="OpenAI project ID",
     )
@@ -153,19 +153,19 @@ class LLMConfig(BaseSettings):
         "Captures prompts, responses, token usage, and metadata. "
         "See LLMTracer docstring for setup instructions.",
     )
-    langfuse_public_key: Optional[str] = Field(
+    langfuse_public_key: str | None = Field(
         default=None,
         description="Langfuse public key. "
         "Can also be set via LANGFUSE_PUBLIC_KEY environment variable. "
         "Required if enable_langfuse=True.",
     )
-    langfuse_secret_key: Optional[str] = Field(
+    langfuse_secret_key: str | None = Field(
         default=None,
         description="Langfuse secret key. "
         "Can also be set via LANGFUSE_SECRET_KEY environment variable. "
         "Required if enable_langfuse=True.",
     )
-    langfuse_host: Optional[str] = Field(
+    langfuse_host: str | None = Field(
         default=None,
         validation_alias=AliasChoices("LANGFUSE_BASE_URL", "LANGFUSE_HOST"),
         description="Langfuse host URL (for self-hosted). "
@@ -225,7 +225,7 @@ class LLMConfig(BaseSettings):
     )
 
     # Logging
-    log_level: Optional[LogLevel] = Field(
+    log_level: LogLevel | None = Field(
         default=None,
         description="Log level for LLM operations (None uses default INFO). "
         "Can be overridden by log_level parameter in ask() functions.",
@@ -233,7 +233,7 @@ class LLMConfig(BaseSettings):
 
     @field_validator("base_url", mode="before")
     @classmethod
-    def resolve_base_url(cls, v: Optional[str], info) -> Optional[str]:
+    def resolve_base_url(cls, v: str | None, info) -> str | None:
         """Resolve base URL from provider if not explicitly set."""
         if v:
             return v.rstrip("/")
@@ -269,15 +269,15 @@ class LLMConfig(BaseSettings):
 
         return self
 
-    def get_effective_base_url(self) -> Optional[str]:
+    def get_effective_base_url(self) -> str | None:
         """Get the effective base URL considering provider defaults."""
         return self.base_url or self.provider.default_base_url
 
-    def to_client_kwargs(self) -> Dict[str, Any]:
+    def to_client_kwargs(self) -> dict[str, Any]:
         """Convert config to kwargs for AsyncOpenAI client."""
         import os
 
-        kwargs: Dict[str, Any] = {
+        kwargs: dict[str, Any] = {
             "api_key": self.api_key or os.getenv("OPENAI_API_KEY"),
             "timeout": self.timeout,
             "max_retries": 0,  # We handle retries with tenacity

@@ -30,7 +30,7 @@ def example_1_basic_file_cache():
     )
 
     logger.info(f"✓ Created file cache: {type(cache).__name__}")
-    logger.info(f"  Cache directory: .cache/demo")
+    logger.info("  Cache directory: .cache/demo")
 
     # Store values to disk
     cache.set("user:1:data", {"name": "Alice", "role": "admin"})

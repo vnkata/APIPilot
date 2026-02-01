@@ -5,10 +5,11 @@ This module provides typed access to OpenAPI specification models
 using Pydantic v2 from the openapi-pydantic library.
 """
 
-from typing import Any, Union
+from typing import Any
 
 # Core OpenAPI models from openapi-pydantic
 from openapi_pydantic import (
+    XML,
     Components,
     Contact,
     Discriminator,
@@ -37,20 +38,19 @@ from openapi_pydantic import (
     Server,
     ServerVariable,
     Tag,
-    XML,
 )
 
 # Type aliases for common use cases
 SpecDict = dict[str, Any]
 PathsDict = dict[str, PathItem]
-SchemasDict = dict[str, Union[Schema, Reference]]
-ParametersDict = dict[str, Union[Parameter, Reference]]
-ResponsesDict = dict[str, Union[Response, Reference]]
-RequestBodiesDict = dict[str, Union[RequestBody, Reference]]
-HeadersDict = dict[str, Union[Header, Reference]]
-SecuritySchemesDict = dict[str, Union[SecurityScheme, Reference]]
-LinksDict = dict[str, Union[Link, Reference]]
-CallbacksDict = dict[str, Union[PathItem, Reference]]
+SchemasDict = dict[str, Schema | Reference]
+ParametersDict = dict[str, Parameter | Reference]
+ResponsesDict = dict[str, Response | Reference]
+RequestBodiesDict = dict[str, RequestBody | Reference]
+HeadersDict = dict[str, Header | Reference]
+SecuritySchemesDict = dict[str, SecurityScheme | Reference]
+LinksDict = dict[str, Link | Reference]
+CallbacksDict = dict[str, PathItem | Reference]
 
 # HTTP Methods supported in OpenAPI
 HTTPMethod = str  # get, post, put, delete, patch, options, head, trace
@@ -62,7 +62,7 @@ def is_reference(obj: Any) -> bool:
     return isinstance(obj, Reference) or (isinstance(obj, dict) and "$ref" in obj)
 
 
-def get_ref_name(ref: Union[Reference, str]) -> str:
+def get_ref_name(ref: Reference | str) -> str:
     """
     Extract component name from $ref
 
