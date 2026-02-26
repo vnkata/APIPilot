@@ -11,54 +11,64 @@ import hashlib
 
 #  HTTP Status Code
 def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
-        flat_schema = {}
-        if schema is None:
-            return
-        newRef = ref
-        if 'properties' in schema:
-            if "xrefs" in schema:
-                ref = schema.get("xrefs", "")    
-            # root
-            for key, value in schema['properties'].items():
-                new_key = f"{parent_key}{sep}{key}" if parent_key else key
-                if value is None:
-                    continue
-                if value.get('type') == 'object' and 'properties' in value:
-                    # Recursively flatten nested object
-                    if "xrefs" in value:
-                        newRef = value.get("xrefs", "")
-                    flat_schema.update(
-                        flatten_json_schema(value, new_key, sep=sep, ref=newRef))
-                elif value.get('type') == 'array':
-                    items = value.get('items', {})
-                    array_key = f"{new_key}"
-                    # if "xrefs" in value.get("items",[]):
-                    #     ref = value.get("xrefs")
-                    if items.get('type') == 'object' and 'properties' in items:
-                        # Flatten object inside array
-                        if "xrefs" in value.get("items", {}):
-                            newRef = value.get("items", {}).get("xrefs", "")
-                        flat_schema.update(flatten_json_schema(
-                            items, array_key, sep=sep, ref=newRef))
-                    else:
-                        if ref != "":
-                            items["xrefs"] = ref
-                        # Array of primitives
-                        flat_schema[array_key] = items
-                else:
-                    # Primitive field
-                    if ref != "":
-                        value["xrefs"] = ref
-                    flat_schema[new_key] = value
-        elif schema.get('type') == 'array':
-            # nested
-            items = schema.get('items', {})
-            newRef = ref
-            if "xrefs" in items:
-                newRef = items.get("xrefs", "")
-            flat_schema.update(
-                flatten_json_schema(items, parent_key, sep=sep, ref=newRef))
+    """
+    Recursively flattens a JSON schema.
+    Preserves array-level metadata (description and type) for arrays of primitives
+    to ensure the downstream parser can correctly identify list-based fields.
+    """
+    flat_schema = {}
+    if schema is None:
         return flat_schema
+
+    # Inherit or update the external reference (xrefs)
+    current_ref = schema.get("xrefs", ref)
+
+    # 1. Process objects with defined properties
+    if 'properties' in schema:
+        for key, value in schema['properties'].items():
+            new_key = f"{parent_key}{sep}{key}" if parent_key else key
+            if value is None:
+                continue
+
+            p_type = value.get('type')
+
+            if p_type == 'object' and 'properties' in value:
+                # Recursively flatten nested objects
+                flat_schema.update(flatten_json_schema(value, new_key, sep=sep, ref=current_ref))
+
+            elif p_type == 'array':
+                items = value.get('items', {})
+                # Only recurse if the array contains an object with its own properties
+                if items.get('type') == 'object' and 'properties' in items:
+                    flat_schema.update(flatten_json_schema(items, new_key, sep=sep, ref=current_ref))
+                else:
+                    # Array of primitives (e.g., transcriptIds): 
+                    # Store the array definition itself to preserve 'description' and 'type: array'
+                    flat_copy = value.copy()
+                    if current_ref:
+                        flat_copy["xrefs"] = current_ref
+                    flat_schema[new_key] = flat_copy
+
+            else:
+                # Standard primitive field (string, integer, etc.)
+                flat_copy = value.copy()
+                if current_ref:
+                    flat_copy["xrefs"] = current_ref
+                flat_schema[new_key] = flat_copy
+
+    # 2. Handle cases where the top-level schema is an array definition
+    elif schema.get('type') == 'array':
+        items = schema.get('items', {})
+        if items.get('type') == 'object' and 'properties' in items:
+            return flatten_json_schema(items, parent_key, sep=sep, ref=current_ref)
+        else:
+            # Preserve metadata for root or nested level primitive arrays
+            flat_copy = schema.copy()
+            if current_ref:
+                flat_copy["xrefs"] = current_ref
+            flat_schema[parent_key] = flat_copy
+
+    return flat_schema
 
 
 def get_combinations(

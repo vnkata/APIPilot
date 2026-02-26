@@ -25,7 +25,20 @@ class RandomBooleanGenerator(RandomGenerator):
     def next_value_as_string(self) -> str:
         """Return next random value as string."""
         return str(self.next_value())
-    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+    def next_fuzz_value(self) -> Any:
+        """Randomly selects from specific supported strategies and returns a fuzzed value."""
+        
+        # Explicitly list only the strategies handled by this specific function
+        supported_strategies = [
+            FuzzStrategy.EMPTY,
+            FuzzStrategy.TYPE_ERROR,
+            FuzzStrategy.STRUCTURE,
+            FuzzStrategy.MUTATE
+        ]
+        
+        # Pick one at random
+        strategy = self.rand.choice(supported_strategies)
+
         if strategy == FuzzStrategy.EMPTY:
             return self.rand.choice([None, ""])
 

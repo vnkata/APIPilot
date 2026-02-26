@@ -44,6 +44,3 @@ class RandomLocaleGenerator(RandomGenerator):
     def next_value_as_string(self) -> str:
         """Return the value as a string."""
         return self.next_value()
-    
-    def next_fuzz_value(self, strategy: str):
-        pass

@@ -81,13 +81,76 @@ class RandomNumberGenerator(RandomGenerator):
         """Generate next random value as string."""
         return str(self.next_value())
     def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+        """
+        Numeric-specific fuzzing strategies focusing on alternate bases, 
+        encoding artifacts, and boundary conditions.
+        """
+        # Generate a valid number within the set range to use as a base for mutations
+        base_val = self.next_value()
+        base_int = int(base_val) if self.type.is_number() else 0
+
+        if strategy == FuzzStrategy.ENCODING:
+            return self.rand.choice([
+                # 1. Hexadecimal Representations
+                hex(base_int),                      # Standard: 0x1a
+                hex(base_int).upper().replace("X", "x"), # Uppercase: 0x1A
+                f"%{base_int % 255:02x}",           # URL-encoded hex byte: %1a
+                
+                # 2. Null-Byte Injection (Testing for string termination vulnerabilities)
+                f"{base_int}%00",                   # URL-encoded null
+                f"{base_int}\0",                    # Literal null byte
+                
+                # 3. Whitespace & Padding (Testing parser trimming logic)
+                f" {base_int} ",                    # Leading/Trailing space
+                f"{base_int}%20",                   # URL-encoded space
+                f"\t{base_int}\n",                  # Tabs and Newlines
+                f"{base_int:010d}",                 # Excessive leading zeros (e.g., 0000000123)
+                
+                # 4. Alternative Number Bases
+                bin(base_int),                      # Binary: 0b1101
+                oct(base_int)                       # Octal: 0o17
+            ])
+
         if strategy == FuzzStrategy.BOUNDARY:
-            return self.rand.choice([self.min, self.max, self.min - 1, self.max + 1, 0])
-        
+            # Focus on integer limits and signs
+            try:
+                min_underflow = int(self.min) - 1   # Underflow (integer)
+            except (ValueError, OverflowError, TypeError):
+                # Fallback: if we cannot safely convert to int, just reuse the minimum
+                min_underflow = self.min
+
+            try:
+                max_overflow = int(self.max) + 1    # Overflow (integer)
+            except (ValueError, OverflowError, TypeError):
+                # Fallback: if we cannot safely convert to int, just reuse the maximum
+                max_overflow = self.max
+
+            return self.rand.choice([
+                self.min,                           # Absolute minimum
+                self.max,                           # Absolute maximum
+                min_underflow,                      # Underflow
+                max_overflow,                       # Overflow
+                0,                                  # Zero
+                -1,                                 # Negative boundary
+                0.00000000001                       # Extremely small positive float
+            ])
+
+        if strategy == FuzzStrategy.FORMAT_ERROR:
+            return self.rand.choice([
+                f"{base_int}.{base_int}.{base_int}",# Multiple decimal points
+                f"{base_int},000",                  # Thousands separator (often breaks parsers)
+                f"+{base_int}",                     # Explicit positive sign
+                "NaN",                              # Not a Number
+                "Infinity",                         # Mathematical infinity
+                "-Infinity"
+            ])
+
         if strategy == FuzzStrategy.TYPE_ERROR:
-            return self.rand.choice(["not_a_number", True, {}, []])
-        
-        if strategy == FuzzStrategy.OVERFLOW:
-            return 2**128 
-        
-        return None
+            return self.rand.choice([
+                str(base_int),                      # Number as a string (if the API expects raw int)
+                float(base_int),                    # Float instead of Integer
+                [base_int],                         # Number inside a list
+                {"value": base_int}                 # Number inside an object
+            ])
+            
+        return base_val

@@ -18,6 +18,8 @@ class ConfigurationParser:
         self.configurations: List[OperationConfiguration] = []
         self.cache_file = os.path.join(
             cache_dir, "configuration.json")
+        if not os.path.exists(cache_dir):
+            os.makedirs(cache_dir)
         self.parameter_random_mapper = ParameterRandomMapper(llm=model)
         self.logger = getLogger(__name__)
         self.load_or_initialize()
@@ -57,6 +59,7 @@ class ConfigurationParser:
             }    
             # Standardize naming access for OperationProperties
             self.logger.debug("Conf for Prompt: " + operation.uuid)
+            print("Processing Operation:", operation.uuid)
             op_config = OperationConfiguration(
                 method= getattr(operation, "http_method", None),
                 endpoint= getattr(operation, "endpoint_path", None) 
@@ -74,11 +77,13 @@ class ConfigurationParser:
                     flattened_body = flatten_json_schema(schema.to_dict())
                     body_schemas.update(flattened_body)
                 
-                for property,details in body_schemas.items():
-                    item_details = ItemProperties(**details)
-                    op_config.request_body[property] = self._process_field(item_details, path=property)
-                    if op_config.request_body[property].type == "PENDING_GPT":
-                        gpt_inferences["request_body"][property] = item_details
+                for property, details in body_schemas.items():
+                    # Handle root-level arrays: use "body" as name when property is empty string
+                    field_name = property if property else "body"
+                    item_details = ItemProperties.from_dict(details)
+                    op_config.request_body[field_name] = self._process_field(item_details, path=field_name)
+                    if op_config.request_body[field_name].type == "PENDING_GPT":
+                        gpt_inferences["request_body"][field_name] = item_details
             # --- 3. Process Parameters & Request Body with GPT ---
             for part, items in gpt_inferences.items():
                 if len(items) > 0:
@@ -95,7 +100,8 @@ class ConfigurationParser:
 
     def _process_field(self, item: Union[ParameterProperties, ItemProperties], path: str = None):
         """Standard entry point for judging Heuristic vs GPT for a single field."""
-        name = path or getattr(item, 'name', 'unknown')
+        # Use 'is not None' to handle empty string path correctly (empty string is falsy but valid)
+        name = path if path is not None else getattr(item, 'name', 'unknown')
         if getattr(item, 'description', None) is None:
             return self.heuristic_parser(item, name_override=name)
         else:
@@ -108,7 +114,8 @@ class ConfigurationParser:
         
         p_type = getattr(schema_source, "type", "string")
         p_format = getattr(schema_source, "format", None)
-        p_name = name_override or getattr(item, "name", "unknown")
+        # Use 'is not None' to handle empty string name correctly
+        p_name = name_override if name_override is not None else getattr(item, "name", "unknown")
 
         config = FieldConfiguration(name=p_name)
         match p_type:
@@ -158,3 +165,8 @@ class ConfigurationParser:
         }
         results = self.parameter_random_mapper.exec(**params)
         return results
+    def export_debug_log(self, filepath: str):
+        output = [asdict(conf) for conf in self.configurations]
+        with open(filepath, "w", encoding="utf-8") as f:
+            json.dump(output, f, indent=4, default=str)
+        print(f"Debug log exported to: {filepath}")

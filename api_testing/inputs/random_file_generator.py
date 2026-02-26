@@ -55,26 +55,46 @@ class RandomFileGenerator(RandomGenerator):
             return self.fake.bmp_file(raw=True)
         else:
             raise ValueError(f"Unsupported file type: {self.file_type}")
-    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+    def next_fuzz_value(self) -> Any:
+        """Randomly selects a binary-specific fuzzing strategy and returns the value."""
+        
+        # Define only the strategies implemented for binary/file data
+        supported_strategies = [
+            FuzzStrategy.EMPTY,
+            FuzzStrategy.LARGE,
+            FuzzStrategy.WRONG_TYPE,
+            FuzzStrategy.JUNK,
+            FuzzStrategy.CORRUPT
+        ]
+        
+        # Pick one at random
+        strategy = self.rand.choice(supported_strategies)
+
         if strategy == FuzzStrategy.EMPTY:
             return b""
 
         if strategy == FuzzStrategy.LARGE:
+            # 10MB of 'A' characters to test memory/upload limits
             return b"A" * (1024 * 1024 * 10)
 
         if strategy == FuzzStrategy.WRONG_TYPE:
+            # Returns a string instead of bytes to trigger type-checking failures
             return f"binary_data_{self.rand.getrandbits(32)}"
 
         if strategy == FuzzStrategy.JUNK:
+            # Completely random bytes
             return self.rand.randbytes(2048)
 
         if strategy == FuzzStrategy.CORRUPT:
-            valid_file = self.next_value() # Assume next_value() generates valid bytes
-            if not valid_file: return b"\xFF\xFF"
+            # Take a valid file/byte sequence and flip the first 16 bytes
+            valid_file = self.next_value() 
+            if not valid_file: 
+                return b"\xFF\xFF"
+                
             mutable = bytearray(valid_file)
+            # Corrupt only the beginning (often where headers like PNG/PDF reside)
             for i in range(min(16, len(mutable))):
                 mutable[i] = self.rand.randint(0, 255)
             return bytes(mutable)
             
         return None
-    

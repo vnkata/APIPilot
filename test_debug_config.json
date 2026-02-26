@@ -1,446 +1,1297 @@
 [
     {
         "method": "post",
-        "endpoint": "/v1/account_links",
-        "params": {},
-        "reqbody": {
-            "account": {
-                "name": "account",
-                "type": "PENDING_GPT",
+        "endpoint": "/annotation",
+        "params": {
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "word",
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "collect": {
-                "name": "collect",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "collection_options.fields": {
-                "name": "collection_options.fields",
+            "fields": {
+                "name": "fields",
                 "type": "RandomInputGenerator",
                 "genParameters": {
                     "values": [
-                        "currently_due",
-                        "eventually_due"
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ]
+                }
+            }
+        },
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "paragraph",
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "post",
+        "endpoint": "/annotation/dbsnp/",
+        "params": {
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "refseq",
+                        "ensembl",
+                        "custom"
                     ],
                     "count": 1
                 }
             },
-            "collection_options.future_requirements": {
-                "name": "collection_options.future_requirements",
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
                 "type": "RandomInputGenerator",
                 "genParameters": {
                     "values": [
-                        "include",
-                        "omit"
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
                     ],
                     "count": 1
                 }
-            },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "refresh_url": {
-                "name": "refresh_url",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "return_url": {
-                "name": "return_url",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "type": {
-                "name": "type",
-                "type": "PENDING_GPT",
-                "genParameters": {}
+            }
+        },
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "paragraph",
+                    "count": 1
+                }
             }
         }
     },
     {
         "method": "get",
-        "endpoint": "/v1/apple_pay/domains",
+        "endpoint": "/annotation/dbsnp/{variantId}",
         "params": {
-            "domain_name": {
-                "name": "domain_name",
+            "variantId": {
+                "name": "variantId",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "rs\\d{6,9}",
+                    "count": 1
+                }
+            },
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "refseq",
+                        "ensembl",
+                        "custom"
+                    ],
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/annotation/genomic",
+        "params": {
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot"
+                    ],
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {
+            "chromosome": {
+                "name": "chromosome",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12",
+                        "13",
+                        "14",
+                        "15",
+                        "16",
+                        "17",
+                        "18",
+                        "19",
+                        "20",
+                        "21",
+                        "22",
+                        "X",
+                        "Y",
+                        "MT"
+                    ],
+                    "count": 1
+                }
+            },
+            "start": {
+                "name": "start",
+                "type": "RandomNumberGenerator",
+                "genParameters": {
+                    "type": "INTEGER",
+                    "min": 1,
+                    "max": 250000000
+                }
+            },
+            "end": {
+                "name": "end",
+                "type": "RandomNumberGenerator",
+                "genParameters": {
+                    "type": "INTEGER",
+                    "min": 1,
+                    "max": 250000000
+                }
+            },
+            "referenceAllele": {
+                "name": "referenceAllele",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "A",
+                        "C",
+                        "G",
+                        "T"
+                    ],
+                    "count": 1
+                }
+            },
+            "variantAllele": {
+                "name": "variantAllele",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "A",
+                        "C",
+                        "G",
+                        "T"
+                    ],
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/annotation/genomic/{genomicLocation}",
+        "params": {
+            "genomicLocation": {
+                "name": "genomicLocation",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "^[0-9]+,[0-9]+,[0-9]+,[ACGT],[ACGT]$",
+                    "count": 1
+                }
+            },
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "refseq",
+                        "ensembl",
+                        "havana",
+                        "other"
+                    ],
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "get",
+        "endpoint": "/annotation/{variant}",
+        "params": {
+            "variant": {
+                "name": "variant",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "\\d+:g\\.\\d+_\\d+ins[ACGT]+",
+                    "count": 1
+                }
+            },
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "ensembl",
+                        "refseq"
+                    ],
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 3
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/ensembl/canonical-gene/entrez",
+        "params": {},
+        "request_body": {
+            "body": {
+                "name": "body",
                 "type": "RandomTextGenerator",
                 "genParameters": {
                     "mode": "sentence",
                     "count": 1
                 }
-            },
-            "ending_before": {
-                "name": "ending_before",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "limit": {
-                "name": "limit",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "starting_after": {
-                "name": "starting_after",
-                "type": "PENDING_GPT",
-                "genParameters": {}
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/canonical-gene/entrez/{entrezGeneId}",
+        "params": {
+            "entrezGeneId": {
+                "name": "entrezGeneId",
+                "type": "RandomNumberGenerator",
+                "genParameters": {
+                    "type": "INTEGER"
+                }
             }
         },
-        "reqbody": {}
+        "request_body": {}
     },
     {
         "method": "post",
-        "endpoint": "/v1/apple_pay/domains",
+        "endpoint": "/ensembl/canonical-gene/hgnc",
         "params": {},
-        "reqbody": {
-            "domain_name": {
-                "name": "domain_name",
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "sentence"
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/canonical-gene/hgnc/{hugoSymbol}",
+        "params": {
+            "hugoSymbol": {
+                "name": "hugoSymbol",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "^[A-Z0-9]{2,10}$",
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/ensembl/canonical-transcript/hgnc",
+        "params": {
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {
+            "body": {
+                "name": "body",
                 "type": "RandomTextGenerator",
                 "genParameters": {
                     "mode": "sentence",
                     "count": 1
                 }
-            },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
             }
         }
     },
     {
+        "method": "get",
+        "endpoint": "/ensembl/canonical-transcript/hgnc/{hugoSymbol}",
+        "params": {
+            "hugoSymbol": {
+                "name": "hugoSymbol",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "[A-Z0-9]{2,10}",
+                    "count": 1
+                }
+            },
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "default"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/transcript",
+        "params": {
+            "geneId": {
+                "name": "geneId",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "proteinId": {
+                "name": "proteinId",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "hugoSymbol": {
+                "name": "hugoSymbol",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            }
+        },
+        "request_body": {}
+    },
+    {
         "method": "post",
-        "endpoint": "/v1/ephemeral_keys",
+        "endpoint": "/ensembl/transcript",
         "params": {},
-        "reqbody": {
-            "customer": {
-                "name": "customer",
-                "type": "PENDING_GPT",
+        "request_body": {
+            "geneIds": {
+                "name": "geneIds",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
+            "hugoSymbols": {
+                "name": "hugoSymbols",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "issuing_card": {
-                "name": "issuing_card",
-                "type": "PENDING_GPT",
+            "proteinIds": {
+                "name": "proteinIds",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "nonce": {
-                "name": "nonce",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "verification_session": {
-                "name": "verification_session",
-                "type": "PENDING_GPT",
+            "transcriptIds": {
+                "name": "transcriptIds",
+                "type": "LLMGenerator",
                 "genParameters": {}
             }
         }
     },
     {
         "method": "get",
-        "endpoint": "/v1/radar/value_list_items",
+        "endpoint": "/ensembl/transcript/{transcriptId}",
         "params": {
-            "created": {
-                "name": "created",
-                "type": "",
-                "genParameters": {}
-            },
-            "ending_before": {
-                "name": "ending_before",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "limit": {
-                "name": "limit",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "starting_after": {
-                "name": "starting_after",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "value": {
-                "name": "value",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "value_list": {
-                "name": "value_list",
-                "type": "PENDING_GPT",
+            "transcriptId": {
+                "name": "transcriptId",
+                "type": "LLMGenerator",
                 "genParameters": {}
             }
         },
-        "reqbody": {}
+        "request_body": {}
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/xrefs",
+        "params": {
+            "accession": {
+                "name": "accession",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            }
+        },
+        "request_body": {}
     },
     {
         "method": "post",
-        "endpoint": "/v1/radar/value_list_items",
+        "endpoint": "/pdb/header",
         "params": {},
-        "reqbody": {
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "value": {
-                "name": "value",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "value_list": {
-                "name": "value_list",
-                "type": "PENDING_GPT",
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "sentence"
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/pdb/header/{pdbId}",
+        "params": {
+            "pdbId": {
+                "name": "pdbId",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "[0-9][a-zA-Z0-9]{3}"
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/pfam/domain",
+        "params": {},
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "sentence",
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/pfam/domain/{pfamAccession}",
+        "params": {
+            "pfamAccession": {
+                "name": "pfamAccession",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "PF\\d{5}",
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "get",
+        "endpoint": "/ptm/experimental",
+        "params": {
+            "ensemblTranscriptId": {
+                "name": "ensemblTranscriptId",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "^ENST\\d{11}$"
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/ptm/experimental",
+        "params": {},
+        "request_body": {
+            "transcriptIds": {
+                "name": "transcriptIds",
+                "type": "LLMGenerator",
                 "genParameters": {}
             }
         }
     },
     {
         "method": "get",
-        "endpoint": "/v1/tax_rates",
-        "params": {
-            "active": {
-                "name": "active",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "created": {
-                "name": "created",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "ending_before": {
-                "name": "ending_before",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "inclusive": {
-                "name": "inclusive",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "limit": {
-                "name": "limit",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "starting_after": {
-                "name": "starting_after",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            }
-        },
-        "reqbody": {}
+        "endpoint": "/version",
+        "params": {},
+        "request_body": {}
     },
     {
         "method": "post",
-        "endpoint": "/v1/tax_rates",
+        "endpoint": "/annotation",
+        "params": {
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "word",
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "paragraph",
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "post",
+        "endpoint": "/annotation/dbsnp/",
+        "params": {
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "refseq",
+                        "ensembl",
+                        "custom"
+                    ],
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 2
+                }
+            }
+        },
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "sentence",
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/annotation/dbsnp/{variantId}",
+        "params": {
+            "variantId": {
+                "name": "variantId",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "rs\\d{6,9}",
+                    "count": 1
+                }
+            },
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "refseq",
+                        "ensembl",
+                        "genbank"
+                    ],
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 3
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/annotation/genomic",
+        "params": {
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "word",
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {
+            "chromosome": {
+                "name": "chromosome",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "1",
+                        "2",
+                        "3",
+                        "4",
+                        "5",
+                        "6",
+                        "7",
+                        "8",
+                        "9",
+                        "10",
+                        "11",
+                        "12",
+                        "13",
+                        "14",
+                        "15",
+                        "16",
+                        "17",
+                        "18",
+                        "19",
+                        "20",
+                        "21",
+                        "22",
+                        "X",
+                        "Y",
+                        "MT"
+                    ],
+                    "count": 1
+                }
+            },
+            "start": {
+                "name": "start",
+                "type": "RandomNumberGenerator",
+                "genParameters": {
+                    "type": "INTEGER",
+                    "min": 1,
+                    "max": 250000000
+                }
+            },
+            "end": {
+                "name": "end",
+                "type": "RandomNumberGenerator",
+                "genParameters": {
+                    "type": "INTEGER",
+                    "min": 1,
+                    "max": 250000000
+                }
+            },
+            "referenceAllele": {
+                "name": "referenceAllele",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "A",
+                        "T",
+                        "C",
+                        "G"
+                    ],
+                    "count": 1
+                }
+            },
+            "variantAllele": {
+                "name": "variantAllele",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "A",
+                        "T",
+                        "C",
+                        "G"
+                    ],
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/annotation/genomic/{genomicLocation}",
+        "params": {
+            "genomicLocation": {
+                "name": "genomicLocation",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "^\\d+,(\\d+),(\\d+),[ACGT],[ACGT]$"
+                }
+            },
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "other_source",
+                        "refseq",
+                        "ensembl"
+                    ],
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "get",
+        "endpoint": "/annotation/{variant}",
+        "params": {
+            "variant": {
+                "name": "variant",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "\\d+:g\\.\\d+_\\d+ins[A-Z]+",
+                    "count": 1
+                }
+            },
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "refseq",
+                        "ensembl",
+                        "custom"
+                    ],
+                    "count": 1
+                }
+            },
+            "token": {
+                "name": "token",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            },
+            "fields": {
+                "name": "fields",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "annotation_summary",
+                        "clinvar",
+                        "hotspots",
+                        "mutation_assessor",
+                        "my_variant_info",
+                        "nucleotide_context",
+                        "oncokb",
+                        "ptms",
+                        "signal"
+                    ],
+                    "count": 3
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/ensembl/canonical-gene/entrez",
         "params": {},
-        "reqbody": {
-            "active": {
-                "name": "active",
-                "type": "PENDING_GPT",
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "sentence",
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/canonical-gene/entrez/{entrezGeneId}",
+        "params": {
+            "entrezGeneId": {
+                "name": "entrezGeneId",
+                "type": "RandomNumberGenerator",
+                "genParameters": {
+                    "type": "INTEGER"
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/ensembl/canonical-gene/hgnc",
+        "params": {},
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "sentence"
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/canonical-gene/hgnc/{hugoSymbol}",
+        "params": {
+            "hugoSymbol": {
+                "name": "hugoSymbol",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/ensembl/canonical-transcript/hgnc",
+        "params": {
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "paragraph",
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/canonical-transcript/hgnc/{hugoSymbol}",
+        "params": {
+            "hugoSymbol": {
+                "name": "hugoSymbol",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "country": {
-                "name": "country",
-                "type": "PENDING_GPT",
+            "isoformOverrideSource": {
+                "name": "isoformOverrideSource",
+                "type": "RandomInputGenerator",
+                "genParameters": {
+                    "values": [
+                        "uniprot",
+                        "default"
+                    ],
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/transcript",
+        "params": {
+            "geneId": {
+                "name": "geneId",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "description": {
-                "name": "description",
-                "type": "PENDING_GPT",
+            "proteinId": {
+                "name": "proteinId",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "display_name": {
-                "name": "display_name",
-                "type": "PENDING_GPT",
+            "hugoSymbol": {
+                "name": "hugoSymbol",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/ensembl/transcript",
+        "params": {},
+        "request_body": {
+            "geneIds": {
+                "name": "geneIds",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
+            "hugoSymbols": {
+                "name": "hugoSymbols",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "inclusive": {
-                "name": "inclusive",
-                "type": "PENDING_GPT",
+            "proteinIds": {
+                "name": "proteinIds",
+                "type": "LLMGenerator",
                 "genParameters": {}
             },
-            "jurisdiction": {
-                "name": "jurisdiction",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "metadata": {
-                "name": "metadata",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "percentage": {
-                "name": "percentage",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "state": {
-                "name": "state",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "tax_type": {
-                "name": "tax_type",
-                "type": "PENDING_GPT",
+            "transcriptIds": {
+                "name": "transcriptIds",
+                "type": "LLMGenerator",
                 "genParameters": {}
             }
         }
     },
     {
         "method": "get",
-        "endpoint": "/v1/test_helpers/test_clocks",
+        "endpoint": "/ensembl/transcript/{transcriptId}",
         "params": {
-            "ending_before": {
-                "name": "ending_before",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "limit": {
-                "name": "limit",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "starting_after": {
-                "name": "starting_after",
-                "type": "PENDING_GPT",
+            "transcriptId": {
+                "name": "transcriptId",
+                "type": "LLMGenerator",
                 "genParameters": {}
             }
         },
-        "reqbody": {}
+        "request_body": {}
+    },
+    {
+        "method": "get",
+        "endpoint": "/ensembl/xrefs",
+        "params": {
+            "accession": {
+                "name": "accession",
+                "type": "LLMGenerator",
+                "genParameters": {}
+            }
+        },
+        "request_body": {}
     },
     {
         "method": "post",
-        "endpoint": "/v1/test_helpers/test_clocks",
+        "endpoint": "/pdb/header",
         "params": {},
-        "reqbody": {
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "frozen_time": {
-                "name": "frozen_time",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "name": {
-                "name": "name",
-                "type": "PENDING_GPT",
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "paragraph",
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/pdb/header/{pdbId}",
+        "params": {
+            "pdbId": {
+                "name": "pdbId",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "[0-9][a-zA-Z0-9]{3}",
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/pfam/domain",
+        "params": {},
+        "request_body": {
+            "body": {
+                "name": "body",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "paragraph",
+                    "count": 1
+                }
+            }
+        }
+    },
+    {
+        "method": "get",
+        "endpoint": "/pfam/domain/{pfamAccession}",
+        "params": {
+            "pfamAccession": {
+                "name": "pfamAccession",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "PF\\d{5}",
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "get",
+        "endpoint": "/ptm/experimental",
+        "params": {
+            "ensemblTranscriptId": {
+                "name": "ensemblTranscriptId",
+                "type": "RandomTextGenerator",
+                "genParameters": {
+                    "mode": "regex",
+                    "pattern": "ENST[0-9]{11}",
+                    "count": 1
+                }
+            }
+        },
+        "request_body": {}
+    },
+    {
+        "method": "post",
+        "endpoint": "/ptm/experimental",
+        "params": {},
+        "request_body": {
+            "transcriptIds": {
+                "name": "transcriptIds",
+                "type": "LLMGenerator",
                 "genParameters": {}
             }
         }
     },
     {
         "method": "get",
-        "endpoint": "/v1/webhook_endpoints",
-        "params": {
-            "ending_before": {
-                "name": "ending_before",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "limit": {
-                "name": "limit",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "starting_after": {
-                "name": "starting_after",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            }
-        },
-        "reqbody": {}
-    },
-    {
-        "method": "post",
-        "endpoint": "/v1/webhook_endpoints",
+        "endpoint": "/version",
         "params": {},
-        "reqbody": {
-            "api_version": {
-                "name": "api_version",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "connect": {
-                "name": "connect",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "description": {
-                "name": "description",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "enabled_events": {
-                "name": "enabled_events",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "metadata": {
-                "name": "metadata",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            },
-            "url": {
-                "name": "url",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            }
-        }
-    },
-    {
-        "method": "get",
-        "endpoint": "/v1/reporting/report_types",
-        "params": {
-            "expand": {
-                "name": "expand",
-                "type": "PENDING_GPT",
-                "genParameters": {}
-            }
-        },
-        "reqbody": {}
+        "request_body": {}
     }
 ]

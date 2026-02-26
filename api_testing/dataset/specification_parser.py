@@ -159,11 +159,17 @@ class SpecificationParser:
 
         request_body_properties = {}
         content = request_body.get('content')
+        # Capture requestBody-level description to inject into schema
+        body_description = request_body.get('description')
         if content:
             for mime_type, mime_details in content.items():
                 # if we need to check required list, do it here
                 schema = mime_details.get('schema')
                 if schema:
+                    # Inject requestBody description into schema if schema doesn't have its own
+                    if body_description and not schema.get('description'):
+                        schema = schema.copy()  # Don't mutate original
+                        schema['description'] = body_description
                     request_body_properties[mime_type] = self.process_parameter_schema(
                         schema)
 
