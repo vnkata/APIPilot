@@ -21,7 +21,7 @@ from api_testing.utils.graph import get_best_mathching_schema, is_nested_path_en
 
 @dataclass
 class OperationGraph:
-    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None, skip_create_graph: bool = False):
+    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None):
         self.spec_parser = spec_parser
         self.embedding_model = embedding_model
         self.model = model  # llm model
@@ -35,11 +35,10 @@ class OperationGraph:
         self.logger = getLogger()
         # prompt for operation-schema dependencies
         self.op_schema_deps = OpSchemaDeps(self.model)
-        self.skip_create_graph  = skip_create_graph
         self.load_or_initialize_graph()
 
     def add_node(self, operation):
-        self.nodes[operation.uuid] = operation
+        self.nodes[operation.uuid] =  OperationNode.from_dict(operation.to_dict())
 
     def add_edge(self, from_node, to_node, parameters):
         if len(parameters) == 0:
@@ -52,7 +51,7 @@ class OperationGraph:
 
     def load_or_initialize_graph(self):
         # Check if the cache file exists
-        if os.path.exists(self.cache_file):
+        if  os.path.exists(self.cache_file):
             print(f"Loading graph from cache: {self.cache_file}")
             with open(self.cache_file, "r") as file:
                 data = json.load(file)
@@ -76,9 +75,8 @@ class OperationGraph:
                         )
         else:
             print("Cache file not found. Initializing graph...")
-            if not self.skip_create_graph:
-                self.create_graph()
-                self.save_graph_to_cache()
+            self.create_graph()
+            self.save_graph_to_cache()
 
     def save_graph_to_cache(self):
         # Save the graph to the cache file
@@ -86,7 +84,6 @@ class OperationGraph:
             "nodes": [to_dict_helper(node) for node in self.nodes],
             "edges": [to_dict_helper(edge) for edge in self.edges],
         }
-        # print(data)
         with open(self.cache_file, "w") as file:
             json.dump(data, file, indent=4)
         print(f"Graph saved to cache: {self.cache_file}")
@@ -113,9 +110,9 @@ class OperationGraph:
                     
                     for param in parameters: 
                         for response in dependent_response:
-                            if param.get("name") == response.get("name"):
+                            if param.get("name") == response.get("full_name"):
                                 similar_parameters.append(SimilarityValue(
-                                    value1=response.get("name"), 
+                                    value1=response.get("full_name"), 
                                     value2=param.get("name"), 
                                     in_value="response to parameter via heuristic"
                                 ))
@@ -127,11 +124,32 @@ class OperationGraph:
                                         value2=param.get("name"), 
                                         in_value="parameter to parameter via heuristic"
                                     ))
-                             
-                # temporal edges
+                
+                # === 2️⃣ Generalized prefix-based heuristic
+                dep_parts = dep_op_properties.endpoint_path.strip("/").split("/")
+                op_parts = op_properties.endpoint_path.strip("/").split("/")
+
+                prefix_len = sum(
+                    1 for a, b in zip(dep_parts, op_parts)
+                    if a == b or (a.startswith("{") and b.startswith("{"))
+                )
+
+                if prefix_len >= 2: 
+                    shared_vars = {
+                        a.strip("{}") for a, b in zip(dep_parts, op_parts)
+                        if a.startswith("{") and b.startswith("{") and a == b
+                    }
+                    for v in shared_vars:
+                        similar_parameters.append(SimilarityValue(
+                            value1=v,
+                            value2=v,
+                            in_value="parameter to parameter via heuristic"
+                        ))
+           
                 #edge from dep_op to op
                 if len(similar_parameters) > 0:
                     edges.append(OperationEdge(dep_op_properties, op_properties, similar_parameters))
+        
         return edges
     
     
@@ -185,29 +203,80 @@ class OperationGraph:
             params["data_schemas"] = "\n".join(data_schemas)
             results = self.op_schema_deps.exec(**params)
             for schema_name, mapping in results.items():
-                similarities = []
+                expanded_mapping = {
+                    param: [a.strip() for a in attrs.split(",")]
+                    for param, attrs in mapping.root.items()
+                }
+
                 for opt in operations.values():
-                    if schema_name in opt.schemas:
-                        self.logger.debug("CHECK MAPPING FOR SCHEMA: " + schema_name + " IN OPERATION: " + opt.http_method.upper() + " " + opt.endpoint_path)
-                        for param_name, attribute_names in mapping.root.items():
-                            for attribute_name in attribute_names.split(", "):
-                                # attribute_name
-                                successful_responses = opt.successful_responses
-                                flatten = flatten_json_schema(successful_responses.to_dict())
-                                attributes = [ att for att, props in flatten.items() if is_nested_path_end_with(att, attribute_name) and props.get("xrefs", None) == schema_name ]
-                                for attr in attributes:
-                                    self.logger.debug(f"Mapping parameter {param_name} to attribute {attr} via GPT")
-                                    similarities.append(SimilarityValue(
-                                        value1=attr,
-                                        value2=param_name,
-                                        in_value=f"response to parameter via gpt"
-                                    ))
-                        if len(similarities) > 0:
-                            edges.append(OperationEdge(
-                                from_node=opt,
-                                to_node=operation,
-                                similar_parameters=similarities
-                            ))
+                    # Skip if schema not used by this operation
+                    if schema_name not in opt.schemas:
+                        continue
+
+                    self.logger.debug(
+                        f"[{schema_name}] Check mapping in operation {opt.http_method.upper()} {opt.endpoint_path}"
+                    )
+
+                    # Reset similarities for each operation
+                    similarities = []
+
+                    # Flatten response once per operation
+                    flatten = flatten_json_schema(opt.successful_responses.to_dict())
+
+                    # Filter only attributes referencing this schema
+                    filtered_attrs = {
+                        att: props for att, props in flatten.items()
+                        if props.get("xrefs") == schema_name
+                    }
+
+                    for param_name, attr_names in expanded_mapping.items():
+                        for attribute_name in attr_names:
+                            matches = [
+                                att for att in filtered_attrs.keys()
+                                if is_nested_path_end_with(att, attribute_name)
+                            ]
+                            for attr in matches:
+                                self.logger.debug(
+                                    f"Mapping param '{param_name}' → '{attr}' in {opt.endpoint_path}"
+                                )
+                                similarities.append(SimilarityValue(
+                                    value1=attr,
+                                    value2=param_name,
+                                    in_value="response to parameter via gpt"
+                                ))
+
+                    # Append edge only if this operation produced matches
+                    if similarities:
+                        edges.append(OperationEdge(
+                            from_node=opt,
+                            to_node=operation,
+                            similar_parameters=similarities
+                        ))
+            # for schema_name, mapping in results.items():
+            #     similarities = []
+            #     for opt in operations.values():
+            #         if schema_name in opt.schemas:
+            #             self.logger.debug("CHECK MAPPING FOR SCHEMA: " + schema_name + " IN OPERATION: " + opt.http_method.upper() + " " + opt.endpoint_path)
+            #             for param_name, attribute_names in mapping.root.items():
+            #                 for attribute_name in attribute_names.split(", "):
+            #                     # attribute_name
+            #                     successful_responses = opt.successful_responses
+            #                     flatten = flatten_json_schema(successful_responses.to_dict())
+            #                     attributes = [ att for att, props in flatten.items() if is_nested_path_end_with(att, attribute_name) and props.get("xrefs", None) == schema_name ]
+            #                     print(attributes)
+            #                     for attr in attributes:
+            #                         self.logger.debug(f"Mapping parameter {param_name} to attribute {attr} via GPT")
+            #                         similarities.append(SimilarityValue(
+            #                             value1=attr,
+            #                             value2=param_name,
+            #                             in_value=f"response to parameter via gpt"
+            #                         ))
+            #             if len(similarities) > 0:
+            #                 edges.append(OperationEdge(
+            #                     from_node=opt,
+            #                     to_node=operation,
+            #                     similar_parameters=similarities
+            #                 ))
         return edges
     def deduplicate_similarity_values(self, similarity_list: List[SimilarityValue]) -> List[SimilarityValue]:
         """

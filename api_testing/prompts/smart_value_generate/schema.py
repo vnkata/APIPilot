@@ -8,6 +8,7 @@ from typing import Any, Dict, List, Optional
 class EndpointPayload(BaseModel):
     parameters: Optional[Dict[str, Any]] = None
     requestBody: Optional[Dict[str, Any]] = None  # only include if not None
+    expected_code: str
 
 @dataclass
 class Verdict(BaseModel):

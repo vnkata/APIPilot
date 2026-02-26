@@ -146,9 +146,10 @@ class SpecificationParser:
         parameters = {}
         if parameter_list:
             for parameter in parameter_list:
-                parameter_properties = self.process_parameter(parameter)
-                parameters.setdefault(
-                    parameter_properties.name, parameter_properties)
+                if parameter.get('in') in ("query", "path"):
+                    parameter_properties = self.process_parameter(parameter)
+                    parameters.setdefault(
+                        parameter_properties.name, parameter_properties)
         return parameters
 
     def process_request_body(self, request_body) -> Dict[str, ItemProperties]:

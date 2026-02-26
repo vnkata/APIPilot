@@ -33,7 +33,7 @@ class RandomTextGenerator(RandomGenerator):
         self.count = count
         self.fake = Faker()
 
-    def next_value(self) -> str:
+    def next_value(self, *args, **kargs) -> str:
         if self.mode == "word":
             return " ".join(self.fake.words(self.count))
         elif self.mode == "sentence":

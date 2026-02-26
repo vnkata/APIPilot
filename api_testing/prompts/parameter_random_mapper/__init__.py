@@ -9,7 +9,8 @@ You are a system that determines the best matching data generator class for each
 The list below contains all generator classes and their corresponding descriptions:
 {genFunction}
 ## IMPORTANT ## 
-- If uncertain, or if properties have interdependent constraints, please fallback to LLMGenerator.
+- Enforce logical rules for paging parameters (page, limit, offset, etc.), and use LLMGenerator when they have dependencies.
+- If unsure or when properties have interrelated constraints, default to LLMGenerator.
 FINAL OUTPUT:
 The response is in the format below, no explanation is needed:
 {{

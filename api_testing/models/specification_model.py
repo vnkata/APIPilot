@@ -108,7 +108,6 @@ class ItemProperties:
             return dict_items
         return ''
 
-
 @dataclass
 class ParameterProperties:
     """
@@ -233,10 +232,10 @@ class OperationProperties:
     # status code as first key, then each response with its properties as second dict
     responses: Dict[str, ResponseProperties] = None
 
-    @property
-    def degree(self) -> int:
-        # type: ignore
-        return len(self.required_parameters)
+    # @property
+    # def degree(self) -> int:
+    #     # type: ignore
+    #     return len(self.required_parameters)
     @property
     def schemas(self) -> Dict[str, ItemProperties]:
         
@@ -341,6 +340,7 @@ class OperationProperties:
 
         return remove_nulls([{
             "name": item.split(".")[-1],
+            "full_name": item,
             "type": val.get("type"),
             "description": val.get("description", ""),
             "enum": val.get("enum"),

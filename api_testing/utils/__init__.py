@@ -1,8 +1,10 @@
 
 from datetime import time
 import itertools
+import math
 import os
 import json
+import random
 from typing import Iterable, Dict, List, Any, Optional, Tuple, Set
 import re
 import hashlib
@@ -59,37 +61,103 @@ def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
         return flat_schema
 
 
-def get_combinations(arr, requiredArr) -> List[Tuple]:
-    combinations = []
-    max_size = 10
-    # Empirically determined - 16 is max number before size grows too large, 10 is a good balance for ensuring proper storage (> 21k)
-    required_set = set(requiredArr)
-    n = len(arr)
+def get_combinations(
+    arr: Iterable[Any],
+    required: Optional[Set[Any]] = None,
+    seed: Optional[str] = None,
+) -> List[Tuple[Any, ...]]:
+    """
+    Generate bounded parameter combinations with depth-weighted sampling.
 
-    def is_valid(combo):
-        return required_set.issubset(combo)
+    Uses stratified sampling that prioritizes smaller combinations while ensuring
+    required parameters are always included. For large parameter sets, random
+    sampling is used with seeded RNG for reproducibility.
 
-    if n >= max_size:
-        window_size = max_size
-        for i in range(n - window_size):
-            subset = arr[i:i + window_size]
-            for j in range(1, window_size + 1):
-                for combo in itertools.combinations(subset, j):
-                    if is_valid(combo):
-                        combinations.append(combo)
-        for size in range(window_size + 1, n + 1):
-            for i in range(n - size + 1):
-                subset = arr[i:i + size]
-                combo = tuple(subset)
-                if is_valid(combo):
-                    combinations.append(combo)
+    Args:
+        arr: All parameters to combine.
+        required: Parameters that must appear in every combination.
+        seed: Seed string for reproducible randomness (e.g., operation ID).
+
+    Returns:
+        List of parameter combination tuples.
+    """
+    arr = list(arr) if arr is not None else []
+    required = required or set()
+    optional = [p for p in arr if p not in required]
+    required_tuple = tuple(p for p in arr if p in required)  # Preserve order
+
+    max_optional_size = 12
+    max_total = 3000
+    base_samples = 200
+    combination_seed = 42
+    # Seeded RNG for reproducibility
+    if seed:
+        seed_int = int(hashlib.md5(seed.encode()).hexdigest(), 16) % (2**32)
+        rng = random.Random(seed_int)
     else:
-        for i in range(1, n + 1):
-            for combo in itertools.combinations(arr, i):
-                if is_valid(combo):
-                    combinations.append(combo)
+        rng = random.Random(combination_seed)
 
-    return combinations
+    combinations: Set[Tuple[Any, ...]] = set()
+    n_optional = len(optional)
+
+    # Always include: required-only and all-params
+    combinations.add(required_tuple)
+    if optional:
+        combinations.add(required_tuple + tuple(optional))
+
+    if n_optional <= max_optional_size:
+        # Small enough: exhaustive enumeration of optional params
+        for size in range(1, n_optional + 1):
+            for combo in itertools.combinations(optional, size):
+                combinations.add(required_tuple + combo)
+    else:
+        # Large: depth-weighted sampling (smaller sizes get more samples)
+        for size in range(1, min(max_optional_size, n_optional) + 1):
+            # Exponential decay: size=1 gets base_samples, larger sizes get fewer
+            samples_for_size = max(10, int(base_samples / (size**0.7)))
+            total_possible = math.comb(n_optional, size)
+
+            if total_possible <= samples_for_size:
+                # Small enough to enumerate all
+                for combo in itertools.combinations(optional, size):
+                    combinations.add(required_tuple + combo)
+            else:
+                # Random sample with seeded RNG
+                sampled: Set[Tuple[Any, ...]] = set()
+                attempts = 0
+                max_attempts = samples_for_size * 20
+                while len(sampled) < samples_for_size and attempts < max_attempts:
+                    indices = rng.sample(range(n_optional), size)
+                    combo = tuple(optional[i] for i in sorted(indices))
+                    sampled.add(combo)
+                    attempts += 1
+                for combo in sampled:
+                    combinations.add(required_tuple + combo)
+
+    # Enforce hard cap (deterministic order: sort by size, then content)
+    result = sorted(combinations, key=lambda x: (len(x), x))
+    if len(result) > max_total:
+        # Keep smallest combinations (most valuable for issue isolation)
+        result = result[:max_total]
+
+    return result
+
+def get_required_body_params(body: 'ItemProperties', prefix: str = "") -> Optional[set[str]]:
+    if not body:
+        return None
+
+    req = set()
+    if body.type == "object" and body.properties:
+        for key, prop in body.properties.items():
+            full = f"{prefix}.{key}" if prefix else key
+            if key in (body.required or []):
+                req.add(full)
+            req |= get_required_body_params(prop, full) or set()
+
+    elif body.type == "array" and body.items:
+        req |= get_required_body_params(body.items, prefix) or set()
+
+    return req or None
 
 
 def encode_dict_as_key(dictionary: Dict) -> str:

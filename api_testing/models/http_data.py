@@ -1,6 +1,7 @@
 from dataclasses import dataclass, field
 import json
 from typing import Any, Dict, Optional
+import requests
 
 
 @dataclass
@@ -28,7 +29,7 @@ class RequestData:
     body: Optional[Any] = None
     headers: Optional[Dict[str, str]] = field(default_factory=dict)
     cookies: Optional[Dict[str, str]] = field(default_factory=dict)
-
+    expected_code: str = "2xx" # 2xx,4xx
     # ----------------------------------------------------------------------
     # Helper methods for RequestExecutor
     # ----------------------------------------------------------------------
@@ -50,9 +51,6 @@ class RequestData:
             f"body_type={type(self.body).__name__})"
         )
 
-from dataclasses import dataclass
-from typing import Any, Dict, Optional
-import requests
 
 
 @dataclass

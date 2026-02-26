@@ -15,7 +15,7 @@ class RandomInputGenerator(RandomGenerator):
         self.count = count
         super().__init__(*args, **kwargs)
 
-    def next_value(self) -> Any:
+    def next_value(self, *args, **kargs) -> Any:
         if not self.values:
             return None
         if self.count <= 1:

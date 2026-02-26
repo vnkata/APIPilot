@@ -33,7 +33,7 @@ class RandomGeneratorFactory:
         "RandomCreditCardGenerator": RandomCreditCardGenerator,
         "RandomNetworkGenerator": RandomNetworkGenerator,
         "LLMGenerator": LLMGenerator, ## auto fallbackn
-        # "ProducerGenerator": ProducerGenerator ## auto fallback
+        "ProducerGenerator": ProducerGenerator ## auto fallback
     }
 
     @classmethod
@@ -44,6 +44,7 @@ class RandomGeneratorFactory:
 
     def gen_description(self):
         descriptions = {}
-        for registry, registry_fns in self._registries.items():
-            descriptions[registry] = registry_fns.description
+        for registry, registry_fns in self._registries.items() :
+            if registry not in ("ProducerGenerator"):
+                descriptions[registry] = registry_fns.description
         return descriptions

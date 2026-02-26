@@ -1,7 +1,7 @@
 import random
 from enum import Enum
 from pydantic import Field
-from typing import Any, Set
+from typing import Any, Optional, Set
 
 from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
@@ -43,8 +43,8 @@ class RandomNumberGenerator(RandomGenerator):
     """
     supported_strategies: Set[FuzzStrategy] = {"boundary", "type_error", "overflow"}
 
-    def __init__(self, type: DataType = None, min=None, max=None, *args, **kwargs):
-        self.type = type
+    def __init__(self, type: DataType|str = None, min=None, max=None, *args, **kwargs):
+        self.type = type if isinstance(type, DataType) else DataType(type)
         self.min = min
         self.max = max
         if not self.type.is_number():
@@ -65,7 +65,7 @@ class RandomNumberGenerator(RandomGenerator):
             self.max = self.max if self.max is not None else 2**63 - 1
         super().__init__(*args, **kwargs)
 
-    def next_value(self) -> Any:
+    def next_value(self, *args, **kargs) -> Any:
         """Generate a random numeric value according to the DataType."""
         if self.type in {DataType.INTEGER, DataType.INT32, DataType.INT64, DataType.LONG}:
             return self.rand.randint(int(self.min), int(self.max))

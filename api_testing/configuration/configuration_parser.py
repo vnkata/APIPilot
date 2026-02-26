@@ -1,3 +1,4 @@
+from collections import defaultdict
 from dataclasses import asdict
 import os
 from typing import List, Dict, Any, Union, Optional
@@ -21,8 +22,20 @@ class ConfigurationParser:
         self.logger = getLogger(__name__)
         self.load_or_initialize()
 
-    def update_conf(self):
-        pass
+    def update_conf(self, graph: 'OperationGraph' = None):
+        properties = defaultdict(list)
+        for edge in graph.edges:
+            properties[edge.to_node.uuid].append(edge)
+        for operation, edges in properties.items():  # assuming you meant operations, not properties
+            keys = list({sp.value2 for e in edges for sp in e.similar_parameters})
+            properties[operation] = keys
+
+        for endpoint in self.configurations:
+            consumer = properties[f'{endpoint.method}-{endpoint.endpoint}']
+            for param in consumer:
+                endpoint.params[param] = FieldConfiguration(name=param, type="ProducerGenerator", genParameters={} )
+        self.json_output()
+    
     def load_or_initialize(self):
         if os.path.exists(self.cache_file):
             print(f"Loading Configuration from cache: {self.cache_file}")

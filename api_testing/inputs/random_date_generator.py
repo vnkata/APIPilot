@@ -38,7 +38,7 @@ class RandomDateGenerator(RandomGenerator):
         self.format = format or "%d/%m/%Y, %H:%M:%S"
         super().__init__(*args, **kwargs)
 
-    def next_value(self) -> datetime:
+    def next_value(self ,*args, **kargs) -> datetime:
         """Generate a random datetime between start_date and end_date."""
         start_ts = self.start_date.timestamp()
         end_ts = self.end_date.timestamp()

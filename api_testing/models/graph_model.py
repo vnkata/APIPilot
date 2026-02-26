@@ -1,7 +1,7 @@
 
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 
-from api_testing.models.specification_model import OperationProperties
+from api_testing.models.specification_model import ItemProperties, OperationProperties, ParameterProperties, ResponseProperties
 from api_testing.utils import to_dict_helper
 
 
@@ -9,20 +9,9 @@ from api_testing.utils import to_dict_helper
 class OperationNode(OperationProperties):
     in_degree: int = 0
     out_degree: int = 0
-
+     
     def __repr__(self):
         return f"OperationNode({self.uuid})"
-
-    def to_dict(self):
-        result = {k: to_dict_helper(
-            v) for k, v in self.__dict__.items() if v is not None}
-        if 'parameters' in result and self.parameters:
-            result['parameters'] = {k: v.to_dict()
-                                    for k, v in self.parameters.items()}
-        if 'request_body' in result and self.request_body:
-            result['request_body'] = {
-                k: v.to_dict() for k, v in self.request_body.items()}
-        return result
     
 
 @dataclass
@@ -33,7 +22,7 @@ class OperationEdge:
         self.similar_parameters = similar_parameters
 
     def __repr__(self):
-        return f"OperationEdge({self.from_node} -> {self.to_node})"
+        return f"OperationEdge({self.from_node.uuid} -> {self.to_node.uuid})"
 
     def to_dict(self):
         return {

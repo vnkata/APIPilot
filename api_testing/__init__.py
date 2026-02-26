@@ -1,14 +1,22 @@
 from collections import defaultdict, deque
+import copy
 import json
 import logging
+from time import sleep
 from api_testing.configuration.configuration_parser import ConfigurationParser
 from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
+from api_testing.feedback import FeedbackAnalyzer
 from api_testing.generators.executor import Executor, Strategy
 from api_testing.generators.requestor import Requestor
 from api_testing.generators.smart_value_generator import SmartValueGenerator
+from api_testing.graph.graph_analyzer import GraphAnalyzer
+from api_testing.memory.contextual_memory import ContextualMemory
 from api_testing.models.configuration_model import FieldConfiguration
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
-from api_testing.utils import to_dict_helper
+from api_testing.utils import flatten_json_schema, to_dict_helper
+from api_testing.utils.common import remove_nulls
+from api_testing.utils.http import isSuccessful
+from collections import defaultdict
 
 from .memory import (
     APITestingVectorDB
@@ -36,6 +44,55 @@ import shutil
 import os
 from api_testing.utils.log import configure_logging
 from typing import List, Dict, Set, Any
+import argparse
+
+
+
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="APITesting - Automated REST API Testing with LLM",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  apitesting                    # Run with TUI and configuration wizard
+  apitesting --quick            # Quick setup (essential settings only)
+  apitesting --skip-wizard      # Skip wizard, use configurations.toml directly
+
+For more information, visit: https://github.com/thanhtuit96/API-Testing
+        """,
+    )
+    parser.add_argument(
+        "--skip-wizard",
+        action="store_true",
+        help="Skip configuration wizard and use configurations.toml directly",
+    )
+    parser.add_argument(
+        "--quick",
+        action="store_true",
+        help="Run quick setup wizard (essential settings only)",
+    )
+    parser.add_argument(
+        "-s",
+        "--spec",
+        type=str,
+        default=None,
+        help="Override specification path (relative to project root)",
+    )
+    parser.add_argument(
+        "-t",
+        "--time",
+        type=int,
+        default=None,
+        help="Override test duration in seconds",
+    )
+    parser.add_argument(
+        "--width",
+        type=int,
+        default=100,
+        help="TUI display width (default: 100)",
+    )
+    return parser.parse_args()
+
 
 
 def build_endpoint_groups(data: dict) -> Dict[str, List[str]]:
@@ -94,8 +151,6 @@ def build_endpoint_groups(data: dict) -> Dict[str, List[str]]:
     # ==== B4. Kết quả trả về dạng Dict[str, List[str]] ====
     return {k: sorted(list(v)) for k, v in groups.items()}
 
-
-
 class APITesting:
     def __init__(self,
                  base_url: Optional[str] = None,
@@ -116,7 +171,7 @@ class APITesting:
         self.spec_path = spec_path
         self.embedder = embedder
         self.model = model
-        self.critic_model = critic_model  # judge model
+        self.critic_model = critic_model or model # judge model
         self.vector_db = vector_db
         self.project_dir = None
         self.test_single_endpoint = test_single_endpoint
@@ -152,15 +207,25 @@ class APITesting:
         )
         self.spec_parser.load_or_initialize(cache_dir=self.project_dir)
         # self._preprocess_()
-
-    def build_conf(self):
-        self.parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
     
+    def build_odg(self):
+        self.operation_graph = OperationGraph(
+            spec_parser=self.spec_parser,
+            model=self.model,
+            embedding_model=self.embedder,
+            cache_dir=self.project_dir
+        )
+        self.operation_graph.create_graph()
+        self.operation_graph.save_graph_to_cache()
+
+    def build_config(self):
+        parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
+        parser.parse()
+
     def process(self):
         
-        self.init_graph()
-        self.build_conf()
-        
+        self.build_odg()
+        self.build_config()
         with open(os.path.join(self.project_dir,"semantic_property_dependency_graph.json"), "r", encoding="utf-8") as f:
             graph_data = json.load(f)
         endpoint_groups = build_endpoint_groups(graph_data)
@@ -218,126 +283,103 @@ class APITesting:
             cache_dir=self.project_dir
         )
         self.operation_graph.plot_graph()
-        
     
-    def train_experience(self, population=200):
-        print("Trainning")
-        # 
-        started_nodes = { node.uuid: node for node in self.operation_graph.nodes.values() if node.degree == 0} # get all nodes no dependency
-        # Tiền xử lý: Nhóm edges theo from_node_uuid
-        adj_list = {}
-        for edge in self.operation_graph.edges:
-            adj_list.setdefault(edge.from_node.uuid, []).append(edge)
-        
-        def traversal(
-            current_node,
-            path: List[str],
-            provided_pool: Set[str],
-            adj_list: Dict[str, List["OperationEdge"]],
-            all_valid_paths: List[Dict],
-        ):
-            """
-            DFS traversal từ node gốc đến node lá, chỉ lưu các đường đi hợp lệ.
-            Một đường đi hợp lệ là khi mỗi node kế tiếp có đủ required parameters
-            từ các node trước đó.
-            """
-
-            # 1️⃣ Thu hoạch dữ liệu mà node hiện tại có thể cung cấp
-            current_uuid = current_node.uuid
-            # process current node
-            executor = Executor(api_url = self.base_url, 
-                strategy= Strategy.SMART_VALUE,
-                operation=current_node,
-                cache_dir=self.project_dir,
-                model=self.model
-            ) 
-            executor.exec()
-            possible_edges = adj_list.get(current_uuid, [])
-            raw_harvested = {
-                p.value1
-                for edge in possible_edges
-                for p in edge.similar_parameters
-            }
-            print("current ", current_uuid, " pool ", raw_harvested)
-
-            # Nếu node hiện tại là node lá (không có outgoing edge) → kết thúc DFS
-            if not possible_edges:
-                all_valid_paths.append({
-                    "path": path,
-                    "final_pool": provided_pool | raw_harvested
-                })
-                return
-
-            # 2️⃣ Ưu tiên cạnh mang lại nhiều tham số mới hơn
-            def get_priority(edge):
-                neighbor_required = {
-                    name
-                    for name, p in edge.to_node.parameters.items()
-                }
-                new_raw_harvested = {p.value2 for p in edge.similar_parameters}
-                # Các tham số mới mà current node có thể cung cấp cho neighbor
-                new_params_count = len((new_raw_harvested & neighbor_required) - provided_pool)
-                return new_params_count
-
-            # Tính priority cho từng edge
-            edge_priorities = [(edge, get_priority(edge)) for edge in possible_edges]
-
-            # Chỉ giữ các cạnh có priority > 0
-            valid_edges = [edge for edge, score in edge_priorities if score > 0]
-
-            # Sắp xếp giảm dần theo priority
-            sorted_edges = sorted(valid_edges, key=lambda e: get_priority(e), reverse=True)
-
-            has_valid_next = False
-            # 3️⃣ Duyệt từng cạnh hợp lệ
-            for edge in sorted_edges:
-                neighbor = edge.to_node
-
-                # Tránh vòng lặp
-                if neighbor.uuid in path:
-                    continue
-                
-                # Lấy tập tham số required của node kế tiếp
-                required_params = {
-                    name
-                    for name, p in neighbor.parameters.items()
-                    if getattr(p, "required", False)
-                }
-                mapped_outputs = {
-                        p.value2
-                        for p in edge.similar_parameters
-                        if p.value1 in raw_harvested
-                    }
-
-                # 3️⃣ Các dữ liệu hữu ích có thể cung cấp cho neighbor
-                useful_data = mapped_outputs & required_params
-                current_branch_pool = provided_pool | useful_data
-
-                # Nếu đủ dữ liệu để đi sang node kế → đi tiếp
-                if required_params.issubset(current_branch_pool):
-                    has_valid_next = True
-                    traversal(
-                        neighbor,
-                        path + [neighbor.uuid],
-                        provided_pool | raw_harvested,
-                        adj_list,
-                        all_valid_paths,
-                    )
-
-            # 4️⃣ Nếu node hiện tại không có neighbor hợp lệ → đây là node lá hợp lệ
-            if not has_valid_next:
-                all_valid_paths.append({
-                    "path": path,
-                    "final_pool": provided_pool | raw_harvested
-                })
-
-        all_results = []
-        for start_uuid, start_props in started_nodes.items():
-            traversal(current_node=start_props, path=[start_uuid], provided_pool=set(), adj_list=adj_list, all_valid_paths=all_results)
-        with open("demo.json", "w", encoding="utf-8") as f:
-            json.dump(all_results, f, indent=4, default=str)
-    
-    def run_tests(self):
+    def run_tests(self,num_generations=1, num_test_cases=20, mutation_ratio=0.0):
+        self.operation_graph = OperationGraph(
+            spec_parser=self.spec_parser,
+            model=self.model,
+            embedding_model=self.embedder,
+            cache_dir=self.project_dir
+        )
         parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
-        parser.parse()
-        
+        parser.update_conf(self.operation_graph)
+        configurations = { f"{conf.method}-{conf.endpoint}": conf for conf in parser.configurations}
+        nodes = self.operation_graph.nodes
+
+        total_testcase = 0
+        total_success = 0
+
+        # process producer
+        # edges = []
+        adjacency_map  = {}
+        properties = defaultdict(list)
+
+        for edge in self.operation_graph.edges:
+            adjacency_map.setdefault(edge.from_node.uuid, []).append(edge)
+            properties[edge.from_node.uuid].append(edge)
+        producer_map = {}
+
+        def extract_xrefs_for_keys(keys, flatten):
+            """
+            Trích ra xrefs tương ứng cho danh sách key từ flatten schema.
+            Trả về dict { key: xrefs_value hoặc None }
+            """
+            return {
+                key: flatten.get(key, {}).get("xrefs")
+                for key in keys
+            }
+        for uuid, edge in adjacency_map.items():
+            producer_map[uuid] = {sp.value1 for e in edge for sp in e.similar_parameters}
+            flatten = flatten_json_schema(nodes.get(uuid).successful_responses.to_dict())
+            producer_map[uuid] = remove_nulls(extract_xrefs_for_keys(producer_map[uuid], flatten))
+            properties[uuid] =  extract_xrefs_for_keys(producer_map[uuid], flatten)   
+
+            # pick
+        graph_analyst = GraphAnalyzer(graph=self.operation_graph, cache_dir=self.project_dir)
+        feedback_analyzer = FeedbackAnalyzer(model=self.model)
+
+        forest = graph_analyst.export_to_forest()
+
+        def traverse_dfs(node, depth=0, context_pool: ContextualMemory = None,parent=None):
+            nonlocal total_testcase, total_success
+            context_pool = context_pool or ContextualMemory()
+            # 
+            print("  " * depth + f"• {node.name} ")
+
+            configuration = copy.copy(configurations.get(node.name))
+            # test
+            producer = { param: conf for param, conf in configuration.params.items() if conf.type == "ProducerGenerator"}
+            if len(producer) > 0:
+                for k, v in node.matched_params.items():
+                    if k in producer:
+                        producer[k].genParameters = {
+                            "pool": producer_map.get(v.get("source_endpoint"), {}).get(v.get("source_param"), None),
+                            "key": v.get("source_param").split(".")[-1]
+                        }
+            executor = Executor(
+                api_url = self.base_url, 
+                strategy= Strategy.NAIVE_VALUE,
+                operation=nodes.get(node.name),
+                cache_dir=self.project_dir,
+                model=self.model,
+                num_test_cases=num_test_cases,
+                configuration=configurations.get(node.name),
+                context_pool=context_pool
+            ) 
+            responses = executor.exec()
+            # feedback = feedback_analyzer.evaluate(responses)
+            # successfull responses 
+
+            success_responses = [ 
+                entry.get("response",{}).get("content",{}).get("text") 
+                for entry in responses if isSuccessful(entry.get("response",{}).get("status",0)) 
+            ]
+            context_pool.update_with_responses(success_responses, properties.get(node.name))
+            print("success", len(success_responses) , "with context_pool", context_pool)
+            total_success +=  len(success_responses)
+            total_testcase +=  num_test_cases
+            # save pool
+            for child in node.children.values():
+                traverse_dfs(child, depth + 1, context_pool.copy(), node)
+
+        def traverse_forest_dfs(forest):
+            """Duyệt toàn bộ rừng"""
+            for root_name, root_node in forest.items():
+                print(f"\n🌳 Root: {root_name}")
+                traverse_dfs(root_node, depth=1)
+
+        for _ in range(num_generations):
+            traverse_forest_dfs(forest)
+        print("Success rate", total_success/total_testcase)
+
+    

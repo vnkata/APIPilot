@@ -9,6 +9,7 @@ from pydantic import BaseModel
 import requests
 
 from api_testing.models.http_data import ResponseData
+from api_testing.utils.log import getLogger
 
 
 class Requestor:
@@ -33,6 +34,7 @@ class Requestor:
             os.makedirs(_cache_dir)
         self.cache_file = os.path.join(
             _cache_dir, self.session_id + ".har")
+        self.logger = getLogger(__name__)
 
     # ----------------------------------------------------------------------
     # Main execution method
@@ -84,7 +86,7 @@ class Requestor:
         response_data = ResponseData.from_requests(response)
         # Record to HAR
         self._record_har_entry(
-            method, url, headers,parameters, body, response, duration_ms
+            method, url, headers,parameters, body, response, duration_ms, expected_code=request_data.expected_code
         )
 
         return response_data
@@ -130,18 +132,21 @@ class Requestor:
         body: Any,
         response: requests.Response,
         duration_ms: float,
+        expected_code: str
     ):
         """Record a single request/response pair with a unique UUID."""
         entry_id = str(uuid.uuid4())
-        
         # --- Build query parameter list ---
         query_string = [
             {"name": str(k), "value": str(v)} for k, v in (params or {}).items()
         ]
+
         entry = {
             "_id": entry_id,
             "startedDateTime": datetime.utcnow().isoformat() + "Z",
             "time": duration_ms,
+            "expected_code": expected_code,
+            "is_expected_status": str(response.status_code)[0] == expected_code[0],
             "request": {
                 "method": method,
                 "url": url,
@@ -178,8 +183,6 @@ class Requestor:
                 "entries": self.entries,
             }
         }
-        # print(data)
-        with open(self.cache_file, "w") as file:
+        with open(self.cache_file, "w", encoding="utf-8") as file:
             json.dump(data, file, indent=2, ensure_ascii=False)
-            print(f"Graph saved to cache: {self.cache_file}")
 
