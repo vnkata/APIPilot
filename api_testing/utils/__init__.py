@@ -70,6 +70,50 @@ def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
 
     return flat_schema
 
+def flatten_item_properties(
+    item: 'ItemProperties',
+    prefix: str = "",
+    include_containers: bool = False
+) -> Dict[str, 'ItemProperties']:
+    """
+    Flatten nested ItemProperties objects into a flat dict with dot-separated keys.
+
+    Args:
+        item: The ItemProperties schema to flatten.
+        prefix: Internal recursion prefix (path of parent keys).
+        include_containers: If True, include container objects (like 'user' or 'user.address')
+                            even if they are not leaf fields.
+
+    Returns:
+        Dict[str, ItemProperties]: Mapping from full dotted key to the corresponding ItemProperties node.
+    """
+    if item is None:
+        return {}
+
+    flat = {}
+
+    # Nếu đây là object
+    if item.properties:
+        # Optionally include this container object itself
+        if include_containers and prefix:
+            flat[prefix] = item
+        
+        for key, value in item.properties.items():
+            full_key = f"{prefix}.{key}" if prefix else key
+            if key in item.required:
+                value.nullable = False
+            flat.update(flatten_item_properties(value, prefix=full_key, include_containers=include_containers))
+
+    # Nếu đây là array
+    elif item.items and item.type == "array":
+        # Flatten phần tử trong array (ví dụ user[].name → user.name)
+        flat.update(flatten_item_properties(item.items, prefix=prefix, include_containers=include_containers))
+
+    # Nếu là leaf node
+    else:
+        flat[prefix] = item
+
+    return flat
 
 def get_combinations(
     arr: Iterable[Any],
@@ -209,34 +253,90 @@ def remove_think_tags(text: str) -> str:
     """ <think>...</think>"""
     return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
+# body
+def get_required_body_params(operation_body: 'ItemProperties', prefix: str = "") -> Optional[Set[str]]:
+    if operation_body is None:
+        return None
 
-def is_data_modified(a, b):
-    if isinstance(a, dict) and isinstance(b, dict):
-        # Các key trừ 'description'
-        keys_a = set(k for k in a if k not in (
-            "check", "reason", "description"))
-        keys_b = set(k for k in b if k not in (
-            "check", "reason", "description"))
+    required_body = set()
 
-        # So sánh keys (phát hiện thêm/xóa field)
-        if keys_a != keys_b:
-            return True
+    if operation_body.properties and operation_body.type == "object":
+        for key, value in operation_body.properties.items():
+            full_key = f"{prefix}.{key}" if prefix else key
 
-        # So sánh nội dung từng key
-        for key in keys_a:
-            if is_data_modified(a[key], b[key]):
-                return True
+            # Nếu field này nằm trong danh sách required
+            if operation_body.required and key in operation_body.required:
+                # Nếu field required là object → chỉ lấy các child params (bỏ key cha)
+                if value.type == "object":
+                    required_body |= set(get_body_params(value, prefix=full_key))
+                # Nếu là array → lấy required từ items
+                elif value.type == "array" and value.items:
+                    child_required = get_required_body_params(value.items, prefix=full_key)
+                    if child_required:
+                        required_body |= child_required
+                else:
+                    # Field thường (string, number, v.v.) → thêm trực tiếp
+                    required_body.add(full_key)
 
-        return False
+            # Dù required hay không, vẫn đệ quy để đi sâu vào nested object
+            if value.type in ("object", "array"):
+                child_required = get_required_body_params(value, prefix=full_key)
+                if child_required:
+                    required_body |= child_required
 
-    elif isinstance(a, list) and isinstance(b, list):
-        if len(a) != len(b):
-            return True
-        return any(is_data_modified(x, y) for x, y in zip(a, b))
+    elif operation_body.items and operation_body.type == "array":
+        child_required = get_required_body_params(operation_body.items, prefix=prefix)
+        if child_required:
+            required_body |= child_required
 
-    else:
-        # So sánh giá trị primitive
-        return a != b
+    return required_body or set()
 
+def get_body_params(body: 'ItemProperties', prefix: str = "") -> List[str]:
+    if body is None:
+        return []
 
-#### MARKDOWN TABLES PROCESSING ####
+    if body.properties or body.type == "object":
+        body_params = []
+        for key, value in body.properties.items():
+            full_key = f"{prefix}.{key}" if prefix else key
+            body_params.append(full_key)
+            # nếu có nested object → đi sâu
+            if value.type in ("object", "array"):
+                body_params += get_body_params(value, prefix=full_key)
+        return body_params
+
+    elif body.items and body.type == "array":
+        return get_body_params(body.items, prefix=prefix)
+
+    return []
+
+def get_request_body_params(
+    operation_body: Dict[str, 'ItemProperties'],
+) -> Dict[str, List[str]]:
+    return (
+        {k: get_body_params(v) for k, v in operation_body.items()}
+        if operation_body is not None
+        else {}
+    )
+
+def get_body_combinations(
+    operation_body: 'ItemProperties',
+) -> Dict[str, List[Tuple[str]]]:
+    return get_combinations(get_body_params(operation_body), required=get_required_body_params(operation_body))
+
+# def get_body_combinations(
+#     operation_body: Dict[str, 'ItemProperties'],
+# ) -> Dict[str, List[Tuple[str]]]:
+#     return {
+#         k: get_combinations(v, required=get_required_body_params(operation_body.get(k,[])))
+#         for k, v in get_request_body_params(operation_body).items()
+#     }
+
+def get_body_object_combinations(
+    body_schema: 'ItemProperties',
+    required_body_params: Optional[Set[str]] = None,
+    seed: Optional[str] = None,
+) -> List[Tuple[str, ...]]:
+    return get_combinations(
+        get_body_params(body_schema), required=required_body_params, seed=seed
+    )

@@ -77,10 +77,7 @@ class RandomNumberGenerator(RandomGenerator):
         else:
             raise ValueError(f"Unsupported data type for random generation: {self.type}")
 
-    def next_value_as_string(self) -> str:
-        """Generate next random value as string."""
-        return str(self.next_value())
-    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+    def next_fuzz_value(self, strategy: FuzzStrategy, context_pool=None, *args, **kargs) -> Any:
         """
         Numeric-specific fuzzing strategies focusing on alternate bases, 
         encoding artifacts, and boundary conditions.

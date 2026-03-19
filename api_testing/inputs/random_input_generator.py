@@ -22,12 +22,12 @@ class RandomInputGenerator(RandomGenerator):
             return self.rand.choice(self.values)
         return self.rand.sample(self.values, min(self.count, len(self.values)))
     
-    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+    def next_fuzz_value(self, strategy: FuzzStrategy, context_pool=None, *args, **kargs) -> Any:
         if not self.values:
-            return self.rand.choice([None, "", "null"])
+            return self.rand.choice(["None", "", "null"])
 
         if strategy == FuzzStrategy.EMPTY:
-            return self.rand.choice([None, "", [], {}])
+            return self.rand.choice(["None", "", [], {}])
 
         if strategy == FuzzStrategy.OUT_OF_BOUNDS:
             return f"not_in_list_{self.rand.getrandbits(32)}"
@@ -43,6 +43,6 @@ class RandomInputGenerator(RandomGenerator):
             if isinstance(val, (int, float)):
                 return val * -1000000
             if isinstance(val, list):
-                return val + [None, "fuzz"]
+                return val + ["None", "fuzz"]
         
-        return None
+        return "None"

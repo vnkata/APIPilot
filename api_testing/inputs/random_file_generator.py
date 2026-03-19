@@ -40,7 +40,7 @@ class RandomFileGenerator(RandomGenerator):
         except ImportError:
             pass
 
-    def next_value(self) -> bytes:
+    def next_value(self, context_pool=None, *args, **kargs) -> bytes:
         if self.file_type == "pdf":
             return self.fake.pdf_file(raw=True)
         elif self.file_type == "docx":
@@ -55,7 +55,7 @@ class RandomFileGenerator(RandomGenerator):
             return self.fake.bmp_file(raw=True)
         else:
             raise ValueError(f"Unsupported file type: {self.file_type}")
-    def next_fuzz_value(self) -> Any:
+    def next_fuzz_value(self, strategy: FuzzStrategy, context_pool=None, *args, **kargs) -> Any:
         """Randomly selects a binary-specific fuzzing strategy and returns the value."""
         
         # Define only the strategies implemented for binary/file data

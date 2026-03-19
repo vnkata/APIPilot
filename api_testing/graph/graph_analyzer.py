@@ -1,7 +1,11 @@
 
+import collections
 import json
 import os
 from heapq import nlargest
+import heapq
+from functools import lru_cache
+import json
 
 class TreeNode:
     def __init__(self, name: str):
@@ -18,7 +22,6 @@ class TreeNode:
     ):
         """
         Build tree where parameter mapping respects the actual path chain.
-        Each tree path (Bills-chain vs Sittings-chain) maps its own sources independently.
         """
         if not path:
             return
@@ -36,7 +39,7 @@ class TreeNode:
                 for src in sources:
                     src_ep = src.get("source_endpoint")
                     if src_ep == current_uuid or src_ep in ancestors:
-                        current_params[target_p] = src
+                        current_params.setdefault(target_p, []).append(src)
 
         combined_params = {**inherited_params, **current_params}
         self.matched_params.update(combined_params)
@@ -56,7 +59,8 @@ class TreeNode:
                     src_ep = src.get("source_endpoint")
                     # chỉ giữ nếu nguồn thuộc ancestor chain hiện tại
                     if src_ep in ancestors + [current_uuid]:
-                        child_params[target_p] = src
+                        child_params.setdefault(target_p, []).append(src)
+
 
         # --- 4️⃣ Gọi đệ quy ---
         child.add_child_with_params(
@@ -83,23 +87,92 @@ class GraphAnalyzer:
             print(f"build analyzer ...")
             self.build_sequences()
             self.save_to_cache()
-    
+            
+    def remove_matching_params(self, target_endpoint, target_param, source_endpoint, source_param):
+        """
+        Remove incorrect dependency mapping from operation_sequences.
+
+        (source_endpoint.source_param) -> (target_endpoint.target_param)
+        """
+
+        if target_endpoint not in self.operation_sequences:
+            return
+
+        new_candidates = []
+
+        for candidate in self.operation_sequences[target_endpoint]:
+
+            params = candidate.get("params", {})
+            if target_param not in params:
+                new_candidates.append(candidate)
+                continue
+
+            # filter source mapping
+            filtered_sources = [
+                s for s in params[target_param]
+                if not (
+                    s.get("source_param") == source_param
+                    and s.get("source_endpoint") == source_endpoint
+                )
+            ]
+
+            # nếu vẫn còn source hợp lệ → giữ lại
+            if filtered_sources:
+                params[target_param] = filtered_sources
+                new_candidates.append(candidate)
+
+            else:
+                # remove param hoàn toàn
+                params.pop(target_param, None)
+
+                # nếu candidate vẫn còn params thì giữ
+                if params:
+                    candidate["params"] = params
+                    new_candidates.append(candidate)
+
+        self.operation_sequences[target_endpoint] = new_candidates
+        self.save_to_cache()
+
+
     def __operation_sequences(self, target, adjacency_map, visited=None, param_mapping=None, top_k=2):
         visited = visited or set()
         base_param_mapping = param_mapping or {}
         target_uuid = target.uuid
 
+        # -------------------------------
+        # Caching key builder
+        # -------------------------------
+        # param_mapping có thể chứa các object không hashable, nên serialize nhẹ
+        def make_cache_key(node_uuid, params, visited_nodes):
+            try:
+                serialized_params = json.dumps(params, sort_keys=True)
+            except Exception:
+                # fallback nếu params chứa object không serialize được
+                serialized_params = str(params)
+            return (node_uuid, serialized_params, tuple(sorted(visited_nodes)))
+
+        # Tạo cache nếu chưa có (chỉ tạo 1 lần trong vòng đời object)
+        if not hasattr(self, "_op_seq_cache"):
+            self._op_seq_cache = {}
+
+        cache_key = make_cache_key(target_uuid, base_param_mapping, visited)
+        if cache_key in self._op_seq_cache:
+            return self._op_seq_cache[cache_key]
+
+        # -------------------------------
+        # Ngăn đệ quy vô hạn
+        # -------------------------------
         if target_uuid in visited:
             return []
-        
+
         current_visited = visited | {target_uuid}
         edges = adjacency_map.get(target_uuid, [])
-        
+
         current_target_path_params = {
-            str(p.name) for n, p in target.parameters.items() 
+            str(p.name) for n, p in target.parameters.items()
             if getattr(p, 'in_value', '') == "path"
         }
-        
+
         all_results = []
 
         # === PHASE 1: SELF-CONTAINED CHECK ===
@@ -108,13 +181,21 @@ class GraphAnalyzer:
         all_produced = {sp.value2 for edge in edges for sp in edge.similar_parameters}
 
         if not current_target_path_params and all_produced.issubset(self_produced):
-            mapping = {p: [{"source_param": p, "source_endpoint": target_uuid}] 
-                    for p in target.parameters.keys() if p in self_produced}
+            mapping = {}
+            for e in self_edges:
+                for sp in e.similar_parameters:
+                    tgt_param = str(sp.value2)
+                    src_param = str(sp.value1)
+                    mapping.setdefault(tgt_param, []).append({
+                        "source_param": src_param,
+                        "source_endpoint": target_uuid
+                    })
+
             all_results.append({
                 "type": "self-contained",
                 "combined_sequences": [[target_uuid]],
                 "params": {**base_param_mapping, **mapping},
-                "score": 0 # Độ dài chuỗi
+                "score": 0
             })
 
         # === PHASE 2: CANDIDATE RANKING ===
@@ -123,40 +204,40 @@ class GraphAnalyzer:
             from_node = edge.from_node
             if from_node.uuid == target_uuid:
                 continue
-            
-            # Lấy tập tham số thực tế mà cạnh này cung cấp
+
             provided_params = {sp.value2 for sp in edge.similar_parameters}
-            
-            # Chỉ xét nếu cạnh này đóng góp ít nhất một tham số cần thiết
+
             if current_target_path_params.intersection(provided_params) or not current_target_path_params:
-                # Ranking criteria nâng cao:
-                # - is_evolving: 1 nếu rút gọn được cấu trúc tham số
-                # - efficiency: số lượng tham số cung cấp / số lượng tham số node nguồn yêu cầu
                 is_evolving = 1 if len(provided_params) >= len(current_target_path_params) else 0
                 richness = len(provided_params)
-                
+
                 candidates.append({
                     "edge": edge,
                     "from_node": from_node,
                     "priority": (is_evolving, richness)
                 })
 
-        # Sắp xếp ứng viên
         candidates.sort(key=lambda x: x["priority"], reverse=True)
 
         # === PHASE 3: SEQUENCE BUILDING ===
         for candidate in candidates:
             edge = candidate["edge"]
             from_node = candidate["from_node"]
-            mapped_on_edge = {sp.value2: sp.value1 for sp in edge.similar_parameters}
-            
-            # Chỉ xử lý nếu cạnh này thỏa mãn các path params của target
+            mapped_on_edge = {}
+
+            for sp in edge.similar_parameters:
+                mapped_on_edge.setdefault(sp.value2, []).append(sp.value1)
+
             if current_target_path_params.issubset(set(mapped_on_edge.keys())):
                 from_name = getattr(from_node, "name", from_node.uuid)
-                edge_mapping = {
-                    t_p: [{"source_param": s_p, "source_endpoint": from_name}]
-                    for t_p, s_p in mapped_on_edge.items() if t_p in current_target_path_params
-                }
+                edge_mapping = {}
+                for t_p, s_p in mapped_on_edge.items():
+                    if t_p in current_target_path_params:
+                        for s in s_p:
+                            edge_mapping.setdefault(t_p, []).append({
+                                "source_param": s,
+                                "source_endpoint": from_name
+                            })
                 combined_mapping = {**base_param_mapping, **edge_mapping}
                 from_req_params = getattr(from_node, "required_parameters", [])
 
@@ -164,9 +245,10 @@ class GraphAnalyzer:
                     upstream_results = self.__operation_sequences(
                         from_node, adjacency_map, current_visited, combined_mapping
                     )
-                    
+
                     for upstream in upstream_results:
-                        if upstream["type"] == "unresolved": continue
+                        if upstream["type"] == "unresolved":
+                            continue
                         for seq in upstream["combined_sequences"]:
                             all_results.append({
                                 "type": "recursive-path",
@@ -175,190 +257,29 @@ class GraphAnalyzer:
                                 "score": len(seq) + 1
                             })
                 else:
-                    all_results.append({
-                        "type": "direct-path",
-                        "combined_sequences": [[from_node.uuid, target_uuid]],
-                        "params": combined_mapping,
-                        "score": 2
-                    })
+                    if len(from_req_params) == 0 and combined_mapping:
+                        all_results.append({
+                            "type": "direct-path",
+                            "combined_sequences": [[from_node.uuid, target_uuid]],
+                            "params": combined_mapping,
+                            "score": 2
+                        })
 
-        # === PHASE 4: FINAL OPTIMIZATION (Lọc bỏ chuỗi rác) ===
+        # === PHASE 4: FINAL OPTIMIZATION ===
         if all_results:
-            # Lọc bỏ các unresolved nếu đã có đường đi tốt
             valid_paths = [r for r in all_results if r["type"] != "unresolved"]
             if valid_paths:
-                # Sắp xếp tất cả kết quả theo độ dài chuỗi (score) tăng dần
                 valid_paths.sort(key=lambda x: x["score"])
-                
-                # Trả về kết quả ngắn nhất (Slice lấy 1 phần tử đầu tiên để tối ưu nhất)
-                return valid_paths[:top_k]
+                result = valid_paths[:top_k]
+                self._op_seq_cache[cache_key] = result
+                return result
 
-        return [{"type": "unresolved", "combined_sequences": [[target_uuid]], "params": base_param_mapping, "score": 999}]
+        result = [{"type": "unresolved", "combined_sequences": [[target_uuid]], "params": base_param_mapping, "score": 999}]
+        self._op_seq_cache[cache_key] = result
+        return result
     
 
-    # def __operation_sequences(
-    #     self,
-    #     target,
-    #     adjacency_map,
-    #     visited=None,
-    #     param_mapping=None,
-    #     top_k=2,
-    #     _cache=None,
-    #     _edge_data=None
-    # ):
-    #     """
-    #     Optimized recursive search for operation sequences.
-    #     Uses caching, precomputed edge data, and efficient merges to reduce time complexity.
-    #     """
-
-    #     # === PHASE 0: INITIAL SETUP & CACHE ===
-    #     if visited is None:
-    #         visited = set()
-    #     if param_mapping is None:
-    #         param_mapping = {}
-    #     if _cache is None:
-    #         _cache = {}
-    #     if _edge_data is None:
-    #         # Precompute edge lookup table for performance
-    #         _edge_data = {
-    #             id(e): {
-    #                 "from_uuid": getattr(e.from_node, "uuid", None),
-    #                 "similar_map": {sp.value2: sp.value1 for sp in getattr(e, "similar_parameters", [])},
-    #             }
-    #             for edges in adjacency_map.values()
-    #             for e in edges
-    #         }
-
-    #     target_uuid = target.uuid
-    #     # ✅ Safe cache key using JSON serialization (handles lists/dicts)
-    #     cache_key = (target_uuid, json.dumps(param_mapping, sort_keys=True))
-    #     if cache_key in _cache:
-    #         return _cache[cache_key]
-
-    #     # Prevent infinite recursion
-    #     if target_uuid in visited:
-    #         return []
-
-    #     visited.add(target_uuid)
-    #     edges = adjacency_map.get(target_uuid, [])
-    #     current_target_path_params = {
-    #         str(p.name)
-    #         for _, p in getattr(target, "parameters", {}).items()
-    #         if getattr(p, "in_value", "") == "path"
-    #     }
-
-    #     all_results = []
-
-    #     # === PHASE 1: SELF-CONTAINED CHECK ===
-    #     self_edges = [e for e in edges if getattr(e.from_node, "uuid", None) == target_uuid]
-    #     self_produced = {sp.value2 for e in self_edges for sp in getattr(e, "similar_parameters", [])}
-    #     all_produced = {sp.value2 for e in edges for sp in getattr(e, "similar_parameters", [])}
-
-    #     if not current_target_path_params and all_produced.issubset(self_produced):
-    #         mapping = {
-    #             p: [{"source_param": p, "source_endpoint": target_uuid}]
-    #             for p in getattr(target, "parameters", {}).keys()
-    #             if p in self_produced
-    #         }
-    #         all_results.append({
-    #             "type": "self-contained",
-    #             "combined_sequences": [[target_uuid]],
-    #             "params": {**param_mapping, **mapping},
-    #             "score": 0
-    #         })
-
-    #     # === PHASE 2: CANDIDATE RANKING ===
-    #     candidates = []
-    #     for edge in edges:
-    #         edge_info = _edge_data[id(edge)]
-    #         from_node = getattr(edge, "from_node", None)
-    #         from_uuid = edge_info["from_uuid"]
-    #         if from_uuid == target_uuid or from_node is None:
-    #             continue
-
-    #         provided_params = set(edge_info["similar_map"].keys())
-    #         if current_target_path_params.intersection(provided_params) or not current_target_path_params:
-    #             is_evolving = int(len(provided_params) >= len(current_target_path_params))
-    #             richness = len(provided_params)
-    #             candidates.append({
-    #                 "edge": edge,
-    #                 "from_node": from_node,
-    #                 "priority": (is_evolving, richness)
-    #             })
-
-    #     # Use heapq.nlargest instead of full sorting
-    #     candidates = nlargest(top_k, candidates, key=lambda x: x["priority"])
-
-    #     # === PHASE 3: SEQUENCE BUILDING ===
-    #     for candidate in candidates:
-    #         edge = candidate["edge"]
-    #         from_node = candidate["from_node"]
-    #         edge_info = _edge_data[id(edge)]
-    #         mapped_on_edge = edge_info["similar_map"]
-
-    #         # Only consider if this edge provides required path parameters
-    #         if current_target_path_params.issubset(mapped_on_edge.keys()):
-    #             from_name = getattr(from_node, "name", from_node.uuid)
-    #             edge_mapping = {
-    #                 t_p: [{"source_param": s_p, "source_endpoint": from_name}]
-    #                 for t_p, s_p in mapped_on_edge.items()
-    #                 if t_p in current_target_path_params
-    #             }
-
-    #             combined_mapping = param_mapping.copy()
-    #             combined_mapping.update(edge_mapping)
-    #             from_req_params = getattr(from_node, "required_parameters", [])
-
-    #             if from_req_params:
-    #                 upstream_results = self.__operation_sequences(
-    #                     from_node,
-    #                     adjacency_map,
-    #                     visited,
-    #                     combined_mapping,
-    #                     top_k=top_k,
-    #                     _cache=_cache,
-    #                     _edge_data=_edge_data
-    #                 )
-
-    #                 for upstream in upstream_results:
-    #                     if upstream["type"] == "unresolved":
-    #                         continue
-    #                     for seq in upstream["combined_sequences"]:
-    #                         all_results.append({
-    #                             "type": "recursive-path",
-    #                             "combined_sequences": [seq + [target_uuid]],
-    #                             "params": upstream["params"],
-    #                             "score": len(seq) + 1
-    #                         })
-    #             else:
-    #                 all_results.append({
-    #                     "type": "direct-path",
-    #                     "combined_sequences": [[from_node.uuid, target_uuid]],
-    #                     "params": combined_mapping,
-    #                     "score": 2
-    #                 })
-
-    #     # Backtrack visited node
-    #     visited.remove(target_uuid)
-
-    #     # === PHASE 4: FINAL OPTIMIZATION (FILTERING) ===
-    #     if all_results:
-    #         valid_paths = [r for r in all_results if r["type"] != "unresolved"]
-    #         if valid_paths:
-    #             valid_paths.sort(key=lambda x: x["score"])
-    #             _cache[cache_key] = valid_paths[:top_k]
-    #             return valid_paths[:top_k]
-
-    #     unresolved = [{
-    #         "type": "unresolved",
-    #         "combined_sequences": [[target_uuid]],
-    #         "params": param_mapping,
-    #         "score": 999
-    #     }]
-    #     _cache[cache_key] = unresolved
-    #     return unresolved
-
-    def build_sequences(self, top_k=2):
+    def build_sequences(self, top_k=3):
         # 2️⃣ Nhóm cạnh theo to_node.uuid (để truy ngược về các node có thể dẫn đến nó)
         adjacency_map  = {}
         for edge in self.graph.edges:

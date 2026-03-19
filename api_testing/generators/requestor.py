@@ -8,6 +8,7 @@ import uuid
 from pydantic import BaseModel
 import requests
 
+from api_testing.generators.status_code_peport import StatusCodeReport
 from api_testing.models.http_data import ResponseData
 from api_testing.utils.log import getLogger
 
@@ -32,6 +33,8 @@ class Requestor:
         if not os.path.exists(_cache_dir):
             print(f"History dir not found, I'll create dir {_cache_dir}")
             os.makedirs(_cache_dir)
+        self.report = StatusCodeReport(report_file=os.path.join(
+            cache_dir, "reports.json"))
         self.cache_file = os.path.join(
             _cache_dir, self.session_id + ".har")
         self.logger = getLogger(__name__)
@@ -54,16 +57,19 @@ class Requestor:
         """
         parameters = (request_data.parameters or {}).copy()  # shallow copy
         endpoint_path = request_data.endpoint_path
-
-        # Tự động phát hiện các path param: /users/{id}/projects/{project_id}
+        base_path = request_data.endpoint_path
+        
         path_param_names = re.findall(r"{([^}]+)}", endpoint_path)
-
+        path_parameters = {}
         for key in path_param_names:
+            path_parameters[key] = None
             if key in parameters:
                 # Thay {key} trong path bằng giá trị thực
                 endpoint_path = endpoint_path.replace(f"{{{key}}}", str(parameters[key]))
+                path_parameters[key] = parameters[key]
                 # Xoá key khỏi query params (đã dùng cho path)
                 parameters.pop(key, None)
+
             else:
                 self.logger.warning(f"⚠️ Missing path parameter '{key}' in parameters; keeping as placeholder.")
 
@@ -80,16 +86,20 @@ class Requestor:
             "params":  parameters # ✅ Add query params here
         })
         start_time = time.perf_counter()
+        try:
+            response = requests.request(method=method, url=url, **request_kwargs)
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            response_data = ResponseData.from_requests(response)
+            # Record to HAR
+            self._record_har_entry(
+                method, url, headers, path_parameters, parameters, body, response, duration_ms, expected_code=request_data.expected_code, base_path=base_path
+            )
+            return response_data
 
-        response = requests.request(method=method, url=url, **request_kwargs)
-        duration_ms = (time.perf_counter() - start_time) * 1000
-        response_data = ResponseData.from_requests(response)
-        # Record to HAR
-        self._record_har_entry(
-            method, url, headers,parameters, body, response, duration_ms, expected_code=request_data.expected_code
-        )
-
-        return response_data
+        except Exception as e:
+            print(e)
+            print(request_data)
+        
     
     # ----------------------------------------------------------------------
     # Internal helper for MIME-based payload preparation
@@ -98,19 +108,41 @@ class Requestor:
         """
         Prepare request payload based on MIME type.
         """
-        if body is None:
+        if body is None or body == {}:
             return {}
 
         if "application/json" in mime_type:
             return {"json": body}
 
-        elif "application/x-www-form-urlencoded" in mime_type:
-            if isinstance(body, dict):
-                return {"data": body}
-            return {"data": json.loads(body)}
+        elif "application/x-www-form-urlencoded" in mime_type:                
+            return {"data": body if isinstance(body, dict) else json.loads(body)}
 
         elif "multipart/form-data" in mime_type:
-            return {"files": body if isinstance(body, dict) else None}
+            if not isinstance(body, dict):
+                return {}
+
+            data = {}
+            files = {}
+
+            for k, v in body.items():
+                if isinstance(v, tuple):
+                    # (filename, fileobj, content_type)
+                    files[k] = v
+                elif hasattr(v, "read"):
+                    # file-like object
+                    files[k] = v
+                else:
+                    # normal field
+                    data[k] = str(v)
+
+            result = {}
+            if data:
+                result["data"] = data
+            if files:
+                result["files"] = files
+
+            return result
+            # return {"files": body if isinstance(body, dict) else None}
 
         elif "text/plain" in mime_type:
             return {"data": body if isinstance(body, (str, bytes)) else str(body)}
@@ -128,11 +160,13 @@ class Requestor:
         method: str,
         url: str,
         headers: Dict[str, Any],
+        path_parameters:  Dict[str, Any],
         params: Dict[str, Any],
         body: Any,
         response: requests.Response,
         duration_ms: float,
-        expected_code: str
+        expected_code: str,
+        base_path: str
     ):
         """Record a single request/response pair with a unique UUID."""
         entry_id = str(uuid.uuid4())
@@ -140,7 +174,19 @@ class Requestor:
         query_string = [
             {"name": str(k), "value": str(v)} for k, v in (params or {}).items()
         ]
+        mime_type = response.headers.get("Content-Type", "")
 
+        # Only attempt to record text if it's actually text/json
+        if "application/json" in mime_type or "text/" in mime_type:
+            # Force utf-8 if requests is unsure to avoid chardet
+            if not response.encoding:
+                response.encoding = 'utf-8'
+            response_body = response.text
+        else:
+            # For binary files, maybe just store a placeholder or base64
+            response_body = "<<binary data>>"
+        self.report.add(f"{method.lower()}-{base_path}", response.status_code)
+        self.report.save()
         entry = {
             "_id": entry_id,
             "startedDateTime": datetime.utcnow().isoformat() + "Z",
@@ -148,6 +194,7 @@ class Requestor:
             "expected_code": expected_code,
             "is_expected_status": str(response.status_code)[0] == expected_code[0],
             "request": {
+                "path_template": base_path,
                 "method": method,
                 "url": url,
                 "headers": [{"name": k, "value": v} for k, v in headers.items()],
@@ -155,8 +202,9 @@ class Requestor:
                 "postData": {
                     "text": json.dumps(body, default=str) if body else "",
                 },
+                "path_params": path_parameters,
                 "queryString": query_string,
-            },
+            }, 
             "response": {
                 "status": response.status_code,
                 "statusText": response.reason,
@@ -166,7 +214,7 @@ class Requestor:
                 "content": {
                     "mimeType": response.headers.get("Content-Type", ""),
                     "size": len(response.content),
-                    "text": response.text,
+                    "text": response_body,
                 },
             },
         }

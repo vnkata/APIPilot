@@ -1,6 +1,9 @@
 from abc import ABC, abstractmethod
 import random
 import string
+from typing import Any
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 
 class RandomGenerator(ABC):
     description: str = ""
@@ -123,7 +126,7 @@ class RandomGenerator(ABC):
 
     # --- Main Fuzzing Entry Point ---
 
-    def next_fuzz_value(self) -> str:
+    def next_fuzz_value(self, strategy: FuzzStrategy, context_pool=None, *args, **kargs) -> Any:
         """Selects a cluster and generates a dynamic value."""
         
         clusters = {

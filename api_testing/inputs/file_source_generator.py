@@ -3,7 +3,7 @@ import os
 from typing import Any, List
 from .random_generator import RandomGenerator
 
-class FileSourceGenerator(RandomGenerator):
+class FileSourceGenerator(RandomGenerator): 
     """
     A generator that loads data from an external CSV file.
     This helps manage large datasets outside of the main configuration file.

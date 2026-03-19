@@ -24,18 +24,36 @@ class ConfigurationParser:
         self.logger = getLogger(__name__)
         self.load_or_initialize()
 
-    def update_conf(self, graph: 'OperationGraph' = None):
+    def update_conf(self, graph: 'OperationGraph' = None, producer_map= {}):
         properties = defaultdict(list)
         for edge in graph.edges:
             properties[edge.to_node.uuid].append(edge)
         for operation, edges in properties.items():  # assuming you meant operations, not properties
-            keys = list({sp.value2 for e in edges for sp in e.similar_parameters})
-            properties[operation] = keys
+            consumer = defaultdict(list)
+            seen = defaultdict(set)
+            for e in edges:
+                for sp in e.similar_parameters:
+                    producer = producer_map.get(e.from_node.uuid, {}).get(sp.value1, None)
+                    key = (producer, sp.value1.split(".")[-1])
+                    data = {"resource": producer, "key": sp.value1.split(".")[-1]}
+                    if producer is not None:
+                        if key not in seen[sp.value2]:
+                            consumer[sp.value2].append(data) 
+                            seen[sp.value2].add(key)
+
+            # keys = list({sp.value2 for e in edges for sp in e.similar_parameters})
+            properties[operation] = consumer
 
         for endpoint in self.configurations:
             consumer = properties[f'{endpoint.method}-{endpoint.endpoint}']
-            for param in consumer:
-                endpoint.params[param] = FieldConfiguration(name=param, type="ProducerGenerator", genParameters={} )
+            for param, producer in dict(consumer).items():
+                endpoint.params[param] = FieldConfiguration(
+                    name=param, 
+                    type="ProducerGenerator", 
+                    genParameters={
+                        "pool": producer
+                    }
+                )
         self.json_output()
     
     def load_or_initialize(self):
@@ -50,53 +68,97 @@ class ConfigurationParser:
             self.parse()
             self.json_output()
     
-    def parse(self) -> List[OperationConfiguration]:
+    def parse(self, batch_size: int = 50) -> List[OperationConfiguration]:
+        """
+        Parse all operations, collect fields that need GPT inference,
+        and batch them (no deduplication).
+        """
+
         operations = self.spec_parser.operations
+        pending_fields = []
+
+        # ------------------ COLLECT FIELDS ------------------
         for operation in operations.values():
-            gpt_inferences = {
-                "params": {},
-                "request_body": {}
-            }    
-            # Standardize naming access for OperationProperties
-            self.logger.debug("Conf for Prompt: " + operation.uuid)
-            print("Processing Operation:", operation.uuid)
+            self.logger.debug("Processing operation: " + operation.uuid)
+
             op_config = OperationConfiguration(
-                method= getattr(operation, "http_method", None),
-                endpoint= getattr(operation, "endpoint_path", None) 
+                method=getattr(operation, "http_method", None),
+                endpoint=getattr(operation, "endpoint_path", None)
             )
-            # --- 1. Process Parameters (Handles deepObject and Flat Params) ---
+
+            # ---- Parameters ----
             for param_name, param_details in operation.parameters.items():
-                # Check if the parameter is an object (deepObject style)
-                op_config.params[param_name] = self._process_field(param_details)
-                if op_config.params[param_name].type == "PENDING_GPT":
-                    gpt_inferences["params"][param_name] = param_details
-            # --- 2. Process Request Body (Handles MIME types and Deep Nesting) ---
+                field_cfg = self._process_field(param_details)
+                op_config.params[param_name] = field_cfg
+
+                if field_cfg.type == "PENDING_GPT":
+                    pending_fields.append({
+                        "operation": op_config,
+                        "part": "params",
+                        "field_name": param_name,
+                        "item": param_details
+                    })
+
+            # ---- Request Body ----
             if hasattr(operation, "request_body"):
                 body_schemas = {}
                 for schema in operation.request_body.values():
-                    flattened_body = flatten_json_schema(schema.to_dict())
-                    body_schemas.update(flattened_body)
-                
-                for property, details in body_schemas.items():
-                    # Handle root-level arrays: use "body" as name when property is empty string
-                    field_name = property if property else "body"
+                    flattened = flatten_json_schema(schema.to_dict())
+                    body_schemas.update(flattened)
+
+                for prop, details in body_schemas.items():
+                    field_name = prop if prop else "body"
                     item_details = ItemProperties.from_dict(details)
-                    op_config.request_body[field_name] = self._process_field(item_details, path=field_name)
-                    if op_config.request_body[field_name].type == "PENDING_GPT":
-                        gpt_inferences["request_body"][field_name] = item_details
-            # --- 3. Process Parameters & Request Body with GPT ---
-            for part, items in gpt_inferences.items():
-                if len(items) > 0:
-                    for result in self.gpt_parser(items):
-                        field_cfg = FieldConfiguration(
-                            name=result.property,
-                            type=result.generator.className,
-                            genParameters=result.generator.args,
-                        )
-                        getattr(op_config, part)[result.property] = field_cfg
-                # 
-            self.configurations.append(op_config)  
+
+                    field_cfg = self._process_field(item_details, path=field_name)
+                    op_config.request_body[field_name] = field_cfg
+
+                    if field_cfg.type == "PENDING_GPT":
+                        pending_fields.append({
+                            "operation": op_config,
+                            "part": "request_body",
+                            "field_name": field_name,
+                            "item": item_details
+                        })
+
+            self.configurations.append(op_config)
+
+        # ------------------ BATCH GPT INFERENCE ------------------
+
+        for i in range(0, len(pending_fields), batch_size):
+            batch = pending_fields[i:i + batch_size]
+
+            # prepare batch_data for GPT
+            batch_data_list = []
+            for meta in batch:
+                batch_data_list.append({
+                    "name": meta["field_name"],
+                    "item": meta["item"]
+                })
+
+            # call GPT once per batch
+            results = self.gpt_parser(batch_data_list)
+
+            # map results back to the operation configuration
+            for result in results:
+                # idx từ GPT là zero-based
+                batch_index = int(result.idx) - 1
+                if batch_index < 0 or batch_index >= len(batch):
+                    continue  # tránh lỗi nếu idx ngoài range
+
+                meta = batch[batch_index]  # lấy meta đúng theo thứ tự batch
+                # tạo FieldConfiguration
+                field_cfg = FieldConfiguration(
+                    name=meta["field_name"],        # tên field gốc
+                    type=result.generator.className,
+                    genParameters=result.generator.args
+                )
+
+                # cập nhật vào đúng operation / part / field_name
+                getattr(meta["operation"], meta["part"])[meta["field_name"]] = field_cfg
+
         return self.configurations
+
 
     def _process_field(self, item: Union[ParameterProperties, ItemProperties], path: str = None):
         """Standard entry point for judging Heuristic vs GPT for a single field."""
@@ -156,12 +218,16 @@ class ConfigurationParser:
             json.dump(output, f, indent=4, default=str)
         print(f"Configuration saved to: {self.cache_file}")
 
-    def gpt_parser(self, data: Union[Dict[str, ParameterProperties], Dict[str, ItemProperties]]):
+    def gpt_parser(self, batch_data_list: list):
         factory = RandomGeneratorFactory()
         descriptions = factory.gen_description() 
+        attributes_lines = []
+        for idx, f in enumerate(batch_data_list, start=1):
+            attributes_lines.append(f"# {idx} {f['name']}: {f['item'].to_human_readable()}")
+
         params = {
             "genFunction": "\n".join([f"- {k}: {v}" for k, v in descriptions.items()]),
-            "attributes":  "\n".join([f"- {k}: {v.to_human_readable()}" for k,v in data.items()])
+            "attributes":  "\n".join(attributes_lines)
         }
         results = self.parameter_random_mapper.exec(**params)
         return results

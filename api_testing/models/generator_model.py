@@ -50,6 +50,6 @@ class ItemGenerator(ItemProperties):
     @property
     def generator(self):
         if self._generator is None and self.strategy:
-            self._generator = RandomGeneratorFactory(self.strategy.name, **self.strategy.genParameters)
+            self._generator = RandomGeneratorFactory.create(self.strategy.type, **self.strategy.genParameters)
         return self._generator
-
+    

@@ -47,11 +47,12 @@ class RandomDateGenerator(RandomGenerator):
         rand_ts = self.rand.uniform(start_ts, end_ts)
         return datetime.fromtimestamp(rand_ts)
 
-    def next_value_as_string(self) -> str:
+    def next_value_as_string(self,*args, **kargs) -> str:
         """Return a formatted random datetime as string."""
-        value = self.next_value()
+        value = self.next_value(*args, **kargs)
         return value.strftime(self.format)
-    def next_fuzz_value(self) -> Any:
+    
+    def next_fuzz_value(self, strategy: FuzzStrategy, context_pool=None, *args, **kargs) -> Any:
         """Randomly selects a date-specific fuzzing strategy and returns a value."""
         
         # Define only the strategies implemented within this specific logic

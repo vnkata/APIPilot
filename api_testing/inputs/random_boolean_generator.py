@@ -22,10 +22,10 @@ class RandomBooleanGenerator(RandomGenerator):
         """Generate a random boolean based on true_probability."""
         return self.rand.random() <= self.true_probability
 
-    def next_value_as_string(self) -> str:
-        """Return next random value as string."""
-        return str(self.next_value())
-    def next_fuzz_value(self) -> Any:
+    # def next_value_as_string(self,*args, **kargs) -> str:
+    #     """Return next random value as string."""
+    #     return str(self.next_value(*args, **kargs))
+    def next_fuzz_value(self, strategy: FuzzStrategy, context_pool=None, *args, **kargs) -> Any:
         """Randomly selects from specific supported strategies and returns a fuzzed value."""
         
         # Explicitly list only the strategies handled by this specific function
@@ -40,7 +40,7 @@ class RandomBooleanGenerator(RandomGenerator):
         strategy = self.rand.choice(supported_strategies)
 
         if strategy == FuzzStrategy.EMPTY:
-            return self.rand.choice([None, ""])
+            return self.rand.choice(["None", ""])
 
         if strategy == FuzzStrategy.TYPE_ERROR:
             return self.rand.choice(["true", "false", "TRUE", "FALSE", 0, 1, "yes", "no"])
@@ -50,6 +50,6 @@ class RandomBooleanGenerator(RandomGenerator):
             return [val] if self.rand.random() > 0.5 else {"val": val}
 
         if strategy == FuzzStrategy.MUTATE:
-            return self.rand.choice([None, "null", "undefined", -1, 2])
+            return self.rand.choice(["None", "null", "undefined", -1, 2])
         
         return None

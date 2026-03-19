@@ -29,7 +29,7 @@ class ItemProperties:
     min_items: Optional[int] = None
     unique_items: Optional[bool] = None
     additional_properties: Union[bool, 'ItemProperties', None] = None
-    nullable: Optional[bool] = None
+    nullable: Optional[bool] = True
     read_only: Optional[bool] = None
     write_only: Optional[bool] = None
     example: Optional[Union[str, int, float, bool, List, Dict]] = None
@@ -97,7 +97,7 @@ class ItemProperties:
             if self.xrefs is not None:
                 return f'a {self.xrefs} object'
                 # return f'a {self.xrefs} object with schema ' + json.dumps(dict_items, indent=4)
-            return json.dumps(dict_items, indent=4)
+            return json.dumps(dict_items, indent=2)
         if self.type == 'array':
             if not self.items:
                 return ''
@@ -227,15 +227,19 @@ class OperationProperties:
     description: Optional[str] = None
     # if None then global document is apply
     external_docs: Dict[str, str] = None
-    # MIME type as first key, then each parameter with its properties as second dict
     request_body: Dict[str, ItemProperties] = field(default_factory=dict)
     # status code as first key, then each response with its properties as second dict
     responses: Dict[str, ResponseProperties] = None
 
-    # @property
-    # def degree(self) -> int:
-    #     # type: ignore
-    #     return len(self.required_parameters)
+    @property
+    def minetypes(self) -> list[str]:
+        request_mime_types = set(self.request_body.keys()) if self.request_body else set()
+        response_mime_types = {
+            mime
+            for resp in (self.responses or {}).values()
+            for mime in (resp.content or {}).keys()
+        }
+        return list(request_mime_types | response_mime_types)    
     @property
     def schemas(self) -> Dict[str, ItemProperties]:
         
@@ -355,10 +359,4 @@ class OperationProperties:
             curr_request_body = flatten_json_schema(
                 to_dict_helper(item_properties))
             request_body_list.update(curr_request_body)
-        return remove_nulls([{
-            "name": item,
-            "type": val.get("type"),
-            "description": val.get("description", ""),
-            "enum": val.get("enum"),
-            "xrefs": val.get("xrefs")
-        } for item, val in request_body_list.items()])
+        return request_body_list

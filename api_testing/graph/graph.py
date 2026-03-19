@@ -10,18 +10,15 @@ from api_testing.prompts import OpSchemaDeps
 from api_testing.utils import flatten_json_schema, to_dict_helper
 import networkx as nx
 import pyvis.network as net
-import time
 import re
-from difflib import SequenceMatcher
 import copy
 from api_testing.utils.log import getLogger
-from sentence_transformers import util
 
 from api_testing.utils.graph import get_best_mathching_schema, is_nested_path_end_with
 
 @dataclass
 class OperationGraph:
-    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.6, cache_dir=None):
+    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.5, cache_dir=None):
         self.spec_parser = spec_parser
         self.embedding_model = embedding_model
         self.model = model  # llm model
@@ -48,6 +45,38 @@ class OperationGraph:
         edge = OperationEdge(
             from_node=source_node, to_node=destination_node, similar_parameters=parameters)
         self.edges.append(edge)
+
+    def remove_edge(self, source_endpoint: str, target_endpoint: str, source_param: str, target_param: str):
+        """
+        Remove an incorrect dependency edge mapping:
+        (source_endpoint.source_param) -> (target_endpoint.target_param)
+        """
+
+        new_edges = []
+
+        for edge in self.edges:
+
+            if edge.from_node.uuid != source_endpoint or edge.to_node.uuid != target_endpoint:
+                new_edges.append(edge)
+                continue
+
+            # filter similar_parameters
+            filtered_params = [
+                sp for sp in edge.similar_parameters
+                if not (sp.value1 == source_param and sp.value2 == target_param)
+            ]
+
+            # if still has dependencies keep edge
+            if filtered_params:
+                edge.similar_parameters = filtered_params
+                new_edges.append(edge)
+            else:
+                self.logger.debug(
+                    f"Removed edge {source_endpoint} -> {target_endpoint} ({source_param} -> {target_param})"
+                )
+
+        self.edges = new_edges
+        self.save_graph_to_cache()
 
     def load_or_initialize_graph(self):
         # Check if the cache file exists
@@ -102,8 +131,8 @@ class OperationGraph:
                 if dep_op_properties.http_method.lower() == "delete":  # delete operation is end of flow
                     continue
                 if op_properties.endpoint_path.startswith(dep_op_properties.endpoint_path):
-                    if ["post", "get", "put", "delete"].index(op_properties.http_method.lower()) > ["post", "get", "put", "delete"].index(dep_op_properties.http_method.lower()):
-                        continue
+                    # if ["post", "get", "put", "delete"].index(dep_op_properties.http_method.lower()) > ["post", "get", "put", "delete"].index(op_properties.http_method.lower()):
+                    #     continue
                     parameters = op_properties.get_parameters(required=True) # heuristic on required parameters 
                     dependent_response = dep_op_properties.get_responses()
                     dependent_parameters = dep_op_properties.get_parameters(required=True) # heuristic on required parameters 
@@ -177,18 +206,24 @@ class OperationGraph:
         edges = []
         for operation in operations.values(): 
             self.logger.debug("GPT CHECK FOR OPERATION: " + operation.http_method.upper() + " " + operation.endpoint_path)
+
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
                 print(f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
                 continue
-
+            # 
             params = {
                 "endpoint": f"{operation.http_method.upper()} {operation.endpoint_path}",
                 "summary": ((operation.summary or "") + " " + (operation.description or "")).strip(),
-                "specific_endpoint_params": "\n".join([
-                    f"- {k} : {v.to_human_readable()}" 
-                    for k, v in operation.parameters.items() 
-                    if v.schema.type not in ("boolean",)
-                ]),
+                "specific_endpoint_params": "\n".join(
+                    [
+                        f"- {k}::parameter : {v.to_human_readable()}" 
+                        for k, v in operation.parameters.items() 
+                        if v.schema.type not in ("boolean",) 
+                    ] + [
+                        f"- {k}::requestBody : {ItemProperties.from_dict(v).to_human_readable()}"
+                        for k,v in operation.get_request_body().items()
+                    ]
+                ),
             }
             relavant_schemas = get_best_mathching_schema(embedding_model=self.embedding_model, operation=operation, schemas=schemas, threshold=self.threshold, path_tree=self.path_tree)
             data_schemas = []
@@ -230,7 +265,9 @@ class OperationGraph:
                     }
 
                     for param_name, attr_names in expanded_mapping.items():
+                        param_name, locator = param_name.split("::")
                         for attribute_name in attr_names:
+                            # print(param_name)
                             matches = [
                                 att for att in filtered_attrs.keys()
                                 if is_nested_path_end_with(att, attribute_name)
@@ -242,7 +279,7 @@ class OperationGraph:
                                 similarities.append(SimilarityValue(
                                     value1=attr,
                                     value2=param_name,
-                                    in_value="response to parameter via gpt"
+                                    in_value=f"response to {locator} via gpt"
                                 ))
 
                     # Append edge only if this operation produced matches

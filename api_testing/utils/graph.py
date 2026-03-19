@@ -60,7 +60,6 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
     endpoint = preprocess_string(endpoint)
     
     def lookup_string(path: str, param) -> str | None:
-        """Trả về phần chuỗi path đến hết {param}, làm sạch định dạng."""
         if param.in_value != "path":
             return None
         match = re.search(rf"\{{{re.escape(param.name)}\}}", path)
@@ -78,6 +77,12 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
         f"{lookup_string(common_path, p) or handle_word_cases(f'{endpoint}_{p.name}')} {p.to_human_readable()}".lower()
         for p in operation.parameters.values()
     ]
+    # combine with req_body
+    for k,v in operation.get_request_body().items():
+        combined = handle_word_cases((v.get("xrefs") or '') + "_" + k)
+        readable = ItemProperties.from_dict(v).to_human_readable()
+        parameters.append(f"{combined} {readable}")
+    
     if len(parameters) == 0:
         return {}
     parameter_embeddings = embedding_model.embed_texts(parameters)
@@ -87,23 +92,26 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
             flattened_schema = {
                 field: values
                 for field, values in flatten_json_schema(schema.to_dict()).items()
-                if (
-                    (schema.xrefs is None and values.get("xrefs") is None)
-                    or (schema.xrefs is not None and values.get("xrefs") == schema.xrefs)
-                )
+                # if (
+                #     (schema.xrefs is None and values.get("xrefs") is None)
+                #     or (schema.xrefs is not None and values.get("xrefs") == schema.xrefs)
+                # )
             }
-            attributes = [field for field, values in flattened_schema.items() if values.get('type') not in ['object', 'array', None]]
+            # attributes = [field for field, values in flattened_schema.items() if values.get('type') not in ['object', 'array', None]]
+            attributes = [field for field, values in flattened_schema.items()]   
+
             attributes_texts = []
             for field, values in flattened_schema.items():
                 if values.get('type') not in ['object', 'array', None]:
                     xrefs = values.get('xrefs', '')
-                    field_name = field.split('.')[-1]
-                    combined = handle_word_cases(xrefs + "_" + field_name)
+                    # field_name = field.split('.')[-1]
+                    path_context = field.replace('.', ' ')
+                    combined = handle_word_cases(xrefs + "_" + path_context)
                     readable = ItemProperties(**values).to_human_readable()
                     attributes_texts.append(f"{combined} {readable}")
             attributes_embedding = embedding_model.embed_texts(attributes_texts)
             
-            hits = util.semantic_search(parameter_embeddings, attributes_embedding)
+            hits = util.semantic_search(parameter_embeddings, attributes_embedding, top_k=50)
             keep_attributes = {}
             for param_i in range(len(hits)):
                 for hit in hits[param_i]:
@@ -111,6 +119,7 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
                     score = hit["score"]
                     if score >= threshold:
                         keep_attributes[attribute] = score
+            # print(schema_name,"=>", keep_attributes)
             schema = filter_item_properties(schema, root_xrefs=schema.xrefs, paths=list(keep_attributes.keys()))
             if len(keep_attributes) > 0:
                 keep_schemas[schema_name] = schema

@@ -1,8 +1,10 @@
-from typing import Literal
+import re
+from typing import Any, Literal
 from faker import Faker
 
 from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
+from hypothesis import strategies as st
 
 class RandomTextGenerator(RandomGenerator):
     """
@@ -31,6 +33,7 @@ class RandomTextGenerator(RandomGenerator):
         super().__init__(seed)
         self.mode = mode
         self.count = count
+        self.pattern = pattern
         self.fake = Faker()
 
     def next_value(self, *args, **kargs) -> str:
@@ -40,6 +43,11 @@ class RandomTextGenerator(RandomGenerator):
             return " ".join(self.fake.sentences(self.count))
         elif self.mode == "paragraph":
             return "\n\n".join(self.fake.paragraphs(self.count))
+        elif self.mode == "regex":
+            rex = st.from_regex(re.compile(self.pattern,flags=re.ASCII), fullmatch=True).example()
+            return rex
         else:
             raise ValueError(f"Unsupported mode: {self.mode}")
-    
+        
+    def next_fuzz_value(self, *args, **kargs) -> Any:
+        return self.next_value(*args, **kargs)

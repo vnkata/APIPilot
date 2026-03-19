@@ -16,6 +16,8 @@ from tenacity import (
     RetryCallState,
 )
 
+from api_testing.utils.llm_tracker import add_usage
+
 def log_retry_error(retry_state: RetryCallState):
     exception = retry_state.outcome.exception()
     logging.error(
@@ -169,6 +171,9 @@ class GeminiModel(APITestingBaseLLMModel):
             # "response_mime_type": "application/json",
             "safety_settings": self.model_safety_settings,
             "temperature": self.temperature,
+            "thinking_config": types.ThinkingConfig(
+                thinking_budget=0
+            )
         }
         if system_prompt:
             configure_params["system_instruction"] = system_prompt
@@ -180,7 +185,11 @@ class GeminiModel(APITestingBaseLLMModel):
                 config=types.GenerateContentConfig(**configure_params),
             )
             cleaned = re.sub(r"^```json\s*|\s*```$", "", response.text.strip(), flags=re.MULTILINE)
-            print(cleaned)
+            usage = getattr(response, "usage_metadata", None)
+            if usage:
+                prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                completion_tokens = getattr(usage, "candidates_token_count", 0)
+                add_usage(prompt_tokens, completion_tokens)
             return schema.model_validate_json(cleaned), 0
         else:
             response = self.client.models.generate_content(
@@ -188,6 +197,13 @@ class GeminiModel(APITestingBaseLLMModel):
                 contents=prompt,
                 config=types.GenerateContentConfig(**configure_params),
             )
+            usage = getattr(response, "usage_metadata", None)
+            if usage:
+                prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                completion_tokens = getattr(usage, "candidates_token_count", 0)
+                add_usage(prompt_tokens, completion_tokens)
+            return schema.model_validate_json(cleaned), 0
+
             return response.text, 0
 
     async def a_generate(

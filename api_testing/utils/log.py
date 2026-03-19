@@ -41,3 +41,4 @@ def configure_logging(class_name: str = __name__, log_dir=None, level=None, llm_
     
     logger = log
     return logger
+

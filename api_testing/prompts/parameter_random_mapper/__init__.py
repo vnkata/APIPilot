@@ -16,6 +16,7 @@ The response is in the format below, no explanation is needed:
 {{
   "mapping": [
     {{
+      "idx": "...",
       "property": "...",
       "generator": {{
         "className": "...",
