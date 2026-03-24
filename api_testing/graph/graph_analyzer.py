@@ -207,12 +207,23 @@ class GraphAnalyzer:
 
         # === PHASE 2: CANDIDATE RANKING ===
         candidates = []
+        target_method = getattr(target, "method", "").lower() # Giả sử target có attribute method
+        target_path = getattr(target, "path", "")            # Giả sử target có attribute path
         for edge in edges:
             from_node = edge.from_node
             if from_node.uuid == target_uuid:
                 continue
-
+            from_method = getattr(from_node, "method", "").lower()
+            from_path = getattr(from_node, "path", "")
             provided_params = {sp.value2 for sp in edge.similar_parameters}
+            # === LOGIC ĐẶC BIỆT: PUT TÌM POST TRÊN CÙNG ENDPOINT ===
+            method_priority = 0
+            # Nếu cùng đường dẫn và target là PUT/PATCH, ưu tiên cực cao cho POST
+            if from_path == target_path:
+                if target_method in ["put", "patch"] and from_method == "post":
+                    method_priority = 10  # Trọng số ưu tiên cao nhất
+                elif target_method == "delete" and from_method in ["post", "get"]:
+                    method_priority = 5   # Ưu tiên tìm để xóa
 
             if current_target_path_params.intersection(provided_params) or not current_target_path_params:
                 is_evolving = 1 if len(provided_params) >= len(current_target_path_params) else 0
@@ -221,7 +232,7 @@ class GraphAnalyzer:
                 candidates.append({
                     "edge": edge,
                     "from_node": from_node,
-                    "priority": (is_evolving, richness)
+                    "priority": (method_priority, is_evolving, richness)
                 })
 
 

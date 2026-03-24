@@ -57,7 +57,6 @@ def merge_config(
                 for k, v in flatten_items.items():
                     param_data = v.to_dict()
                     generator = ItemGenerator.from_dict(param_data)
-                    # tempk = k.replace("[]","")
                     # required → nullable = False
                     if k in required:
                         generator.nullable = False
@@ -242,6 +241,6 @@ class Executor:
   def exec(self):
     data = self.generate_values()
     for item in data:
-      print("Executing request:", asdict(item))
+      print("request", asdict(item))
       self.sender.exec(request_data=item)
     return self.sender.entries

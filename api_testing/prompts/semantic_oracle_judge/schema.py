@@ -6,6 +6,7 @@ from typing import Any, Dict, List, Optional
 #     root: Dict[str, Any]
 
 class SemanticOracleJudgeSchemas(BaseModel):
+    idx: int
     parameters: Optional[Dict[str, Any]] = None
     requestBody: Optional[Dict[str, Any]] = None  # only include if not None
     expected_code: str

@@ -12,7 +12,6 @@ from api_testing.utils.common import remove_nulls
 from typing import Any, Dict
 
 def has_file_deep(data):
-    
     if isinstance(data, dict):
         return any(has_file_deep(v) for v in data.values())
     if isinstance(data, list):
@@ -377,7 +376,8 @@ class NaiveValueGenerator:
                     # 
             # --- Rebuild body & finalize ---
             data.append(
-                {
+                {   
+                    "idx": (i+1),
                     "parameters": remove_nulls(params),
                     "requestBody": body,
                     "expected_code": "4xx"
@@ -462,9 +462,39 @@ class NaiveValueGenerator:
                 "requestBody": rb_desc,
                 "test_datas": json.dumps(judge_datas, separators=(",", ":"), ensure_ascii=False, default=to_placeholder)
             }
-
+            
             judge_results = self.semantic_oracle_judge.exec(**params)
             judge_results = judge_results.dict().get("datas")
+            original_map = {
+                int(item.get("idx")): item
+                for item in judge_datas
+                if item.get("idx") is not None
+            }
+            merged_judge_results = []
+            for item in judge_results:
+                idx = item.get("idx")
+                if idx is not None and int(idx) in original_map:
+                    original = original_map[int(idx)]
+
+                    merged = {
+                        **original,
+                        **item,
+                        "parameters": {
+                            **original.get("parameters", {}),
+                            **item.get("parameters", {})
+                        },
+                        "requestBody": (
+                            original.get("requestBody")
+                            if has_file_deep(original.get("requestBody"))
+                            else item.get("requestBody")
+                        )
+                    }
+                    merged_judge_results.append(merged)
+                else:
+                    # fallback nếu không có idx
+                    merged_judge_results.append(item)
+
+            judge_results = merged_judge_results
         # -----------------------------
         # 3️⃣ Merge (không cần thứ tự)
         # -----------------------------

@@ -12,7 +12,7 @@ You are provided with the following information:
 ## Tasks
 Evaluate whether each request satisfies API constraints. Based on this information, you need to:
 * Populate all fields marked as **LLMGenerator** with concrete, realistic values so that the resulting request conforms to the specified `expected_code`. Don't change struct response
-* Keep "parameters", "requestBody", and "expected_code" EXACTLY unchanged (no normalization, no type changes). Preserve requestBody structure (object stays object, including "__body__").
+* Keep "idx","parameters", "requestBody", and "expected_code" EXACTLY unchanged (no normalization, no type changes). Preserve requestBody structure (object stays object, including "__body__").
 * If `expected_code` is "2xx", verify that the request satisfies all API constraints (e.g., type, format, required fields, dependencies, inter-parameter relationships, mutual exclusion, combination rules,...). Return `1` if valid; otherwise `0`.
 * If `expected_code` is "4xx", set satisfies = 1 without evaluating the constraints.
 ## Important
@@ -23,6 +23,7 @@ Return ONLY valid JSON with the exact same structure as the input. The response 
 ```json {
   "datas": [
     {
+      "idx": "...",
       "parameters": { "parameter1": "value1", ..., "parameterN": "valueN" },
       "requestBody": { "field1": "value1", ..., "fieldN": "valueN" }, 
       "expected_code": "<expected HTTP response code: '2xx' or '4xx'>",

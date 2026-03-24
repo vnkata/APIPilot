@@ -50,8 +50,6 @@ from api_testing.utils.log import configure_logging
 from typing import List, Dict, Set, Any
 import argparse
 
-
-
 def parse_args():
     parser = argparse.ArgumentParser(
         description="APITesting - Automated REST API Testing with LLM",
@@ -96,6 +94,26 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
         help="TUI display width (default: 100)",
     )
     return parser.parse_args()
+
+def sort_children_by_method(children_values):
+    # Định nghĩa trọng số ưu tiên
+    method_priority = {
+        "post": 1,
+        "get": 2,
+        "put": 3,
+        "delete": 4
+    }
+
+    def get_priority(child):
+        name = getattr(child, 'name', '').lower()
+        # Tách lấy phần method trước dấu "-"
+        # Ví dụ: "post-/projects" -> "post"
+        method_part = name.split('-')[0] if '-' in name else name
+        
+        # Trả về trọng số, nếu không khớp thì cho xuống cuối (99)
+        return method_priority.get(method_part, 99)
+
+    return sorted(children_values, key=get_priority)
 
 class APITesting:
     def __init__(self,
@@ -369,7 +387,7 @@ class APITesting:
             context_pool.clear_current()
             if len(success_responses)   > 0:
                 successFull.update({node.name: 1})
-                for child in node.children.values():
+                for child in sort_children_by_method(node.children.values()):
                     traverse_dfs(child, depth + 1, context_pool, node, seq_path=seq_path + [child.name])
             
             # save pool
@@ -377,9 +395,9 @@ class APITesting:
 
         def traverse_forest_dfs(forest,context):
             """Duyệt toàn bộ rừng"""
-            for root_name, root_node in forest.items():
-                print(f"\n🌳 Root: {root_name}")
-                traverse_dfs(root_node, depth=1, context_pool=context , seq_path=[root_name])
+            for root_node in sort_children_by_method(forest.values()):
+                print(f"\n🌳 Root: {root_node.name}")
+                traverse_dfs(root_node, depth=1, context_pool=context , seq_path=[root_node.name])
                 
         for idx in range(num_generations):
             print("🌳"*10, " RUN GENERATIONS ", str(idx+1), "🌳"*10)
