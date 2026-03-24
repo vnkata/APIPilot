@@ -1,9 +1,9 @@
 from typing import Iterable, TypeAlias
+from collections.abc import Iterable
 
 def isEmpty(value):
     return value == '-' or value is None or value == [] or value == ['-'] or value == ''
 
-from collections.abc import Iterable
 
 def remove_nulls(item):
     # object có to_dict

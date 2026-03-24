@@ -15,7 +15,7 @@ def normalize_error(text):
 
     text = text.lower()
     text = re.sub(r'\d+', '<num>', text)
-    text = re.sub(r'\".*?\"', '<str>', text)
+    # text = re.sub(r'\".*?\"', '<str>', text)
 
     return text[:500]
 

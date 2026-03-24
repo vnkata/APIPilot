@@ -57,7 +57,7 @@ def merge_config(
                 for k, v in flatten_items.items():
                     param_data = v.to_dict()
                     generator = ItemGenerator.from_dict(param_data)
-
+                    # tempk = k.replace("[]","")
                     # required → nullable = False
                     if k in required:
                         generator.nullable = False
@@ -174,15 +174,19 @@ class Executor:
           mime = random.choice(operation_mimetypes)
       else:
           mime = "application/json"
+      headers = {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "*/*",
+      }
+
+      # 2. Cập nhật Content-Type dựa trên mime (giả sử 'mime' là biến chứa type)
+      if mime == "application/octet-stream":
+        headers["Content-Type"] = "application/octet-stream"
       base_request = RequestData(
           endpoint_path=self.operation.endpoint_path,
           http_method=self.operation.http_method,
           mime_type=mime,
-          headers= {
-            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-            "Accept": "*/*",
-            # "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc3NDMyODgzNCwiYXV0aCI6IlJPTEVfQURNSU4gUk9MRV9VU0VSIEZBQ1RPUl9QQVNTV09SRCIsImlhdCI6MTc3NDI0MjQzNCwidXNlcklkIjoxfQ.mockAMKi3L3ml4gdc2n27a2ewBr3V4D5JtlwJDJtfX3uRN5S1nf0uYjM6_QYGt4h44Oxi03zrMphtEETffzAuw"
-          }
+          headers=headers
       )
 
       params = self.operation.parameters

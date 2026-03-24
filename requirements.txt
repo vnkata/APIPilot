@@ -25,3 +25,4 @@ docx
 pdfkit
 pdf2image
 imgkit
+faiss

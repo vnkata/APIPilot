@@ -120,6 +120,102 @@ def clone_item(item: 'ItemProperties') -> 'ItemProperties':
 
 #     return flat
 
+# def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
+#     flat_schema = {}
+#     if not schema:
+#         return flat_schema
+
+#     current_ref = schema.get("xrefs", ref)
+
+#     # =========================
+#     # 🔥 HANDLE allOf (core fix)
+#     # =========================
+#     if schema.get("allOf"):
+#         for sub in schema["allOf"]:
+#             sub_flat = flatten_json_schema(sub, parent_key, sep, current_ref)
+#             flat_schema.update(sub_flat)
+#         return flat_schema
+
+#     # =========================
+#     # anyOf / oneOf
+#     # =========================
+#     if schema.get("anyOf"):
+#         for sub in schema["anyOf"]:
+#             flat_schema.update(
+#                 flatten_json_schema(sub, parent_key, sep, current_ref)
+#             )
+#         return flat_schema
+
+#     if schema.get("oneOf"):
+#         for sub in schema["oneOf"]:
+#             flat_schema.update(
+#                 flatten_json_schema(sub, parent_key, sep, current_ref)
+#             )
+#         return flat_schema
+
+#     # =========================
+#     # OBJECT
+#     # =========================
+#     if schema.get("properties"):
+#         for key, value in schema["properties"].items():
+#             if not value:
+#                 continue
+
+#             new_key = f"{parent_key}{sep}{key}" if parent_key else key
+
+#             # propagate xrefs
+#             child_ref = value.get("xrefs", current_ref)
+
+#             # 🔥 recursive call FIRST (important)
+#             if value.get("allOf") or value.get("anyOf") or value.get("oneOf"):
+#                 flat_schema.update(
+#                     flatten_json_schema(value, new_key, sep, child_ref)
+#                 )
+#                 continue
+
+#             p_type = value.get("type")
+
+#             # nested object
+#             if p_type == "object" and value.get("properties"):
+#                 flat_schema.update(
+#                     flatten_json_schema(value, new_key, sep, child_ref)
+#                 )
+
+#             # array
+#             elif p_type == "array":
+#                 items = value.get("items", {})
+
+#                 # 🔥 items có allOf
+#                 if items.get("allOf") or items.get("anyOf") or items.get("oneOf"):
+#                     flat_schema.update(
+#                         flatten_json_schema(items, new_key, sep, child_ref)
+#                     )
+
+#                 elif items.get("type") == "object" and items.get("properties"):
+#                     flat_schema.update(
+#                         flatten_json_schema(items, new_key, sep, child_ref)
+#                     )
+
+#                 else:
+#                     flat_copy = value.copy()
+#                     flat_copy["xrefs"] = child_ref
+#                     flat_schema[new_key] = flat_copy
+
+#             else:
+#                 flat_copy = value.copy()
+#                 flat_copy["xrefs"] = child_ref
+#                 flat_schema[new_key] = flat_copy
+
+#     # =========================
+#     # ROOT ARRAY
+#     # =========================
+#     elif schema.get("type") == "array":
+#         items = schema.get("items", {})
+
+#         if items:
+#             return flatten_json_schema(items, parent_key, sep, current_ref)
+
+#     return flat_schema
 def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
     flat_schema = {}
     if not schema:
@@ -128,30 +224,15 @@ def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
     current_ref = schema.get("xrefs", ref)
 
     # =========================
-    # 🔥 HANDLE allOf (core fix)
+    # 🔥 HANDLE Composition (allOf, anyOf, oneOf)
     # =========================
-    if schema.get("allOf"):
-        for sub in schema["allOf"]:
-            sub_flat = flatten_json_schema(sub, parent_key, sep, current_ref)
-            flat_schema.update(sub_flat)
-        return flat_schema
-
-    # =========================
-    # anyOf / oneOf
-    # =========================
-    if schema.get("anyOf"):
-        for sub in schema["anyOf"]:
-            flat_schema.update(
-                flatten_json_schema(sub, parent_key, sep, current_ref)
-            )
-        return flat_schema
-
-    if schema.get("oneOf"):
-        for sub in schema["oneOf"]:
-            flat_schema.update(
-                flatten_json_schema(sub, parent_key, sep, current_ref)
-            )
-        return flat_schema
+    for composition in ["allOf", "anyOf", "oneOf"]:
+        if schema.get(composition):
+            for sub in schema[composition]:
+                flat_schema.update(
+                    flatten_json_schema(sub, parent_key, sep, current_ref)
+                )
+            return flat_schema
 
     # =========================
     # OBJECT
@@ -162,58 +243,50 @@ def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
                 continue
 
             new_key = f"{parent_key}{sep}{key}" if parent_key else key
-
-            # propagate xrefs
             child_ref = value.get("xrefs", current_ref)
 
-            # 🔥 recursive call FIRST (important)
-            if value.get("allOf") or value.get("anyOf") or value.get("oneOf"):
-                flat_schema.update(
-                    flatten_json_schema(value, new_key, sep, child_ref)
-                )
+            # Handle Composition at property level
+            if any(k in value for k in ("allOf", "anyOf", "oneOf")):
+                flat_schema.update(flatten_json_schema(value, new_key, sep, child_ref))
                 continue
 
             p_type = value.get("type")
 
-            # nested object
+            # Nested Object
             if p_type == "object" and value.get("properties"):
-                flat_schema.update(
-                    flatten_json_schema(value, new_key, sep, child_ref)
-                )
+                flat_schema.update(flatten_json_schema(value, new_key, sep, child_ref))
 
-            # array
+            # Array Handling with [] prefix
             elif p_type == "array":
                 items = value.get("items", {})
+                # Create the array path: e.g., "user.orders[]"
+                array_path = f"{new_key}[]" 
 
-                # 🔥 items có allOf
-                if items.get("allOf") or items.get("anyOf") or items.get("oneOf"):
+                # If items are complex (objects or compositions), recurse with array_path
+                if any(k in items for k in ("allOf", "anyOf", "oneOf", "properties")):
                     flat_schema.update(
-                        flatten_json_schema(items, new_key, sep, child_ref)
+                        flatten_json_schema(items, array_path, sep, child_ref)
                     )
-
-                elif items.get("type") == "object" and items.get("properties"):
-                    flat_schema.update(
-                        flatten_json_schema(items, new_key, sep, child_ref)
-                    )
-
                 else:
+                    # Primitive array (e.g., array of strings)
                     flat_copy = value.copy()
                     flat_copy["xrefs"] = child_ref
-                    flat_schema[new_key] = flat_copy
+                    flat_schema[array_path] = flat_copy
 
+            # Leaf Node
             else:
                 flat_copy = value.copy()
                 flat_copy["xrefs"] = child_ref
                 flat_schema[new_key] = flat_copy
 
     # =========================
-    # ROOT ARRAY
+    # ROOT ARRAY (e.g., schema starts as an array)
     # =========================
     elif schema.get("type") == "array":
         items = schema.get("items", {})
-
         if items:
-            return flatten_json_schema(items, parent_key, sep, current_ref)
+            array_path = f"{parent_key}[]" if parent_key else "[]"
+            return flatten_json_schema(items, array_path, sep, current_ref)
 
     return flat_schema
 
@@ -304,14 +377,15 @@ def flatten_item_properties(
     # =========================
     elif item.type == "array" and item.items:
         sub = item.items
+        array_prefix = f"{prefix}[]" if prefix else "[]"
         is_primitive = (
                 sub.type is not None
                 and sub.type not in ("object", "array")
                 and not sub.properties
             )
         if is_primitive:
-            if prefix:
-                flat[prefix] = item
+            if array_prefix:
+                flat[array_prefix] = item
             return flat
 
         # 🔥 items có composition
@@ -319,7 +393,7 @@ def flatten_item_properties(
             flat.update(
                 flatten_item_properties(
                     sub,
-                    prefix=prefix,
+                    prefix=array_prefix,
                     include_containers=include_containers
                 )
             )
@@ -327,7 +401,7 @@ def flatten_item_properties(
             flat.update(
                 flatten_item_properties(
                     sub,
-                    prefix=prefix,
+                    prefix=array_prefix,
                     include_containers=include_containers
                 )
             )
