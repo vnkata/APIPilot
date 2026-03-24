@@ -80,6 +80,15 @@ class ResponseData:
     @classmethod
     def from_requests(cls, response: requests.Response) -> "ResponseData":
         """Create a ResponseData instance from a requests.Response."""
+        if response is None:
+            return cls(
+                status_code=0,
+                headers={},
+                cookies={},
+                mime_type="",
+                body=None,
+                parsed=None,
+            )
         mime_type = response.headers.get("Content-Type", "").split(";")[0].strip()
         body = response.content
 

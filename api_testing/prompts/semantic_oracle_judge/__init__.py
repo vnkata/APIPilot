@@ -49,7 +49,6 @@ Request Body:
 
   def exec(self, *args, **kargs):
     prompt = self.PROMPT.format(*args, **kargs) ## pass
-    self.logger.debug("SemanticOracleJudge Prompt: " + prompt)
     response, _ = self.llm.generate(
       system_prompt=self.SYSTEM_PROMPT,
       prompt=prompt,

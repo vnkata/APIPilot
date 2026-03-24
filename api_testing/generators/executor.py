@@ -12,6 +12,7 @@ from api_testing.models.http_data import RequestData
 from api_testing.models.specification_model import ItemProperties, OperationProperties, ParameterProperties
 from api_testing.utils import flatten_item_properties, get_required_body_params
 from fake_useragent import UserAgent
+import time
 
 class Strategy(Enum):
   SMART_VALUE = auto()      # use GPT
@@ -237,5 +238,6 @@ class Executor:
   def exec(self):
     data = self.generate_values()
     for item in data:
+      print("Executing request:", asdict(item))
       self.sender.exec(request_data=item)
     return self.sender.entries

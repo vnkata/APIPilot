@@ -132,7 +132,7 @@ class Requestor:
         })
         start_time = time.perf_counter()
         try:
-            response = requests.request(method=method, url=url, **request_kwargs)
+            response = requests.request(method=method, url=url, **request_kwargs, timeout=(5, 300))
             duration_ms = (time.perf_counter() - start_time) * 1000
             response_data = ResponseData.from_requests(response)
             # Record to HAR
@@ -140,8 +140,15 @@ class Requestor:
                 method, url, headers, path_parameters, parameters, body, response, duration_ms, expected_code=request_data.expected_code, base_path=base_path
             )
             return response_data
-        except Exception as e:
-            print(e)
+        except requests.exceptions.Timeout:
+            response_data = ResponseData.from_requests(None)
+            # Record to HAR
+            self._record_har_entry(
+                method, url, headers, path_parameters, parameters, body, response, duration_ms, expected_code=request_data.expected_code, base_path=base_path
+            )
+            print("Lỗi: Request đã quá thời gian chờ 5 phút!")
+        except requests.exceptions.RequestException as e:
+            print(f"Lỗi hệ thống: {e}")
         
     # ----------------------------------------------------------------------
     # Internal helper for MIME-based payload preparation

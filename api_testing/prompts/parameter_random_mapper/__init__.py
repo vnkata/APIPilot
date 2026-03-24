@@ -42,18 +42,13 @@ Here is list input property and descriptions:
     self.logger = getLogger(__name__)
   
   def exec(self, *args, **kargs):
-    print("ParameterRandomMapper exec called for attributes:", kargs.get("attributes"))
     system = self.SYSTEM_PROMPT.format(genFunction=kargs.get("genFunction"))
     prompt = self.PROMPT.format(attributes=kargs.get("attributes")) ## pass
-    self.logger.debug("ParameterRandomMapper Prompt: " + system)
-    self.logger.debug("ParameterRandomMapper Prompt: " + prompt)
     response, _ = self.llm.generate(
       system_prompt=system,
       prompt=prompt,
       schema=Verdict
     )
-    print("ParameterRandomMapper exec finished")
-    print("Response:", response)
     self.logger.debug("ParameterRandomMapper Response: " + response.model_dump_json())
 
     return response.mapping
