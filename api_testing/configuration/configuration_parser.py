@@ -24,36 +24,121 @@ class ConfigurationParser:
         self.logger = getLogger(__name__)
         self.load_or_initialize()
 
-    def update_conf(self, graph: 'OperationGraph' = None, producer_map= {}):
-        properties = defaultdict(list)
-        for edge in graph.edges:
-            properties[edge.to_node.uuid].append(edge)
-        for operation, edges in properties.items():  # assuming you meant operations, not properties
-            consumer = defaultdict(list)
-            seen = defaultdict(set)
-            for e in edges:
-                for sp in e.similar_parameters:
-                    producer = producer_map.get(e.from_node.uuid, {}).get(sp.value1, None)
-                    key = (producer, sp.value1.split(".")[-1])
-                    data = {"resource": producer, "key": sp.value1.split(".")[-1]}
-                    if producer is not None:
-                        if key not in seen[sp.value2]:
-                            consumer[sp.value2].append(data) 
-                            seen[sp.value2].add(key)
+    def update_conf(self, graph: "OperationGraph" = None, producer_map=None):
+        if graph is None:
+            return
+        if producer_map is None:
+            producer_map = {}
 
-            # keys = list({sp.value2 for e in edges for sp in e.similar_parameters})
-            properties[operation] = consumer
+        # Step 1: group edges by consumer operation
+        edges_by_operation = defaultdict(list)
+        for edge in graph.edges:
+            edges_by_operation[edge.to_node.uuid].append(edge)
+
+        # Step 2: build dependency map (consumer -> producer)
+        operation_dependencies = {}
+
+        for operation, edges in edges_by_operation.items():
+            consumer_map = defaultdict(list)
+            seen = defaultdict(set)
+
+            for edge in edges:
+                from_uuid = edge.from_node.uuid
+                producer_lookup = producer_map.get(from_uuid, {})
+
+                for sp in edge.similar_parameters:
+                    producer = producer_lookup.get(sp.value1)
+                    if not producer:
+                        continue
+
+                    key_name = sp.value1.split(".")[-1] # {"value1": "category.id","value2": "category.id","in_value": "response to requestBody via gpt"},
+                    dedup_key = (producer, key_name)
+
+                    param_config = edge.to_node.parameters.get(sp.value2) 
+                    is_optional = (
+                        param_config.in_value != "path"
+                        if param_config else False
+                    )
+
+                    if dedup_key in seen[sp.value2]:
+                        continue
+                    for p in producer.split(","):
+                        consumer_map[sp.value2].append({
+                            "resource": p,
+                            "key": key_name,
+                            "optional": is_optional,
+                            "in_value": sp.in_value,  # 🔥 thêm dòng này
+                        })
+                    seen[sp.value2].add(dedup_key)
+
+            operation_dependencies[operation] = consumer_map
+
+        # Step 3: apply to endpoint config
+        RANDOM_TYPES = {
+            "RandomBooleanGenerator",
+            "RandomDateGenerator",
+            "RandomFileGenerator",
+            "RandomInputGenerator",
+            "RandomTextGenerator",
+        }
 
         for endpoint in self.configurations:
-            consumer = properties[f'{endpoint.method}-{endpoint.endpoint}']
-            for param, producer in dict(consumer).items():
-                endpoint.params[param] = FieldConfiguration(
-                    name=param, 
-                    type="ProducerGenerator", 
-                    genParameters={
-                        "pool": producer
-                    }
+            op_key = f"{endpoint.method}-{endpoint.endpoint}"
+            consumer = operation_dependencies.get(op_key)
+
+            if not consumer:
+                continue
+
+            for param, producers in consumer.items():
+                in_value = producers[0].get("in_value") if producers else None
+
+                # 🔥 tìm mutator ở cả params và request_body
+                source = None
+                mutator = None
+                if in_value and "requestBody" in in_value:
+                    source  = "request_body"
+                    mutator = endpoint.request_body.get(param)
+                else:
+                    source  = "params"
+                    mutator = endpoint.params.get(param)
+
+
+                # if mutator:
+                #     source = "params"
+                # else:
+                #     mutator = endpoint.request_body.get(param) if endpoint.request_body else None
+                #     if mutator:
+                #         
+
+                if not mutator:
+                    continue
+
+                keep_original = (
+                    producers
+                    and producers[0].get("optional")
+                    and mutator.type in RANDOM_TYPES
                 )
+
+                clean_producers = [
+                    {k: v for k, v in p.items() if k != "optional"}
+                    for p in producers
+                ]
+
+                if keep_original:
+                    continue
+
+                new_field = FieldConfiguration(
+                    name=param,
+                    type="ProducerGenerator",
+                    genParameters={"pool": clean_producers},
+                )
+
+                # 🔥 update đúng source
+                if source == "params":
+                    endpoint.params[param] = new_field
+                elif source == "request_body":
+                    endpoint.request_body[param] = new_field
+
         self.json_output()
     
     def load_or_initialize(self):
@@ -102,7 +187,12 @@ class ConfigurationParser:
             # ---- Request Body ----
             if hasattr(operation, "request_body"):
                 body_schemas = {}
-                for schema in operation.request_body.values():
+                for mime_type, schema in operation.request_body.items():
+                    # if mime_type == "application/octet-stream":
+                    #     body_schemas.update({
+                    #         "_raw_binary": schema.to_dict()
+                    #     })
+                    # else:
                     flattened = flatten_json_schema(schema.to_dict())
                     body_schemas.update(flattened)
 
@@ -164,10 +254,16 @@ class ConfigurationParser:
         """Standard entry point for judging Heuristic vs GPT for a single field."""
         # Use 'is not None' to handle empty string path correctly (empty string is falsy but valid)
         name = path if path is not None else getattr(item, 'name', 'unknown')
-        if getattr(item, 'description', None) is None:
+        required = getattr(item, 'required', False)
+        nullable = getattr(item, 'nullable', False)
+        description = getattr(item, 'description', None) # 
+        should_use_heuristic = (
+            description is None
+            and (required is False or nullable is True)
+        )
+        if should_use_heuristic:
             return self.heuristic_parser(item, name_override=name)
-        else:
-            return FieldConfiguration(name=name, type="PENDING_GPT")
+        return FieldConfiguration(name=name, type="PENDING_GPT")
 
     def heuristic_parser(self, item: Union[ParameterProperties, ItemProperties], name_override: str = None) -> FieldConfiguration:
         """Normalized parser: determines generator based on type/format/enum."""
@@ -201,12 +297,15 @@ class ConfigurationParser:
                 if enum_vals:
                     config.type = "RandomInputGenerator"
                     config.genParameters = {"values": enum_vals}
-                elif p_format in ["date", "date-time"]:
+                elif p_format and p_format in ["date", "date-time"]:
                     config.type = "RandomDateGenerator"
                     config.genParameters = {"format": "%Y-%m-%d %H:%M:%S"}
+                elif p_format and p_format in ["file"]:
+                    config.type = "RandomFileGenerator"
                 else:
                     config.type = "RandomTextGenerator"
                     config.genParameters = {"mode": "sentence"}
+
 
         # Clean None values
         config.genParameters = {k: v for k, v in config.genParameters.items() if v is not None}

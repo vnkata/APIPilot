@@ -21,3 +21,7 @@ faker-file[all]
 prance
 fake_useragent
 openai
+docx
+pdfkit
+pdf2image
+imgkit

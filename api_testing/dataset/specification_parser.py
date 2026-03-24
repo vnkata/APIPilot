@@ -116,6 +116,15 @@ class SpecificationParser:
             examples=schema.get('examples'),
             xrefs=schema.get('x-refs')
         )
+        if schema.get("allOf"):
+            value_properties.allOf = [ self.process_parameter_schema(x) for x in schema["allOf"]]
+
+        if schema.get("anyOf"):
+            value_properties.anyOf = [ self.process_parameter_schema(x) for x in schema["anyOf"]]
+
+        if schema.get("oneOf"):
+            value_properties.oneOf = [ self.process_parameter_schema(x) for x in schema["oneOf"]]
+            
         return value_properties
 
     def process_parameter(self, parameter) -> ParameterProperties:
@@ -152,7 +161,7 @@ class SpecificationParser:
                         parameter_properties.name, parameter_properties)
         return parameters
 
-    def process_request_body(self, request_body) -> Dict[str, ItemProperties]:
+    def process_request_body(self, request_body, operation_properties) -> Dict[str, ItemProperties]:
         """
         Process the request body to return a Dictionary with mime type and its properties and values.
         """
@@ -161,17 +170,33 @@ class SpecificationParser:
         content = request_body.get('content')
         # Capture requestBody-level description to inject into schema
         body_description = request_body.get('description')
+        operation_description = operation_properties.description if operation_properties.description else operation_properties.summary
         if content:
             for mime_type, mime_details in content.items():
                 # if we need to check required list, do it here
                 schema = mime_details.get('schema')
                 if schema:
+                    if mime_type == "application/octet-stream":
+                        if not schema.get('description'):
+                            if body_description:
+                                schema['description'] = body_description
+                            else:
+                                schema["description"] = operation_description
+                        schema["required"] = True
+                        schema["nullable"] = False
+                        request_body_properties[mime_type] = ItemProperties(
+                            type="object",
+                            properties={
+                                "__raw_binary__": self.process_parameter_schema(schema)
+                            }
+                        )
+                    else:
                     # Inject requestBody description into schema if schema doesn't have its own
-                    if body_description and not schema.get('description'):
-                        schema = schema.copy()  # Don't mutate original
-                        schema['description'] = body_description
-                    request_body_properties[mime_type] = self.process_parameter_schema(
-                        schema)
+                        if body_description and not schema.get('description'):
+                            schema = schema.copy()  # Don't mutate original
+                            schema['description'] = body_description
+                        request_body_properties[mime_type] = self.process_parameter_schema(
+                            schema)
 
         return request_body_properties
 
@@ -217,7 +242,7 @@ class SpecificationParser:
 
         if operation_details.get('requestBody'):
             operation_properties.request_body = self.process_request_body(
-                request_body=operation_details.get('requestBody'))
+                request_body=operation_details.get('requestBody'), operation_properties=operation_properties)
         
         if operation_details.get('responses'):
             operation_properties.responses = self.process_responses(

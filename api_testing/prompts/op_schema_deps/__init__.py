@@ -20,6 +20,8 @@ Follow these steps below to complete your task:
 - If a parameter corresponds to a key inside a referenced schema, map the parameter under that referenced schema instead.
 - Each attribute must belong directly to the schema where it is declared.
 - Additionally, when a schema contains nested or referenced schemas (e.g., arrays or objects within a schema), analyze those nested schemas as well to identify potential matching keys relevant to the endpoint parameters.
+**Fallback Rule (Natural Key Substitution):**
+- If no primary/foreign key exists, map to a natural key (e.g., name, code, key) only if it is from the same entity, has the same type, is likely unique, and is not descriptive (e.g., exclude description, title).
 FINAL OUTPUT:
 The response is in the format below, no explanation is needed:
 ```json {

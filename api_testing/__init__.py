@@ -2,6 +2,7 @@ from collections import defaultdict, deque
 import copy
 import json
 import logging
+import random
 from time import sleep
 from api_testing.configuration.configuration_parser import ConfigurationParser
 from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
@@ -13,10 +14,13 @@ from api_testing.graph.graph_analyzer import GraphAnalyzer
 from api_testing.memory.contextual_memory import ContextualMemory
 from api_testing.models.configuration_model import FieldConfiguration
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
+# from api_testing.tracing.tracing import TraceManager
 from api_testing.utils import flatten_json_schema, to_dict_helper
 from api_testing.utils.common import remove_nulls
 from api_testing.utils.http import isSuccessful
 from collections import defaultdict
+
+from api_testing.utils.llm_tracker import initTracker
 
 from .memory import (
     APITestingVectorDB
@@ -93,64 +97,6 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
     )
     return parser.parse_args()
 
-
-
-def build_endpoint_groups(data: dict) -> Dict[str, List[str]]:
-    """
-    Gom nhóm tham số tương tự nhưng tôn trọng hướng truyền dữ liệu giữa các endpoint.
-    - value1: từ response của from_node
-    - value2: vào parameter của to_node
-    Lan truyền bắc cầu theo hướng endpoint graph.
-    """
-    graph: Dict[str, Set[str]] = defaultdict(set)
-    reverse_graph: Dict[str, Set[str]] = defaultdict(set)
-
-    # ==== B1. Xây dựng đồ thị có hướng ====
-    for edge in data.get("edges", []):
-        for sp in edge.get("similar_parameters", []):
-            v1, v2 = sp.get("value1"), sp.get("value2")
-            if not v1 or not v2:
-                continue
-            kv1 = edge.get("from_node") + "_attributes_" + v1
-            kv2 = edge.get("to_node") + "_params_" + v2
-            graph[kv1].add(kv2)
-            reverse_graph[kv2].add(kv1)
-
-    # ==== B2. Duyệt nhóm liên thông (bắc cầu hai chiều) ====
-    def traverse_group(start: str, visited: Set[str]) -> Set[str]:
-        group = set()
-        queue = deque([start])
-        while queue:
-            node = queue.popleft()
-            if node in visited:
-                continue
-            visited.add(node)
-            group.add(node)
-            # Lan truyền xuôi
-            for nxt in graph.get(node, []):
-                if nxt not in visited:
-                    queue.append(nxt)
-            # Lan truyền ngược
-            for prev in reverse_graph.get(node, []):
-                if prev not in visited:
-                    queue.append(prev)
-        return group
-
-    # ==== B3. Gom nhóm ====
-    visited = set()
-    groups: Dict[str, Set[str]] = {}
-    all_nodes = list(graph.keys()) + list(reverse_graph.keys())
-
-    for node in all_nodes:
-        if node not in visited:
-            group = traverse_group(node, visited)
-            if group:
-                canonical = min(group, key=len)
-                groups[canonical] = group
-
-    # ==== B4. Kết quả trả về dạng Dict[str, List[str]] ====
-    return {k: sorted(list(v)) for k, v in groups.items()}
-
 class APITesting:
     def __init__(self,
                  base_url: Optional[str] = None,
@@ -165,6 +111,7 @@ class APITesting:
                                            APITestingVectorDB]] = None,
                  test_single_endpoint: Optional[str] = None,  # New parameter
                  # async_mode=False,
+
                  ):
         self.base_url = base_url
         self.base_title = base_title
@@ -176,6 +123,7 @@ class APITesting:
         self.project_dir = None
         self.test_single_endpoint = test_single_endpoint
         self.operation_graph = None
+        self.tracer = None
         self._load_()
         
         if self.test_single_endpoint:
@@ -200,11 +148,17 @@ class APITesting:
             shutil.copyfile(
                 self.spec_path, os.path.join(self.project_dir, f"baseline_specification{file_extension}"))
         # logger
+        # self.tracer = TraceManager(
+        #     trace_path=self.project_dir,
+        #     llm_model=self.model.get_model_name(),
+        #     level=logging.DEBUG
+        # )
         configure_logging(
             log_dir=self.project_dir,
             llm_model=self.model.get_model_name(),
             level=logging.DEBUG
         )
+        initTracker(dir=self.project_dir, model=self.model.get_model_name())
         self.spec_parser.load_or_initialize(cache_dir=self.project_dir)
         # self._preprocess_()
     
@@ -222,22 +176,22 @@ class APITesting:
         parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
         parser.parse()
 
-    def process(self):
+    # def process(self):
         
-        self.build_odg()
-        self.build_config()
-        with open(os.path.join(self.project_dir,"semantic_property_dependency_graph.json"), "r", encoding="utf-8") as f:
-            graph_data = json.load(f)
-        endpoint_groups = build_endpoint_groups(graph_data)
-        with open(os.path.join(self.project_dir,"producer_pool.json"), "w", encoding="utf-8") as f:
-            f.write(json.dumps(endpoint_groups, indent=4, ensure_ascii=False))
+    #     self.build_odg()
+    #     self.build_config()
+    #     with open(os.path.join(self.project_dir,"semantic_property_dependency_graph.json"), "r", encoding="utf-8") as f:
+    #         graph_data = json.load(f)
+    #     endpoint_groups = build_endpoint_groups(graph_data)
+    #     with open(os.path.join(self.project_dir,"producer_pool.json"), "w", encoding="utf-8") as f:
+    #         f.write(json.dumps(endpoint_groups, indent=4, ensure_ascii=False))
 
-        for endpoint in self.parser.configurations:
-            for param in endpoint.params.keys():
-                for k,v in endpoint_groups.items():
-                    if f'{endpoint.method}-{endpoint.endpoint}_params_{param}' in v:
-                        endpoint.params[param] = FieldConfiguration(name=param, type="ProducerGenerator",genParameters={"pool": k} )
-        self.parser.json_output()
+    #     for endpoint in self.parser.configurations:
+    #         for param in endpoint.params.keys():
+    #             for k,v in endpoint_groups.items():
+    #                 if f'{endpoint.method}-{endpoint.endpoint}_params_{param}' in v:
+    #                     endpoint.params[param] = FieldConfiguration(name=param, type="ProducerGenerator",genParameters={"pool": k} )
+    #     self.parser.json_output()
 
         # process
     
@@ -292,13 +246,13 @@ class APITesting:
             cache_dir=self.project_dir
         )
         parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
-        parser.update_conf(self.operation_graph)
         configurations = { f"{conf.method}-{conf.endpoint}": conf for conf in parser.configurations}
         nodes = self.operation_graph.nodes
+        context = ContextualMemory(cache_dir=self.project_dir)
 
         total_testcase = 0
         total_success = 0
-
+        successFull = {}
         # process producer
         # edges = []
         adjacency_map  = {}
@@ -323,15 +277,17 @@ class APITesting:
             flatten = flatten_json_schema(nodes.get(uuid).successful_responses.to_dict())
             producer_map[uuid] = remove_nulls(extract_xrefs_for_keys(producer_map[uuid], flatten))
             properties[uuid] =  extract_xrefs_for_keys(producer_map[uuid], flatten)   
+            
+        parser.update_conf(self.operation_graph, producer_map)
 
-            # pick
+        # pick
         graph_analyst = GraphAnalyzer(graph=self.operation_graph, cache_dir=self.project_dir)
-        feedback_analyzer = FeedbackAnalyzer(model=self.model)
+        feedback_analyzer = FeedbackAnalyzer(model=self.model, embed=self.embedder, cache_dir=self.project_dir)
 
         forest = graph_analyst.export_to_forest()
-
-        def traverse_dfs(node, depth=0, context_pool: ContextualMemory = None,parent=None):
-            nonlocal total_testcase, total_success
+      
+        def traverse_dfs(node, depth=0, context_pool: ContextualMemory = None, parent=None, seq_path = []):
+            nonlocal total_testcase, total_success, forest
             context_pool = context_pool or ContextualMemory()
             # 
             print("  " * depth + f"• {node.name} ")
@@ -339,13 +295,52 @@ class APITesting:
             configuration = copy.copy(configurations.get(node.name))
             # test
             producer = { param: conf for param, conf in configuration.params.items() if conf.type == "ProducerGenerator"}
-            if len(producer) > 0:
-                for k, v in node.matched_params.items():
-                    if k in producer:
-                        producer[k].genParameters = {
-                            "pool": producer_map.get(v.get("source_endpoint"), {}).get(v.get("source_param"), None),
-                            "key": v.get("source_param").split(".")[-1]
-                        }
+            producer_mapping = {}
+            context_pool.set_current(node.name)
+            # collect prefix -> keys
+            prefix_groups = defaultdict(set)
+            for k, params in node.matched_params.items():
+                for p in params:
+                    sp = p.get("source_param")
+                    if sp:
+                        prefix_groups[sp.rsplit(".", 1)[0]].add(k)
+
+            # best prefix shared by most params
+            best_prefix = max(prefix_groups, key=lambda x: len(prefix_groups[x]), default=None)
+            common_res = None
+            for k, producer_obj in producer.items():
+                candidates = node.matched_params.get(k)
+                if not candidates:
+                    continue
+                prioritized = [p for p in candidates if best_prefix and p.get("source_param","").startswith(best_prefix)]
+                param = random.choice(prioritized or candidates)
+                se = param.get("source_endpoint")
+                sp = param.get("source_param")
+                resource = producer_map.get(se, {}).get(sp)
+                resource = resource.split(",")[0] if resource else None
+                # 
+                if parent is not None:
+                    if resource and resource not in self.operation_graph.nodes[parent.name].schemas.keys():
+                        key = sp.split(".")[-1]
+                        if key in self.operation_graph.nodes[parent.name].required_parameters:
+                            key = key + ":path"
+                        data = {"resource": resource, "key": key, "need_change": True, **param}
+                    else:
+                        common_res = resource
+                        data = {"resource": resource, "key": sp.split(".")[-1], **param}
+                else:
+                    data = {"resource": resource, "key": sp.split(".")[-1], **param}
+                    # producer_obj.genParameters = {"pool": [data]}
+                producer_mapping[k] = data
+            for k, producer_obj in producer.items():
+                if k in producer_mapping:
+                    data = producer_mapping[k]
+                    if data.get("need_change"):
+                        if common_res is not None:
+                            data["resource"] = common_res
+                        del data["need_change"]
+                        producer_mapping[k] = data
+                    producer_obj.genParameters = {"pool": [data]}
             executor = Executor(
                 api_url = self.base_url, 
                 strategy= Strategy.NAIVE_VALUE,
@@ -354,32 +349,45 @@ class APITesting:
                 model=self.model,
                 num_test_cases=num_test_cases,
                 configuration=configurations.get(node.name),
+                mutation_ratio=mutation_ratio,
                 context_pool=context_pool
             ) 
             responses = executor.exec()
-            # feedback = feedback_analyzer.evaluate(responses)
-            # successfull responses 
-
+            feedback = feedback_analyzer.evaluate(seq_path, operation=nodes.get(node.name),  responses=responses, producer_mapping=producer_mapping,context_pool=context_pool)
+            adjug = feedback_analyzer.adjust(node.name, context_pool, producer_mapping,  self.operation_graph, graph_analyst= graph_analyst)
+            if adjug:
+                forest = graph_analyst.export_to_forest()
+            # successfull responses  
             success_responses = [ 
-                entry.get("response",{}).get("content",{}).get("text") 
+                entry
                 for entry in responses if isSuccessful(entry.get("response",{}).get("status",0)) 
             ]
             context_pool.update_with_responses(success_responses, properties.get(node.name))
             print("success", len(success_responses) , "with context_pool", context_pool)
             total_success +=  len(success_responses)
-            total_testcase +=  num_test_cases
+            total_testcase +=  len(responses)
+            context_pool.clear_current()
+            if len(success_responses)   > 0:
+                successFull.update({node.name: 1})
+                for child in node.children.values():
+                    traverse_dfs(child, depth + 1, context_pool, node, seq_path=seq_path + [child.name])
+            
             # save pool
-            for child in node.children.values():
-                traverse_dfs(child, depth + 1, context_pool.copy(), node)
+           
 
-        def traverse_forest_dfs(forest):
+        def traverse_forest_dfs(forest,context):
             """Duyệt toàn bộ rừng"""
             for root_name, root_node in forest.items():
                 print(f"\n🌳 Root: {root_name}")
-                traverse_dfs(root_node, depth=1)
+                traverse_dfs(root_node, depth=1, context_pool=context , seq_path=[root_name])
+                
+        for idx in range(num_generations):
+            print("🌳"*10, " RUN GENERATIONS ", str(idx+1), "🌳"*10)
 
-        for _ in range(num_generations):
-            traverse_forest_dfs(forest)
+            traverse_forest_dfs(forest, context)
+        
         print("Success rate", total_success/total_testcase)
+        print(successFull)
+        print("Success rate", len(successFull.keys()))
 
     

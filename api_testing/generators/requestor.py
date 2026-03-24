@@ -12,6 +12,51 @@ from api_testing.generators.status_code_peport import StatusCodeReport
 from api_testing.models.http_data import ResponseData
 from api_testing.utils.log import getLogger
 
+def to_placeholder(obj):
+    if isinstance(obj, tuple) and len(obj) == 3:
+        filename, content, content_type = obj
+        return {
+            "filename": filename,
+            "content": "<BINARY>",
+            "content_type": content_type
+        }
+    # bytes
+    if isinstance(obj, (bytes, bytearray)):
+        return "<BINARY>"
+
+    # custom object (BytesValue)
+    if obj.__class__.__name__ == "BytesValue":
+        return "<BINARY>"
+
+    # fallback
+    return str(obj)
+
+def unflatten_dict(flat_dict: Dict[str, Any], sep: str = ".") -> Dict[str, Any]:
+    if isinstance(flat_dict, dict):
+            
+        """
+        Convert a flattened dictionary with dot-separated keys back into a nested dictionary.
+
+        Example:
+            {"a.b.c": 1, "a.b.d": 2}
+            → {"a": {"b": {"c": 1, "d": 2}}}
+        """
+        nested: Dict[str, Any] = {}
+
+        for path, value in flat_dict.items():
+            parts = path.split(sep)
+            current = nested
+
+            # Traverse or create nested structure
+            for key in parts[:-1]:
+                current = current.setdefault(key, {})
+
+            # Assign the leaf value
+            current[parts[-1]] = value
+
+        return nested
+    return flat_dict
+
 
 class Requestor:
     """
@@ -24,7 +69,7 @@ class Requestor:
       - text/plain
       - application/xml / text/xml
     """
-    def __init__(self, api_url: str, cache_dir: str = None):
+    def __init__(self, api_url: str, cache_dir: str = "."):
         self.api_url = api_url.rstrip("/")
         self.session_id = str(uuid.uuid4())
         self.entries: list[Dict[str, Any]] = []
@@ -95,29 +140,26 @@ class Requestor:
                 method, url, headers, path_parameters, parameters, body, response, duration_ms, expected_code=request_data.expected_code, base_path=base_path
             )
             return response_data
-
         except Exception as e:
             print(e)
-            print(request_data)
         
-    
     # ----------------------------------------------------------------------
     # Internal helper for MIME-based payload preparation
     # ----------------------------------------------------------------------
+    
     def _prepare_payload(self, body: Any, mime_type: str) -> Dict[str, Any]:
         """
         Prepare request payload based on MIME type.
         """
         if body is None or body == {}:
             return {}
-
+        if "__body__" in body:
+            body = body.get("__body__") 
+            
         if "application/json" in mime_type:
-            return {"json": body}
+            return {"json": unflatten_dict(body)}
 
-        elif "application/x-www-form-urlencoded" in mime_type:                
-            return {"data": body if isinstance(body, dict) else json.loads(body)}
-
-        elif "multipart/form-data" in mime_type:
+        elif "multipart/form-data" in mime_type or "application/x-www-form-urlencoded" in mime_type:
             if not isinstance(body, dict):
                 return {}
 
@@ -132,17 +174,38 @@ class Requestor:
                     # file-like object
                     files[k] = v
                 else:
-                    # normal field
-                    data[k] = str(v)
+                    data[k] = v
 
             result = {}
             if data:
-                result["data"] = data
+                result["data"] = unflatten_dict(data)
             if files:
                 result["files"] = files
-
             return result
-            # return {"files": body if isinstance(body, dict) else None}
+        elif "application/octet-stream" in mime_type:
+            if "__raw_binary__" in body:
+                if body["__raw_binary__"] is not None and isinstance(body["__raw_binary__"], tuple) and len(body["__raw_binary__"]) == 3:
+                    _, body, __  = body["__raw_binary__"]
+                else:
+                    return {"data": None}
+            # case 1: file-like object
+            if hasattr(body, "read"):
+                return {"data": body}
+
+            # case 2: raw bytes
+            if isinstance(body, (bytes, bytearray)):
+                return {"data": body}
+
+            # case 3: filepath
+            if isinstance(body, str):
+                try:
+                    return {"data": open(body, "rb")}
+                except Exception:
+                    return {"data": body.encode()}
+
+            # fallback
+            return {"data": bytes(body)}
+
 
         elif "text/plain" in mime_type:
             return {"data": body if isinstance(body, (str, bytes)) else str(body)}
@@ -177,7 +240,7 @@ class Requestor:
         mime_type = response.headers.get("Content-Type", "")
 
         # Only attempt to record text if it's actually text/json
-        if "application/json" in mime_type or "text/" in mime_type:
+        if "json" in mime_type or "text" in mime_type or mime_type == "":
             # Force utf-8 if requests is unsure to avoid chardet
             if not response.encoding:
                 response.encoding = 'utf-8'
@@ -187,6 +250,7 @@ class Requestor:
             response_body = "<<binary data>>"
         self.report.add(f"{method.lower()}-{base_path}", response.status_code)
         self.report.save()
+        
         entry = {
             "_id": entry_id,
             "startedDateTime": datetime.utcnow().isoformat() + "Z",
@@ -200,7 +264,7 @@ class Requestor:
                 "headers": [{"name": k, "value": v} for k, v in headers.items()],
                 "bodySize": len(json.dumps(body, default=str)) if body else 0,
                 "postData": {
-                    "text": json.dumps(body, default=str) if body else "",
+                    "text": json.dumps(body,  default=to_placeholder ) if body else "",
                 },
                 "path_params": path_parameters,
                 "queryString": query_string,

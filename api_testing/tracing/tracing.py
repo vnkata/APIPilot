@@ -80,8 +80,7 @@ def setup_logger(redirect_to_dev_log=False):
     return logger
 
 class TraceManager:
-    def __init__(self, trace_path=None):
-        self.tracing = None
+    def __init__(self, trace_path=None, llm_model=None, level=None):
         self.trace_path = trace_path # Directory to save trace files, e.g., "/results/<task_id>"
         # os.makedirs(self.trace_path, exist_ok=True)
 
@@ -119,40 +118,4 @@ class TraceManager:
                 logger.addHandler(c_handler)
 
         return logger
-    # Capture the DOM tree
-    def _capture_dom_trace(self, dom_data, filename="dom_trace.html"):
-        """Capture DOM data to an HTML file in the trace_path directory."""
-        if self.trace_path is None:
-            raise ValueError("Trace path is not set. Please set trace_path before capturing traces.")
-        
-        dom_file_path = os.path.join(self.trace_path, filename)
-        with open(dom_file_path, 'w', encoding='utf-8') as f:
-            f.write(dom_data)
-    # Capture the Accessibility Tree
-    def _capture_a11y_trace(self, a11y_data, filename="a11y_trace.json"):
-        """Capture accessibility data to a JSON file in the trace_path directory."""
-        if self.trace_path is None:
-            raise ValueError("Trace path is not set. Please set trace_path before capturing traces.")
-        
-        a11y_file_path = os.path.join(self.trace_path, filename)
-        with open(a11y_file_path, 'w', encoding='utf-8') as f:
-            f.write(a11y_data)
-
-    # Capture the Screenshot as PNG
-    def _capture_screenshot_trace(self, screenshot_data, filename="screenshot.png"):
-        """Capture screenshot data to a PNG file in the trace_path directory."""
-        if self.trace_path is None:
-            raise ValueError("Trace path is not set. Please set trace_path before capturing traces.")
-        
-        screenshot_file_path = os.path.join(self.trace_path, filename)
-        with open(screenshot_file_path, 'wb') as f:
-            f.write(base64.b64decode(screenshot_data))
-            
-    def _capture_trace(self, trace_data, filename="trace.json"):
-        """Capture trace data to a JSON file in the trace_path directory."""
-        if self.trace_path is None:
-            raise ValueError("Trace path is not set. Please set trace_path before capturing traces.")
-        
-        trace_file_path = os.path.join(self.trace_path, filename)
-        with open(trace_file_path, 'w', encoding='utf-8') as f:
-            f.write(trace_data) 
+    

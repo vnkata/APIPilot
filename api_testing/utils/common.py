@@ -3,15 +3,42 @@ from typing import Iterable, TypeAlias
 def isEmpty(value):
     return value == '-' or value is None or value == [] or value == ['-'] or value == ''
 
+from collections.abc import Iterable
+
 def remove_nulls(item):
-    if hasattr(item, 'to_dict'):
-        return item.to_dict()
-    elif isinstance(item, dict):
-        return {k: remove_nulls(v) for k, v in item.items() if not isEmpty(v) and remove_nulls(v)}
-    elif isinstance(item, Iterable) and not isinstance(item, (str, bytes)):
-        return [remove_nulls(i) for i in item if remove_nulls(i) is not None]
-    else:
-        return item
+    # object có to_dict
+    if hasattr(item, "to_dict"):
+        return remove_nulls(item.to_dict())
+
+    # dict
+    if isinstance(item, dict):
+        result = {}
+        for k, v in item.items():
+            cleaned = remove_nulls(v)
+            if not isEmpty(cleaned):
+                result[k] = cleaned
+        return result
+
+    # tuple → giữ nguyên tuple
+    if isinstance(item, tuple):
+        cleaned_items = []
+        for i in item:
+            cleaned = remove_nulls(i)
+            if not isEmpty(cleaned):
+                cleaned_items.append(cleaned)
+        return tuple(cleaned_items)
+
+    # list / iterable (trừ str, bytes)
+    if isinstance(item, Iterable) and not isinstance(item, (str, bytes)):
+        result = []
+        for i in item:
+            cleaned = remove_nulls(i)
+            if not isEmpty(cleaned):
+                result.append(cleaned)
+        return result
+
+    # giữ nguyên primitive (including bytes)
+    return item
     
 ParameterKey: TypeAlias = tuple[str, str | None]
 

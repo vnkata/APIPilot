@@ -19,6 +19,87 @@ class Strategy(Enum):
   COUNTER_VALUE = auto()    # sinh giá trị đối nghịch / edge-case
   FUZZY_VALUE = auto()      # sinh data fuzzy
 
+def merge_config(
+        p: ParameterProperties | ItemProperties | Dict[str, Any] = None,
+        conf: Dict[str, "FieldConfiguration"] = None,
+    ):
+        if p is None:
+            return None
+
+        conf = conf or {}
+
+        # -------------------------
+        # CASE 1: Request Body (ItemProperties)
+        # -------------------------
+        if isinstance(p, ItemProperties):
+            schema_type = getattr(p, "type", None)
+            # 🔥 ARRAY
+            if schema_type == "array":
+                item_schema = getattr(p, "items", None)
+
+                generator = ItemGenerator.from_dict(p.to_dict())
+
+                # apply config (áp dụng cho whole array nếu có key đặc biệt)
+                if "__self__" in conf:
+                    generator.strategy = conf["__self__"]
+                return {
+                    "__type__": "array",
+                    "__generator__": generator,
+                    "description": p.description,
+                    "items": merge_config(item_schema, conf),
+                }
+            # 🔥 OBJECT
+            elif schema_type == "object" or getattr(p, "properties", None) is not None:
+                result = {}
+                flatten_items = flatten_item_properties(p)
+                required = get_required_body_params(p)
+                for k, v in flatten_items.items():
+                    param_data = v.to_dict()
+                    generator = ItemGenerator.from_dict(param_data)
+
+                    # required → nullable = False
+                    if k in required:
+                        generator.nullable = False
+
+                    # apply config
+                    if k in conf:
+                        generator.strategy = conf[k]
+
+                    result[k] = generator
+
+                return {
+                    "__type__": "object",
+                    "properties": result,
+                }
+
+            # 🔥 PRIMITIVE
+            else:
+                generator = ItemGenerator.from_dict(p.to_dict())
+
+                if "__self__" in conf:
+                    generator.strategy = conf["__self__"]
+
+                return {
+                    "__type__": "primitive",
+                    "__generator__": generator,
+                }
+
+        # -------------------------
+        # CASE 2: Parameters (dict)
+        # -------------------------
+        result = {}
+        for k, v in p.items():
+            param_data = v.to_dict()
+            generator = ParameterGenerator.from_dict(param_data)
+
+            if k in conf:
+                generator.strategy = conf[k]
+
+            result[k] = generator
+
+        return result
+
+
 class Executor:
   def __init__(self, api_url: str=None, strategy: Strategy = Strategy.SMART_VALUE, operation: OperationProperties = None, cache_dir=None,model=None,configuration=None,
                num_test_cases=1, context_pool=None, mutation_ratio = 0.1):
@@ -99,7 +180,7 @@ class Executor:
           headers= {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
             "Accept": "*/*",
-            "PRIVATE-TOKEN": "zmy1FupqQvgL9BgG1sqw"
+            # "Authorization": "Bearer eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJhZG1pbiIsImV4cCI6MTc3NDMyODgzNCwiYXV0aCI6IlJPTEVfQURNSU4gUk9MRV9VU0VSIEZBQ1RPUl9QQVNTV09SRCIsImlhdCI6MTc3NDI0MjQzNCwidXNlcklkIjoxfQ.mockAMKi3L3ml4gdc2n27a2ewBr3V4D5JtlwJDJtfX3uRN5S1nf0uYjM6_QYGt4h44Oxi03zrMphtEETffzAuw"
           }
       )
 
@@ -115,35 +196,7 @@ class Executor:
 						for v in values
 				]
       
-      def merge_config(p: ParameterProperties | ItemProperties = None, 
-                      conf: Dict[str, 'FieldConfiguration'] = None):
-          if p is None:
-              return None
-          result = {}
-          conf = conf or {}
-          if isinstance(p, ItemProperties):
-              flatten_items =  flatten_item_properties(p)
-              required = get_required_body_params(p)
-              # 3. Duyệt qua dictionary của ItemProperties
-              for k, v in flatten_items.items():
-                param_data = v.to_dict()
-                generator = ItemGenerator.from_dict(param_data)
-                if k in required:
-                   generator.nullable = False # == required
-                if k in conf:
-                    generator.strategy = conf[k] 
-                result[k] = generator     
-              return result
-         
-          # 3. Duyệt qua dictionary của ParameterProperties
-          for k, v in p.items():
-              param_data = v.to_dict()
-              generator = ParameterGenerator.from_dict(param_data)
-              if k in conf:
-                  generator.strategy = conf[k] 
-              result[k] = generator
-              
-          return result
+    
       match self.strategy:
           case Strategy.SMART_VALUE:
               params = merge_config(params, self.configuration.params)

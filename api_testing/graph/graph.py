@@ -16,6 +16,45 @@ from api_testing.utils.log import getLogger
 
 from api_testing.utils.graph import get_best_mathching_schema, is_nested_path_end_with
 
+def parse_path_to_resources(path: str):
+    parts = path.strip("/").split("/")
+    
+    result = []
+    current = []
+    parent = None
+
+    for part in parts:
+        if part.startswith("{") and part.endswith("}"):
+            # thêm param vào group hiện tại
+            current.append(part)
+
+            # build resource object
+            resource = "/".join([x for x in current if not x.startswith("{")])
+            params = [x.strip("{}") for x in current if x.startswith("{")]
+
+            result.append({
+                "resource": resource,
+                "params": params,
+                "parent": parent
+            })
+
+            parent = resource
+            current = []
+        else:
+            # static segment
+            current.append(part)
+
+    # phần dư không có param
+    if current:
+        resource = "/".join(current)
+        result.append({
+            "resource": resource,
+            "params": [],
+            "parent": parent
+        })
+
+    return result
+
 @dataclass
 class OperationGraph:
     def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.5, cache_dir=None):
@@ -155,25 +194,41 @@ class OperationGraph:
                                     ))
                 
                 # === 2️⃣ Generalized prefix-based heuristic
-                dep_parts = dep_op_properties.endpoint_path.strip("/").split("/")
-                op_parts = op_properties.endpoint_path.strip("/").split("/")
+                # dep_parts = dep_op_properties.endpoint_path.strip("/").split("/")
+                # op_parts = op_properties.endpoint_path.strip("/").split("/")
+                dep_resources = parse_path_to_resources(dep_op_properties.endpoint_path)
+                op_resources = parse_path_to_resources(op_properties.endpoint_path)
 
-                prefix_len = sum(
-                    1 for a, b in zip(dep_parts, op_parts)
-                    if a == b or (a.startswith("{") and b.startswith("{"))
-                )
+                for dep_r in dep_resources:
+                    for op_r in op_resources:
+                        # cùng resource
+                        if dep_r["resource"] == op_r["resource"]:
+                            # param trùng nhau
+                            shared = set(dep_r["params"]) & set(op_r["params"])
+                            
+                            for v in shared:
+                                similar_parameters.append(SimilarityValue(
+                                    value1=v,
+                                    value2=v,
+                                    in_value="parameter to parameter via heuristic"
+                                ))
 
-                if prefix_len >= 2: 
-                    shared_vars = {
-                        a.strip("{}") for a, b in zip(dep_parts, op_parts)
-                        if a.startswith("{") and b.startswith("{") and a == b
-                    }
-                    for v in shared_vars:
-                        similar_parameters.append(SimilarityValue(
-                            value1=v,
-                            value2=v,
-                            in_value="parameter to parameter via heuristic"
-                        ))
+                # prefix_len = sum(
+                #     1 for a, b in zip(dep_parts, op_parts)
+                #     if a == b or (a.startswith("{") and b.startswith("{"))
+                # )
+
+                # if prefix_len >= 2: 
+                #     shared_vars = {
+                #         a.strip("{}") for a, b in zip(dep_parts, op_parts)
+                #         if a.startswith("{") and b.startswith("{") and a == b
+                #     }
+                #     for v in shared_vars:
+                #         similar_parameters.append(SimilarityValue(
+                #             value1=v,
+                #             value2=v,
+                #             in_value="parameter to parameter via heuristic"
+                #         ))
            
                 #edge from dep_op to op
                 if len(similar_parameters) > 0:
@@ -206,7 +261,6 @@ class OperationGraph:
         edges = []
         for operation in operations.values(): 
             self.logger.debug("GPT CHECK FOR OPERATION: " + operation.http_method.upper() + " " + operation.endpoint_path)
-
             if len(operation.parameters) == 0 and len(operation.request_body) == 0:
                 print(f"SKIP NODE {operation.http_method.upper()} {operation.endpoint_path} DUE TO NO PARAMETERS AND REQUEST BODY")
                 continue
@@ -257,11 +311,14 @@ class OperationGraph:
 
                     # Flatten response once per operation
                     flatten = flatten_json_schema(opt.successful_responses.to_dict())
-
+                    
                     # Filter only attributes referencing this schema
                     filtered_attrs = {
-                        att: props for att, props in flatten.items()
-                        if props.get("xrefs") == schema_name
+                        att: {**props, "xrefs": schema_name}
+                        for att, props in flatten.items()
+                        if props.get("xrefs") and schema_name in [
+                            x.strip() for x in props["xrefs"].split(",")
+                        ]
                     }
 
                     for param_name, attr_names in expanded_mapping.items():
@@ -315,6 +372,7 @@ class OperationGraph:
             #                     similar_parameters=similarities
             #                 ))
         return edges
+    
     def deduplicate_similarity_values(self, similarity_list: List[SimilarityValue]) -> List[SimilarityValue]:
         """
         Removes duplicate SimilarityValue objects from a list based on the
@@ -369,18 +427,18 @@ class OperationGraph:
         paths = [ opt.endpoint_path for opt in operations.values()]
         self.path_tree  = os.path.commonprefix(paths) 
         schemas = {k: v for opt in operations.values() for k, v in opt.schemas.items()} # extract all schemas
-        heuristic_edges = self.heuristic_similarities(operations)
-        gpt_edges = self.gpt_similarities(operations, schemas)    
-        edges = self.merge_operation_edges(heuristic_edges, gpt_edges)
-        print(f"HEURISTIC EDGES: {len(heuristic_edges)}")
-        print(f"GPT EDGES: {len(gpt_edges)}")
-        with open(self.cache_file.replace("semantic_property_dependency_graph", "heuristic_edges"), "w") as f:
-            json.dump([to_dict_helper(edge) for edge in heuristic_edges], f, indent=4)
-        with open(self.cache_file.replace("semantic_property_dependency_graph", "gpt_edges"), "w") as f:
-            json.dump([to_dict_helper(edge) for edge in gpt_edges], f, indent=4)
-            
-        
-        self.edges = edges
+        if len(schemas) > 0:
+            heuristic_edges = self.heuristic_similarities(operations)
+            gpt_edges = self.gpt_similarities(operations, schemas)    
+            edges = self.merge_operation_edges(heuristic_edges, gpt_edges)
+            print(f"HEURISTIC EDGES: {len(heuristic_edges)}")
+            print(f"GPT EDGES: {len(gpt_edges)}")
+            with open(self.cache_file.replace("semantic_property_dependency_graph", "heuristic_edges"), "w") as f:
+                json.dump([to_dict_helper(edge) for edge in heuristic_edges], f, indent=4)
+            with open(self.cache_file.replace("semantic_property_dependency_graph", "gpt_edges"), "w") as f:
+                json.dump([to_dict_helper(edge) for edge in gpt_edges], f, indent=4)
+                
+            self.edges = edges
         
     def create_graph(self):
         operations: Dict[str,
@@ -428,8 +486,8 @@ class OperationGraph:
 
         nx.write_graphml(G, self.cache_file.replace("json", "graphml"))
         # 3. Tìm các thành phần liên thông (Clusters)
-        clusters = list(nx.weakly_connected_components(G))
-        print(f"Total clusters found: {len(clusters)}")
+        # clusters = list(nx.weakly_connected_components(G))
+        # print(f"Total clusters found: {len(clusters)}")
         # for i, cluster in enumerate(clusters):
         #     print(f"Cluster {i+1}: {cluster}")
         ODG_pyvis.show(self.cache_file.replace("json", "html"))

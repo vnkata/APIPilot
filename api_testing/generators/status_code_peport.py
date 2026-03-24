@@ -44,7 +44,7 @@ class StatusCodeReport:
 
         with open(self.report_file, "w", encoding="utf-8") as f:
             json.dump(self.data, f, indent=2, ensure_ascii=False)
-
+            f.flush()
     # ---------------------------------------------------------
     # load existing report (optional)
     # ---------------------------------------------------------

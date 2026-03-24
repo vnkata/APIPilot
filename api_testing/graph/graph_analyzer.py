@@ -134,10 +134,17 @@ class GraphAnalyzer:
         self.save_to_cache()
 
 
-    def __operation_sequences(self, target, adjacency_map, visited=None, param_mapping=None, top_k=2):
+    def __operation_sequences(self, target, adjacency_map, visited=None, param_mapping=None, top_k=2, max_depth=6,depth=0):
         visited = visited or set()
         base_param_mapping = param_mapping or {}
         target_uuid = target.uuid
+        if depth >= max_depth:
+            return [{
+                "type": "max-depth",
+                "combined_sequences": [[target_uuid]],
+                "params": base_param_mapping,
+                "score": 999
+            }]
 
         # -------------------------------
         # Caching key builder
@@ -217,8 +224,10 @@ class GraphAnalyzer:
                     "priority": (is_evolving, richness)
                 })
 
-        candidates.sort(key=lambda x: x["priority"], reverse=True)
 
+        candidates.sort(key=lambda x: x["priority"], reverse=True)
+        MAX_CANDIDATES = max(top_k * 2, 20)
+        candidates = candidates[:MAX_CANDIDATES]
         # === PHASE 3: SEQUENCE BUILDING ===
         for candidate in candidates:
             edge = candidate["edge"]
@@ -243,7 +252,10 @@ class GraphAnalyzer:
 
                 if len(from_req_params) > 0:
                     upstream_results = self.__operation_sequences(
-                        from_node, adjacency_map, current_visited, combined_mapping
+                        from_node, adjacency_map, current_visited, combined_mapping , 
+                        top_k,
+                        max_depth,
+                        depth + 1   # 👈 tăng depth
                     )
 
                     for upstream in upstream_results:
@@ -278,8 +290,7 @@ class GraphAnalyzer:
         self._op_seq_cache[cache_key] = result
         return result
     
-
-    def build_sequences(self, top_k=3):
+    def build_sequences(self, top_k=4):
         # 2️⃣ Nhóm cạnh theo to_node.uuid (để truy ngược về các node có thể dẫn đến nó)
         adjacency_map  = {}
         for edge in self.graph.edges:
@@ -309,8 +320,12 @@ class GraphAnalyzer:
         root_uuids = [
             uuid for uuid in self.operation_sequences.keys()
             if "{" not in uuid and "}" not in uuid
-        ]
-
+        ]   
+        
+        # --- 2️⃣ Thêm các node unresolved ---
+        for uuid, candidates in self.operation_sequences.items():
+            if any(c.get("type") == "unresolved" for c in candidates):
+                root_uuids.append(uuid)
         # 2️⃣ For each root, build its tree
         for r_uuid in root_uuids:
             root_node = TreeNode(r_uuid)
@@ -322,8 +337,15 @@ class GraphAnalyzer:
                         # Only process sequences that start from this root
                         if path and path[0] == r_uuid:
                             root_node.add_child_with_params(path, self.operation_sequences)
+            # ⚠️ Nếu là unresolved root → đảm bảo có ít nhất self-node
+            if not root_node.children:
+                root_node.add_child_with_params(
+                    [r_uuid], self.operation_sequences
+                )
+
 
             forest[r_uuid] = root_node
+        
 
         return forest
          

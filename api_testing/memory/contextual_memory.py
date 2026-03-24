@@ -2,6 +2,7 @@ from collections import defaultdict
 import copy
 import json
 import os
+import random
 
 def build_entity_prefix_map(xref_map):
     entity_prefix = {}
@@ -31,8 +32,9 @@ def extract_context(data, xref_map, prefix="", base_dict=None, entity_prefix=Non
     if isinstance(data, list):
         for item in data:
             sub = extract_context(item, xref_map, prefix, base_dict, entity_prefix)
-            for ent, vals in sub.items():
-                grouped[ent].extend(vals)
+            if sub:
+                for ent, vals in sub.items():
+                    grouped[ent].extend(vals)
         return grouped
 
     if not isinstance(data, dict):
@@ -42,7 +44,6 @@ def extract_context(data, xref_map, prefix="", base_dict=None, entity_prefix=Non
     # DFS children
     # -------------------------
     child_entities = []
-
     for key, val in data.items():
 
         child_prefix = f"{prefix}.{key}" if prefix else key
@@ -186,7 +187,8 @@ class ContextualMemory:
                 if not context:
                     continue
                 for entity, record in context.items():
-                    self.produce(entity, record)
+                    for x in entity.split(","):
+                        self.produce(x, record)
             except Exception as e:
                 print("update_with_responses error:", e)
                 continue
@@ -344,13 +346,14 @@ class ContextualMemory:
         # 4. Select max-score set
         # --------------------------
         max_score = max(s for _, s in scored)
-        best_items = [item for item, s in scored if s == max_score]
-
+        best_items = [item for item, s in scored if s ==  max_score]
+        no_best_items = [item for item, s in scored if s !=  max_score]
         # --------------------------
         # 5. Stable ordering
         # --------------------------
         best_items = sorted(best_items, key=lambda x: str(x))
-        return best_items
+        no_best_items = random.sample(no_best_items, min(len(best_items), len(no_best_items)))
+        return best_items + no_best_items
 
     def consume(self, entity_name, **filters):
         if len(self.priority_resources) > 0:

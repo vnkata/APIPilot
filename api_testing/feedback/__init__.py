@@ -1,70 +1,7 @@
-# import json
-# import re
-# from urllib.parse import urlparse
-
-# from api_testing.feedback.semantic_error_memory import SemanticErrorMemory
-# from api_testing.prompts.feedback_judge import FeedBackJudge
-# from api_testing.utils.http import isClientError, isSuccessful
-
-# class FeedbackAnalyzer:
-# 	def __init__(self,model=None):
-# 		self.model = model
-# 		self.feedback_eval = FeedBackJudge(self.model)
-# 		self.feedback = []
-# 		self.error_memory = SemanticErrorMemory(embed)
-
-# 	def evaluate(self, seq_path, responses):
-# 		seq_path = [f"{method.upper()} {endpoint}" for method, endpoint in (p.split("-", 1) for p in seq_path)]
-# 		invalids = [ entry for entry in responses if not entry.get("is_expected_status",True) and isClientError(entry.get("response",{}).get("status"))  ] # lấy những response không thỏa mong đợi
-# 		format = [
-# 			{
-# 				"method": entry.get("request",{}).get("method"),
-# 				"url": entry.get("request",{}).get("url"),
-# 				"path_params": entry.get("request",{}).get("path_params"),
-# 				"query_params": {item["name"]: parse(item["value"]) for item in entry.get("request",{}).get("queryString")},
-# 				"request_body": entry.get("request",{}).get("postData",{}).get("text"),
-# 				"error_response": entry.get("response",{}).get("content",{}).get("text")
-# 			}
-# 			for entry in invalids
-# 		]
-# 		if len(format) > 0:
-# 			params = {
-# 				"test_sequences": "\n".join(f"{i}. {p}" for i, p in enumerate(seq_path, 1)),
-# 				"operations_details":  format
-# 			}
-# 			info = self.feedback_eval.exec(**params)
-# 			info = info.get("datas", [])
-# 			for item, feedback in zip(format, info):
-# 				item["feedback"] = feedback
-# 			self.feedback = format
-
-# 			with open("FeedbackAnalyzer.json", "w", encoding="utf-8") as f:
-# 				json.dump(format, f, indent=4, ensure_ascii=False)
-
-# 	def adjust(self, path, context: 'ContextualMemory', producer_mapping,  *args, **kargs):
-# 		context.set_current(path)
-# 		for item in self.feedback:
-# 			feedback = item.get('feedback',{})
-# 			if feedback.get("remove_pair", False):
-# 				combines = item.get("path_params")
-# 				result = {}
-# 				for param, value in combines.items():
-# 					meta = producer_mapping.get(param)
-# 					if not meta:
-# 							continue
-# 					resource = meta["resource"]
-# 					key = meta["key"]
-# 					result.setdefault(resource, {})[key] = value
-# 				for resource, values in result.items():
-# 					context.remove(resource, values)
-# 			# feedback = ")
-# 		context.clear_current()
-
-
 import json
 import re
 from sklearn.metrics.pairwise import cosine_similarity
-
+ 
 from api_testing.feedback.semantic_error_memory import SemanticErrorMemory
 from api_testing.models.specification_model import ItemProperties
 from api_testing.prompts.feedback_judge import FeedBackJudge

@@ -52,6 +52,23 @@ def filter_item_properties(item: ItemProperties,
 
     return _filter_recursive(item, tree)
 
+def normalize_xref(values, target):
+    xrefs = values.get("xrefs")
+    if not xrefs:
+        return None
+
+    if isinstance(xrefs, str):
+        xrefs_list = [x.strip() for x in xrefs.split(",") if x.strip()]
+    else:
+        xrefs_list = xrefs
+
+    if target in xrefs_list:
+        # 👇 rewrite lại chỉ giữ đúng schema.xrefs
+        new_values = dict(values)
+        new_values["xrefs"] = target
+        return new_values
+
+    return None
 
 def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7, path_tree=""):
     endpoint = operation.endpoint_path
@@ -89,14 +106,22 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
     keep_schemas = {}
     for schema_name, schema in schemas.items():
         if schema is not None:
-            flattened_schema = {
-                field: values
-                for field, values in flatten_json_schema(schema.to_dict()).items()
-                # if (
-                #     (schema.xrefs is None and values.get("xrefs") is None)
-                #     or (schema.xrefs is not None and values.get("xrefs") == schema.xrefs)
-                # )
-            }
+            # flattened_schema = {
+            #     field: values
+            #     for field, values in flatten_json_schema(schema.to_dict()).items()
+            #     # if (
+            #     #     (schema.xrefs is None and values.get("xrefs") is None)
+            #     #     or (schema.xrefs is not None and values.get("xrefs") == schema.xrefs)
+            #     # )
+            # }
+            flattened = flatten_json_schema(schema.to_dict())
+            flattened_schema = {}
+
+            for field, values in flattened.items():
+                normalized = normalize_xref(values, schema_name)
+                if normalized:
+                    flattened_schema[field] = normalized
+            
             # attributes = [field for field, values in flattened_schema.items() if values.get('type') not in ['object', 'array', None]]
             attributes = [field for field, values in flattened_schema.items()]   
 
@@ -109,9 +134,10 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
                     combined = handle_word_cases(xrefs + "_" + path_context)
                     readable = ItemProperties(**values).to_human_readable()
                     attributes_texts.append(f"{combined} {readable}")
+
             attributes_embedding = embedding_model.embed_texts(attributes_texts)
             
-            hits = util.semantic_search(parameter_embeddings, attributes_embedding, top_k=50)
+            hits = util.semantic_search(parameter_embeddings, attributes_embedding, top_k=100)
             keep_attributes = {}
             for param_i in range(len(hits)):
                 for hit in hits[param_i]:
@@ -119,7 +145,6 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
                     score = hit["score"]
                     if score >= threshold:
                         keep_attributes[attribute] = score
-            # print(schema_name,"=>", keep_attributes)
             schema = filter_item_properties(schema, root_xrefs=schema.xrefs, paths=list(keep_attributes.keys()))
             if len(keep_attributes) > 0:
                 keep_schemas[schema_name] = schema

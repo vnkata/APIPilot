@@ -1,11 +1,32 @@
 
 
+from collections import defaultdict
+import copy
 import json
 from typing import List, Dict, Optional, Union
 from dataclasses import dataclass, field, fields
 from api_testing.utils import flatten_json_schema, to_dict_helper
 from api_testing.utils.common import isEmpty, remove_nulls
 from api_testing.utils.http import isSuccessful
+from copy import deepcopy
+
+def parse_xrefs(xrefs: str) -> list[str]:
+    if not xrefs:
+        return []
+    return [x.strip() for x in xrefs.split(",") if x.strip()]
+
+
+def merge_xrefs_str(*xrefs_list: str) -> str:
+    seen = set()
+    result = []
+
+    for xrefs in xrefs_list:
+        for x in parse_xrefs(xrefs):
+            if x not in seen:
+                seen.add(x)
+                result.append(x)
+
+    return ",".join(result)
 
 @dataclass
 class ItemProperties:
@@ -36,7 +57,10 @@ class ItemProperties:
     examples: List[Optional[Union[str, int, float, bool, List, Dict]]] = field(
         default_factory=list)
     xrefs: Optional[str] = None
-
+    allOf: Optional[List['ItemProperties']] = field(default_factory=list)
+    anyOf: Optional[List['ItemProperties']] = field(default_factory=list)
+    oneOf: Optional[List['ItemProperties']] = field(default_factory=list)
+    
     @classmethod
     def from_dict(cls, data: dict):
         if data is None:
@@ -48,7 +72,70 @@ class ItemProperties:
             it.properties = {}
             for key, value in data.get("properties").items():
                 it.properties[key] = ItemProperties.from_dict(value)
+            # 🔥 NEW: handle allOf / anyOf / oneOf
+        if data.get("allOf"):
+            it.allOf = [ItemProperties.from_dict(x) for x in data["allOf"]]
+
+        if data.get("anyOf"):
+            it.anyOf = [ItemProperties.from_dict(x) for x in data["anyOf"]]
+
+        if data.get("oneOf"):
+            it.oneOf = [ItemProperties.from_dict(x) for x in data["oneOf"]]
         return it
+    
+    def merge_allOf(self) -> 'ItemProperties':
+        if not self.allOf:
+            return self
+
+        merged = copy.deepcopy(self)
+        merged.allOf = []
+
+        if merged.properties is None:
+            merged.properties = {}
+            merged.type = "object"
+
+        required_set = set(merged.required or [])
+        merged_xrefs = merged.xrefs or ""
+
+        for schema in self.allOf:
+            if not schema:
+                continue
+
+            schema = schema.merge_allOf()
+
+            # =========================
+            # MERGE PROPERTIES
+            # =========================
+            if schema.properties:
+                for key, val in schema.properties.items():
+                    if key in merged.properties:
+                        existing = merged.properties[key]
+                        if existing.type == "object" and val.type == "object":
+                            existing.properties = {
+                                **(existing.properties or {}),
+                                **(val.properties or {})
+                            }
+                        else:
+                            merged.properties[key] = val
+                    else:
+                        merged.properties[key] = val
+
+            # =========================
+            # MERGE REQUIRED
+            # =========================
+            if schema.required:
+                required_set.update(schema.required)
+
+            # =========================
+            # 🔥 MERGE XREFS (STRING)
+            # =========================
+            merged_xrefs = merge_xrefs_str(merged_xrefs, schema.xrefs)
+
+        merged.required = list(required_set)
+        merged.xrefs = merged_xrefs
+
+        return merged
+
 
     def to_dict(self):
         result = {
@@ -58,8 +145,23 @@ class ItemProperties:
         return result
 
     def to_human_readable(self,ingore_type=False):
+        if self.allOf:
+            merged = self.merge_allOf()
+            return merged.to_human_readable(ingore_type)
+        if self.anyOf:
+            return " or ".join([
+                item.to_human_readable(True)
+                for item in self.anyOf
+            ])
+
+        if self.oneOf:
+            return " one of (" + ", ".join([
+                item.to_human_readable(True)
+                for item in self.oneOf
+            ]) + ")"
         if self.type not in ('array', 'object'):
             # pass
+            
             str = ''
             if ingore_type:
                 str+= f'a attribute to describe {self.description}' if self.description else ' a attribute'
@@ -91,7 +193,7 @@ class ItemProperties:
                 str += f', eg: {self.example}'
             return str
 
-        if self.type == 'object':
+        if self.type == 'object' and self.properties:
             dict_items = {k: v.to_human_readable()
                           for k, v in self.properties.items() if v}
             if self.xrefs is not None:
@@ -100,12 +202,10 @@ class ItemProperties:
             return json.dumps(dict_items, indent=2)
         if self.type == 'array':
             if not self.items:
-                return ''
-            dict_items = self.items.to_human_readable()
-            if self.xrefs is not None:
-                return f'a array of {self.xrefs} object'
-                # return f'a array of {self.xrefs} object with schema ' + json.dumps(dict_items, indent=4)
-            return dict_items
+                return "array"
+            if self.xrefs:
+                return f"array of {self.xrefs} object"
+            return f"array of {self.items.to_human_readable()}"            # return dict_items
         return ''
 
 @dataclass
@@ -240,33 +340,169 @@ class OperationProperties:
             for mime in (resp.content or {}).keys()
         }
         return list(request_mime_types | response_mime_types)    
+    
+    # @property
+    # def schemas(self) -> Dict[str, ItemProperties]:
+
+    #     grouped: dict[str, dict[str, dict]] = defaultdict(dict)
+
+    #     def parse_xrefs(xrefs: str) -> list[str]:
+    #         if not xrefs:
+    #             return []
+    #         return [x.strip() for x in xrefs.split(",") if x.strip()]
+
+    #     def collect(item: ItemProperties):
+    #         if not item:
+    #             return
+
+    #         # 🔥 1. flatten trực tiếp
+    #         flat = flatten_json_schema(item.to_dict())
+
+    #         # 🔥 2. group theo xrefs của từng field
+    #         for field_name, field_props in flat.items():
+    #             refs = parse_xrefs(field_props.get("xrefs")) or ["Unknown"]
+
+    #             for ref in refs:
+    #                 if field_name not in grouped[ref]:
+    #                     grouped[ref][field_name] = field_props
+    #                 else:
+    #                     # merge nhẹ tránh overwrite
+    #                     grouped[ref][field_name] = {
+    #                         **field_props,
+    #                         **grouped[ref][field_name],
+    #                     }
+
+    #     # 🚀 root traversal
+    #     for status_code, resp in (self.responses or {}).items():
+    #         if not isSuccessful(status_code):
+    #             continue
+
+    #         for item in (resp.content or {}).values():
+    #             collect(item)
+
+    #     # 🔥 3. convert → ItemProperties object
+    #     result: dict[str, ItemProperties] = {}
+
+    #     for xrefs_name, fields_dict in grouped.items():
+    #         props: dict[str, ItemProperties] = {}
+
+    #         for field_name, field_props in fields_dict.items():
+    #             field_copy = deepcopy(field_props)
+    #             field_copy.pop("xrefs", None)
+
+    #             props[field_name] = ItemProperties.from_dict(field_copy)
+
+    #         result[xrefs_name] = ItemProperties(
+    #             type="object",
+    #             properties=props,
+    #             xrefs=xrefs_name
+    #         )
+
+    #     return result
+
     @property
     def schemas(self) -> Dict[str, ItemProperties]:
+        relevant_schemas: Dict[str, ItemProperties] = {}
+
+        def parse_xrefs(xrefs: str):
+            if not xrefs:
+                return []
+            return [x.strip() for x in xrefs.split(",") if x.strip()]
+
+        def collect(item: ItemProperties, inherited_xrefs=None):
+            if not item:
+                return
+
+            inherited_xrefs = inherited_xrefs or []
+
+            # =========================
+            # 🔥 1. collect ALL sub trước
+            # =========================
+            if getattr(item, "allOf", None):
+                for sub in item.allOf:
+                    collect(sub, inherited_xrefs)
+
+            if getattr(item, "anyOf", None):
+                for sub in item.anyOf:
+                    collect(sub, inherited_xrefs)
+
+            if getattr(item, "oneOf", None):
+                for sub in item.oneOf:
+                    collect(sub, inherited_xrefs)
+
+            # =========================
+            # 🔥 2. merge allOf
+            # =========================
+            if getattr(item, "allOf", None):
+                item = item.merge_allOf()
+
+            # =========================
+            # 🔥 3. resolve xrefs (FIX + INHERIT)
+            # =========================
+            current_refs = parse_xrefs(item.xrefs)
+            effective_refs = current_refs if current_refs else inherited_xrefs
+
+            if effective_refs:
+                if item.type in ("object", "array"):
+                    for ref in effective_refs:
+                        if ref not in relevant_schemas:
+                            relevant_schemas[ref] = item
+                else:
+                    for ref in effective_refs:  # 👈 FIX: loop thay vì dùng ref undefined
+                        relevant_schemas.setdefault(ref, item)
+
+            # =========================
+            # 🔁 4. recurse (PASS DOWN refs)
+            # =========================
+            next_inherited = effective_refs
+
+            if item.items:
+                collect(item.items, next_inherited)
+
+            if item.properties:
+                for prop in item.properties.values():
+                    collect(prop, next_inherited)
+
+        # =========================
+        # 🚀 root traversal
+        # =========================
+        for status_code, resp in (self.responses or {}).items():
+            if not isSuccessful(status_code):
+                continue
+
+            for item in (resp.content or {}).values():
+                collect(item)
+
+        return relevant_schemas
+
+
+    # @property
+    # def schemas(self) -> Dict[str, ItemProperties]:
         
-        def get_relevant_schema_of_endpoint(response: ResponseProperties) -> List[str]:
-            relevant_schemas = {}
+    #     def get_relevant_schema_of_endpoint(response: ResponseProperties) -> List[str]:
+    #         relevant_schemas = {}
 
-            def get_schema_recursive(item_properties: ItemProperties):
-                if item_properties is None:
-                    return
-                if item_properties.xrefs and item_properties.type in ['object', 'array']:
-                    schema_name = item_properties.xrefs
-                    if schema_name not in relevant_schemas:
-                        relevant_schemas[schema_name] = item_properties
+    #         def get_schema_recursive(item_properties: ItemProperties):
+    #             if item_properties is None:
+    #                 return
+    #             if item_properties.xrefs and item_properties.type in ['object', 'array']:
+    #                 schema_name = item_properties.xrefs
+    #                 if schema_name not in relevant_schemas:
+    #                     relevant_schemas[schema_name] = item_properties
 
-                if item_properties.items:
-                    get_schema_recursive(item_properties.items)
-                if item_properties.properties:
-                    for prop in item_properties.properties.values():
-                        get_schema_recursive(prop)
+    #             if item_properties.items:
+    #                 get_schema_recursive(item_properties.items)
+    #             if item_properties.properties:
+    #                 for prop in item_properties.properties.values():
+    #                     get_schema_recursive(prop)
 
-            for status_code, properties in response.items():
-                if isSuccessful(status_code):
-                    for item_properties in properties.content.values():
-                        get_schema_recursive(item_properties)
-            return relevant_schemas
+    #         for status_code, properties in response.items():
+    #             if isSuccessful(status_code):
+    #                 for item_properties in properties.content.values():
+    #                     get_schema_recursive(item_properties)
+    #         return relevant_schemas
 
-        return get_relevant_schema_of_endpoint(self.responses)
+    #     return get_relevant_schema_of_endpoint(self.responses)
 
     @property
     def required_parameters(self) -> Dict[str, ParameterProperties]:
@@ -277,16 +513,141 @@ class OperationProperties:
     def optional_parameters(self) -> Dict[str, ParameterProperties]:
         return {k: v for k, v in self.parameters.items() if not v.required}
     
+    # @property
+    # def successful_responses(self) -> ItemProperties:
+    #     if self.responses is None:
+    #         return None
+    #     for status_code, response_properties in self.responses.items():
+    #         if status_code and isSuccessful(status_code) and response_properties.content:
+    #             for _, response_details in response_properties.content.items():
+    #                 return response_details
+    #     return None
+
     @property
-    def successful_responses(self) -> ItemProperties:
-        if self.responses is None:
+    def successful_responses(self) -> Optional[ItemProperties]:
+        if not self.responses:
             return None
-        for status_code, response_properties in self.responses.items():
-            if status_code and isSuccessful(status_code) and response_properties.content:
-                for _, response_details in response_properties.content.items():
-                    return response_details
-        return None
-    
+
+        collected: list[ItemProperties] = []
+
+        for status_code, resp in self.responses.items():
+            if not isSuccessful(status_code):
+                continue
+
+            for item in (resp.content or {}).values():
+                if not item:
+                    continue
+
+                # 🔥 allOf
+                if getattr(item, "allOf", None):
+                    item = item.merge_allOf()
+
+                # 🔥 array → unwrap
+                if item.type == "array" and item.items:
+                    item = item.items
+
+                # 🔥 anyOf / oneOf
+                if getattr(item, "anyOf", None):
+                    collected.extend(item.anyOf)
+                    continue
+
+                if getattr(item, "oneOf", None):
+                    collected.extend(item.oneOf)
+                    continue
+
+                collected.append(item)
+
+        if not collected:
+            return None
+
+        return self._merge_item_properties(collected)
+    def _merge_item_properties(self, items: list[ItemProperties]) -> ItemProperties:
+        merged = ItemProperties(
+            type="object",
+            properties={},
+            required=[],
+        )
+
+        merged_xrefs = set()
+
+        for item in items:
+            if not item:
+                continue
+
+            # 🔥 merge object-level xrefs
+            if getattr(item, "xrefs", None):
+                merged_xrefs.update(
+                    x.strip() for x in item.xrefs.split(",") if x.strip()
+                )
+
+            # 🔥 ưu tiên object
+            if item.type == "object" and item.properties:
+                for k, v in item.properties.items():
+                    if k not in merged.properties:
+                        merged.properties[k] = v
+                    else:
+                        existing = merged.properties[k]
+
+                        # 🔥 merge field-level xrefs
+                        old_refs = set(
+                            x.strip()
+                            for x in (getattr(existing, "xrefs", "") or "").split(",")
+                            if x.strip()
+                        )
+                        new_refs = set(
+                            x.strip()
+                            for x in (getattr(v, "xrefs", "") or "").split(",")
+                            if x.strip()
+                        )
+
+                        merged_refs = old_refs | new_refs
+                        if merged_refs:
+                            existing.xrefs = ",".join(sorted(merged_refs))
+
+                # 🔥 merge required
+                if item.required:
+                    merged.required = list(set(merged.required + item.required))
+
+                # 🔥 propagate parent xrefs → field (optional nhưng rất hữu ích)
+                if getattr(item, "xrefs", None):
+                    for field in item.properties.values():
+                        if not getattr(field, "xrefs", None):
+                            field.xrefs = item.xrefs
+
+            else:
+                # 🔥 fallback nếu chưa có object nào
+                if not merged.properties:
+                    merged = item
+
+        # 🔥 set merged object-level xrefs
+        if merged_xrefs:
+            merged.xrefs = ",".join(sorted(merged_xrefs))
+
+        return merged.merge_allOf()
+
+    # def _merge_item_properties(self, items: list[ItemProperties]) -> ItemProperties:
+    #     merged = ItemProperties(
+    #         type="object",
+    #         properties={},
+    #         required=[],
+    #     )
+
+    #     for item in items:
+    #         if not item:
+    #             continue
+
+    #         # ưu tiên object
+    #         if item.type == "object" and item.properties:
+    #             merged.properties.update(item.properties)
+
+    #             if item.required:
+    #                 merged.required = list(set(merged.required + item.required))
+    #         else:
+    #             # fallback nếu không có object nào
+    #             if not merged.properties:
+    #                 merged = item
+
+    #     return merged.merge_allOf()
     @classmethod
     def from_dict(cls, data: dict):
         # Lấy tên của tất cả các fields định nghĩa trong dataclass

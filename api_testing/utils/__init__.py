@@ -8,112 +8,339 @@ import random
 from typing import Iterable, Dict, List, Any, Optional, Tuple, Set
 import re
 import hashlib
+import copy
 
-#  HTTP Status Code
+def clone_item(item: 'ItemProperties') -> 'ItemProperties':
+    return copy.deepcopy(item)
+
+# #  HTTP Status Code
+# def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
+#     """
+#     Recursively flattens a JSON schema.
+#     Preserves array-level metadata (description and type) for arrays of primitives
+#     to ensure the downstream parser can correctly identify list-based fields.
+#     """
+#     flat_schema = {}
+#     if schema is None:
+#         return flat_schema
+
+#     # Inherit or update the external reference (xrefs)
+#     current_ref = schema.get("xrefs", ref)
+
+#     # 1. Process objects with defined properties
+#     if 'properties' in schema:
+#         for key, value in schema['properties'].items():
+#             new_key = f"{parent_key}{sep}{key}" if parent_key else key
+#             if value is None:
+#                 continue
+
+#             p_type = value.get('type')
+
+#             if p_type == 'object' and 'properties' in value:
+#                 # Recursively flatten nested objects
+#                 flat_schema.update(flatten_json_schema(value, new_key, sep=sep, ref=current_ref))
+
+#             elif p_type == 'array':
+#                 items = value.get('items', {})
+#                 # Only recurse if the array contains an object with its own properties
+#                 if items.get('type') == 'object' and 'properties' in items:
+#                     flat_schema.update(flatten_json_schema(items, new_key, sep=sep, ref=current_ref))
+#                 else:
+#                     # Array of primitives (e.g., transcriptIds): 
+#                     # Store the array definition itself to preserve 'description' and 'type: array'
+#                     flat_copy = value.copy()
+#                     if current_ref:
+#                         flat_copy["xrefs"] = current_ref
+#                     flat_schema[new_key] = flat_copy
+
+#             else:
+#                 # Standard primitive field (string, integer, etc.)
+#                 flat_copy = value.copy()
+#                 if current_ref:
+#                     flat_copy["xrefs"] = current_ref
+#                 flat_schema[new_key] = flat_copy
+
+#     # 2. Handle cases where the top-level schema is an array definition
+#     elif schema.get('type') == 'array':
+#         items = schema.get('items', {})
+#         if items.get('type') == 'object' and 'properties' in items:
+#             return flatten_json_schema(items, parent_key, sep=sep, ref=current_ref)
+#         else:
+#             # Preserve metadata for root or nested level primitive arrays
+#             flat_copy = schema.copy()
+#             if current_ref:
+#                 flat_copy["xrefs"] = current_ref
+#             flat_schema[parent_key] = flat_copy
+
+#     return flat_schema
+
+
+# def flatten_item_properties(
+#     item: 'ItemProperties',
+#     prefix: str = "",
+#     include_containers: bool = False
+# ) -> Dict[str, 'ItemProperties']:
+#     """
+#     Flatten nested ItemProperties objects into a flat dict with dot-separated keys.
+
+#     Args:
+#         item: The ItemProperties schema to flatten.
+#         prefix: Internal recursion prefix (path of parent keys).
+#         include_containers: If True, include container objects (like 'user' or 'user.address')
+#                             even if they are not leaf fields.
+
+#     Returns:
+#         Dict[str, ItemProperties]: Mapping from full dotted key to the corresponding ItemProperties node.
+#     """
+#     if item is None:
+#         return {}
+
+#     flat = {}
+
+#     # Nếu đây là object
+#     if item.properties:
+#         # Optionally include this container object itself
+#         if include_containers and prefix:
+#             flat[prefix] = item
+        
+#         for key, value in item.properties.items():
+#             full_key = f"{prefix}.{key}" if prefix else key
+#             if key in item.required:
+#                 value.nullable = False
+#             flat.update(flatten_item_properties(value, prefix=full_key, include_containers=include_containers))
+
+#     # Nếu đây là array
+#     elif item.items and item.type == "array":
+#         # Flatten phần tử trong array (ví dụ user[].name → user.name)
+#         flat.update(flatten_item_properties(item.items, prefix=prefix, include_containers=include_containers))
+
+#     # Nếu là leaf node
+#     else:
+#         flat[prefix] = item
+
+#     return flat
+
 def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
-    """
-    Recursively flattens a JSON schema.
-    Preserves array-level metadata (description and type) for arrays of primitives
-    to ensure the downstream parser can correctly identify list-based fields.
-    """
     flat_schema = {}
-    if schema is None:
+    if not schema:
         return flat_schema
 
-    # Inherit or update the external reference (xrefs)
     current_ref = schema.get("xrefs", ref)
 
-    # 1. Process objects with defined properties
-    if 'properties' in schema:
-        for key, value in schema['properties'].items():
-            new_key = f"{parent_key}{sep}{key}" if parent_key else key
-            if value is None:
+    # =========================
+    # 🔥 HANDLE allOf (core fix)
+    # =========================
+    if schema.get("allOf"):
+        for sub in schema["allOf"]:
+            sub_flat = flatten_json_schema(sub, parent_key, sep, current_ref)
+            flat_schema.update(sub_flat)
+        return flat_schema
+
+    # =========================
+    # anyOf / oneOf
+    # =========================
+    if schema.get("anyOf"):
+        for sub in schema["anyOf"]:
+            flat_schema.update(
+                flatten_json_schema(sub, parent_key, sep, current_ref)
+            )
+        return flat_schema
+
+    if schema.get("oneOf"):
+        for sub in schema["oneOf"]:
+            flat_schema.update(
+                flatten_json_schema(sub, parent_key, sep, current_ref)
+            )
+        return flat_schema
+
+    # =========================
+    # OBJECT
+    # =========================
+    if schema.get("properties"):
+        for key, value in schema["properties"].items():
+            if not value:
                 continue
 
-            p_type = value.get('type')
+            new_key = f"{parent_key}{sep}{key}" if parent_key else key
 
-            if p_type == 'object' and 'properties' in value:
-                # Recursively flatten nested objects
-                flat_schema.update(flatten_json_schema(value, new_key, sep=sep, ref=current_ref))
+            # propagate xrefs
+            child_ref = value.get("xrefs", current_ref)
 
-            elif p_type == 'array':
-                items = value.get('items', {})
-                # Only recurse if the array contains an object with its own properties
-                if items.get('type') == 'object' and 'properties' in items:
-                    flat_schema.update(flatten_json_schema(items, new_key, sep=sep, ref=current_ref))
+            # 🔥 recursive call FIRST (important)
+            if value.get("allOf") or value.get("anyOf") or value.get("oneOf"):
+                flat_schema.update(
+                    flatten_json_schema(value, new_key, sep, child_ref)
+                )
+                continue
+
+            p_type = value.get("type")
+
+            # nested object
+            if p_type == "object" and value.get("properties"):
+                flat_schema.update(
+                    flatten_json_schema(value, new_key, sep, child_ref)
+                )
+
+            # array
+            elif p_type == "array":
+                items = value.get("items", {})
+
+                # 🔥 items có allOf
+                if items.get("allOf") or items.get("anyOf") or items.get("oneOf"):
+                    flat_schema.update(
+                        flatten_json_schema(items, new_key, sep, child_ref)
+                    )
+
+                elif items.get("type") == "object" and items.get("properties"):
+                    flat_schema.update(
+                        flatten_json_schema(items, new_key, sep, child_ref)
+                    )
+
                 else:
-                    # Array of primitives (e.g., transcriptIds): 
-                    # Store the array definition itself to preserve 'description' and 'type: array'
                     flat_copy = value.copy()
-                    if current_ref:
-                        flat_copy["xrefs"] = current_ref
+                    flat_copy["xrefs"] = child_ref
                     flat_schema[new_key] = flat_copy
 
             else:
-                # Standard primitive field (string, integer, etc.)
                 flat_copy = value.copy()
-                if current_ref:
-                    flat_copy["xrefs"] = current_ref
+                flat_copy["xrefs"] = child_ref
                 flat_schema[new_key] = flat_copy
 
-    # 2. Handle cases where the top-level schema is an array definition
-    elif schema.get('type') == 'array':
-        items = schema.get('items', {})
-        if items.get('type') == 'object' and 'properties' in items:
-            return flatten_json_schema(items, parent_key, sep=sep, ref=current_ref)
-        else:
-            # Preserve metadata for root or nested level primitive arrays
-            flat_copy = schema.copy()
-            if current_ref:
-                flat_copy["xrefs"] = current_ref
-            flat_schema[parent_key] = flat_copy
+    # =========================
+    # ROOT ARRAY
+    # =========================
+    elif schema.get("type") == "array":
+        items = schema.get("items", {})
+
+        if items:
+            return flatten_json_schema(items, parent_key, sep, current_ref)
 
     return flat_schema
+
 
 def flatten_item_properties(
     item: 'ItemProperties',
     prefix: str = "",
     include_containers: bool = False
 ) -> Dict[str, 'ItemProperties']:
-    """
-    Flatten nested ItemProperties objects into a flat dict with dot-separated keys.
 
-    Args:
-        item: The ItemProperties schema to flatten.
-        prefix: Internal recursion prefix (path of parent keys).
-        include_containers: If True, include container objects (like 'user' or 'user.address')
-                            even if they are not leaf fields.
-
-    Returns:
-        Dict[str, ItemProperties]: Mapping from full dotted key to the corresponding ItemProperties node.
-    """
     if item is None:
         return {}
 
-    flat = {}
+    flat: Dict[str, 'ItemProperties'] = {}
 
-    # Nếu đây là object
+    # =========================
+    # 🔥 1. HANDLE allOf
+    # =========================
+    if getattr(item, "allOf", None):
+        merged_required = set()
+
+        for sub in item.allOf:
+            # collect required
+            if sub and sub.required:
+                merged_required.update(sub.required)
+
+            flat.update(
+                flatten_item_properties(
+                    sub,
+                    prefix=prefix,
+                    include_containers=include_containers
+                )
+            )
+
+        # apply required → nullable=False
+        for key in flat:
+            last_key = key.split(".")[-1]
+            if last_key in merged_required:
+                flat[key].nullable = False
+
+        return flat
+
+    # =========================
+    # 🔥 2. anyOf / oneOf (union)
+    # =========================
+    if getattr(item, "anyOf", None):
+        for sub in item.anyOf:
+            flat.update(
+                flatten_item_properties(sub, prefix, include_containers)
+            )
+        return flat
+
+    if getattr(item, "oneOf", None):
+        for sub in item.oneOf:
+            flat.update(
+                flatten_item_properties(sub, prefix, include_containers)
+            )
+        return flat
+
+    # =========================
+    # 3. OBJECT
+    # =========================
     if item.properties:
-        # Optionally include this container object itself
         if include_containers and prefix:
             flat[prefix] = item
-        
+
         for key, value in item.properties.items():
+            if not value:
+                continue
+
             full_key = f"{prefix}.{key}" if prefix else key
-            if key in item.required:
+
+            # ⚠️ tránh mutate object gốc
+            if key in (item.required or []):
+                value = clone_item(value)
                 value.nullable = False
-            flat.update(flatten_item_properties(value, prefix=full_key, include_containers=include_containers))
 
-    # Nếu đây là array
-    elif item.items and item.type == "array":
-        # Flatten phần tử trong array (ví dụ user[].name → user.name)
-        flat.update(flatten_item_properties(item.items, prefix=prefix, include_containers=include_containers))
+            flat.update(
+                flatten_item_properties(
+                    value,
+                    prefix=full_key,
+                    include_containers=include_containers
+                )
+            )
 
-    # Nếu là leaf node
+    # =========================
+    # 4. ARRAY
+    # =========================
+    elif item.type == "array" and item.items:
+        sub = item.items
+        is_primitive = (
+                sub.type is not None
+                and sub.type not in ("object", "array")
+                and not sub.properties
+            )
+        if is_primitive:
+            if prefix:
+                flat[prefix] = item
+            return flat
+
+        # 🔥 items có composition
+        if getattr(sub, "allOf", None) or getattr(sub, "anyOf", None) or getattr(sub, "oneOf", None):
+            flat.update(
+                flatten_item_properties(
+                    sub,
+                    prefix=prefix,
+                    include_containers=include_containers
+                )
+            )
+        else:
+            flat.update(
+                flatten_item_properties(
+                    sub,
+                    prefix=prefix,
+                    include_containers=include_containers
+                )
+            )
+
+    # =========================
+    # 5. LEAF
+    # =========================
     else:
-        flat[prefix] = item
+        if prefix:
+            flat[prefix] = item
 
     return flat
+
 
 def get_combinations(
     arr: Iterable[Any],

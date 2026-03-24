@@ -11,29 +11,16 @@ from api_testing.utils import get_body_combinations, get_combinations
 from api_testing.utils.common import remove_nulls
 from typing import Any, Dict
 
-
-def unflatten_dict(flat_dict: Dict[str, Any], sep: str = ".") -> Dict[str, Any]:
-    """
-    Convert a flattened dictionary with dot-separated keys back into a nested dictionary.
-
-    Example:
-        {"a.b.c": 1, "a.b.d": 2}
-        → {"a": {"b": {"c": 1, "d": 2}}}
-    """
-    nested: Dict[str, Any] = {}
-
-    for path, value in flat_dict.items():
-        parts = path.split(sep)
-        current = nested
-
-        # Traverse or create nested structure
-        for key in parts[:-1]:
-            current = current.setdefault(key, {})
-
-        # Assign the leaf value
-        current[parts[-1]] = value
-
-    return nested
+def has_file_deep(data):
+    
+    if isinstance(data, dict):
+        return any(has_file_deep(v) for v in data.values())
+    if isinstance(data, list):
+        return any(has_file_deep(v) for v in data)
+    if isinstance(data, tuple) and len(data) == 3:
+        filename, content, content_type = data
+        return True
+    return isinstance(data, (bytes, bytearray))
 
 def has_llm_placeholder(obj):
 
@@ -50,8 +37,27 @@ def has_llm_placeholder(obj):
     elif isinstance(obj, str):
         if v := obj:
             return v == "**LLMGenerator**" or v == "**LLMGenerator**::invalid"
-
     return False
+
+def to_placeholder(obj):
+    if isinstance(obj, tuple) and len(obj) == 3:
+        filename, content, content_type = obj
+        return {
+            "filename": filename,
+            "content": "<BINARY>",
+            "content_type": content_type
+        }
+    # bytes
+    if isinstance(obj, (bytes, bytearray)):
+        return "<BINARY>"
+
+    # custom object (BytesValue)
+    if obj.__class__.__name__ == "BytesValue":
+        return "<BINARY>"
+
+    # fallback
+    return str(obj)
+
 
 class NaiveValueGenerator:
     def __init__(
@@ -98,16 +104,61 @@ class NaiveValueGenerator:
         return params_combinations
 
     def __get_combination_request_body__(self, request_body):
-        request_body_label = request_body.keys()
-        request_body_required_label = {
-            k
-            for k, v in request_body.items()
-            if v.nullable is not None and v.nullable == False
-        }
-        request_body_combinations = get_combinations(
-            request_body_label, request_body_required_label
-        )
-        return request_body_combinations
+        if not request_body:
+            return [[]]
+
+        # 🔥 NEW STRUCTURE: có __type__
+        if isinstance(request_body, dict) and "__type__" in request_body:
+            body_type = request_body.get("__type__")
+
+            # -------------------------
+            # ARRAY / PRIMITIVE → only 1 way
+            # -------------------------
+            if body_type in ("array", "primitive"):
+                return [["__body__"]]
+
+            # -------------------------
+            # OBJECT → combinations of fields
+            # -------------------------
+            if body_type == "object":
+                props = request_body.get("properties", {})
+                if not isinstance(props, dict):
+                    return [[]]
+
+                request_body_label = list(props.keys())
+
+                # required fields
+                request_body_required_label = {
+                    k
+                    for k, v in props.items()
+                    if getattr(v, "nullable", None) is False
+                }
+
+                return get_combinations(
+                    request_body_label,
+                    request_body_required_label
+                )
+
+        # -------------------------
+        # FALLBACK (old format)
+        # -------------------------
+        if isinstance(request_body, dict):
+            request_body_label = list(request_body.keys())
+
+            request_body_required_label = {
+                k
+                for k, v in request_body.items()
+                if getattr(v, "required", False)
+                or (getattr(v, "nullable", None) is False)
+            }
+
+            return get_combinations(
+                request_body_label,
+                request_body_required_label
+            )
+
+        return [[]]
+
     
     def exec(self):
         # process parameters
@@ -152,11 +203,13 @@ class NaiveValueGenerator:
                 if name is None:
                     continue
                 field = field_map.get(name)
-                if not field or not field.strategy.type:
+                if not field:
+                    generated[name] = None
                     continue
                 val = None
                 try:
-                    if field.strategy.type == "LLMGenerator":
+                    strategy_type = getattr(getattr(field, "strategy", None), "type", None)
+                    if not strategy_type or strategy_type == "LLMGenerator":
                         val = "**LLMGenerator**"
                     else:
                         val = (
@@ -174,14 +227,20 @@ class NaiveValueGenerator:
                                 strategy=strategy, context_pool=self.context_pool
                             )
                         mutated = True
-                except:
+                except Exception as e:
                     val = None
+                if getattr(field, "type", None) == "array" and val is not None:
+                    if not isinstance(val, list):
+                        val = [val]
                 generated[name] = val
-
             return generated, mutated
+        
+        is_array_body = (
+            isinstance(self.request_body, dict)
+            and self.request_body.get("__type__") == "array"
+        )
 
         for i in range(self.num_test_cases):
-        
         
             # --- Select parameters ---
             params_selected = (
@@ -193,15 +252,60 @@ class NaiveValueGenerator:
             should_mutate = random.random() < self.mutation_ratio
             # --- Generate parameter values ---
             params, params_mutated = generate_fields(self.parameters, params_selected, should_mutate)
-            body, body_mutated = generate_fields(self.request_body, body_selected, should_mutate)
+            body_mutated = False
+
+            body = [] 
+
+            if is_array_body:
+                # 🔥 ALWAYS use LLM placeholder for array
+                items_schema = self.request_body.get("items", {})
+                if items_schema.get("__type__") == "object":
+                    props = items_schema.get("properties", {})
+                    min_items = items_schema.get("minItems", 1)
+                    max_items = items_schema.get("maxItems", 5)
+
+                    if should_mutate:
+                        num_items = random.choice([
+                            0,                # empty array
+                            1,
+                            random.randint(2, 5),
+                            100               # large payload
+                        ])
+                    else:
+                        num_items = random.randint(min_items, max_items)
+
+                    for _ in range(num_items):
+                        item, mutated = generate_fields(
+                            props,
+                            list(props.keys()),
+                            should_mutate
+                        )
+                        body.append(item)
+                        body_mutated = body_mutated or mutated
+                    body = {
+                        "__body__": body
+                    }
+                else:
+                    body = {
+                        "__body__": "**LLMGenerator**" # for array with LLM gen
+                    }
+
+            else:
+                props_mapping = self.request_body.get("properties", {})
+                body, body_mutated = generate_fields(
+                    props_mapping,
+                    body_selected,
+                    should_mutate
+                )
+
             if not should_mutate:    
-                for i in range(10):
+                for _ in range(10):
                     path_param_values = {k: v for k, v in params.items() if k in path_params}
 
                     # 1️⃣ blacklist check FIRST
                     if self.context_pool.is_blacklisted(path_param_values):
                         params, params_mutated = generate_fields(self.parameters, params_selected)
-                        body, body_mutated = generate_fields(self.request_body, body_selected)
+                        # body, body_mutated = generate_fields(self.request_body, body_selected)
                         continue
                     # 2️⃣ whitelist priority (70%)
                     if random.random() < 0.7:
@@ -211,13 +315,13 @@ class NaiveValueGenerator:
                         # 3️⃣ exploration 30%
                         break
                     params, params_mutated = generate_fields(self.parameters, params_selected)
-                    body, body_mutated = generate_fields(self.request_body, body_selected)
+                    # body, body_mutated = generate_fields(self.request_body, body_selected)
                     # 
             # --- Rebuild body & finalize ---
             data.append(
                 {
                     "parameters": remove_nulls(params),
-                    "requestBody": remove_nulls(body),
+                    "requestBody": body,
                     "expected_code": "4xx"
                     if (params_mutated or body_mutated)
                     else "2xx",
@@ -239,6 +343,7 @@ class NaiveValueGenerator:
                 )
             )
         ]
+        
         def contains_llm_generator(obj):
             if isinstance(obj, dict):
                 return any(contains_llm_generator(v) for v in obj.values())
@@ -246,22 +351,49 @@ class NaiveValueGenerator:
                 return any(contains_llm_generator(v) for v in obj)
             return obj == "**LLMGenerator**"
 
-
         # -----------------------------
         # 1️⃣ Split
         # -----------------------------
         def _need_judge(item):
-            return item.get("expected_code") == "2xx" or contains_llm_generator(item)
+            return (item.get("expected_code") == "2xx" or contains_llm_generator(item)) and  has_file_deep(item.get("requestBody")) == False
 
         judge_datas = [item for item in test_datas if _need_judge(item)]
         normal_datas = [item for item in test_datas if not _need_judge(item)]
-
         # -----------------------------
         # 2️⃣ Execute judge
         # -----------------------------
         judge_results = []
 
         if judge_datas:
+            rb_desc = ""
+
+            if isinstance(self.request_body, dict) and "__type__" in self.request_body:
+                body_type = self.request_body.get("__type__")
+
+                # 🔥 ARRAY
+                if body_type == "array":
+                    rb_desc = self.request_body.get("description") or "Array request body"
+
+                # 🔥 OBJECT
+                elif body_type == "object":
+                    props = self.request_body.get("properties", {})
+                    rb_desc = "\n".join(
+                        f"- {k} : {v.to_human_readable()}"
+                        for k, v in props.items()
+                    )
+
+                # 🔥 PRIMITIVE
+                elif body_type == "primitive":
+                    gen = self.request_body.get("__generator__")
+                    rb_desc = gen.to_human_readable() if gen else "Primitive request body"
+
+            else:
+                # fallback (old format)
+                rb_desc = "\n".join(
+                    f"- {k} : {v.to_human_readable()}"
+                    for k, v in (self.request_body or {}).items()
+                )
+
             params = {
                 "endpoint": f"{self.operation.http_method.upper()} {self.operation.endpoint_path}",
                 "summary": " ".join(filter(None, [self.operation.summary, self.operation.description])),
@@ -269,11 +401,8 @@ class NaiveValueGenerator:
                     f"- {k} : {v.to_human_readable()}"
                     for k, v in self.parameters.items()
                 ),
-                "requestBody": "\n".join(
-                    f"- {k} : {v.to_human_readable()}"
-                    for k, v in self.request_body.items()
-                ),
-                "test_datas": json.dumps(judge_datas,separators=(",", ":"), ensure_ascii=False)
+                "requestBody": rb_desc,
+                "test_datas": json.dumps(judge_datas, separators=(",", ":"), ensure_ascii=False, default=to_placeholder)
             }
 
             judge_results = self.semantic_oracle_judge.exec(**params)
@@ -282,113 +411,7 @@ class NaiveValueGenerator:
         # 3️⃣ Merge (không cần thứ tự)
         # -----------------------------
         merged_results = normal_datas + judge_results
-
         return merged_results
 
         
-        # params = {
-        #     "endpoint": f"{self.operation.http_method.upper()} {self.operation.endpoint_path}",
-        #     "summary": ((self.operation.summary or "") + " " + (self.operation.description or "")).strip(),
-        #     "parameters": "\n".join([
-        #         f"- {k} : {v.to_human_readable()}"   
-        #         for k, v in self.parameters.items() 
-        #     ]),
-        #     "requestBody": "\n".join([
-        #         f"- {k} : {v.to_human_readable()}"   
-        #         for k, v in self.request_body.items() 
-        #     ]),
-        #     "test_datas": json.dumps(filtered_data, indent=4)
-        # }
-        # ## semantic oracle judge
-        # results = self.semantic_oracle_judge.exec(**params)
-        # results = [ item for item in results.dict().get("datas") if item.get("satisfies", False)]
-        # return results
-    
-    # def exec(self):
-    #     # process parameters
-    #     cache = self.load_cache()
-    #     if self.operation.uuid in cache:
-    #         param_combos = cache.get(self.operation.uuid, {}).get("parameters", [])
-    #         body_combos = cache.get(self.operation.uuid, {}).get("requestBody", [])
-    #     else:
-    #         param_combos = self.__get_combination_parameters(self.parameters)
-    #         body_combos = self.__get_combination_request_body__(self.request_body)
-    #         cache[self.operation.uuid] = {
-    #             "parameters": param_combos,
-    #             "requestBody": body_combos,
-    #         }
-    #         # save cache
-    #         CACHE_FILE = os.path.join(self.cache_dir, "combination.json")
-    #         with open(CACHE_FILE, "w", encoding="utf-8") as f:
-    #             json.dump(cache, f, indent=2, ensure_ascii=False)
-    #     # if self.operation.uuid == :
-    #     #     print(body_combos)  
-    #     required_params = [
-    #         n for n, p in self.parameters.items() if getattr(p, "required", False)
-    #     ]
-    #     data = []
-    #     self.context_pool.set_current(self.operation.uuid)
-
-    #     def generate_fields(
-    #         field_map: Dict[str, Any], selected_fields: List[str]
-    #     ) -> Tuple[Dict[str, Any], bool]:
-    #         """Generate a dict of values for selected fields. Return (generated_data, is_mutated)."""
-    #         generated, mutated = {}, False
-    #         for name in selected_fields:
-    #             if name is None:
-    #                 continue
-    #             field = field_map.get(name)
-    #             if not field:
-    #                 continue
-    #             val = None
-    #             try:
-    #                 val = field.generator.next_value(context_pool=self.context_pool)
-    #             except:
-    #                 pass        
-    #             if random.random() < self.mutation_ratio:
-    #                 strategy = random.choice(list(FuzzStrategy)).value
-    #                 val = field.generator.next_fuzz_value(
-    #                     strategy=strategy, context_pool=self.context_pool
-    #                 )
-    #                 mutated = True
-    #             generated[name] = val
-
-    #         return generated, mutated
-
-    #     for i in range(self.num_test_cases):
-        
-        
-    #         # --- Select parameters ---
-    #         params_selected = (
-    #             required_params
-    #             if (i == 0 and required_params)
-    #             else random.choice(param_combos)
-    #         )
-    #         body_selected = random.choice(body_combos)
-            
-    #         # --- Generate parameter values ---
-    #         params, params_mutated = generate_fields(self.parameters, params_selected)
-    #         body, body_mutated = generate_fields(self.request_body, body_selected)
-
-    #         # --- Rebuild body & finalize ---
-    #         data.append(
-    #             {
-    #                 "parameters": remove_nulls(params),
-    #                 "requestBody": unflatten_dict(body),
-    #                 "expected_code": "4xx"
-    #                 if (params_mutated or body_mutated)
-    #                 else "2xx",
-    #             }
-    #         )
-
-    #         self.context_pool.clear_cache()
-    #         self.context_pool.clear_current()
-    #     filtered_data = [
-    #         item
-    #         for item in data
-    #         if all(
-    #             item.get("parameters", {}).get(param) is not None
-    #             for param in required_params
-    #         )
-    #     ]
-    #     return filtered_data
+       

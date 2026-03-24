@@ -9,6 +9,7 @@ from tenacity import (
     stop_after_attempt,
     wait_exponential_jitter,
     RetryCallState,
+    wait_fixed,
 )
 
 from api_testing.models.base_model import APITestingBaseLLMModel
@@ -29,7 +30,7 @@ class OpenAIModel(APITestingBaseLLMModel):
     def __init__(
         self,
         model: Optional[str] = None,
-        temperature: float = 0.7,
+        temperature: float = 0.0,
         api_key: Optional[str] = None,
         base_url: Optional[str] = None,
         **kwargs,
@@ -70,7 +71,7 @@ class OpenAIModel(APITestingBaseLLMModel):
     # Sync generate
     # ========================
     @retry(
-        wait=wait_exponential_jitter(initial=1, max=20),
+        wait=wait_fixed(60),
         stop=stop_after_attempt(3),
         after=log_retry_error,
     )
@@ -82,8 +83,9 @@ class OpenAIModel(APITestingBaseLLMModel):
     ):
         messages = []
 
-        # if system_prompt:
-        #     messages.append({"role": "system", "content": system_prompt})
+        if system_prompt:
+            schema_instruction = """Think step by step and strictly follow all requirements in the user prompt. Return only valid JSON that exactly matches the specified structure, without any extra text or fields, and ensure it is fully syntactically correct. """
+            messages.append({"role": "system", "content": schema_instruction})
 
         if isinstance(prompt, str):
             messages.append({"role": "user", "content": system_prompt + "\n" + prompt})
@@ -107,8 +109,10 @@ class OpenAIModel(APITestingBaseLLMModel):
         # ===== structured output =====
         if schema:
             try:
+                # print(text)
                 parsed = schema.model_validate_json(text)
                 add_usage(prompt_tokens, completion_tokens)
+
                 return parsed, 0
             except Exception:
                 try:

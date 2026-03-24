@@ -1,5 +1,7 @@
-from typing import Literal
+from typing import Any, Literal
 from faker import Faker
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
 
 class RandomLocaleGenerator(RandomGenerator):
@@ -26,7 +28,7 @@ class RandomLocaleGenerator(RandomGenerator):
         self.mode = mode.lower()
         self.fake = Faker()
 
-    def next_value(self) -> str:
+    def next_value(self, context_pool=None, *args, **kwargs) -> tuple[str, bytes, str]:
         """Generate the next valid locale value based on the selected mode."""
         mode_map = {
             "language_code": self.fake.language_code, # e.g., 'en', 'vi'
@@ -39,8 +41,15 @@ class RandomLocaleGenerator(RandomGenerator):
         if self.mode not in mode_map:
             raise ValueError(f"Unsupported locale mode: {self.mode}")
             
-        return str(mode_map[self.mode]())
-
-    def next_value_as_string(self) -> str:
-        """Return the value as a string."""
-        return self.next_value()
+        return mode_map[self.mode]()
+    # --------------------------
+    # Fuzzing
+    # --------------------------
+    def next_fuzz_value(
+        self,
+        strategy: FuzzStrategy | None,
+        context_pool=None,
+        *args,
+        **kwargs,
+    ) -> Any:
+        return self.next_value(*args, **kwargs)

@@ -10,7 +10,7 @@ class RandomGenerator(ABC):
 
     def __init__(self, seed: int | None = None):
         self.rand = random.Random()
-        self.seed = seed if seed is not None else random.getrandbits(64)
+        self.seed = seed # if seed is not None else random.getrandbits(64)
         self.rand.seed(self.seed)
 
     def set_seed(self, seed: int):

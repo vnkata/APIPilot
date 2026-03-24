@@ -36,7 +36,7 @@ class RequestData:
     def resolve_headers(self) -> Dict[str, str]:
         """Return headers with Content-Type ensured."""
         headers = dict(self.headers or {})
-        headers.setdefault("Content-Type", self.mime_type)
+        # headers.setdefault("Content-Type", self.mime_type)
         return headers
 
     def resolve_cookies(self) -> Dict[str, str]:

@@ -18,7 +18,7 @@ class RandomTextGenerator(RandomGenerator):
     Generates random text according to the specified mode.
     Attributes:
         mode (str): Generation mode — can be "word", "sentence", "paragraph", or "regex".
-        pattern (str): Regular expression pattern used when mode is "regex".
+        pattern (str): Regular expression pattern used when mode is "regex". using it for phone, currency,lang,...
         count (int): Number of words, sentences, or paragraphs to generate based on the mode.
         seed (int | N  one): Optional random seed value to ensure reproducible results.
     """
