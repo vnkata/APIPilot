@@ -58,6 +58,33 @@ def to_placeholder(obj):
     # fallback
     return str(obj)
 
+def deduplicate_items(items):
+    """
+    Deduplicate a list of items (dict) using stable hashing.
+    Handles binary data via to_placeholder.
+    """
+    seen = set()
+    result = []
+
+    for item in items:
+        try:
+            key = json.dumps(
+                item,
+                sort_keys=True,
+                default=to_placeholder,
+                separators=(",", ":")
+            )
+        except Exception:
+            key = str(item)
+
+        h = hashlib.md5(key.encode("utf-8")).hexdigest()
+
+        if h not in seen:
+            seen.add(h)
+            result.append(item)
+
+    return result
+
 
 class NaiveValueGenerator:
     def __init__(
@@ -193,47 +220,78 @@ class NaiveValueGenerator:
         self.context_pool.set_priority_resources(path_field_resources.values())
 
         def generate_fields(
-            field_map: Dict[str, Any], selected_fields: List[str], should_mutate=False
+            field_map: Dict[str, Any],
+            selected_fields: List[str],
+            should_mutate: bool = False
         ) -> Tuple[Dict[str, Any], bool]:
-            """Generate a dict of values for selected fields. Return (generated_data, is_mutated)."""
-            generated, mutated = {}, False
-            # path_params
+            """Generate values for selected fields. Ensure required fields are never null."""
             
+            generated: Dict[str, Any] = {}
+            mutated = False
+
             for name in selected_fields:
                 if name is None:
                     continue
+
                 field = field_map.get(name)
                 if not field:
                     generated[name] = None
                     continue
+
                 val = None
+
                 try:
                     strategy_type = getattr(getattr(field, "strategy", None), "type", None)
+
+                    # -------------------------
+                    # 1️⃣ Generate normal value
+                    # -------------------------
                     if not strategy_type or strategy_type == "LLMGenerator":
                         val = "**LLMGenerator**"
                     else:
-                        val = (
-                            field.generator.next_value_as_string()
-                            if callable(getattr(field.generator, "next_value_as_string", None))
-                            else field.generator.next_value(context_pool=self.context_pool)
-                        )
+                        if callable(getattr(field.generator, "next_value_as_string", None)):
+                            val = field.generator.next_value_as_string()
+                        else:
+                            val = field.generator.next_value(context_pool=self.context_pool)
 
+                    # -------------------------
+                    # 2️⃣ Mutation
+                    # -------------------------
                     if should_mutate and random.random() < self.mutation_ratio:
                         strategy = random.choice(list(FuzzStrategy)).value
-                        if field.strategy.type == "LLMGenerator":
+
+                        if strategy_type == "LLMGenerator":
                             val = "**LLMGenerator**"
-                        else: 
+                        else:
                             val = field.generator.next_fuzz_value(
-                                strategy=strategy, context_pool=self.context_pool
+                                strategy=strategy,
+                                context_pool=self.context_pool
                             )
                         mutated = True
-                except Exception as e:
+
+                except Exception:
                     val = None
+
+                # -------------------------
+                # 3️⃣ Normalize array
+                # -------------------------
                 if getattr(field, "type", None) == "array" and val is not None:
                     if not isinstance(val, list):
                         val = [val]
+
+                # -------------------------
+                # 4️⃣ Enforce required / non-nullable
+                # -------------------------
+                is_required = getattr(field, "required", False)
+                is_non_nullable = getattr(field, "nullable", None) is False
+
+                if (is_required or is_non_nullable) and val is None:
+                    val = "**LLMGenerator**"
+
                 generated[name] = val
+
             return generated, mutated
+
         
         is_array_body = (
             isinstance(self.request_body, dict)
@@ -269,7 +327,7 @@ class NaiveValueGenerator:
                             0,                # empty array
                             1,
                             random.randint(2, 5),
-                            100               # large payload
+                            10               # large payload
                         ])
                     else:
                         num_items = random.randint(min_items, max_items)
@@ -393,7 +451,7 @@ class NaiveValueGenerator:
                     f"- {k} : {v.to_human_readable()}"
                     for k, v in (self.request_body or {}).items()
                 )
-
+            # judge_datas = deduplicate_items(judge_datas)
             params = {
                 "endpoint": f"{self.operation.http_method.upper()} {self.operation.endpoint_path}",
                 "summary": " ".join(filter(None, [self.operation.summary, self.operation.description])),

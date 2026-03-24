@@ -1,3 +1,4 @@
+import base64
 from datetime import datetime
 import json
 import os
@@ -31,25 +32,34 @@ def to_placeholder(obj):
     # fallback
     return str(obj)
 
+
 def unflatten_dict(flat_dict: Dict[str, Any], sep: str = ".") -> Dict[str, Any]:
+    nested: Dict[str, Any] = {}
+    if isinstance(flat_dict, list):
+        return [unflatten_dict(item, sep) for item in flat_dict]
+    
     if isinstance(flat_dict, dict):
-            
-        """
-        Convert a flattened dictionary with dot-separated keys back into a nested dictionary.
-
-        Example:
-            {"a.b.c": 1, "a.b.d": 2}
-            → {"a": {"b": {"c": 1, "d": 2}}}
-        """
-        nested: Dict[str, Any] = {}
-
         for path, value in flat_dict.items():
             parts = path.split(sep)
             current = nested
 
-            # Traverse or create nested structure
-            for key in parts[:-1]:
-                current = current.setdefault(key, {})
+            for i in range(len(parts) - 1):
+                key = parts[i]
+                is_array = key.endswith("[]")
+                clean_key = key[:-2] if is_array else key
+
+                if is_array:
+                    # If key doesn't exist, create an empty list
+                    if clean_key not in current:
+                        current[clean_key] = [{}]
+                    
+                    # Move into the first element of the list
+                    current = current[clean_key][0]
+                else:
+                    # Standard dictionary navigation
+                    if clean_key not in current:
+                        current[clean_key] = {}
+                    current = current[clean_key]
 
             # Assign the leaf value
             current[parts[-1]] = value
@@ -186,6 +196,19 @@ class Requestor:
             if "__raw_binary__" in body:
                 if body["__raw_binary__"] is not None and isinstance(body["__raw_binary__"], tuple) and len(body["__raw_binary__"]) == 3:
                     _, body, __  = body["__raw_binary__"]
+                elif body["__raw_binary__"] is not None and isinstance(body["__raw_binary__"],str):
+                    raw_data = body["__raw_binary__"]
+                    try:
+                        # If it's Base64 encoded:
+                        binary_content = base64.b64decode(raw_data)
+    
+                        # Or if it's just a UTF-8 string you need as bytes:
+                        binary_content = raw_data.encode('utf-8')
+                        
+                    except Exception as e:
+                        print(f"Conversion failed: {e}")
+                        binary_content = b""
+                    body = binary_content
                 else:
                     return {"data": None}
             # case 1: file-like object
