@@ -241,6 +241,6 @@ class Executor:
   def exec(self):
     data = self.generate_values()
     for item in data:
-      print("request", asdict(item))
+      print("HTTP Request", asdict(item))
       self.sender.exec(request_data=item)
     return self.sender.entries

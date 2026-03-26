@@ -12,7 +12,8 @@ def normalize_error(text):
 
     if not text:
         return ""
-
+    if isinstance(text, bytes):
+        text = text.decode('utf-8')
     text = text.lower()
     text = re.sub(r'\d+', '<num>', text)
     # text = re.sub(r'\".*?\"', '<str>', text)

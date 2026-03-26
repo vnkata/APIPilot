@@ -147,14 +147,15 @@ class Requestor:
             response_data = ResponseData.from_requests(response)
             # Record to HAR
             self._record_har_entry(
-                method, url, headers, path_parameters, parameters, body, response, duration_ms, expected_code=request_data.expected_code, base_path=base_path
+                method, url, headers, path_parameters, parameters, body, response_data, duration_ms, expected_code=request_data.expected_code, base_path=base_path
             )
             return response_data
         except requests.exceptions.Timeout:
             response_data = ResponseData.from_requests(None)
+            duration_ms = (time.perf_counter() - start_time) * 1000
             # Record to HAR
             self._record_har_entry(
-                method, url, headers, path_parameters, parameters, body, response, duration_ms, expected_code=request_data.expected_code, base_path=base_path
+                method, url, headers, path_parameters, parameters, body, response_data, duration_ms, expected_code=request_data.expected_code, base_path=base_path
             )
             print("Lỗi: Request đã quá thời gian chờ 5 phút!")
         except requests.exceptions.RequestException as e:
@@ -256,7 +257,7 @@ class Requestor:
         path_parameters:  Dict[str, Any],
         params: Dict[str, Any],
         body: Any,
-        response: requests.Response,
+        response: ResponseData,
         duration_ms: float,
         expected_code: str,
         base_path: str
@@ -274,7 +275,7 @@ class Requestor:
             # Force utf-8 if requests is unsure to avoid chardet
             if not response.encoding:
                 response.encoding = 'utf-8'
-            response_body = response.text
+            response_body = response.body
         else:
             # For binary files, maybe just store a placeholder or base64
             response_body = "<<binary data>>"
@@ -301,13 +302,13 @@ class Requestor:
             }, 
             "response": {
                 "status": response.status_code,
-                "statusText": response.reason,
+                "statusText": body,
                 "headers": [
                     {"name": k, "value": v} for k, v in response.headers.items()
                 ],
                 "content": {
                     "mimeType": response.headers.get("Content-Type", ""),
-                    "size": len(response.content),
+                    "size": len(response.body),
                     "text": response_body,
                 },
             },
@@ -326,5 +327,5 @@ class Requestor:
             }
         }
         with open(self.cache_file, "w", encoding="utf-8") as file:
-            json.dump(data, file, indent=2, ensure_ascii=False)
+            json.dump(data, file, indent=2, ensure_ascii=False, default=to_placeholder)
 

@@ -73,7 +73,7 @@ class ResponseData:
     mime_type: str
     body: Any
     parsed: Optional[Any] = None
-
+    encoding: Any = None
     # ------------------------------------------------------------------
     # Factory constructor from requests.Response
     # ------------------------------------------------------------------
@@ -86,11 +86,11 @@ class ResponseData:
                 headers={},
                 cookies={},
                 mime_type="",
-                body=None,
+                body="",
                 parsed=None,
             )
         mime_type = response.headers.get("Content-Type", "").split(";")[0].strip()
-        body = response.content
+        body = response.content or response.reason
 
         parsed = None
         if "application/json" in mime_type:
