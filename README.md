@@ -15,7 +15,7 @@
    
 ## Evaluation Dataset: API Services
 
-The experimental evaluation encompasses five diverse REST API services, selected to represent varying complexity levels and domain-specific characteristics:
+The experimental evaluation encompasses 11 diverse REST API services, selected to represent varying complexity levels and domain-specific characteristics:
 
 #### Locally Deployed Services
 
@@ -25,11 +25,18 @@ The experimental evaluation encompasses five diverse REST API services, selected
   *Source*: https://github.com/languagetool-org/languagetool  
 - **rest-countries**: A geographical information service providing country-specific metadata  
   *Source*: https://github.com/apilayer/restcountries
-- **GitLab**: A geographical information service providing country-specific metadata  
-  *Source*: https://github.com/apilayer/restcountries
+- **GitLab**: A web-based DevOps lifecycle tool providing Git repository management, issue tracking, and CI/CD pipeline features
+  *Source*: https://gitlab.com/gitlab-org/gitlab
+- **Jhipster Sample Application**: Jhipster Sample Application API
+  *Source*: https://github.com/jhipster/jhipster-sample-app
+- **Petstore**: This is a sample server Petstore server.
+  *Source*: https://github.com/swagger-api/swagger-petstore
+- **Spring PetClinic**: Spring PetClinic Sample Application.
 
+  *Source*: https://github.com/spring-projects/spring-petclinic
 #### Remotely Hosted Services
-
+- **Bills API**: API to get and search for information regarding Bills, their stages, associated amendments and publications.
+- **Canada Holidays API**: This API lists all 31 public holidays for all 13 provinces and territories in Canada, including federal holidays.
 - **fdic**: Federal Deposit Insurance Corporation banking institution data service  
   *Documentation*: https://api.fdic.gov/banks/docs/
 - **ohsome**: OpenStreetMap geospatial data analysis and statistics service  

@@ -10,18 +10,19 @@
     },
     "version": "v1"
   },
-  "servers": [{
-    "url": "https://bills-api.parliament.uk/"
-  }],
+  "servers": [
+    {
+      "url": "https://bills-api.parliament.uk/"
+    }
+  ],
   "paths": {
     "/api/v1/Bills/{billId}/Stages/{billStageId}/Amendments": {
       "get": {
-        "tags": [
-          "Amendments"
-        ],
+        "tags": ["Amendments"],
         "summary": "Returns a list of amendments.",
         "operationId": "GetAmendments",
-        "parameters": [{
+        "parameters": [
+          {
             "name": "billId",
             "in": "path",
             "description": "Amendments relating to a Bill with Bill ID specified",
@@ -167,12 +168,11 @@
     },
     "/api/v1/Bills/{billId}/Stages/{billStageId}/Amendments/{amendmentId}": {
       "get": {
-        "tags": [
-          "Amendments"
-        ],
+        "tags": ["Amendments"],
         "summary": "Returns an amendment.",
         "operationId": "GetAmendment",
-        "parameters": [{
+        "parameters": [
+          {
             "name": "billId",
             "in": "path",
             "description": "Amendment relating to a bill with bill ID specified",
@@ -278,12 +278,11 @@
     },
     "/api/v1/Bills/{billId}/NewsArticles": {
       "get": {
-        "tags": [
-          "Bill News"
-        ],
+        "tags": ["Bill News"],
         "summary": "Returns a list of news articles for a Bill.",
         "operationId": "GetNewsArticles",
-        "parameters": [{
+        "parameters": [
+          {
             "name": "billId",
             "in": "path",
             "required": true,
@@ -384,11 +383,11 @@
     },
     "/api/v1/BillTypes": {
       "get": {
-        "tags": [
-          "Bill Types"
-        ],
+        "tags": ["Bill Types"],
         "summary": "Returns a list of Bill types.",
-        "parameters": [{
+        "operationId": "GetBillTypes",
+        "parameters": [
+          {
             "name": "Category",
             "in": "query",
             "required": false,
@@ -467,12 +466,11 @@
     },
     "/api/v1/Bills": {
       "get": {
-        "tags": [
-          "Bills"
-        ],
+        "tags": ["Bills"],
         "summary": "Returns a list of Bills.",
         "operationId": "GetBills",
-        "parameters": [{
+        "parameters": [
+          {
             "name": "SearchTerm",
             "in": "query",
             "required": false,
@@ -700,24 +698,24 @@
     },
     "/api/v1/Bills/{billId}": {
       "get": {
-        "tags": [
-          "Bills"
-        ],
+        "tags": ["Bills"],
         "summary": "Return a Bill.",
         "operationId": "GetBill",
-        "parameters": [{
-          "name": "billId",
-          "in": "path",
-          "description": "Bill with ID specified",
-          "required": true,
-          "style": "simple",
-          "explode": false,
-          "schema": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
+        "parameters": [
+          {
+            "name": "billId",
+            "in": "path",
+            "description": "Bill with ID specified",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
           }
-        }],
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -784,12 +782,11 @@
     },
     "/api/v1/Bills/{billId}/Stages/{billStageId}": {
       "get": {
-        "tags": [
-          "Bills"
-        ],
+        "tags": ["Bills"],
         "summary": "Returns a Bill stage.",
         "operationId": "GetBillStageDetails",
-        "parameters": [{
+        "parameters": [
+          {
             "name": "billId",
             "in": "path",
             "description": "Bill stage relating to Bill with Bill ID specified",
@@ -882,11 +879,11 @@
     },
     "/api/v1/Bills/{billId}/Stages": {
       "get": {
-        "tags": [
-          "Bills"
-        ],
+        "tags": ["Bills"],
         "summary": "Returns all Bill stages.",
-        "parameters": [{
+        "operationId": "GetBillStages",
+        "parameters": [
+          {
             "name": "billId",
             "in": "path",
             "description": "Stages relating to a Bill with Bill ID specified",
@@ -988,11 +985,11 @@
     },
     "/api/v1/Publications/{publicationId}/Documents/{documentId}": {
       "get": {
-        "tags": [
-          "Documents"
-        ],
+        "tags": ["Documents"],
         "summary": "Return information on a document.",
-        "parameters": [{
+        "operationId": "GetPublicationDocument",
+        "parameters": [
+          {
             "name": "publicationId",
             "in": "path",
             "description": "Document with publication Id specified",
@@ -1083,11 +1080,11 @@
     },
     "/api/v1/Publications/{publicationId}/Documents/{documentId}/Download": {
       "get": {
-        "tags": [
-          "Documents"
-        ],
+        "tags": ["Documents"],
         "summary": "Return a document.",
-        "parameters": [{
+        "operationId": "DownloadPublicationDocument",
+        "parameters": [
+          {
             "name": "publicationId",
             "in": "path",
             "description": "Document with publication Id specified",
@@ -1161,12 +1158,11 @@
     },
     "/api/v1/Bills/{billId}/Stages/{billStageId}/PingPongItems": {
       "get": {
-        "tags": [
-          "Ping Pong Items"
-        ],
+        "tags": ["Ping Pong Items"],
         "summary": "Returns a list of motions or amendments.",
         "operationId": "SearchPingPongItems",
-        "parameters": [{
+        "parameters": [
+          {
             "name": "billId",
             "in": "path",
             "description": "Motions or amendments relating to a Bill with Bill ID specified",
@@ -1312,12 +1308,11 @@
     },
     "/api/v1/Bills/{billId}/Stages/{billStageId}/PingPongItems/{pingPongItemId}": {
       "get": {
-        "tags": [
-          "Ping Pong Items"
-        ],
+        "tags": ["Ping Pong Items"],
         "summary": "Returns amendment or motion detail.",
         "operationId": "GetPingPongItem",
-        "parameters": [{
+        "parameters": [
+          {
             "name": "billId",
             "in": "path",
             "description": "Motions or amendments relating to a bill with bill ID specified",
@@ -1423,11 +1418,11 @@
     },
     "/api/v1/PublicationTypes": {
       "get": {
-        "tags": [
-          "Publication Types"
-        ],
+        "tags": ["Publication Types"],
         "summary": "Returns a list of publication types.",
-        "parameters": [{
+        "operationId": "GetPublicationTypes",
+        "parameters": [
+          {
             "name": "Skip",
             "in": "query",
             "required": false,
@@ -1496,24 +1491,24 @@
     },
     "/api/v1/Bills/{billId}/Publications": {
       "get": {
-        "tags": [
-          "Publications"
-        ],
+        "tags": ["Publications"],
         "summary": "Return a list of Bill publications.",
         "operationId": "GetBillPublication",
-        "parameters": [{
-          "name": "billId",
-          "in": "path",
-          "description": "Publications relating to Bill with Bill ID specified",
-          "required": true,
-          "style": "simple",
-          "explode": false,
-          "schema": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
+        "parameters": [
+          {
+            "name": "billId",
+            "in": "path",
+            "description": "Publications relating to Bill with Bill ID specified",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
           }
-        }],
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -1580,11 +1575,11 @@
     },
     "/api/v1/Bills/{billId}/Stages/{stageId}/Publications": {
       "get": {
-        "tags": [
-          "Publications"
-        ],
+        "tags": ["Publications"],
         "summary": "Return a list of Bill stage publications.",
-        "parameters": [{
+        "operationId": "GetBillStagePublications",
+        "parameters": [
+          {
             "name": "billId",
             "in": "path",
             "required": true,
@@ -1674,10 +1669,9 @@
     },
     "/api/v1/Rss/allbills.rss": {
       "get": {
-        "tags": [
-          "RSS"
-        ],
+        "tags": ["RSS"],
         "summary": "Returns an Rss feed of all Bills.",
+        "operationId": "GetAllBillsRss",
         "responses": {
           "200": {
             "description": "OK"
@@ -1687,10 +1681,9 @@
     },
     "/api/v1/Rss/publicbills.rss": {
       "get": {
-        "tags": [
-          "RSS"
-        ],
+        "tags": ["RSS"],
         "summary": "Returns an Rss feed of public Bills.",
+        "operationId": "GetPublicBillsRss",
         "responses": {
           "200": {
             "description": "OK"
@@ -1700,10 +1693,9 @@
     },
     "/api/v1/Rss/privatebills.rss": {
       "get": {
-        "tags": [
-          "RSS"
-        ],
+        "tags": ["RSS"],
         "summary": "Returns an Rss feed of private Bills.",
+        "operationId": "GetPrivateBillsRss",
         "responses": {
           "200": {
             "description": "OK"
@@ -1713,23 +1705,24 @@
     },
     "/api/v1/Rss/Bills/{id}.rss": {
       "get": {
-        "tags": [
-          "RSS"
-        ],
+        "tags": ["RSS"],
         "summary": "Returns an Rss feed of a certain Bill.",
-        "parameters": [{
-          "name": "id",
-          "in": "path",
-          "description": "Id of Bill",
-          "required": true,
-          "style": "simple",
-          "explode": false,
-          "schema": {
-            "minimum": 1,
-            "type": "integer",
-            "format": "int32"
+        "operationId": "GetBillRss",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "description": "Id of Bill",
+            "required": true,
+            "style": "simple",
+            "explode": false,
+            "schema": {
+              "minimum": 1,
+              "type": "integer",
+              "format": "int32"
+            }
           }
-        }],
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -1779,12 +1772,11 @@
     },
     "/api/v1/Sittings": {
       "get": {
-        "tags": [
-          "Sittings"
-        ],
+        "tags": ["Sittings"],
         "summary": "Returns a list of Sittings.",
         "operationId": "GetSittings",
-        "parameters": [{
+        "parameters": [
+          {
             "name": "House",
             "in": "query",
             "required": false,
@@ -1885,11 +1877,11 @@
     },
     "/api/v1/Stages": {
       "get": {
-        "tags": [
-          "Stages"
-        ],
+        "tags": ["Stages"],
         "summary": "Returns a list of Bill stages.",
-        "parameters": [{
+        "operationId": "GetStages",
+        "parameters": [
+          {
             "name": "Skip",
             "in": "query",
             "required": false,
@@ -2780,11 +2772,7 @@
       },
       "BillTypeCategory": {
         "type": "string",
-        "enum": [
-          "Public",
-          "Private",
-          "Hybrid"
-        ]
+        "enum": ["Public", "Private", "Hybrid"]
       },
       "BillTypeSearchResult": {
         "type": "object",
@@ -2834,20 +2822,11 @@
       },
       "CommitteeHouse": {
         "type": "string",
-        "enum": [
-          "Commons",
-          "Lords",
-          "Joint"
-        ]
+        "enum": ["Commons", "Lords", "Joint"]
       },
       "House": {
         "type": "string",
-        "enum": [
-          "All",
-          "Commons",
-          "Lords",
-          "Unassigned"
-        ]
+        "enum": ["All", "Commons", "Lords", "Unassigned"]
       },
       "Member": {
         "type": "object",
@@ -3071,11 +3050,7 @@
       },
       "OriginatingHouse": {
         "type": "string",
-        "enum": [
-          "All",
-          "Commons",
-          "Lords"
-        ]
+        "enum": ["All", "Commons", "Lords"]
       },
       "PingPongAmendment": {
         "type": "object",
@@ -3211,10 +3186,7 @@
       },
       "PingpongItemType": {
         "type": "string",
-        "enum": [
-          "Motion",
-          "Amendment"
-        ]
+        "enum": ["Motion", "Amendment"]
       },
       "ProblemDetails": {
         "type": "object",

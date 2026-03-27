@@ -13,10 +13,9 @@
   "paths": {
     "/projects": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a list of all visible projects across GitLab for the authenticated user. When accessed without authentication, only public projects with simple fields are returned.",
+        "operationId": "getProjects",
         "parameters": [
           {
             "name": "archived",
@@ -74,14 +73,7 @@
             "description": "Limit by current user minimal access level.",
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                10,
-                20,
-                30,
-                40,
-                50
-              ]
+              "enum": [0, 10, 20, 30, 40, 50]
             }
           },
           {
@@ -153,10 +145,7 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -181,11 +170,7 @@
             "description": "Limit by visibility",
             "schema": {
               "type": "string",
-              "enum": [
-                "public",
-                "internal",
-                "private"
-              ]
+              "enum": ["public", "internal", "private"]
             }
           },
           {
@@ -248,10 +233,9 @@
         }
       },
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Creates a new project owned by the authenticated user.",
+        "operationId": "createProject",
         "parameters": [
           {
             "name": "allow_merge_on_skipped_pipeline",
@@ -264,13 +248,10 @@
           {
             "name": "auto_cancel_pending_pipelines",
             "in": "query",
-            "description": "Auto-cancel pending pipelines. This isn\u2019t a boolean, but enabled/disabled.",
+            "description": "Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "enabled",
-                "disabled"
-              ]
+              "enum": ["enabled", "disabled"]
             }
           },
           {
@@ -279,11 +260,7 @@
             "description": "Auto Deploy strategy",
             "schema": {
               "type": "string",
-              "enum": [
-                "continuous",
-                "manual",
-                "timed_incremental"
-              ]
+              "enum": ["continuous", "manual", "timed_incremental"]
             }
           },
           {
@@ -342,11 +319,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -396,11 +369,7 @@
             "description": "One of disabled,private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -426,11 +395,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -463,11 +428,7 @@
             "description": "Set the merge method used.",
             "schema": {
               "type": "string",
-              "enum": [
-                "merge",
-                "rebase_merge",
-                "ff"
-              ]
+              "enum": ["merge", "rebase_merge", "ff"]
             }
           },
           {
@@ -476,11 +437,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -537,12 +494,7 @@
             "description": "One of disabled, private,enabled, or public.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled",
-                "public"
-              ]
+              "enum": ["disabled", "private", "enabled", "public"]
             }
           },
           {
@@ -551,12 +503,7 @@
             "description": "One of disabled,private,enabled or public",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled",
-                "public"
-              ]
+              "enum": ["disabled", "private", "enabled", "public"]
             }
           },
           {
@@ -597,11 +544,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -650,11 +593,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -692,11 +631,7 @@
             "description": "See project visibility level.",
             "schema": {
               "type": "string",
-              "enum": [
-                "private",
-                "internal",
-                "public"
-              ]
+              "enum": ["private", "internal", "public"]
             }
           },
           {
@@ -705,11 +640,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -759,10 +690,9 @@
     },
     "/issues": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Get all issues the authenticated user has access to. By default it returns only issues created by the current user. To get all issues, use parameter scope=all.",
+        "operationId": "getIssues",
         "parameters": [
           {
             "name": "page",
@@ -880,11 +810,7 @@
             "description": "Modify the scope of the search attribute. title , description , or a string joining them with comma. Default is title,description",
             "schema": {
               "type": "string",
-              "enum": [
-                "title",
-                "description",
-                "title,description"
-              ]
+              "enum": ["title", "description", "title,description"]
             }
           },
           {
@@ -893,10 +819,7 @@
             "description": "The milestone title. None lists all issues with no milestone. Any lists all issues that have an assigned milestone.",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any"
-              ]
+              "enum": ["None", "Any"]
             }
           },
           {
@@ -905,11 +828,7 @@
             "description": "Comma-separated list of label names, issues must have all labels to be returned. None lists all issues with no labels. Any lists all issues with at least one label. No+Label (Deprecated) lists all issues with no labels. Predefined names are case-insensitive.",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any",
-                "No+Label"
-              ]
+              "enum": ["None", "Any", "No+Label"]
             }
           },
           {
@@ -918,10 +837,7 @@
             "description": "Return issues reacted by the authenticated user by the given emoji . None returns issues not given a reaction. Any returns issues given at least one reaction. ( Introduced in GitLab 10.0)",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any"
-              ]
+              "enum": ["None", "Any"]
             }
           },
           {
@@ -958,11 +874,7 @@
             "schema": {
               "type": "string",
               "default": "created_by_me",
-              "enum": [
-                "created_by_me",
-                "assigned_to_me",
-                "all"
-              ]
+              "enum": ["created_by_me", "assigned_to_me", "all"]
             }
           },
           {
@@ -980,10 +892,7 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -992,11 +901,7 @@
             "description": "Return all issues or just those that are opened or closed",
             "schema": {
               "type": "string",
-              "enum": [
-                "all",
-                "opened",
-                "closed"
-              ]
+              "enum": ["all", "opened", "closed"]
             }
           },
           {
@@ -1068,10 +973,9 @@
     },
     "/issues/{id}": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Only for administrators. Get a single issue.",
+        "operationId": "getIssueById",
         "parameters": [
           {
             "name": "id",
@@ -1109,10 +1013,9 @@
     },
     "/groups": {
       "get": {
-        "tags": [
-          "Group"
-        ],
+        "tags": ["Group"],
         "description": "Get a list of visible groups for the authenticated user. When accessed without authentication, only public groups are returned.",
+        "operationId": "getGroups",
         "parameters": [
           {
             "name": "page",
@@ -1169,11 +1072,7 @@
             "schema": {
               "type": "string",
               "default": "name",
-              "enum": [
-                "name",
-                "path",
-                "id"
-              ]
+              "enum": ["name", "path", "id"]
             }
           },
           {
@@ -1183,10 +1082,7 @@
             "schema": {
               "type": "string",
               "default": "asc",
-              "enum": [
-                "desc",
-                "asc"
-              ]
+              "enum": ["desc", "asc"]
             }
           },
           {
@@ -1219,14 +1115,7 @@
             "description": "Limit to groups where current user has at least this access level",
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                10,
-                20,
-                30,
-                40,
-                50
-              ]
+              "enum": [0, 10, 20, 30, 40, 50]
             }
           },
           {
@@ -1265,10 +1154,9 @@
         }
       },
       "post": {
-        "tags": [
-          "Group"
-        ],
+        "tags": ["Group"],
         "description": "Creates a new project group. Available only for users who can create groups.",
+        "operationId": "createGroup",
         "parameters": [
           {
             "name": "visibility",
@@ -1276,11 +1164,7 @@
             "description": "The group's visibility. Can be private,internal, orpublic.",
             "schema": {
               "type": "string",
-              "enum": [
-                "private",
-                "internal",
-                "public"
-              ]
+              "enum": ["private", "internal", "public"]
             }
           },
           {
@@ -1313,11 +1197,7 @@
             "description": "Determine if developers can create projects in the group. Can benoone(No one),maintainer(Maintainers), or developer(Developers + Maintainers).",
             "schema": {
               "type": "string",
-              "enum": [
-                "noone",
-                "maintainer",
-                "developer"
-              ]
+              "enum": ["noone", "maintainer", "developer"]
             }
           },
           {
@@ -1334,10 +1214,7 @@
             "description": "Allowed to create subgroups. Can be owner(Owners), or maintainer(Maintainers).",
             "schema": {
               "type": "string",
-              "enum": [
-                "owner",
-                "maintainer"
-              ]
+              "enum": ["owner", "maintainer"]
             }
           },
           {
@@ -1386,17 +1263,13 @@
             "description": "SeeOptions fordefault_branch_protection. Default to the global level default branch protection setting.",
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                1,
-                2
-              ]
+              "enum": [0, 1, 2]
             }
           },
           {
             "name": "shared_runners_setting",
             "in": "query",
-            "description": "SeeOptions forshared_runners_setting. Enable or disable shared runners for a group\u2019s subgroups and projects.",
+            "description": "SeeOptions forshared_runners_setting. Enable or disable shared runners for a group’s subgroups and projects.",
             "schema": {
               "type": "string",
               "enum": [
@@ -1411,10 +1284,7 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "required": [
-                  "name",
-                  "path"
-                ],
+                "required": ["name", "path"],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -1438,10 +1308,7 @@
             },
             "multipart/form-data": {
               "schema": {
-                "required": [
-                  "name",
-                  "path"
-                ],
+                "required": ["name", "path"],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -1492,10 +1359,9 @@
     },
     "/groups/{id}/issues": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
-        "description": "Get a list of a group\u2019s issues.",
+        "tags": ["Issue"],
+        "description": "Get a list of a group’s issues.",
+        "operationId": "getGroupIssues",
         "parameters": [
           {
             "name": "page",
@@ -1622,11 +1488,7 @@
             "description": "Comma-separated list of label names, issues must have all labels to be returned. None lists all issues with no labels. Any lists all issues with at least one label. No+Label (Deprecated) lists all issues with no labels. Predefined names are case-insensitive.",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any",
-                "No+Label"
-              ]
+              "enum": ["None", "Any", "No+Label"]
             }
           },
           {
@@ -1635,10 +1497,7 @@
             "description": "The milestone title. None lists all issues with no milestone. Any lists all issues that have an assigned milestone.",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any"
-              ]
+              "enum": ["None", "Any"]
             }
           },
           {
@@ -1647,10 +1506,7 @@
             "description": "Return issues reacted by the authenticated user by the given emoji . None returns issues not given a reaction. Any returns issues given at least one reaction. ( Introduced in GitLab 10.0)",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any"
-              ]
+              "enum": ["None", "Any"]
             }
           },
           {
@@ -1686,11 +1542,7 @@
             "description": "Return issues for the given scope: created_by_me , assigned_to_me or all . For versions before 11.0, use the now deprecated created-by-me or assigned-to-me scopes instead. ( Introduced in GitLab 9.5. Changed to snake_case in GitLab 11.0)",
             "schema": {
               "type": "string",
-              "enum": [
-                "created_by_me",
-                "assigned_to_me",
-                "all"
-              ]
+              "enum": ["created_by_me", "assigned_to_me", "all"]
             }
           },
           {
@@ -1708,10 +1560,7 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -1720,10 +1569,7 @@
             "description": "Return all issues or just those that are opened or closed",
             "schema": {
               "type": "string",
-              "enum": [
-                "opened",
-                "closed"
-              ]
+              "enum": ["opened", "closed"]
             }
           },
           {
@@ -1794,10 +1640,9 @@
     },
     "/projects/{id}/issues": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
-        "description": "Get a list of a project\u2019s issues.",
+        "tags": ["Issue"],
+        "description": "Get a list of a project’s issues.",
+        "operationId": "getProjectIssues",
         "parameters": [
           {
             "name": "page",
@@ -1924,11 +1769,7 @@
             "description": "Comma-separated list of label names, issues must have all labels to be returned. None lists all issues with no labels. Any lists all issues with at least one label. No+Label (Deprecated) lists all issues with no labels. Predefined names are case-insensitive.",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any",
-                "No+Label"
-              ]
+              "enum": ["None", "Any", "No+Label"]
             }
           },
           {
@@ -1937,10 +1778,7 @@
             "description": "The milestone title. None lists all issues with no milestone. Any lists all issues that have an assigned milestone.",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any"
-              ]
+              "enum": ["None", "Any"]
             }
           },
           {
@@ -1949,10 +1787,7 @@
             "description": "Return issues reacted by the authenticated user by the given emoji . None returns issues not given a reaction. Any returns issues given at least one reaction. ( Introduced in GitLab 10.0)",
             "schema": {
               "type": "string",
-              "enum": [
-                "None",
-                "Any"
-              ]
+              "enum": ["None", "Any"]
             }
           },
           {
@@ -1980,11 +1815,7 @@
             "description": "Return issues for the given scope: created_by_me , assigned_to_me or all . For versions before 11.0, use the now deprecated created-by-me or assigned-to-me scopes instead. ( Introduced in GitLab 9.5. Changed to snake_case in GitLab 11.0)",
             "schema": {
               "type": "string",
-              "enum": [
-                "created_by_me",
-                "assigned_to_me",
-                "all"
-              ]
+              "enum": ["created_by_me", "assigned_to_me", "all"]
             }
           },
           {
@@ -2002,10 +1833,7 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -2014,10 +1842,7 @@
             "description": "Return all issues or just those that are opened or closed",
             "schema": {
               "type": "string",
-              "enum": [
-                "opened",
-                "closed"
-              ]
+              "enum": ["opened", "closed"]
             }
           },
           {
@@ -2086,10 +1911,9 @@
         "x-codegen-request-body-name": "not"
       },
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Creates a new project issue.",
+        "operationId": "createProjectIssue",
         "parameters": [
           {
             "name": "assignee_ids",
@@ -2224,10 +2048,9 @@
     },
     "/projects/{id}/issues/{issue_iid}": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Get a single project issue.",
+        "operationId": "getProjectIssue",
         "parameters": [
           {
             "name": "id",
@@ -2272,10 +2095,9 @@
         }
       },
       "put": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Updates an existing project issue. This call is also used to mark an issue as closed.",
+        "operationId": "updateProjectIssue",
         "parameters": [
           {
             "name": "add_labels",
@@ -2378,10 +2200,7 @@
             "description": "The state event of an issue. Set close to close the issue and reopen to reopen it",
             "schema": {
               "type": "string",
-              "enum": [
-                "close",
-                "reopen"
-              ]
+              "enum": ["close", "reopen"]
             }
           },
           {
@@ -2426,10 +2245,9 @@
         }
       },
       "delete": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Only for administrators and project owners. Deletes an issue.",
+        "operationId": "deleteProjectIssue",
         "parameters": [
           {
             "name": "id",
@@ -2470,10 +2288,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/reorder": {
       "put": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Reorders an issue, you can see the results when sorting issues manually",
+        "operationId": "reorderProjectIssue",
         "parameters": [
           {
             "name": "id",
@@ -2496,7 +2313,7 @@
           {
             "name": "move_after_id",
             "in": "query",
-            "description": "The ID of a project\u2019s issue that should be placed after this issue, If move_after_id is not present, move_before_id is required",
+            "description": "The ID of a project’s issue that should be placed after this issue, If move_after_id is not present, move_before_id is required",
             "schema": {
               "type": "integer"
             }
@@ -2504,7 +2321,7 @@
           {
             "name": "move_before_id",
             "in": "query",
-            "description": "The ID of a project\u2019s issue that should be placed before this issue",
+            "description": "The ID of a project’s issue that should be placed before this issue",
             "schema": {
               "type": "integer"
             }
@@ -2539,10 +2356,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/move": {
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Moves an issue to a different project.",
+        "operationId": "moveProjectIssue",
         "parameters": [
           {
             "name": "id",
@@ -2598,10 +2414,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/subscribe": {
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Subscribes the authenticated user to an issue to receive notifications.",
+        "operationId": "subscribeToProjectIssue",
         "parameters": [
           {
             "name": "id",
@@ -2648,10 +2463,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/unsubscribe": {
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Unsubscribes the authenticated user from the issue to not receive notifications from it",
+        "operationId": "unsubscribeFromProjectIssue",
         "parameters": [
           {
             "name": "id",
@@ -2698,10 +2512,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/todo": {
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Manually creates a to-do item for the current user on an issue.",
+        "operationId": "createProjectIssueTodo",
         "parameters": [
           {
             "name": "id",
@@ -2748,10 +2561,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/time_estimate": {
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Sets an estimated time of work for this issue.",
+        "operationId": "setProjectIssueTimeEstimate",
         "parameters": [
           {
             "name": "id",
@@ -2807,10 +2619,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/reset_time_estimate": {
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Resets the estimated time for this issue to 0 seconds.",
+        "operationId": "resetProjectIssueTimeEstimate",
         "parameters": [
           {
             "name": "id",
@@ -2857,10 +2668,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/add_spent_time": {
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Adds spent time for this issue",
+        "operationId": "addProjectIssueSpentTime",
         "parameters": [
           {
             "name": "id",
@@ -2916,10 +2726,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/reset_spent_time": {
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Resets the total spent time for this issue to 0 seconds.",
+        "operationId": "resetProjectIssueSpentTime",
         "parameters": [
           {
             "name": "id",
@@ -2966,10 +2775,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/time_stats": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "If the project is private or the issue is confidential, you need to provide credentials to authorize. The preferred way to do this, is by using personal access tokens.",
+        "operationId": "getProjectIssueTimeStats",
         "parameters": [
           {
             "name": "id",
@@ -3016,10 +2824,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/related_merge_requests": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Get all the merge requests that are related to the issue.",
+        "operationId": "getProjectIssueRelatedMergeRequests",
         "parameters": [
           {
             "name": "id",
@@ -3069,10 +2876,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/closed_by": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Get all merge requests that close a particular issue when merged.",
+        "operationId": "getProjectIssueClosedBy",
         "parameters": [
           {
             "name": "id",
@@ -3122,10 +2928,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/participants": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Participants on issues",
+        "operationId": "getProjectIssueParticipants",
         "parameters": [
           {
             "name": "id",
@@ -3175,10 +2980,9 @@
     },
     "/projects/{id}/issues/{issue_iid}/metric_images": {
       "get": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "List metric image",
+        "operationId": "listProjectIssueMetricImages",
         "parameters": [
           {
             "name": "id",
@@ -3226,10 +3030,9 @@
         }
       },
       "post": {
-        "tags": [
-          "Issue"
-        ],
+        "tags": ["Issue"],
         "description": "Upload metric image",
+        "operationId": "uploadProjectIssueMetricImage",
         "parameters": [
           {
             "name": "id",
@@ -3262,9 +3065,7 @@
           "content": {
             "multipart/form-data": {
               "schema": {
-                "required": [
-                  "file"
-                ],
+                "required": ["file"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -3374,29 +3175,18 @@
           "committed_date": "2012-09-20T08:50:22.000Z",
           "created_at": "2012-09-20T08:50:22.000Z",
           "message": "Replace sanitize with escape once",
-          "parent_ids": [
-            "6104942438c14ec7bd21c6cd5bd995272b3faff6"
-          ],
+          "parent_ids": ["6104942438c14ec7bd21c6cd5bd995272b3faff6"],
           "web_url": "https://gitlab.example.com/thedude/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"
         }
       },
       "Action": {
-        "required": [
-          "action",
-          "file_path"
-        ],
+        "required": ["action", "file_path"],
         "type": "object",
         "properties": {
           "action": {
             "type": "string",
             "description": "The action to perform",
-            "enum": [
-              "create",
-              "delete",
-              "move",
-              "update",
-              "chmod"
-            ]
+            "enum": ["create", "delete", "move", "update", "chmod"]
           },
           "file_path": {
             "type": "string",
@@ -3414,10 +3204,7 @@
             "type": "string",
             "description": "The file encoding",
             "default": "text",
-            "enum": [
-              "base64",
-              "text"
-            ]
+            "enum": ["base64", "text"]
           },
           "last_commit_id": {
             "type": "string",
@@ -3508,9 +3295,7 @@
           "committer_email": "user@example.com",
           "created_at": "2016-09-20T16:26:24.000Z",
           "message": "some commit message",
-          "parent_ids": [
-            "ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"
-          ],
+          "parent_ids": ["ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"],
           "committed_date": "2016-09-20T16:26:24.000Z",
           "authored_date": "2016-09-20T16:26:24.000Z",
           "last_pipeline": {
@@ -3564,11 +3349,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "branch",
-              "tag",
-              "all"
-            ]
+            "enum": ["branch", "tag", "all"]
           },
           "name": {
             "type": "string"
@@ -4020,7 +3801,7 @@
               "subject": "CN=gitlab@example.org,OU=Example,O=World",
               "subject_key_identifier": "BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC",
               "email": "gitlab@example.org",
-              "serial_number": 2.7896956101890133e+38,
+              "serial_number": 2.7896956101890133e38,
               "certificate_status": "good",
               "x509_issuer": {
                 "id": 1,
@@ -4300,10 +4081,7 @@
             "http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",
             "web_url": "http://example.com/diaspora/diaspora-client",
             "readme_url": "http://example.com/diaspora/diaspora-client/blob/master/README.md",
-            "tag_list": [
-              "example",
-              "disapora client"
-            ],
+            "tag_list": ["example", "disapora client"],
             "owner": {
               "id": 3,
               "name": "Diaspora",
@@ -4380,10 +4158,7 @@
             "http_url_to_repo": "http://example.com/brightbox/puppet.git",
             "web_url": "http://example.com/brightbox/puppet",
             "readme_url": "http://example.com/brightbox/puppet/blob/master/README.md",
-            "tag_list": [
-              "example",
-              "puppet"
-            ],
+            "tag_list": ["example", "puppet"],
             "owner": {
               "id": 4,
               "name": "Brightbox",
@@ -4645,10 +4420,7 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": [
-            "example",
-            "disapora project"
-          ],
+          "tag_list": ["example", "disapora project"],
           "owner": {
             "id": 3,
             "name": "Diaspora",
@@ -4874,10 +4646,7 @@
             "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
             "web_url": "http://example.com/diaspora/diaspora-project-site",
             "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-            "tag_list": [
-              "example",
-              "disapora project"
-            ],
+            "tag_list": ["example", "disapora project"],
             "name": "Diaspora Project Site",
             "name_with_namespace": "Diaspora / Diaspora Project Site",
             "path": "diaspora-project-site",
@@ -5083,10 +4852,7 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": [
-            "example",
-            "disapora project"
-          ],
+          "tag_list": ["example", "disapora project"],
           "name": "Diaspora Project Site",
           "name_with_namespace": "Diaspora / Diaspora Project Site",
           "path": "diaspora-project-site",
@@ -5414,10 +5180,7 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": [
-            "example",
-            "disapora project"
-          ],
+          "tag_list": ["example", "disapora project"],
           "owner": {
             "id": 3,
             "name": "Diaspora",
@@ -5516,9 +5279,7 @@
           "autoclose_referenced_issues": true,
           "marked_for_deletion_at": "2020-04-03T00:00:00.000Z",
           "marked_for_deletion_on": "2020-04-03T00:00:00.000Z",
-          "compliance_frameworks": [
-            "sox"
-          ],
+          "compliance_frameworks": ["sox"],
           "statistics": {
             "commit_count": 37,
             "storage_size": 1038090,
@@ -6694,11 +6455,7 @@
           },
           "search": {
             "type": "string",
-            "enum": [
-              "title",
-              "description",
-              "title,description"
-            ]
+            "enum": ["title", "description", "title,description"]
           },
           "in": {
             "type": "string"
@@ -6853,10 +6610,7 @@
               "id": 9,
               "name": "Dr. Luella Kovacek"
             },
-            "labels": [
-              "foo",
-              "bar"
-            ],
+            "labels": ["foo", "bar"],
             "upvotes": 4,
             "downvotes": 0,
             "merge_requests_count": 0,
