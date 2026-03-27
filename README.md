@@ -1,4 +1,7 @@
 # APIPilot: REST API Testing with Verified LLM-Inferred Dependencies and Response-Driven Refinement
+APIPilot is a verification-guided framework for REST API testing that infers and validates operation dependencies using LLMs and execution feedback, enabling reliable workflow generation and iterative refinement.
+## Architecture
+![Reflexion RL diagram](./figures/architecture.png)
 
 ## Available Baseline Tools
 
