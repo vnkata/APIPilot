@@ -10,13 +10,13 @@
       "url": "http://localhost:30000/api/v4"
     }
   ],
+
   "paths": {
     "/projects": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a list of all visible projects across GitLab for the authenticated user. When accessed without authentication, only public projects with simple fields are returned.",
+        "operationId": "getProjects",
         "parameters": [
           {
             "name": "archived",
@@ -74,14 +74,7 @@
             "description": "Limit by current user minimal access level.",
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                10,
-                20,
-                30,
-                40,
-                50
-              ]
+              "enum": [0, 10, 20, 30, 40, 50]
             }
           },
           {
@@ -153,10 +146,7 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -181,11 +171,7 @@
             "description": "Limit by visibility",
             "schema": {
               "type": "string",
-              "enum": [
-                "public",
-                "internal",
-                "private"
-              ]
+              "enum": ["public", "internal", "private"]
             }
           },
           {
@@ -248,10 +234,9 @@
         }
       },
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Creates a new project owned by the authenticated user.",
+        "operationId": "createProject",
         "parameters": [
           {
             "name": "allow_merge_on_skipped_pipeline",
@@ -264,13 +249,10 @@
           {
             "name": "auto_cancel_pending_pipelines",
             "in": "query",
-            "description": "Auto-cancel pending pipelines. This isn\u2019t a boolean, but enabled/disabled.",
+            "description": "Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "enabled",
-                "disabled"
-              ]
+              "enum": ["enabled", "disabled"]
             }
           },
           {
@@ -279,11 +261,7 @@
             "description": "Auto Deploy strategy",
             "schema": {
               "type": "string",
-              "enum": [
-                "continuous",
-                "manual",
-                "timed_incremental"
-              ]
+              "enum": ["continuous", "manual", "timed_incremental"]
             }
           },
           {
@@ -342,11 +320,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -396,11 +370,7 @@
             "description": "One of disabled,private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -426,11 +396,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -463,11 +429,7 @@
             "description": "Set the merge method used.",
             "schema": {
               "type": "string",
-              "enum": [
-                "merge",
-                "rebase_merge",
-                "ff"
-              ]
+              "enum": ["merge", "rebase_merge", "ff"]
             }
           },
           {
@@ -476,11 +438,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -537,12 +495,7 @@
             "description": "One of disabled, private,enabled, or public.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled",
-                "public"
-              ]
+              "enum": ["disabled", "private", "enabled", "public"]
             }
           },
           {
@@ -551,12 +504,7 @@
             "description": "One of disabled,private,enabled or public",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled",
-                "public"
-              ]
+              "enum": ["disabled", "private", "enabled", "public"]
             }
           },
           {
@@ -597,11 +545,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -650,11 +594,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -692,11 +632,7 @@
             "description": "See project visibility level.",
             "schema": {
               "type": "string",
-              "enum": [
-                "private",
-                "internal",
-                "public"
-              ]
+              "enum": ["private", "internal", "public"]
             }
           },
           {
@@ -705,11 +641,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -759,10 +691,9 @@
     },
     "/projects/user/{user_id}": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Creates a new project owned by the specified user. Available only for admins.",
+        "operationId": "createUserProject",
         "parameters": [
           {
             "name": "allow_merge_on_skipped_pipeline",
@@ -775,13 +706,10 @@
           {
             "name": "auto_cancel_pending_pipelines",
             "in": "query",
-            "description": "Auto-cancel pending pipelines. This isn\u2019t a boolean, but enabled/disabled.",
+            "description": "Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "enabled",
-                "disabled"
-              ]
+              "enum": ["enabled", "disabled"]
             }
           },
           {
@@ -790,11 +718,7 @@
             "description": "Auto Deploy strategy",
             "schema": {
               "type": "string",
-              "enum": [
-                "continuous",
-                "manual",
-                "timed_incremental"
-              ]
+              "enum": ["continuous", "manual", "timed_incremental"]
             }
           },
           {
@@ -853,11 +777,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -898,11 +818,7 @@
             "description": "One of disabled,private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -928,11 +844,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -965,11 +877,7 @@
             "description": "Set the merge method used.",
             "schema": {
               "type": "string",
-              "enum": [
-                "merge",
-                "rebase_merge",
-                "ff"
-              ]
+              "enum": ["merge", "rebase_merge", "ff"]
             }
           },
           {
@@ -978,11 +886,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1039,12 +943,7 @@
             "description": "One of disabled, private,enabled, or public.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled",
-                "public"
-              ]
+              "enum": ["disabled", "private", "enabled", "public"]
             }
           },
           {
@@ -1053,12 +952,7 @@
             "description": "One of disabled,private,enabled or public",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled",
-                "public"
-              ]
+              "enum": ["disabled", "private", "enabled", "public"]
             }
           },
           {
@@ -1099,11 +993,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1152,11 +1042,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1211,11 +1097,7 @@
             "description": "See project visibility level.",
             "schema": {
               "type": "string",
-              "enum": [
-                "private",
-                "internal",
-                "public"
-              ]
+              "enum": ["private", "internal", "public"]
             }
           },
           {
@@ -1224,11 +1106,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1266,10 +1144,9 @@
     },
     "/projects/{id}": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a specific project. This endpoint can be accessed without authentication if the project is publicly accessible.",
+        "operationId": "getProjectById",
         "parameters": [
           {
             "name": "id",
@@ -1329,10 +1206,9 @@
         }
       },
       "put": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Updates an existing project.",
+        "operationId": "updateProject",
         "parameters": [
           {
             "name": "allow_merge_on_skipped_pipeline",
@@ -1348,10 +1224,7 @@
             "description": "Auto-cancel pending pipelines. This isn\u2019t a boolean, but enabled/disabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "enabled",
-                "disabled"
-              ]
+              "enum": ["enabled", "disabled"]
             }
           },
           {
@@ -1360,11 +1233,7 @@
             "description": "Auto Deploy strategy",
             "schema": {
               "type": "string",
-              "enum": [
-                "continuous",
-                "manual",
-                "timed_incremental"
-              ]
+              "enum": ["continuous", "manual", "timed_incremental"]
             }
           },
           {
@@ -1423,11 +1292,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1495,11 +1360,7 @@
             "description": "One of disabled,private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1516,11 +1377,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1553,11 +1410,7 @@
             "description": "Set the merge method used.",
             "schema": {
               "type": "string",
-              "enum": [
-                "merge",
-                "rebase_merge",
-                "ff"
-              ]
+              "enum": ["merge", "rebase_merge", "ff"]
             }
           },
           {
@@ -1566,11 +1419,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1619,12 +1468,7 @@
             "description": "One of disabled, private,enabled, or public.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled",
-                "public"
-              ]
+              "enum": ["disabled", "private", "enabled", "public"]
             }
           },
           {
@@ -1633,12 +1477,7 @@
             "description": "One of disabled,private,enabled or public",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled",
-                "public"
-              ]
+              "enum": ["disabled", "private", "enabled", "public"]
             }
           },
           {
@@ -1671,11 +1510,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1732,11 +1567,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1783,11 +1614,7 @@
             "description": "See project visibility level.",
             "schema": {
               "type": "string",
-              "enum": [
-                "private",
-                "internal",
-                "public"
-              ]
+              "enum": ["private", "internal", "public"]
             }
           },
           {
@@ -1796,11 +1623,7 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": [
-                "disabled",
-                "private",
-                "enabled"
-              ]
+              "enum": ["disabled", "private", "enabled"]
             }
           },
           {
@@ -1848,10 +1671,9 @@
         "x-codegen-request-body-name": "container_expiration_policy_attributes"
       },
       "delete": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a specific project. This endpoint can be accessed without authentication if the project is publicly accessible.",
+        "operationId": "deleteProject",
         "parameters": [
           {
             "name": "id",
@@ -1883,10 +1705,9 @@
     },
     "/projects/{id}/users": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get the users list of a project.",
+        "operationId": "getProjectUsers",
         "parameters": [
           {
             "name": "id",
@@ -1948,10 +1769,9 @@
     },
     "/projects/{id}/fork": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a list of visible projects owned by the given user. When accessed without authentication, only public projects are returned.",
+        "operationId": "forkProject",
         "parameters": [
           {
             "name": "id",
@@ -2027,10 +1847,9 @@
         }
       },
       "delete": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Delete an existing forked from relationship",
+        "operationId": "deleteProjectForkRelation",
         "parameters": [
           {
             "name": "id",
@@ -2062,10 +1881,9 @@
     },
     "/projects/{id}/forks": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "List the projects accessible to the calling user that have an established, forked relationship with the specified project",
+        "operationId": "getProjectForks",
         "parameters": [
           {
             "name": "archived",
@@ -2098,14 +1916,7 @@
             "description": "Limit by current user minimalaccess level.",
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                10,
-                20,
-                30,
-                40,
-                50
-              ]
+              "enum": [0, 10, 20, 30, 40, 50]
             }
           },
           {
@@ -2156,10 +1967,7 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -2184,11 +1992,7 @@
             "description": "Limit by visibilitypublic,internal, orprivate.",
             "schema": {
               "type": "string",
-              "enum": [
-                "public",
-                "internal",
-                "private"
-              ]
+              "enum": ["public", "internal", "private"]
             }
           },
           {
@@ -2245,10 +2049,9 @@
     },
     "/projects/{id}/star": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Stars a given project. Returns status code 304 if the project is already starred.",
+        "operationId": "starProject",
         "parameters": [
           {
             "name": "id",
@@ -2286,10 +2089,9 @@
     },
     "/projects/{id}/unstar": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Unstars a given project. Returns status code 304 if the project is not starred.",
+        "operationId": "unstarProject",
         "parameters": [
           {
             "name": "id",
@@ -2327,10 +2129,9 @@
     },
     "/projects/{id}/starrers": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "List the users who starred the specified project.",
+        "operationId": "getProjectStarrers",
         "parameters": [
           {
             "name": "id",
@@ -2339,14 +2140,6 @@
             "required": true,
             "schema": {
               "type": "integer"
-            }
-          },
-          {
-            "name": "search",
-            "in": "query",
-            "description": "Search for specific users.",
-            "schema": {
-              "type": "string"
             }
           }
         ],
@@ -2379,10 +2172,9 @@
     },
     "/projects/{id}/languages": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get languages used in a project with percentage value.",
+        "operationId": "getProjectLanguages",
         "parameters": [
           {
             "name": "id",
@@ -2420,10 +2212,9 @@
     },
     "/projects/{id}/archive": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Archives the project if the user is either an administrator or the owner of this project. This action is idempotent, thus archiving an already archived project does not change the project.",
+        "operationId": "archiveProject",
         "parameters": [
           {
             "name": "id",
@@ -2461,10 +2252,9 @@
     },
     "/projects/{id}/unarchive": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Unarchives the project if the user is either an administrator or the owner of this project. This action is idempotent, thus unarchiving a non-archived project doesn\u2019t change the project.",
+        "operationId": "unarchiveProject",
         "parameters": [
           {
             "name": "id",
@@ -2502,10 +2292,9 @@
     },
     "/projects/{id}/restore": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Restores project marked for deletion.",
+        "operationId": "restoreProject",
         "parameters": [
           {
             "name": "id",
@@ -2543,10 +2332,9 @@
     },
     "/projects/{id}/uploads": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Uploads a file to the specified project to be used in an issue or merge request description, or a comment.",
+        "operationId": "uploadProjectFile",
         "parameters": [
           {
             "name": "id",
@@ -2562,9 +2350,7 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "required": [
-                  "file"
-                ],
+                "required": ["file"],
                 "properties": {
                   "file": {
                     "type": "string",
@@ -2603,10 +2389,9 @@
     },
     "/projects/{id}/share": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Allow to share project with group.",
+        "operationId": "shareProject",
         "parameters": [
           {
             "name": "id",
@@ -2633,13 +2418,7 @@
             "required": true,
             "schema": {
               "type": "integer",
-              "enum": [
-                10,
-                20,
-                30,
-                40,
-                50
-              ]
+              "enum": [10, 20, 30, 40, 50]
             }
           },
           {
@@ -2678,10 +2457,9 @@
     },
     "/projects/{id}/share/{group_id}": {
       "delete": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Unshare the project from the group. Returns 204 and no content on success.",
+        "operationId": "unshareProjectFromGroup",
         "parameters": [
           {
             "name": "id",
@@ -2722,10 +2500,9 @@
     },
     "/projects/{id}/hooks": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a list of project hooks.",
+        "operationId": "getProjectHooks",
         "parameters": [
           {
             "name": "id",
@@ -2764,10 +2541,9 @@
         }
       },
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Adds a hook to a specified project.",
+        "operationId": "createProjectHook",
         "parameters": [
           {
             "name": "confidential_issues_events",
@@ -2926,10 +2702,9 @@
     },
     "/projects/{id}/hooks/{hook_id}": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a specific hook for a project.",
+        "operationId": "getProjectHookById",
         "parameters": [
           {
             "name": "id",
@@ -2974,10 +2749,9 @@
         }
       },
       "put": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Edits a hook for a specified project",
+        "operationId": "updateProjectHook",
         "parameters": [
           {
             "name": "confidential_issues_events",
@@ -3151,10 +2925,9 @@
         }
       },
       "delete": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Removes a hook from a project. This is an idempotent method and can be called multiple times. Either the hook is available or not.",
+        "operationId": "deleteProjectHook",
         "parameters": [
           {
             "name": "hook_id",
@@ -3201,10 +2974,9 @@
     },
     "/projects/{id}/housekeeping": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Start the Housekeeping task for a project",
+        "operationId": "startProjectHousekeeping",
         "parameters": [
           {
             "name": "id",
@@ -3236,10 +3008,9 @@
     },
     "/projects/{id}/transfer": {
       "put": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Transfer a project to a new namespace",
+        "operationId": "transferProject",
         "parameters": [
           {
             "name": "id",
@@ -3286,10 +3057,9 @@
     },
     "/projects/{id}/fork/{forked_from_id}": {
       "post": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Create a forked from/to relation between existing projects",
+        "operationId": "createProjectForkRelationFromId",
         "parameters": [
           {
             "name": "forked_from_id",
@@ -3330,10 +3100,9 @@
     },
     "/projects/{id}/snapshot": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Download snapshot of a Git repository",
+        "operationId": "downloadProjectSnapshot",
         "parameters": [
           {
             "name": "id",
@@ -3373,10 +3142,9 @@
     },
     "/users/{user_id}/projects": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a list of visible projects owned by the given user. When accessed without authentication, only public projects are returned.",
+        "operationId": "getUserProjects",
         "parameters": [
           {
             "name": "archived",
@@ -3416,14 +3184,7 @@
             "description": "Limit by current user minimal access level.",
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                10,
-                20,
-                30,
-                40,
-                50
-              ]
+              "enum": [0, 10, 20, 30, 40, 50]
             }
           },
           {
@@ -3474,10 +3235,7 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -3511,11 +3269,7 @@
             "description": "Limit by visibility",
             "schema": {
               "type": "string",
-              "enum": [
-                "public",
-                "internal",
-                "private"
-              ]
+              "enum": ["public", "internal", "private"]
             }
           },
           {
@@ -3580,10 +3334,9 @@
     },
     "/users/{user_id}/starred_projects": {
       "get": {
-        "tags": [
-          "Project"
-        ],
+        "tags": ["Project"],
         "description": "Get a list of visible projects owned by the given user. When accessed without authentication, only public projects are returned.",
+        "operationId": "getUserStarredProjects",
         "parameters": [
           {
             "name": "archived",
@@ -3607,14 +3360,7 @@
             "description": "Limit by current user minimal access level.",
             "schema": {
               "type": "integer",
-              "enum": [
-                0,
-                10,
-                20,
-                30,
-                40,
-                50
-              ]
+              "enum": [0, 10, 20, 30, 40, 50]
             }
           },
           {
@@ -3665,10 +3411,7 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": [
-                "asc",
-                "desc"
-              ]
+              "enum": ["asc", "desc"]
             }
           },
           {
@@ -3702,11 +3445,7 @@
             "description": "Limit by visibility",
             "schema": {
               "type": "string",
-              "enum": [
-                "public",
-                "internal",
-                "private"
-              ]
+              "enum": ["public", "internal", "private"]
             }
           },
           {
@@ -3762,6 +3501,7 @@
       }
     }
   },
+
   "components": {
     "schemas": {
       "Error": {
@@ -3834,29 +3574,18 @@
           "committed_date": "2012-09-20T08:50:22.000Z",
           "created_at": "2012-09-20T08:50:22.000Z",
           "message": "Replace sanitize with escape once",
-          "parent_ids": [
-            "6104942438c14ec7bd21c6cd5bd995272b3faff6"
-          ],
+          "parent_ids": ["6104942438c14ec7bd21c6cd5bd995272b3faff6"],
           "web_url": "https://gitlab.example.com/thedude/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"
         }
       },
       "Action": {
-        "required": [
-          "action",
-          "file_path"
-        ],
+        "required": ["action", "file_path"],
         "type": "object",
         "properties": {
           "action": {
             "type": "string",
             "description": "The action to perform",
-            "enum": [
-              "create",
-              "delete",
-              "move",
-              "update",
-              "chmod"
-            ]
+            "enum": ["create", "delete", "move", "update", "chmod"]
           },
           "file_path": {
             "type": "string",
@@ -3874,10 +3603,7 @@
             "type": "string",
             "description": "The file encoding",
             "default": "text",
-            "enum": [
-              "base64",
-              "text"
-            ]
+            "enum": ["base64", "text"]
           },
           "last_commit_id": {
             "type": "string",
@@ -3968,9 +3694,7 @@
           "committer_email": "user@example.com",
           "created_at": "2016-09-20T16:26:24.000Z",
           "message": "some commit message",
-          "parent_ids": [
-            "ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"
-          ],
+          "parent_ids": ["ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"],
           "committed_date": "2016-09-20T16:26:24.000Z",
           "authored_date": "2016-09-20T16:26:24.000Z",
           "last_pipeline": {
@@ -4024,11 +3748,7 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": [
-              "branch",
-              "tag",
-              "all"
-            ]
+            "enum": ["branch", "tag", "all"]
           },
           "name": {
             "type": "string"
@@ -4480,7 +4200,7 @@
               "subject": "CN=gitlab@example.org,OU=Example,O=World",
               "subject_key_identifier": "BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC",
               "email": "gitlab@example.org",
-              "serial_number": 2.7896956101890133e+38,
+              "serial_number": 2.7896956101890133e38,
               "certificate_status": "good",
               "x509_issuer": {
                 "id": 1,
@@ -4760,10 +4480,7 @@
             "http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",
             "web_url": "http://example.com/diaspora/diaspora-client",
             "readme_url": "http://example.com/diaspora/diaspora-client/blob/master/README.md",
-            "tag_list": [
-              "example",
-              "disapora client"
-            ],
+            "tag_list": ["example", "disapora client"],
             "owner": {
               "id": 3,
               "name": "Diaspora",
@@ -4840,10 +4557,7 @@
             "http_url_to_repo": "http://example.com/brightbox/puppet.git",
             "web_url": "http://example.com/brightbox/puppet",
             "readme_url": "http://example.com/brightbox/puppet/blob/master/README.md",
-            "tag_list": [
-              "example",
-              "puppet"
-            ],
+            "tag_list": ["example", "puppet"],
             "owner": {
               "id": 4,
               "name": "Brightbox",
@@ -5105,10 +4819,7 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": [
-            "example",
-            "disapora project"
-          ],
+          "tag_list": ["example", "disapora project"],
           "owner": {
             "id": 3,
             "name": "Diaspora",
@@ -5334,10 +5045,7 @@
             "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
             "web_url": "http://example.com/diaspora/diaspora-project-site",
             "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-            "tag_list": [
-              "example",
-              "disapora project"
-            ],
+            "tag_list": ["example", "disapora project"],
             "name": "Diaspora Project Site",
             "name_with_namespace": "Diaspora / Diaspora Project Site",
             "path": "diaspora-project-site",
@@ -5543,10 +5251,7 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": [
-            "example",
-            "disapora project"
-          ],
+          "tag_list": ["example", "disapora project"],
           "name": "Diaspora Project Site",
           "name_with_namespace": "Diaspora / Diaspora Project Site",
           "path": "diaspora-project-site",
@@ -5874,10 +5579,7 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": [
-            "example",
-            "disapora project"
-          ],
+          "tag_list": ["example", "disapora project"],
           "owner": {
             "id": 3,
             "name": "Diaspora",
@@ -5976,9 +5678,7 @@
           "autoclose_referenced_issues": true,
           "marked_for_deletion_at": "2020-04-03T00:00:00.000Z",
           "marked_for_deletion_on": "2020-04-03T00:00:00.000Z",
-          "compliance_frameworks": [
-            "sox"
-          ],
+          "compliance_frameworks": ["sox"],
           "statistics": {
             "commit_count": 37,
             "storage_size": 1038090,
@@ -7154,11 +6854,7 @@
           },
           "search": {
             "type": "string",
-            "enum": [
-              "title",
-              "description",
-              "title,description"
-            ]
+            "enum": ["title", "description", "title,description"]
           },
           "in": {
             "type": "string"
@@ -7313,10 +7009,7 @@
               "id": 9,
               "name": "Dr. Luella Kovacek"
             },
-            "labels": [
-              "foo",
-              "bar"
-            ],
+            "labels": ["foo", "bar"],
             "upvotes": 4,
             "downvotes": 0,
             "merge_requests_count": 0,
