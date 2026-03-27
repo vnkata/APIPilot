@@ -8,17 +8,23 @@ class ParameterRandomMapper:
 You are a system that determines the best matching data generator class for each input property.
 The list below contains all generator classes and their corresponding descriptions:
 {genFunction}
-## IMPORTANT ## 
-- If uncertain, or if properties have interdependent constraints, please fallback to LLMGenerator.
+## IMPORTANT
+* Carefully analyze each property’s name and description to select the best-matching data generator class and its arguments, ensuring the generated data is logical, meaningful, and as realistic as possible.
+* **Fallback to `LLMGenerator`:** Use it for complex or lengthy regex patterns, difficult constraints, or intricate string formats (e.g., currency, region).
+* **Uncertain or dependent constraints:** Default to `LLMGenerator`.
+* **Scope:** Apply fallback at the **field level**, not the entire object.
+* **Data quality:** Ensure all generated values are valid, realistic, and comply with the given constraints.
+
 FINAL OUTPUT:
 The response is in the format below, no explanation is needed:
 {{
   "mapping": [
     {{
+      "idx": "...",
       "property": "...",
       "generator": {{
-        "className": "...",
-        "args": {{
+        "className": "...", // required
+        "args": {{ 
           "arg1": "...",
           "arg2": "..."
         }}
@@ -26,6 +32,7 @@ The response is in the format below, no explanation is needed:
     }}
   ]
 }}
+(Note: Only keys with non-null values are included in args.)
 """
   PROMPT = """
 Please review the following details for each input property to identify the corresponding data generator class for it:
@@ -37,18 +44,13 @@ Here is list input property and descriptions:
     self.logger = getLogger(__name__)
   
   def exec(self, *args, **kargs):
-    print("ParameterRandomMapper exec called for attributes:", kargs.get("attributes"))
     system = self.SYSTEM_PROMPT.format(genFunction=kargs.get("genFunction"))
     prompt = self.PROMPT.format(attributes=kargs.get("attributes")) ## pass
-    self.logger.debug("ParameterRandomMapper Prompt: " + system)
-    self.logger.debug("ParameterRandomMapper Prompt: " + prompt)
     response, _ = self.llm.generate(
       system_prompt=system,
       prompt=prompt,
       schema=Verdict
     )
-    print("ParameterRandomMapper exec finished")
-    print("Response:", response)
     self.logger.debug("ParameterRandomMapper Response: " + response.model_dump_json())
 
     return response.mapping

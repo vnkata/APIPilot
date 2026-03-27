@@ -1,7 +1,7 @@
 import random
 from enum import Enum
 from pydantic import Field
-from typing import Any, Set
+from typing import Any, Optional, Set
 
 from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
@@ -43,9 +43,10 @@ class RandomNumberGenerator(RandomGenerator):
     """
     supported_strategies: Set[FuzzStrategy] = {"boundary", "type_error", "overflow"}
 
-    def model_post_init(self, __context):
-        super().model_post_init(__context)
-
+    def __init__(self, type: DataType|str = None, min=None, max=None, *args, **kwargs):
+        self.type = type if isinstance(type, DataType) else DataType(type)
+        self.min = min
+        self.max = max
         if not self.type.is_number():
             raise ValueError("The requested type is not a number")
 
@@ -62,8 +63,9 @@ class RandomNumberGenerator(RandomGenerator):
         elif self.type == DataType.LONG:
             self.min = self.min if self.min is not None else -2**63
             self.max = self.max if self.max is not None else 2**63 - 1
+        super().__init__(*args, **kwargs)
 
-    def next_value(self) -> Any:
+    def next_value(self, *args, **kargs) -> Any:
         """Generate a random numeric value according to the DataType."""
         if self.type in {DataType.INTEGER, DataType.INT32, DataType.INT64, DataType.LONG}:
             return self.rand.randint(int(self.min), int(self.max))
@@ -75,10 +77,7 @@ class RandomNumberGenerator(RandomGenerator):
         else:
             raise ValueError(f"Unsupported data type for random generation: {self.type}")
 
-    def next_value_as_string(self) -> str:
-        """Generate next random value as string."""
-        return str(self.next_value())
-    def next_fuzz_value(self, strategy: FuzzStrategy) -> Any:
+    def next_fuzz_value(self, strategy: FuzzStrategy, context_pool=None, *args, **kargs) -> Any:
         """
         Numeric-specific fuzzing strategies focusing on alternate bases, 
         encoding artifacts, and boundary conditions.

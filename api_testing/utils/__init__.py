@@ -1,105 +1,518 @@
 
 from datetime import time
 import itertools
+import math
 import os
 import json
+import random
 from typing import Iterable, Dict, List, Any, Optional, Tuple, Set
 import re
 import hashlib
+import copy
 
-#  HTTP Status Code
+def clone_item(item: 'ItemProperties') -> 'ItemProperties':
+    return copy.deepcopy(item)
+
+# #  HTTP Status Code
+# def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
+#     """
+#     Recursively flattens a JSON schema.
+#     Preserves array-level metadata (description and type) for arrays of primitives
+#     to ensure the downstream parser can correctly identify list-based fields.
+#     """
+#     flat_schema = {}
+#     if schema is None:
+#         return flat_schema
+
+#     # Inherit or update the external reference (xrefs)
+#     current_ref = schema.get("xrefs", ref)
+
+#     # 1. Process objects with defined properties
+#     if 'properties' in schema:
+#         for key, value in schema['properties'].items():
+#             new_key = f"{parent_key}{sep}{key}" if parent_key else key
+#             if value is None:
+#                 continue
+
+#             p_type = value.get('type')
+
+#             if p_type == 'object' and 'properties' in value:
+#                 # Recursively flatten nested objects
+#                 flat_schema.update(flatten_json_schema(value, new_key, sep=sep, ref=current_ref))
+
+#             elif p_type == 'array':
+#                 items = value.get('items', {})
+#                 # Only recurse if the array contains an object with its own properties
+#                 if items.get('type') == 'object' and 'properties' in items:
+#                     flat_schema.update(flatten_json_schema(items, new_key, sep=sep, ref=current_ref))
+#                 else:
+#                     # Array of primitives (e.g., transcriptIds): 
+#                     # Store the array definition itself to preserve 'description' and 'type: array'
+#                     flat_copy = value.copy()
+#                     if current_ref:
+#                         flat_copy["xrefs"] = current_ref
+#                     flat_schema[new_key] = flat_copy
+
+#             else:
+#                 # Standard primitive field (string, integer, etc.)
+#                 flat_copy = value.copy()
+#                 if current_ref:
+#                     flat_copy["xrefs"] = current_ref
+#                 flat_schema[new_key] = flat_copy
+
+#     # 2. Handle cases where the top-level schema is an array definition
+#     elif schema.get('type') == 'array':
+#         items = schema.get('items', {})
+#         if items.get('type') == 'object' and 'properties' in items:
+#             return flatten_json_schema(items, parent_key, sep=sep, ref=current_ref)
+#         else:
+#             # Preserve metadata for root or nested level primitive arrays
+#             flat_copy = schema.copy()
+#             if current_ref:
+#                 flat_copy["xrefs"] = current_ref
+#             flat_schema[parent_key] = flat_copy
+
+#     return flat_schema
+
+
+# def flatten_item_properties(
+#     item: 'ItemProperties',
+#     prefix: str = "",
+#     include_containers: bool = False
+# ) -> Dict[str, 'ItemProperties']:
+#     """
+#     Flatten nested ItemProperties objects into a flat dict with dot-separated keys.
+
+#     Args:
+#         item: The ItemProperties schema to flatten.
+#         prefix: Internal recursion prefix (path of parent keys).
+#         include_containers: If True, include container objects (like 'user' or 'user.address')
+#                             even if they are not leaf fields.
+
+#     Returns:
+#         Dict[str, ItemProperties]: Mapping from full dotted key to the corresponding ItemProperties node.
+#     """
+#     if item is None:
+#         return {}
+
+#     flat = {}
+
+#     # Nếu đây là object
+#     if item.properties:
+#         # Optionally include this container object itself
+#         if include_containers and prefix:
+#             flat[prefix] = item
+        
+#         for key, value in item.properties.items():
+#             full_key = f"{prefix}.{key}" if prefix else key
+#             if key in item.required:
+#                 value.nullable = False
+#             flat.update(flatten_item_properties(value, prefix=full_key, include_containers=include_containers))
+
+#     # Nếu đây là array
+#     elif item.items and item.type == "array":
+#         # Flatten phần tử trong array (ví dụ user[].name → user.name)
+#         flat.update(flatten_item_properties(item.items, prefix=prefix, include_containers=include_containers))
+
+#     # Nếu là leaf node
+#     else:
+#         flat[prefix] = item
+
+#     return flat
+
+# def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
+#     flat_schema = {}
+#     if not schema:
+#         return flat_schema
+
+#     current_ref = schema.get("xrefs", ref)
+
+#     # =========================
+#     # 🔥 HANDLE allOf (core fix)
+#     # =========================
+#     if schema.get("allOf"):
+#         for sub in schema["allOf"]:
+#             sub_flat = flatten_json_schema(sub, parent_key, sep, current_ref)
+#             flat_schema.update(sub_flat)
+#         return flat_schema
+
+#     # =========================
+#     # anyOf / oneOf
+#     # =========================
+#     if schema.get("anyOf"):
+#         for sub in schema["anyOf"]:
+#             flat_schema.update(
+#                 flatten_json_schema(sub, parent_key, sep, current_ref)
+#             )
+#         return flat_schema
+
+#     if schema.get("oneOf"):
+#         for sub in schema["oneOf"]:
+#             flat_schema.update(
+#                 flatten_json_schema(sub, parent_key, sep, current_ref)
+#             )
+#         return flat_schema
+
+#     # =========================
+#     # OBJECT
+#     # =========================
+#     if schema.get("properties"):
+#         for key, value in schema["properties"].items():
+#             if not value:
+#                 continue
+
+#             new_key = f"{parent_key}{sep}{key}" if parent_key else key
+
+#             # propagate xrefs
+#             child_ref = value.get("xrefs", current_ref)
+
+#             # 🔥 recursive call FIRST (important)
+#             if value.get("allOf") or value.get("anyOf") or value.get("oneOf"):
+#                 flat_schema.update(
+#                     flatten_json_schema(value, new_key, sep, child_ref)
+#                 )
+#                 continue
+
+#             p_type = value.get("type")
+
+#             # nested object
+#             if p_type == "object" and value.get("properties"):
+#                 flat_schema.update(
+#                     flatten_json_schema(value, new_key, sep, child_ref)
+#                 )
+
+#             # array
+#             elif p_type == "array":
+#                 items = value.get("items", {})
+
+#                 # 🔥 items có allOf
+#                 if items.get("allOf") or items.get("anyOf") or items.get("oneOf"):
+#                     flat_schema.update(
+#                         flatten_json_schema(items, new_key, sep, child_ref)
+#                     )
+
+#                 elif items.get("type") == "object" and items.get("properties"):
+#                     flat_schema.update(
+#                         flatten_json_schema(items, new_key, sep, child_ref)
+#                     )
+
+#                 else:
+#                     flat_copy = value.copy()
+#                     flat_copy["xrefs"] = child_ref
+#                     flat_schema[new_key] = flat_copy
+
+#             else:
+#                 flat_copy = value.copy()
+#                 flat_copy["xrefs"] = child_ref
+#                 flat_schema[new_key] = flat_copy
+
+#     # =========================
+#     # ROOT ARRAY
+#     # =========================
+#     elif schema.get("type") == "array":
+#         items = schema.get("items", {})
+
+#         if items:
+#             return flatten_json_schema(items, parent_key, sep, current_ref)
+
+#     return flat_schema
 def flatten_json_schema(schema, parent_key='', sep='.', ref=""):
-    """
-    Recursively flattens a JSON schema.
-    Preserves array-level metadata (description and type) for arrays of primitives
-    to ensure the downstream parser can correctly identify list-based fields.
-    """
     flat_schema = {}
-    if schema is None:
+    if not schema:
         return flat_schema
 
-    # Inherit or update the external reference (xrefs)
     current_ref = schema.get("xrefs", ref)
 
-    # 1. Process objects with defined properties
-    if 'properties' in schema:
-        for key, value in schema['properties'].items():
-            new_key = f"{parent_key}{sep}{key}" if parent_key else key
-            if value is None:
+    # =========================
+    # 🔥 HANDLE Composition (allOf, anyOf, oneOf)
+    # =========================
+    for composition in ["allOf", "anyOf", "oneOf"]:
+        if schema.get(composition):
+            for sub in schema[composition]:
+                flat_schema.update(
+                    flatten_json_schema(sub, parent_key, sep, current_ref)
+                )
+            return flat_schema
+
+    # =========================
+    # OBJECT
+    # =========================
+    if schema.get("properties"):
+        for key, value in schema["properties"].items():
+            if not value:
                 continue
 
-            p_type = value.get('type')
+            new_key = f"{parent_key}{sep}{key}" if parent_key else key
+            child_ref = value.get("xrefs", current_ref)
 
-            if p_type == 'object' and 'properties' in value:
-                # Recursively flatten nested objects
-                flat_schema.update(flatten_json_schema(value, new_key, sep=sep, ref=current_ref))
+            # Handle Composition at property level
+            if any(k in value for k in ("allOf", "anyOf", "oneOf")):
+                flat_schema.update(flatten_json_schema(value, new_key, sep, child_ref))
+                continue
 
-            elif p_type == 'array':
-                items = value.get('items', {})
-                # Only recurse if the array contains an object with its own properties
-                if items.get('type') == 'object' and 'properties' in items:
-                    flat_schema.update(flatten_json_schema(items, new_key, sep=sep, ref=current_ref))
+            p_type = value.get("type")
+
+            # Nested Object
+            if p_type == "object" and value.get("properties"):
+                flat_schema.update(flatten_json_schema(value, new_key, sep, child_ref))
+
+            # Array Handling with [] prefix
+            elif p_type == "array":
+                items = value.get("items", {})
+                # Create the array path: e.g., "user.orders[]"
+                array_path = f"{new_key}[]" 
+
+                # If items are complex (objects or compositions), recurse with array_path
+                if any(k in items for k in ("allOf", "anyOf", "oneOf", "properties")):
+                    flat_schema.update(
+                        flatten_json_schema(items, array_path, sep, child_ref)
+                    )
                 else:
-                    # Array of primitives (e.g., transcriptIds): 
-                    # Store the array definition itself to preserve 'description' and 'type: array'
+                    # Primitive array (e.g., array of strings)
                     flat_copy = value.copy()
-                    if current_ref:
-                        flat_copy["xrefs"] = current_ref
-                    flat_schema[new_key] = flat_copy
+                    flat_copy["xrefs"] = child_ref
+                    flat_schema[array_path] = flat_copy
 
+            # Leaf Node
             else:
-                # Standard primitive field (string, integer, etc.)
                 flat_copy = value.copy()
-                if current_ref:
-                    flat_copy["xrefs"] = current_ref
+                flat_copy["xrefs"] = child_ref
                 flat_schema[new_key] = flat_copy
 
-    # 2. Handle cases where the top-level schema is an array definition
-    elif schema.get('type') == 'array':
-        items = schema.get('items', {})
-        if items.get('type') == 'object' and 'properties' in items:
-            return flatten_json_schema(items, parent_key, sep=sep, ref=current_ref)
-        else:
-            # Preserve metadata for root or nested level primitive arrays
-            flat_copy = schema.copy()
-            if current_ref:
-                flat_copy["xrefs"] = current_ref
-            flat_schema[parent_key] = flat_copy
+    # =========================
+    # ROOT ARRAY (e.g., schema starts as an array)
+    # =========================
+    elif schema.get("type") == "array":
+        items = schema.get("items", {})
+        if items:
+            array_path = f"{parent_key}[]" if parent_key else "[]"
+            return flatten_json_schema(items, array_path, sep, current_ref)
 
     return flat_schema
 
 
-def get_combinations(arr, requiredArr) -> List[Tuple]:
-    combinations = []
-    max_size = 10
-    # Empirically determined - 16 is max number before size grows too large, 10 is a good balance for ensuring proper storage (> 21k)
-    required_set = set(requiredArr)
-    n = len(arr)
+def flatten_item_properties(
+    item: 'ItemProperties',
+    prefix: str = "",
+    include_containers: bool = False
+) -> Dict[str, 'ItemProperties']:
 
-    def is_valid(combo):
-        return required_set.issubset(combo)
+    if item is None:
+        return {}
 
-    if n >= max_size:
-        window_size = max_size
-        for i in range(n - window_size):
-            subset = arr[i:i + window_size]
-            for j in range(1, window_size + 1):
-                for combo in itertools.combinations(subset, j):
-                    if is_valid(combo):
-                        combinations.append(combo)
-        for size in range(window_size + 1, n + 1):
-            for i in range(n - size + 1):
-                subset = arr[i:i + size]
-                combo = tuple(subset)
-                if is_valid(combo):
-                    combinations.append(combo)
+    flat: Dict[str, 'ItemProperties'] = {}
+
+    # =========================
+    # 🔥 1. HANDLE allOf
+    # =========================
+    if getattr(item, "allOf", None):
+        merged_required = set()
+
+        for sub in item.allOf:
+            # collect required
+            if sub and sub.required:
+                merged_required.update(sub.required)
+
+            flat.update(
+                flatten_item_properties(
+                    sub,
+                    prefix=prefix,
+                    include_containers=include_containers
+                )
+            )
+
+        # apply required → nullable=False
+        for key in flat:
+            last_key = key.split(".")[-1]
+            if last_key in merged_required:
+                flat[key].nullable = False
+
+        return flat
+
+    # =========================
+    # 🔥 2. anyOf / oneOf (union)
+    # =========================
+    if getattr(item, "anyOf", None):
+        for sub in item.anyOf:
+            flat.update(
+                flatten_item_properties(sub, prefix, include_containers)
+            )
+        return flat
+
+    if getattr(item, "oneOf", None):
+        for sub in item.oneOf:
+            flat.update(
+                flatten_item_properties(sub, prefix, include_containers)
+            )
+        return flat
+
+    # =========================
+    # 3. OBJECT
+    # =========================
+    if item.properties:
+        if include_containers and prefix:
+            flat[prefix] = item
+
+        for key, value in item.properties.items():
+            if not value:
+                continue
+
+            full_key = f"{prefix}.{key}" if prefix else key
+
+            # ⚠️ tránh mutate object gốc
+            if key in (item.required or []):
+                value = clone_item(value)
+                value.nullable = False
+
+            flat.update(
+                flatten_item_properties(
+                    value,
+                    prefix=full_key,
+                    include_containers=include_containers
+                )
+            )
+
+    # =========================
+    # 4. ARRAY
+    # =========================
+    elif item.type == "array" and item.items:
+        sub = item.items
+        array_prefix = f"{prefix}[]" if prefix else "[]"
+        is_primitive = (
+                sub.type is not None
+                and sub.type not in ("object", "array")
+                and not sub.properties
+            )
+        if is_primitive:
+            if array_prefix:
+                flat[array_prefix] = item
+            return flat
+
+        # 🔥 items có composition
+        if getattr(sub, "allOf", None) or getattr(sub, "anyOf", None) or getattr(sub, "oneOf", None):
+            flat.update(
+                flatten_item_properties(
+                    sub,
+                    prefix=array_prefix,
+                    include_containers=include_containers
+                )
+            )
+        else:
+            flat.update(
+                flatten_item_properties(
+                    sub,
+                    prefix=array_prefix,
+                    include_containers=include_containers
+                )
+            )
+
+    # =========================
+    # 5. LEAF
+    # =========================
     else:
-        for i in range(1, n + 1):
-            for combo in itertools.combinations(arr, i):
-                if is_valid(combo):
-                    combinations.append(combo)
+        if prefix:
+            flat[prefix] = item
 
-    return combinations
+    return flat
+
+
+def get_combinations(
+    arr: Iterable[Any],
+    required: Optional[Set[Any]] = None,
+    seed: Optional[str] = None,
+) -> List[Tuple[Any, ...]]:
+    """
+    Generate bounded parameter combinations with depth-weighted sampling.
+
+    Uses stratified sampling that prioritizes smaller combinations while ensuring
+    required parameters are always included. For large parameter sets, random
+    sampling is used with seeded RNG for reproducibility.
+
+    Args:
+        arr: All parameters to combine.
+        required: Parameters that must appear in every combination.
+        seed: Seed string for reproducible randomness (e.g., operation ID).
+
+    Returns:
+        List of parameter combination tuples.
+    """
+    arr = list(arr) if arr is not None else []
+    required = required or set()
+    optional = [p for p in arr if p not in required]
+    required_tuple = tuple(p for p in arr if p in required)  # Preserve order
+
+    max_optional_size = 12
+    max_total = 3000
+    base_samples = 200
+    combination_seed = 42
+    # Seeded RNG for reproducibility
+    if seed:
+        seed_int = int(hashlib.md5(seed.encode()).hexdigest(), 16) % (2**32)
+        rng = random.Random(seed_int)
+    else:
+        rng = random.Random(combination_seed)
+
+    combinations: Set[Tuple[Any, ...]] = set()
+    n_optional = len(optional)
+
+    # Always include: required-only and all-params
+    combinations.add(required_tuple)
+    if optional:
+        combinations.add(required_tuple + tuple(optional))
+
+    if n_optional <= max_optional_size:
+        # Small enough: exhaustive enumeration of optional params
+        for size in range(1, n_optional + 1):
+            for combo in itertools.combinations(optional, size):
+                combinations.add(required_tuple + combo)
+    else:
+        # Large: depth-weighted sampling (smaller sizes get more samples)
+        for size in range(1, min(max_optional_size, n_optional) + 1):
+            # Exponential decay: size=1 gets base_samples, larger sizes get fewer
+            samples_for_size = max(10, int(base_samples / (size**0.7)))
+            total_possible = math.comb(n_optional, size)
+
+            if total_possible <= samples_for_size:
+                # Small enough to enumerate all
+                for combo in itertools.combinations(optional, size):
+                    combinations.add(required_tuple + combo)
+            else:
+                # Random sample with seeded RNG
+                sampled: Set[Tuple[Any, ...]] = set()
+                attempts = 0
+                max_attempts = samples_for_size * 20
+                while len(sampled) < samples_for_size and attempts < max_attempts:
+                    indices = rng.sample(range(n_optional), size)
+                    combo = tuple(optional[i] for i in sorted(indices))
+                    sampled.add(combo)
+                    attempts += 1
+                for combo in sampled:
+                    combinations.add(required_tuple + combo)
+
+    # Enforce hard cap (deterministic order: sort by size, then content)
+    result = sorted(combinations, key=lambda x: (len(x), x))
+    if len(result) > max_total:
+        # Keep smallest combinations (most valuable for issue isolation)
+        result = result[:max_total]
+
+    return result
+
+def get_required_body_params(body: 'ItemProperties', prefix: str = "") -> Optional[set[str]]:
+    if not body:
+        return None
+
+    req = set()
+    if body.type == "object" and body.properties:
+        for key, prop in body.properties.items():
+            full = f"{prefix}.{key}" if prefix else key
+            if key in (body.required or []):
+                req.add(full)
+            req |= get_required_body_params(prop, full) or set()
+
+    elif body.type == "array" and body.items:
+        req |= get_required_body_params(body.items, prefix) or set()
+
+    return req or None
 
 
 def encode_dict_as_key(dictionary: Dict) -> str:
@@ -141,34 +554,90 @@ def remove_think_tags(text: str) -> str:
     """ <think>...</think>"""
     return re.sub(r'<think>.*?</think>', '', text, flags=re.DOTALL).strip()
 
+# body
+def get_required_body_params(operation_body: 'ItemProperties', prefix: str = "") -> Optional[Set[str]]:
+    if operation_body is None:
+        return None
 
-def is_data_modified(a, b):
-    if isinstance(a, dict) and isinstance(b, dict):
-        # Các key trừ 'description'
-        keys_a = set(k for k in a if k not in (
-            "check", "reason", "description"))
-        keys_b = set(k for k in b if k not in (
-            "check", "reason", "description"))
+    required_body = set()
 
-        # So sánh keys (phát hiện thêm/xóa field)
-        if keys_a != keys_b:
-            return True
+    if operation_body.properties and operation_body.type == "object":
+        for key, value in operation_body.properties.items():
+            full_key = f"{prefix}.{key}" if prefix else key
 
-        # So sánh nội dung từng key
-        for key in keys_a:
-            if is_data_modified(a[key], b[key]):
-                return True
+            # Nếu field này nằm trong danh sách required
+            if operation_body.required and key in operation_body.required:
+                # Nếu field required là object → chỉ lấy các child params (bỏ key cha)
+                if value.type == "object":
+                    required_body |= set(get_body_params(value, prefix=full_key))
+                # Nếu là array → lấy required từ items
+                elif value.type == "array" and value.items:
+                    child_required = get_required_body_params(value.items, prefix=full_key)
+                    if child_required:
+                        required_body |= child_required
+                else:
+                    # Field thường (string, number, v.v.) → thêm trực tiếp
+                    required_body.add(full_key)
 
-        return False
+            # Dù required hay không, vẫn đệ quy để đi sâu vào nested object
+            if value.type in ("object", "array"):
+                child_required = get_required_body_params(value, prefix=full_key)
+                if child_required:
+                    required_body |= child_required
 
-    elif isinstance(a, list) and isinstance(b, list):
-        if len(a) != len(b):
-            return True
-        return any(is_data_modified(x, y) for x, y in zip(a, b))
+    elif operation_body.items and operation_body.type == "array":
+        child_required = get_required_body_params(operation_body.items, prefix=prefix)
+        if child_required:
+            required_body |= child_required
 
-    else:
-        # So sánh giá trị primitive
-        return a != b
+    return required_body or set()
 
+def get_body_params(body: 'ItemProperties', prefix: str = "") -> List[str]:
+    if body is None:
+        return []
 
-#### MARKDOWN TABLES PROCESSING ####
+    if body.properties or body.type == "object":
+        body_params = []
+        for key, value in body.properties.items():
+            full_key = f"{prefix}.{key}" if prefix else key
+            body_params.append(full_key)
+            # nếu có nested object → đi sâu
+            if value.type in ("object", "array"):
+                body_params += get_body_params(value, prefix=full_key)
+        return body_params
+
+    elif body.items and body.type == "array":
+        return get_body_params(body.items, prefix=prefix)
+
+    return []
+
+def get_request_body_params(
+    operation_body: Dict[str, 'ItemProperties'],
+) -> Dict[str, List[str]]:
+    return (
+        {k: get_body_params(v) for k, v in operation_body.items()}
+        if operation_body is not None
+        else {}
+    )
+
+def get_body_combinations(
+    operation_body: 'ItemProperties',
+) -> Dict[str, List[Tuple[str]]]:
+    return get_combinations(get_body_params(operation_body), required=get_required_body_params(operation_body))
+
+# def get_body_combinations(
+#     operation_body: Dict[str, 'ItemProperties'],
+# ) -> Dict[str, List[Tuple[str]]]:
+#     return {
+#         k: get_combinations(v, required=get_required_body_params(operation_body.get(k,[])))
+#         for k, v in get_request_body_params(operation_body).items()
+#     }
+
+def get_body_object_combinations(
+    body_schema: 'ItemProperties',
+    required_body_params: Optional[Set[str]] = None,
+    seed: Optional[str] = None,
+) -> List[Tuple[str, ...]]:
+    return get_combinations(
+        get_body_params(body_schema), required=required_body_params, seed=seed
+    )

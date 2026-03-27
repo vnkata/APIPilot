@@ -1,80 +1,186 @@
-from api_testing.models.base_model import APITestingBaseLLMModel
-from ollama import Client, AsyncClient, ChatResponse
-from typing import List, Optional, Tuple, Union, Dict
-from google.genai import types
+import logging
+import json
+from typing import Optional, List, Union
 from pydantic import BaseModel
+from openai import OpenAI, AsyncOpenAI
 
-from api_testing.utils import remove_think_tags
+from tenacity import (
+    retry,
+    stop_after_attempt,
+    wait_exponential_jitter,
+    RetryCallState,
+    wait_fixed,
+)
 
-default_gemini_model = "gemini-2.0-flash"
+from api_testing.models.base_model import APITestingBaseLLMModel
+from api_testing.utils.llm_tracker import add_usage
 
 
-class OllamaModel(APITestingBaseLLMModel):
+def log_retry_error(retry_state: RetryCallState):
+    exception = retry_state.outcome.exception()
+    logging.error(
+        f"OpenAI Error: {exception}. Retrying: {retry_state.attempt_number} time(s)..."
+    )
+
+
+default_model = "gpt-4o-mini"
+
+
+class OpenAIModel(APITestingBaseLLMModel):
     def __init__(
         self,
         model: Optional[str] = None,
-        temperature: float = 0.7,
+        temperature: float = 0.0,
+        api_key: Optional[str] = None,
+        base_url: Optional[str] = None,
         **kwargs,
     ):
-        model_name = model
-    
+        self.model_name = model or default_model
+
         if temperature < 0:
             raise ValueError("Temperature must be >= 0.")
         self.temperature = temperature
-        super().__init__(model_name)
 
-    ###############################################
-    # Other generate functions
-    ###############################################
+        self.api_key = api_key
+        self.base_url = base_url
 
+        super().__init__(self.model_name, **kwargs)
+
+    # ========================
+    # Load model / client
+    # ========================
+    def load_model(self, *args, **kwargs):
+        if not self.api_key:
+            raise ValueError(
+                "OpenAI API key is required. Set OPENAI_API_KEY or pass api_key."
+            )
+
+        self.client = OpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+        )
+
+        self.async_client = AsyncOpenAI(
+            api_key=self.api_key,
+            base_url=self.base_url,
+        )
+
+        return self.client
+
+    # ========================
+    # Sync generate
+    # ========================
+    @retry(
+        wait=wait_fixed(60),
+        stop=stop_after_attempt(3),
+        after=log_retry_error,
+    )
     def generate(
-        self, prompt:  Union[str, List], schema: Optional[BaseModel] = None
-    ) -> Tuple[Union[str, Dict], float]:
-        chat_model = self.load_model()
+        self,
+        prompt: Union[str, List[dict]],
+        system_prompt: Optional[str] = None,
+        schema: Optional[BaseModel] = None,
+    ):
+        messages = []
 
-        response: ChatResponse = chat_model.chat(
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-            format=schema.model_json_schema() if schema else None,
-            options={"temperature": self.temperature},
-        )
-        return (
-            (
-                schema.model_validate_json(response.message.content)
-                if schema
-                else remove_think_tags(response.message.content)
-            ),
-            0,
-        )
+        if system_prompt:
+            schema_instruction = """Think step by step and strictly follow all requirements in the user prompt. Return only valid JSON that exactly matches the specified structure, without any extra text or fields, and ensure it is fully syntactically correct. """
+            messages.append({"role": "system", "content": schema_instruction})
 
-    async def a_generate(
-        self, prompt: str, schema: Optional[BaseModel] = None
-    ) -> Tuple[str, float]:
-        chat_model = self.load_model(async_mode=True)
-        response: ChatResponse = await chat_model.chat(
-            model=self.model_name,
-            messages=[{"role": "user", "content": prompt}],
-            format=schema.model_json_schema() if schema else None,
-            options={"temperature": self.temperature},
-        )
-        return (
-            (
-                schema.model_validate_json(response.message.content)
-                if schema
-                else remove_think_tags(response.message.content)
-            ),
-            0,
-        )
-
-    ###############################################
-    # Model
-    ###############################################
-
-    def load_model(self, async_mode: bool = False):
-        if not async_mode:
-            return Client(host=self.base_url)
+        if isinstance(prompt, str):
+            messages.append({"role": "user", "content": system_prompt + "\n" + prompt})
         else:
-            return AsyncClient(host=self.base_url)
+            messages.extend(prompt)
 
-    def get_model_name(self):
-        return f"{self.model_name}"
+        response = self.client.chat.completions.create(
+            model=self.model_name,
+            messages=messages,
+            temperature=self.temperature,
+        )
+
+        # ===== usage tracking =====
+        usage = getattr(response, "usage", None)
+        prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
+        completion_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
+
+
+        text = response.choices[0].message.content.strip()
+
+        # ===== structured output =====
+        if schema:
+            try:
+                # print(text)
+                parsed = schema.model_validate_json(text)
+                add_usage(prompt_tokens, completion_tokens)
+
+                return parsed, 0
+            except Exception:
+                try:
+                    cleaned = text.strip("```json").strip("```").strip()
+                    parsed = schema.model_validate_json(cleaned)
+                    add_usage(prompt_tokens, completion_tokens)
+                    return parsed, 0
+                except Exception as e:
+                    raise Exception(f"JSON parse failed: {e}")
+
+        return text, 0
+
+    # ========================
+    # Async generate
+    # ========================
+    @retry(
+        wait=wait_exponential_jitter(initial=1, max=20),
+        stop=stop_after_attempt(3),
+        after=log_retry_error,
+    )
+    async def a_generate(
+        self,
+        prompt: Union[str, List[dict]],
+        system_prompt: Optional[str] = None,
+        schema: Optional[BaseModel] = None,
+    ):
+        messages = []
+
+        if system_prompt:
+            messages.append({"role": "system", "content": system_prompt})
+
+        if isinstance(prompt, str):
+            messages.append({"role": "user", "content": prompt})
+        else:
+            messages.extend(prompt)
+
+        response = await self.async_client.chat.completions.create(
+            model=self.model_name,
+            messages=messages,
+            temperature=self.temperature,
+        )
+
+        usage = getattr(response, "usage", None)
+        prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
+        completion_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
+
+        add_usage(prompt_tokens, completion_tokens)
+
+        text = response.choices[0].message.content.strip()
+
+        if schema:
+            try:
+                parsed = schema.model_validate_json(text)
+                return parsed, 0
+            except Exception:
+                logging.error("Async JSON parse failed")
+                return text, 0
+
+        return text, 0
+
+    # ========================
+    # Batch (simple version)
+    # ========================
+    def batch_generate(self, prompts: List[str]):
+        return [self.generate(p) for p in prompts]
+
+    # ========================
+    # Model name
+    # ========================
+    def get_model_name(self) -> str:
+        return self.model_name

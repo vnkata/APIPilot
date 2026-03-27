@@ -5,3 +5,5 @@ from .vectordb import (
     QdrantDB,
     # ChromaDB
 )
+
+from .contextual_memory import ContextualMemory

@@ -1,13 +1,16 @@
 from abc import ABC, abstractmethod
 import random
 import string
+from typing import Any
+
+from api_testing.inputs.fuzz_strategy import FuzzStrategy
 
 class RandomGenerator(ABC):
     description: str = ""
 
     def __init__(self, seed: int | None = None):
         self.rand = random.Random()
-        self.seed = seed if seed is not None else random.getrandbits(64)
+        self.seed = seed # if seed is not None else random.getrandbits(64)
         self.rand.seed(self.seed)
 
     def set_seed(self, seed: int):
@@ -123,7 +126,7 @@ class RandomGenerator(ABC):
 
     # --- Main Fuzzing Entry Point ---
 
-    def next_fuzz_value(self) -> str:
+    def next_fuzz_value(self, strategy: FuzzStrategy, context_pool=None, *args, **kargs) -> Any:
         """Selects a cluster and generates a dynamic value."""
         
         clusters = {

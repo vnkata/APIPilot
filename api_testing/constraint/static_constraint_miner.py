@@ -19,9 +19,8 @@ class StaticConstraintMiner:
         self.schemas = {k: v for opt in self.operations.values() for k, v in opt.schemas.items()}
         self.response_constraint = ResponseConstraints(llm=self.model)
 
-    def reuest_response_constraints(self):
+    def request_response_constraints(self):
         # Implement mining constraints between request and response
-
         pass
       
     def response_properties_constraints(self):

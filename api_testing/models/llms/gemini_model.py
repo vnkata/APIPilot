@@ -1,4 +1,5 @@
 import logging
+import random
 import re
 from api_testing.models.base_model import APITestingBaseLLMModel
 from google import genai
@@ -14,6 +15,8 @@ from tenacity import (
     wait_fixed,
     RetryCallState,
 )
+
+from api_testing.utils.llm_tracker import add_usage
 
 def log_retry_error(retry_state: RetryCallState):
     exception = retry_state.outcome.exception()
@@ -105,6 +108,7 @@ class GeminiModel(APITestingBaseLLMModel):
         Returns:
             A GenerativeModel instance.
         """
+        
         if self.should_use_vertexai():
             if not self.project or not self.location:
                 raise ValueError(
@@ -124,8 +128,8 @@ class GeminiModel(APITestingBaseLLMModel):
                     "or set it in your configuration."
                 )
             # Create client for Gemini API
-            self.client = genai.Client(api_key=self.api_key)
-
+            # self.client = genai.Client(api_key=self.api_key)
+            self.client = genai.Client(api_key=random.choice(self.api_key.split(",")))
         # Configure default model generation settings
         self.model_safety_settings = [
             types.SafetySetting(
@@ -148,7 +152,7 @@ class GeminiModel(APITestingBaseLLMModel):
         return self.client.models
 
     @retry(
-        wait=wait_fixed(20),
+        wait=wait_fixed(60),
         stop=stop_after_attempt(3),
         after=log_retry_error,
     )
@@ -161,11 +165,15 @@ class GeminiModel(APITestingBaseLLMModel):
 
         Returns:
             Generated text response or structured output as Pydantic model
-        """ 
+        """
+        self.model = self.load_model()
         configure_params =  {
             # "response_mime_type": "application/json",
             "safety_settings": self.model_safety_settings,
             "temperature": self.temperature,
+            "thinking_config": types.ThinkingConfig(
+                thinking_budget=0
+            )
         }
         if system_prompt:
             configure_params["system_instruction"] = system_prompt
@@ -177,6 +185,11 @@ class GeminiModel(APITestingBaseLLMModel):
                 config=types.GenerateContentConfig(**configure_params),
             )
             cleaned = re.sub(r"^```json\s*|\s*```$", "", response.text.strip(), flags=re.MULTILINE)
+            usage = getattr(response, "usage_metadata", None)
+            if usage:
+                prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                completion_tokens = getattr(usage, "candidates_token_count", 0)
+                add_usage(prompt_tokens, completion_tokens)
             return schema.model_validate_json(cleaned), 0
         else:
             response = self.client.models.generate_content(
@@ -184,7 +197,12 @@ class GeminiModel(APITestingBaseLLMModel):
                 contents=prompt,
                 config=types.GenerateContentConfig(**configure_params),
             )
-            return response.text, 0
+            usage = getattr(response, "usage_metadata", None)
+            if usage:
+                prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                completion_tokens = getattr(usage, "candidates_token_count", 0)
+                add_usage(prompt_tokens, completion_tokens)
+            return schema.model_validate_json(cleaned), 0
 
     async def a_generate(
         self, prompt: str, schema: Optional[BaseModel] = None
