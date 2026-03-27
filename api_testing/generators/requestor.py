@@ -146,8 +146,12 @@ class Requestor:
             duration_ms = (time.perf_counter() - start_time) * 1000
             response_data = ResponseData.from_requests(response)
             # Record to HAR
+            print(parameters)
             self._record_har_entry(
-                method, url, headers, path_parameters, parameters, body, response_data, duration_ms, expected_code=request_data.expected_code, base_path=base_path
+                ruuid=request_data.uuid, method=method, url=url, headers=headers, path_parameters=path_parameters, 
+                params=parameters, body=body, response=response_data,
+                duration_ms=duration_ms, expected_code=request_data.expected_code,
+                base_path=base_path
             )
             return response_data
         except requests.exceptions.Timeout:
@@ -155,7 +159,8 @@ class Requestor:
             duration_ms = (time.perf_counter() - start_time) * 1000
             # Record to HAR
             self._record_har_entry(
-                method, url, headers, path_parameters, parameters, body, response_data, duration_ms, expected_code=request_data.expected_code, base_path=base_path
+                ruuid=request_data.uuid, method=method, url=url, headers=headers, path_parameters=path_parameters, 
+                params=parameters, body=body, response=response_data, duration_ms=duration_ms, expected_code=request_data.expected_code, base_path=base_path
             )
             print("Lỗi: Request đã quá thời gian chờ 5 phút!")
         except requests.exceptions.RequestException as e:
@@ -260,7 +265,8 @@ class Requestor:
         response: ResponseData,
         duration_ms: float,
         expected_code: str,
-        base_path: str
+        base_path: str,
+        ruuid: str
     ):
         """Record a single request/response pair with a unique UUID."""
         entry_id = str(uuid.uuid4())
@@ -279,7 +285,7 @@ class Requestor:
         else:
             # For binary files, maybe just store a placeholder or base64
             response_body = "<<binary data>>"
-        self.report.add(f"{method.lower()}-{base_path}", response.status_code)
+        self.report.add(ruuid, response.status_code)
         self.report.save()
         
         entry = {

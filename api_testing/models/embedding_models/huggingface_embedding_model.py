@@ -1,9 +1,11 @@
+import asyncio
 from pathlib import Path
 import zipfile
 from api_testing.models.base_model import APITestingBaseEmbeddingModel
 from typing import Any, Optional, List
 import torch
 import os
+import asyncio
 
 default_huggingface_embedding_model = f"{os.path.dirname(__file__)}/.cache/embeddinggemma-300m"
 
@@ -33,11 +35,11 @@ class HuggingfaceEmbeddingModel(APITestingBaseEmbeddingModel):
             texts, device=self.device, convert_to_tensor=True, batch_size=12, prompt_name="document")
 
     async def a_embed_text(self, text: str) -> List[float]:
-        return self.embed_text(text)
+        return await asyncio.to_thread(self.embed_text, text)
 
     async def a_embed_texts(self, texts: List[str]) -> List[List[float]]:
-        return self.embed_texts(texts)
-
+        return await asyncio.to_thread(self.embed_texts, texts)
+    
     def get_model_name(self) -> str:
         return self.model_name
 

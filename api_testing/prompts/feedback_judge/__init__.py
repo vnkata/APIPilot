@@ -4,6 +4,8 @@ from .schema import Verdict
 from api_testing.utils.log import getLogger
 
 class FeedBackJudge:
+  """LLM-based judge for analyzing failed API requests and determining corrective actions."""
+    
   SYSTEM_PROMPT = """
 You are an **API Testing Expert**. Analyze API requests that returned a **4xx Client Error** and determine the appropriate corrective action.
 ### Inputs
@@ -27,7 +29,7 @@ For each failed request, determine the most probable cause by analyzing resource
   - incorrect parameter pairing
 - Only report constraints or invalid_parameter_source when there is clear evidence
 - Choose the most specific and highest-confidence cause
-⚠️ Do not include your reasoning. Return only the final result.
+Do not include your reasoning. Return only the final result.
 ### Response
 Return **only** the following JSON:
 ```json
@@ -45,7 +47,7 @@ Return **only** the following JSON:
   ]
 }
 """
-  PROMPT = """
+  USER_PROMPT_TEMPLATE  = """
 ### Provided Inputs:
 **Executed Workflow Steps**
 {test_sequences}
@@ -66,7 +68,7 @@ Request Body:
     self.logger = getLogger(__name__)
   
   def exec(self, *args, **kwargs):
-    prompt = self.PROMPT.format(*args, **kwargs) ## pass
+    prompt = self.USER_PROMPT_TEMPLATE.format(*args, **kwargs) ## pass
     self.logger.debug("FeedBackJudge Prompt: " + prompt)
     response, _ = self.llm.generate(
       system_prompt=self.SYSTEM_PROMPT,

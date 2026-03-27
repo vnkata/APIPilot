@@ -217,7 +217,7 @@ class NaiveValueGenerator:
             for field in path_params
         }
         self.context_pool.set_priority_resources(path_field_resources.values())
-
+        print("mutation ratio", self.mutation_ratio)
         def generate_fields(
             field_map: Dict[str, Any],
             selected_fields: List[str],
@@ -256,7 +256,7 @@ class NaiveValueGenerator:
                     # -------------------------
                     # 2️⃣ Mutation
                     # -------------------------
-                    if should_mutate and random.random() < self.mutation_ratio:
+                    if should_mutate and random.random() < 0.5:
                         strategy = random.choice(list(FuzzStrategy)).value
 
                         if strategy_type == "LLMGenerator":
@@ -310,7 +310,7 @@ class NaiveValueGenerator:
             # --- Generate parameter values ---
             params, params_mutated = generate_fields(self.parameters, params_selected, should_mutate)
             body_mutated = False
-
+            print(f"Test case {i+1}: selected params: {params_selected}, selected body fields: {body_selected}, should_mutate: {should_mutate}")
             body = [] 
 
             if is_array_body:

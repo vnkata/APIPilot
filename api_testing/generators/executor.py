@@ -132,11 +132,6 @@ class Executor:
     ua = UserAgent()
     # covert_to_array = body_schema and isinstance(body_schema, ItemProperties) and (body_schema.type == "array" or body_schema.items) 
     for req in requests:
-        # if covert_to_array and isinstance(req.body, dict):
-        #     req = replace(
-        #         req,
-        #         body=[req.body],
-        #     )
         # chỉ mutate một phần theo ratio + chỉ khi expected 4xx
         if req.expected_code == "4xx":
             new_mime = req.mime_type
@@ -145,14 +140,19 @@ class Executor:
                 candidate_mimes = list(set(invalid_mimes) - operation_mimetypes)
                 if not candidate_mimes:
                     candidate_mimes = invalid_mimes  # fallback
-                
                 new_mime = random.choice(candidate_mimes)
             new_headers = {}
             if random.random() < self.mutation_ratio:                
                 new_headers = { "User-Agent": ua.random }
-
+            http_method = req.http_method
+            if random.random() < self.mutation_ratio:
+                # chọn mime sai (không nằm trong operation)
+                candidate_mimes = list(set(["DELETE","GET","POST", "PUT", "PATCH", "OPTIONS", "HEAD", "TRACE"]) - set([req.http_method]))
+                http_method = random.choice(candidate_mimes)
+            
             mutated_req = replace(
                 req,
+                http_method=http_method,
                 mime_type=new_mime,
                 headers={**req.headers, "Content-Type": new_mime, **new_headers}
             )
@@ -182,6 +182,7 @@ class Executor:
       if mime == "application/octet-stream":
         headers["Content-Type"] = "application/octet-stream"
       base_request = RequestData(
+          uuid=self.operation.uuid,
           endpoint_path=self.operation.endpoint_path,
           http_method=self.operation.http_method,
           mime_type=mime,

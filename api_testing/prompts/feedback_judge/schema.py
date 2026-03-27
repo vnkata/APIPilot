@@ -2,9 +2,6 @@ from dataclasses import Field, dataclass, field
 from pydantic import BaseModel, ConfigDict, RootModel
 from typing import Any, Dict, List, Optional
 
-# class MappingContents(RootModel):
-#     root: Dict[str, Any]
-
 class AdjustContents(BaseModel):
     invalid_resource_pair:  bool
     constraints: Optional[Dict[str, Any]] = None
