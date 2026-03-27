@@ -1,0 +1,15 @@
+WARNING: A restricted method in java.lang.System has been called
+WARNING: java.lang.System::load has been called by org.apache.tomcat.jni.Library in an unnamed module (jar:file:/E:/ThacSi/docker/autoresttest/services/restcountries/target/restcountries-sut.jar!/BOOT-INF/lib/tomcat-embed-core-9.0.37.jar!/)
+WARNING: Use --enable-native-access=ALL-UNNAMED to avoid a warning for callers in this module
+WARNING: Restricted methods will be blocked in a future release unless native access is enabled
+
+Mar 25, 2026 2:01:01 PM org.apache.catalina.core.StandardService startInternal
+INFO: Starting service [Tomcat]
+Mar 25, 2026 2:01:01 PM org.apache.catalina.core.StandardEngine startInternal
+INFO: Starting Servlet engine: [Apache Tomcat/9.0.37]
+Mar 25, 2026 2:01:01 PM org.apache.catalina.core.ApplicationContext log
+INFO: Initializing Spring embedded WebApplicationContext
+WARNING: A terminally deprecated method in sun.misc.Unsafe has been called
+WARNING: sun.misc.Unsafe::invokeCleaner has been called by nonapi.io.github.classgraph.utils.FileUtils (jar:file:/E:/ThacSi/docker/autoresttest/services/restcountries/target/restcountries-sut.jar!/BOOT-INF/lib/classgraph-4.8.69.jar!/)
+WARNING: Please consider reporting this to the maintainers of class nonapi.io.github.classgraph.utils.FileUtils
+WARNING: sun.misc.Unsafe::invokeCleaner will be removed in a future release

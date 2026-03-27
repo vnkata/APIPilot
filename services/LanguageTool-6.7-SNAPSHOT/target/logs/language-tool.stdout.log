@@ -1,0 +1,1621 @@
+2026-03-22 14:11:15.512 GMT+07:00 INFO  org.languagetool.server.DatabaseAccessOpenSource Not setting up database access, dbDriver is not configured
+2026-03-22 07:11:15 +0000 Setting up thread pool with 10 threads
+2026-03-22 14:11:17.094 GMT+07:00 WARN  org.languagetool.language.identifier.DefaultLanguageIdentifier fastText not configured - language detection performance will be degraded. See https://dev.languagetool.org/http-server#starting-from-command-line for instructions.
+2026-03-22 14:11:17.103 GMT+07:00 INFO  org.languagetool.server.TextChecker A/B-Test enabled: []
+2026-03-22 07:11:17 +0000 Starting LanguageTool 6.7-SNAPSHOT (build date: 2025-07-21 18:51:01 +0200, 4b82df8) server on http://localhost:9001...
+2026-03-22 07:11:17 +0000 Server started
+2026-03-22 14:11:17.332 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:11:17.384 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 71ms; sending code 200
+2026-03-22 14:12:25.497 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:29.833 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 31 chars, en-US, requestId: null, #1, null, 0/0 matches, 4323ms, agent:-, sent, q:0, h:1, dH:1, r:2, m:all, premium: false
+2026-03-22 14:12:29.834 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 4337ms; sending code 200
+2026-03-22 14:12:31.885 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:39.020 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 26 chars, de-DE, requestId: null, #1, null, 0/0 matches, 7134ms, agent:-, sent, q:0, h:1, dH:1, r:3, m:all, premium: false
+2026-03-22 14:12:39.020 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 7135ms; sending code 200
+2026-03-22 14:12:41.071 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:41.075 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 4, time: 2m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:12:41.076 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 5ms; sending code 400
+2026-03-22 14:12:43.123 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:44.537 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 6 chars, en-GB, requestId: null, #1, null, 0/0 matches, 1318ms, agent:-, sent, q:0, h:1, dH:1, r:5, m:all, premium: false
+2026-03-22 14:12:44.537 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1414ms; sending code 200
+2026-03-22 14:12:46.599 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:46.600 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: null, h: 1, r: 6, time: 0text length: 33, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:12:46.600 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:12:48.652 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:48.652 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'With 'username' set, you also need to specify 'apiKey'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 7, user: user@example.com, time: 1text length: 29, m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: With 'username' set, you also need to specify 'apiKey'
+	at org.languagetool.server.ServerTools.getUserLimits(ServerTools.java:149)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:332)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:12:48.653 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 400
+2026-03-22 14:12:50.707 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:52.156 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 8 chars, de-AT, requestId: null, #1, null, 0/0 matches, 1448ms, agent:-, sent, q:0, h:1, dH:1, r:8, m:all, premium: false
+2026-03-22 14:12:52.156 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1449ms; sending code 200
+2026-03-22 14:12:54.215 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:54.216 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'With 'username' set, you also need to specify 'apiKey'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 9, user: user@example.co.uk, time: 0text length: 20, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: With 'username' set, you also need to specify 'apiKey'
+	at org.languagetool.server.ServerTools.getUserLimits(ServerTools.java:149)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:332)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:12:54.216 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:12:56.253 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:56.254 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 10, apiKey: apikey1234567890, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:12:56.254 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:12:58.291 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:12:58.318 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 30 chars, en-US (mother tongue: es), requestId: null, #2, null, 0/0 matches, 27ms, agent:-, sent, q:0, h:1, dH:1, r:11, m:all, premium: false
+2026-03-22 14:12:58.318 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 28ms; sending code 200
+2026-03-22 14:13:00.361 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:00.362 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 12, time: 1text length: 36, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:00.362 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:02.412 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:02.412 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 13, time: 1m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:02.412 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:04.468 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:04.469 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 14, user: user@example.com, time: 1text length: 38, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:04.469 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:06.523 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:06.524 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 15, user: premiumuser@example.com, apiKey: premiumapikey123, time: 1text length: 38, m: ALL, l: PICKY, (no stacktrace logged)
+2026-03-22 14:13:06.525 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 403
+2026-03-22 14:13:08.554 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:08.555 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 16, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:08.555 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:10.611 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:10.612 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 17, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:10.612 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:12.647 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:12.648 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 18, time: 1text length: 36, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:12.648 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:14.692 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:14.693 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: null, h: 1, r: 19, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:14.693 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:16.727 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:16.728 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 20, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:16.728 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:18.768 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:18.769 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'You specified 'preferredVariants' but you didn't specify 'language=auto'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 21, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: You specified 'preferredVariants' but you didn't specify 'language=auto'
+	at org.languagetool.server.V2TextChecker.getPreferredVariants(V2TextChecker.java:138)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:476)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:18.770 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 400
+2026-03-22 14:13:20.824 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:20.852 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 12 chars, en-GB, requestId: null, #2, null, 0/0 matches, 26ms, agent:-, sent, q:0, h:1, dH:1, r:22, m:all, premium: false
+2026-03-22 14:13:20.852 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 28ms; sending code 200
+2026-03-22 14:13:22.910 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:22.910 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 23, apiKey: apikey123456, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:22.911 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:24.949 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:24.950 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: null, h: 1, r: 24, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:24.950 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:27.006 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:27.006 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 25, user: user@example.com, apiKey: apikey123, time: 0text length: 30, m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:13:27.007 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:13:29.045 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:29.046 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 26, user: user@example.com, apiKey: apikey123, time: 1text length: 32, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:29.046 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 400
+2026-03-22 14:13:31.100 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:31.100 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 27, apiKey: apikey123, time: 0text length: 27, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:31.101 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:33.140 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:33.141 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 28, user: user@example.fr, apiKey: apikeyfr123, time: 1m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:13:33.141 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:13:35.185 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:35.186 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 29, apiKey: apikeyde123, time: 1m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:35.186 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:37.224 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:37.225 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 30, user: user@example.com, time: 1text length: 34, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:37.225 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:13:39.284 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:13:39.285 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 31, user: user@example.com, time: 0text length: 43, m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:13:39.285 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:14:21.362 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:21.363 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:23.412 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:23.413 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:25.469 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:25.470 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:27.526 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:27.526 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:29.571 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:29.572 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:31.624 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:31.625 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:33.678 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:33.679 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:35.735 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:35.736 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:37.792 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:37.793 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:39.846 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:39.847 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:41.899 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:41.900 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:43.941 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:43.942 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:45.994 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:45.995 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:48.041 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:48.042 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:50.085 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:50.086 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:52.138 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:52.139 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:14:54.194 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:54.196 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 200
+2026-03-22 14:14:56.246 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:56.248 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 200
+2026-03-22 14:14:58.294 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:14:58.295 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:00.337 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:00.338 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:02.364 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:02.365 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:04.412 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:04.413 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:06.465 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:06.465 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:15:08.519 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:08.520 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:10.562 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:10.563 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:12.616 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:12.617 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:14.654 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:14.655 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:16.697 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:16.698 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:15:18.739 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:15:18.740 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:16:25.349 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:25.350 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 61, apiKey: apikey1234567890, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:25.350 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:27.390 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:28.371 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 17 chars, de-DE, requestId: null, #2, null, 0/0 matches, 980ms, agent:-, sent, q:0, h:1, dH:1, r:62, m:all, premium: false
+2026-03-22 14:16:28.371 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 981ms; sending code 200
+2026-03-22 14:16:30.431 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:30.431 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 63, user: user@example.com, apiKey: apikey1234567890, time: 0text length: 17, m: ALL, l: PICKY, (no stacktrace logged)
+2026-03-22 14:16:30.432 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:16:32.481 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:32.482 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'apiKey was set, but username was not: apikey1234567890', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 64, apiKey: apikey1234567890, time: 1text length: 22, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: apiKey was set, but username was not: apikey1234567890
+	at org.languagetool.server.ServerTools.getUserLimits(ServerTools.java:153)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:332)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:32.482 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:34.538 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:34.538 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 65, apiKey: apikey1234567890, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:34.539 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:36.577 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:36.578 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-AT, h: 1, r: 66, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:36.578 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:38.632 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:38.633 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 67, user: user@example.com, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:38.633 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:40.685 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:40.686 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 68, apiKey: apikey1234567890, time: 1m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:40.686 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:42.737 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:42.737 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 69, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:42.737 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 400
+2026-03-22 14:16:44.777 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:44.778 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 70, user: user@example.com, apiKey: apikey1234567890, time: 1m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:16:44.778 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:16:46.818 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:46.819 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 71, user: user@example.com, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:46.819 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:48.857 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:48.858 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 72, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:48.858 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:50.906 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:50.907 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'You specified 'preferredVariants' but you didn't specify 'language=auto'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 73, time: 1text length: 24, m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: You specified 'preferredVariants' but you didn't specify 'language=auto'
+	at org.languagetool.server.V2TextChecker.getPreferredVariants(V2TextChecker.java:138)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:476)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:50.907 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:52.961 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:52.961 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 74, user: user@example.com, apiKey: apikey1234567890, time: 0m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:16:52.962 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:16:55.014 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:55.015 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 75, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:55.015 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:16:57.070 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:57.070 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'You specified 'preferredVariants' but you didn't specify 'language=auto'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 76, time: 0text length: 15, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: You specified 'preferredVariants' but you didn't specify 'language=auto'
+	at org.languagetool.server.V2TextChecker.getPreferredVariants(V2TextChecker.java:138)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:476)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:57.070 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 400
+2026-03-22 14:16:59.123 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:16:59.124 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 77, apiKey: apikey1234567890, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:16:59.124 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:17:01.173 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:01.174 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 78, user: user@example.com, apiKey: apikey1234567890, time: 1text length: 15, m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:01.174 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:17:03.228 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:03.229 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 79, user: user@example.com, apiKey: apikey1234567890, time: 1text length: 15, m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:17:03.229 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:17:05.287 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:05.287 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 80, user: user@example.com, apiKey: apikey1234567890, time: 1m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:05.287 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:17:07.340 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:07.341 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 81, apiKey: apikey1234567890, time: 1text length: 15, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:07.341 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:17:09.397 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:09.398 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 82, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:09.398 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:17:11.449 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:11.450 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 83, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:11.450 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:17:13.507 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:13.508 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 84, user: user@example.com, apiKey: apikey1234567890, time: 1text length: 15, m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:17:13.508 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:17:15.549 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:15.550 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'apiKey was set, but username was not: apikey1234567890', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 85, apiKey: apikey1234567890, time: 1text length: 15, m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: apiKey was set, but username was not: apikey1234567890
+	at org.languagetool.server.ServerTools.getUserLimits(ServerTools.java:153)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:332)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:15.550 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:17:17.594 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:17.594 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 86, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:17.596 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 400
+2026-03-22 14:17:19.649 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:20.522 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 8 chars, de-DE, requestId: null, #3, null, 0/0 matches, 873ms, agent:-, sent, q:0, h:1, dH:1, r:87, m:all, premium: false
+2026-03-22 14:17:20.523 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 874ms; sending code 200
+2026-03-22 14:17:22.566 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:22.567 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'You specified 'preferredVariants' but you didn't specify 'language=auto'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 88, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: You specified 'preferredVariants' but you didn't specify 'language=auto'
+	at org.languagetool.server.V2TextChecker.getPreferredVariants(V2TextChecker.java:138)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:476)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:22.567 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:17:24.605 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:24.605 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'With 'username' set, you also need to specify 'apiKey'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 89, user: user@example.com, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: With 'username' set, you also need to specify 'apiKey'
+	at org.languagetool.server.ServerTools.getUserLimits(ServerTools.java:149)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:332)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:24.605 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 400
+2026-03-22 14:17:26.634 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:17:26.635 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 90, user: user@example.com, time: 1m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:17:26.635 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:18:05.605 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:05.606 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:07.657 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:07.657 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:18:09.686 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:09.687 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:11.744 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:11.745 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:13.789 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:13.791 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 200
+2026-03-22 14:18:15.830 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:15.830 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:18:17.864 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:17.866 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 200
+2026-03-22 14:18:19.914 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:19.914 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:18:21.953 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:21.954 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:23.994 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:23.995 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:26.028 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:26.029 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:28.063 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:28.064 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:30.116 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:30.117 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:32.166 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:32.167 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:34.208 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:34.209 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:36.259 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:36.260 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:38.311 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:38.312 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:40.356 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:40.357 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:42.413 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:42.414 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:44.465 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:44.466 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:46.522 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:46.523 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:48.574 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:48.574 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:18:50.610 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:50.611 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:52.665 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:52.666 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:54.692 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:54.693 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:56.736 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:56.737 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:18:58.785 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:18:58.786 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:19:00.830 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:19:00.830 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:19:02.891 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:19:02.892 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:19:36.476 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:36.477 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'apiKey was set, but username was not: abc123apikey', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 120, apiKey: abc123apikey, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: apiKey was set, but username was not: abc123apikey
+	at org.languagetool.server.ServerTools.getUserLimits(ServerTools.java:153)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:332)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:36.477 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:38.528 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:38.529 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'language' parameter, e.g. 'language=en-US' for American English or 'language=fr' for French', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: null, h: 1, r: 121, time: 1text length: 31, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'language' parameter, e.g. 'language=en-US' for American English or 'language=fr' for French
+	at org.languagetool.server.V2TextChecker.checkParams(V2TextChecker.java:98)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:330)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:38.529 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:40.582 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:40.583 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 122, user: user@example.com, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:40.583 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:42.636 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:42.637 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 123, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:42.637 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:44.690 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:44.691 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 124, user: user@example.com, apiKey: apikey123, time: 1m: ALL, l: PICKY, (no stacktrace logged)
+2026-03-22 14:19:44.691 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:19:46.742 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:46.743 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 125, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:46.743 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:48.785 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:48.786 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'apiKey was set, but username was not: apikey456', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 126, apiKey: apikey456, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: apiKey was set, but username was not: apikey456
+	at org.languagetool.server.ServerTools.getUserLimits(ServerTools.java:153)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:332)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:48.786 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:50.839 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:50.839 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-AT, h: 1, r: 127, apiKey: apikey789, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:50.839 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 400
+2026-03-22 14:19:52.898 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:52.899 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr-CA, h: 1, r: 128, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:52.899 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:54.954 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:54.955 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 129, apiKey: apikey101, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:54.955 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:56.993 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:56.994 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 130, time: 1text length: 24, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:56.994 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:19:59.047 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:19:59.048 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 131, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:19:59.048 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:01.087 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:01.088 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 132, user: user@example.com, apiKey: apikey123, time: 1m: ALL, l: PICKY, (no stacktrace logged)
+2026-03-22 14:20:01.088 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:20:03.142 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:03.143 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 133, user: user@example.com, apiKey: apikey456, time: 1text length: 15, m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:03.143 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:05.183 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:05.184 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 134, user: user@example.com, apiKey: apikey789, time: 1m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:20:05.184 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:20:07.224 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:07.252 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 20 chars, en-GB (mother tongue: fr), requestId: null, #3, null, 0/0 matches, 28ms, agent:-, sent, q:0, h:1, dH:1, r:135, m:all, premium: false
+2026-03-22 14:20:07.252 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 28ms; sending code 200
+2026-03-22 14:20:09.294 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:09.294 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 136, apiKey: apikey101, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:09.294 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 400
+2026-03-22 14:20:11.335 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:11.336 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 137, user: user@example.com, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:11.336 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:13.387 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:13.388 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'You specified 'preferredVariants' but you didn't specify 'language=auto'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 138, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: You specified 'preferredVariants' but you didn't specify 'language=auto'
+	at org.languagetool.server.V2TextChecker.getPreferredVariants(V2TextChecker.java:138)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:476)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:13.388 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:15.440 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:15.441 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 139, user: user@example.com, apiKey: apikey123, time: 1m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:20:15.441 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:20:17.469 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:17.470 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 140, user: user@example.com, apiKey: apikey456, time: 1text length: 15, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:17.470 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:19.524 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:19.525 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 141, user: user@example.com, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:19.525 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:21.578 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:21.578 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Set only 'text' or 'data' parameter, not both', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-GB, h: 1, r: 142, user: user@example.com, time: 0text length: 16, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Set only 'text' or 'data' parameter, not both
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:148)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:21.578 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 400
+2026-03-22 14:20:23.631 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:27.220 GMT+07:00 INFO  org.languagetool.server.TextChecker Check done: 17 chars, fr (mother tongue: en-US), requestId: null, #1, null, 0/0 matches, 3588ms, agent:-, sent, q:0, h:1, dH:1, r:143, m:all, premium: false
+2026-03-22 14:20:27.220 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 3589ms; sending code 200
+2026-03-22 14:20:29.282 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:29.282 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 144, user: user@example.com, apiKey: apikey101, time: 1m: ALL, l: PICKY, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:29.282 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:31.334 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:31.335 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'This is the endpoint for the basic version of LanguageTool. When using 'username' and 'apiKey' to access the premium version, use api.languagetoolplus.com instead.', sending HTTP code 403. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 145, user: user@example.com, apiKey: apikey789, time: 1m: ALL, l: DEFAULT, (no stacktrace logged)
+2026-03-22 14:20:31.335 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 403
+2026-03-22 14:20:33.384 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:33.385 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'You specified 'preferredVariants' but you didn't specify 'language=auto'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: fr, h: 1, r: 146, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: You specified 'preferredVariants' but you didn't specify 'language=auto'
+	at org.languagetool.server.V2TextChecker.getPreferredVariants(V2TextChecker.java:138)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:476)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:33.385 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:35.441 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:35.442 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: null, h: 1, r: 147, time: 1m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:35.442 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:20:37.497 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:37.497 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'With 'username' set, you also need to specify 'apiKey'', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: en-US, h: 1, r: 148, user: user@example.com, time: 0text length: 15, m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: With 'username' set, you also need to specify 'apiKey'
+	at org.languagetool.server.ServerTools.getUserLimits(ServerTools.java:149)
+	at org.languagetool.server.TextChecker.checkText(TextChecker.java:332)
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:177)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:37.497 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 400
+2026-03-22 14:20:39.549 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling POST /v2/check
+2026-03-22 14:20:39.549 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler An error has occurred: 'Missing 'text' or 'data' parameter', sending HTTP code 400. Access from 127.0.0.1, HTTP user agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36, User agent param: null, Referrer: null, language: de-DE, h: 1, r: 149, time: 0m: ALL, l: DEFAULT, Stacktrace follows:org.languagetool.server.BadRequestException: Missing 'text' or 'data' parameter
+	at org.languagetool.server.ApiV2.handleCheckRequest(ApiV2.java:169)
+	at org.languagetool.server.ApiV2.lambda$handleRequest$4(ApiV2.java:87)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.ApiV2.handleRequest(ApiV2.java:87)
+	at org.languagetool.server.LanguageToolHttpHandler.lambda$handle$0(LanguageToolHttpHandler.java:213)
+	at org.languagetool.tools.TelemetryProvider.createSpan(TelemetryProvider.java:96)
+	at org.languagetool.server.LanguageToolHttpHandler.handle(LanguageToolHttpHandler.java:213)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.AuthFilter.doFilter(AuthFilter.java:76)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:101)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange$LinkHandler.handle(ServerImpl.java:863)
+	at jdk.httpserver/com.sun.net.httpserver.Filter$Chain.doFilter(Filter.java:98)
+	at jdk.httpserver/sun.net.httpserver.ServerImpl$Exchange.run(ServerImpl.java:839)
+	at java.base/java.util.concurrent.ThreadPoolExecutor.runWorker(ThreadPoolExecutor.java:1095)
+	at java.base/java.util.concurrent.ThreadPoolExecutor$Worker.run(ThreadPoolExecutor.java:619)
+	at java.base/java.lang.Thread.run(Thread.java:1447)
+
+2026-03-22 14:20:39.550 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 400
+2026-03-22 14:21:17.315 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:17.315 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:21:19.365 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:19.365 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:21:21.416 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:21.417 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:23.471 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:23.472 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:25.505 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:25.505 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:21:27.556 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:27.557 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:29.595 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:29.596 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:31.631 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:31.632 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:33.674 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:33.674 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:21:35.728 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:35.729 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:37.787 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:37.788 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:39.830 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:39.831 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:41.863 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:41.864 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:43.915 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:43.915 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:45.966 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:45.967 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:47.998 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:47.998 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:21:50.050 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:50.051 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:52.076 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:52.077 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:54.133 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:54.134 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:21:56.162 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:56.162 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:21:58.212 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:21:58.214 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 2ms; sending code 200
+2026-03-22 14:22:00.268 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:22:00.269 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:22:02.319 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:22:02.320 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:22:04.373 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:22:04.374 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:22:06.429 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:22:06.430 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:22:08.466 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:22:08.467 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:22:10.521 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:22:10.521 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 0ms; sending code 200
+2026-03-22 14:22:12.576 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:22:12.577 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
+2026-03-22 14:22:14.628 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handling GET /v2/languages
+2026-03-22 14:22:14.629 GMT+07:00 INFO  org.languagetool.server.LanguageToolHttpHandler Handled request in 1ms; sending code 200
