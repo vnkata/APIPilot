@@ -109,3 +109,9 @@ Notes:
 - Use `SpecificationParser` to parse OpenAPI/Swagger files and obtain `OperationProperties` objects when using `Executor` directly. For most use-cases, `APITesting` and `demo.py` already show practical end-to-end flows.
 
 If you'd like, I can expand the `Executor` example to show how to build an `OperationProperties` from a spec or add a complete runnable snippet that uses a local sample spec.
+
+#### Results
+
+The `results/` directory stores structured outputs and analysis artifacts produced during the API testing and fault discovery process. It serves as the primary location for reproducible results and post-execution analysis.
+* `results/results.xlsx`: A central report spreadsheet summarizing statistics across multiple runs.
+* `results/unique_500_entries.jsonl`: A JSON Lines file containing distinct 500-error entries grouped by operations.
