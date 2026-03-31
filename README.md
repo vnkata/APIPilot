@@ -50,7 +50,7 @@ The experimental evaluation encompasses 11 diverse REST API services, selected t
 
 The `results/` directory stores structured outputs and analysis artifacts produced during the API testing and fault discovery process. It serves as the primary location for reproducible results and post-execution analysis.
 * `results/results.xlsx`: A central report spreadsheet summarizing statistics across multiple runs.
-* `results/unique_500_entries.jsonl`: A JSON Lines file containing 185 entries of 500-error cases grouped by operations (137 reported in the paper due to manual verification limitations).
+* `results/unique_500_entries.jsonl`: A JSON Lines file containing 185 entries of 500-error cases grouped by operations.
 
 **Happy testing! 🚀**
 
