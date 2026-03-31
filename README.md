@@ -45,6 +45,13 @@ The experimental evaluation encompasses 11 diverse REST API services, selected t
 - **ohsome**: OpenStreetMap geospatial data analysis and statistics service  
   *Documentation*: https://docs.ohsome.org/ohsome-api/v1/
 
+
+#### Results
+
+The `results/` directory stores structured outputs and analysis artifacts produced during the API testing and fault discovery process. It serves as the primary location for reproducible results and post-execution analysis.
+* `results/results.xlsx`: A central report spreadsheet summarizing statistics across multiple runs.
+* `results/unique_500_entries.jsonl`: A JSON Lines file containing 185 entries of 500-error cases grouped by operations (137 reported in the paper due to manual verification limitations).
+
 **Happy testing! 🚀**
 
 ---
@@ -109,9 +116,3 @@ Notes:
 - Use `SpecificationParser` to parse OpenAPI/Swagger files and obtain `OperationProperties` objects when using `Executor` directly. For most use-cases, `APITesting` and `demo.py` already show practical end-to-end flows.
 
 If you'd like, I can expand the `Executor` example to show how to build an `OperationProperties` from a spec or add a complete runnable snippet that uses a local sample spec.
-
-#### Results
-
-The `results/` directory stores structured outputs and analysis artifacts produced during the API testing and fault discovery process. It serves as the primary location for reproducible results and post-execution analysis.
-* `results/results.xlsx`: A central report spreadsheet summarizing statistics across multiple runs.
-* `results/unique_500_entries.jsonl`: A JSON Lines file containing distinct 500-error entries grouped by operations.
