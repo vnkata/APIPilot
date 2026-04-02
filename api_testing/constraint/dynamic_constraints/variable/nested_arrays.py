@@ -1,11 +1,11 @@
 """Nested arrays handling for Beet."""
 
 from typing import List, Dict
-from agora.beet.model.decls_variable import DeclsVariable
-from agora.beet.variable.variable_utils import (
+from api_testing.constraint.dynamic_constraints.decls_variable import DeclsVariable
+from api_testing.constraint.dynamic_constraints.variable.variable_utils import (
     translate_datatype, OBJECT_TYPE_NAME, ARRAY_TYPE_NAME, HASHCODE_TYPE_NAME
 )
-from agora.beet.variable.array_variables import get_decls_variables_array
+from api_testing.constraint.dynamic_constraints.variable.array_variables import get_decls_variables_array
 
 
 def get_decls_variables_of_nested_array(

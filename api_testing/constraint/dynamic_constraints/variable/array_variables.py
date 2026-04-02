@@ -1,8 +1,8 @@
 """Array variables handling for Beet."""
 
-from typing import List
-from agora.beet.model.decls_variable import DeclsVariable
-from agora.beet.variable.variable_utils import (
+from typing import Dict, List
+from api_testing.constraint.dynamic_constraints.decls_variable import DeclsVariable
+from api_testing.constraint.dynamic_constraints.variable.variable_utils import (
     encode_variable_name, translate_datatype,
     PRIMITIVE_TYPES, ARRAY_TYPE_NAME, HASHCODE_TYPE_NAME
 )

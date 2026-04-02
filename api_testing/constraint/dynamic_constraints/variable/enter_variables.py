@@ -1,8 +1,8 @@
 """Enter variables handling for Beet."""
 
 from typing import List, Optional
-from agora.beet.model.decls_variable import DeclsVariable
-from agora.beet.variable.variable_utils import (
+from api_testing.constraint.dynamic_constraints.decls_variable import DeclsVariable
+from api_testing.constraint.dynamic_constraints.variable.variable_utils import (
     translate_datatype, OBJECT_TYPE_NAME, ARRAY_TYPE_NAME, HASHCODE_TYPE_NAME
 )
 
@@ -32,9 +32,8 @@ def get_list_of_decls_variables(object_name: str, root_variable_name: str, opera
     
     # Extract parameters from operation
     if hasattr(operation, 'parameters') and operation.parameters:
-        for parameter in operation.parameters:
-            param_type = parameter.schema.get('type') if hasattr(parameter, 'schema') else None
-            
+        for parameter_name, parameter in operation.parameters.items():
+            param_type = parameter.schema.type if hasattr(parameter, 'schema') else None
             if param_type is None:
                 raise ValueError(
                     f"Please specify the parameter type for parameter {parameter.get('name', 'unknown')}\n"
@@ -46,10 +45,10 @@ def get_list_of_decls_variables(object_name: str, root_variable_name: str, opera
             
             elif param_type.lower() == ARRAY_TYPE_NAME:
                 # Handle array parameters
-                from agora.beet.variable.array_variables import get_decls_variables_array
+                from .array_variables import get_decls_variables_array
                 decls_vars = get_decls_variables_array(
                     root_variable_name,
-                    parameter.get('name', 'unknown'),
+                    getattr(parameter, 'name', 'unknown'),
                     HASHCODE_TYPE_NAME,
                     HASHCODE_TYPE_NAME
                 )
@@ -57,7 +56,7 @@ def get_list_of_decls_variables(object_name: str, root_variable_name: str, opera
             
             else:
                 # Primitive type parameter
-                param_name = parameter.get('name', 'unknown')
+                param_name = parameter_name
                 decls_var = DeclsVariable(
                     param_name,
                     root_variable_name,

@@ -1,8 +1,8 @@
 """Exit variables handling for Beet."""
 
 from typing import List, Dict, Optional
-from agora.beet.model.decls_variable import DeclsVariable
-from agora.beet.variable.variable_utils import (
+from api_testing.constraint.dynamic_constraints.decls_variable import DeclsVariable
+from api_testing.constraint.dynamic_constraints.variable.variable_utils import (
     translate_datatype, encode_variable_name, decode_variable_name,
     OBJECT_TYPE_NAME, ARRAY_TYPE_NAME, HASHCODE_TYPE_NAME,
     HIERARCHY_SEPARATOR, ARRAY_NESTING_SEPARATOR
