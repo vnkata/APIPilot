@@ -202,7 +202,7 @@ class GeminiModel(APITestingBaseLLMModel):
                 prompt_tokens = getattr(usage, "prompt_token_count", 0)
                 completion_tokens = getattr(usage, "candidates_token_count", 0)
                 add_usage(prompt_tokens, completion_tokens)
-            return schema.model_validate_json(cleaned), 0
+            return response.text, 0
 
     async def a_generate(
         self, prompt: str, schema: Optional[BaseModel] = None

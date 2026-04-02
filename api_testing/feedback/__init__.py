@@ -245,8 +245,45 @@ class FeedbackAnalyzer:
                     )
                     adjust = True
 
-            if feedback.get("constraints",{}):
-                pass
+            if feedback.get("constraints", {}):
+                constraints = feedback.get("constraints", {})
+
+                # Merge constraint info into producer mapping so that generator config can be adjusted.
+                for param_name, constraint_desc in constraints.items():
+                    existing = producer_mapping.get(param_name, {})
+
+                    if existing:
+                        if isinstance(existing.get("constraints"), list):
+                            existing["constraints"].append(constraint_desc)
+                        elif existing.get("constraints"):
+                            existing["constraints"] = [existing.get("constraints"), constraint_desc]
+                        else:
+                            existing["constraints"] = [constraint_desc]
+                    else:
+                        existing = {"constraints": [constraint_desc]}
+
+                    producer_mapping[param_name] = existing
+
+                    # Update graph operation parameter description if possible.
+                    if operation_graph is not None and path in operation_graph.nodes:
+                        node = operation_graph.nodes.get(path)
+                        if node and hasattr(node, "parameters"):
+                            param_obj = node.parameters.get(param_name)
+                            if param_obj is not None:
+                                old_desc = param_obj.description or ""
+                                param_obj.description = (
+                                    f"{old_desc} [constraint: {constraint_desc}]".strip()
+                                )
+
+                        if node and hasattr(node, "request_body"):
+                            request_field = node.request_body.get(param_name)
+                            if request_field is not None and hasattr(request_field, "description"):
+                                old_desc = request_field.description or ""
+                                request_field.description = (
+                                    f"{old_desc} [constraint: {constraint_desc}]".strip()
+                                )
+
+                adjust = True
 
         # context.clear_current()
         return adjust

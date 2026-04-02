@@ -237,7 +237,7 @@ class GraphAnalyzer:
 
 
         candidates.sort(key=lambda x: x["priority"], reverse=True)
-        MAX_CANDIDATES = max(top_k * 2, 20)
+        MAX_CANDIDATES = max(top_k * 2, 10)
         candidates = candidates[:MAX_CANDIDATES]
         # === PHASE 3: SEQUENCE BUILDING ===
         for candidate in candidates:

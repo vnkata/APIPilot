@@ -206,10 +206,10 @@ class OperationEdge:
         Raises:
             ValueError: If nodes are invalid
         """
-        if not isinstance(from_node, OperationNode):
-            raise ValueError("from_node must be an OperationNode")
-        if not isinstance(to_node, OperationNode):
-            raise ValueError("to_node must be an OperationNode")
+        # if not isinstance(from_node, OperationNode):
+        #     raise ValueError("from_node must be an OperationNode")
+        # if not isinstance(to_node, OperationNode):
+        #     raise ValueError("to_node must be an OperationNode")
 
         self.from_node = from_node
         self.to_node = to_node
