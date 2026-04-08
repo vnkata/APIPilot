@@ -2,11 +2,17 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import Enum
+import os
+from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from api_testing.constraint.dynamic_constraints.decls_class import DeclsClass
 from api_testing.constraint.dynamic_constraints.variable.variable_utils import HIERARCHY_SEPARATOR
 from api_testing.utils.http import isSuccessful
+from .decls_enter import DeclsEnter
+from .decls_exit import DeclsExit
+from .nested_ppts import get_all_nested_decls_exits
+from .variable import get_list_of_decls_variables
 
 
 class Comparability(str, Enum):
@@ -14,31 +20,31 @@ class Comparability(str, Enum):
     NONE = "none"
 
 
-class GenerateInstrumentation:
-    """Minimal local instrumentation implementation for dynamic constraints."""
-    HIERARCHY_SEPARATOR = HIERARCHY_SEPARATOR
-    decls_classes = []
-    
-    def add_new_decls_class(decls_class: DeclsClass) -> None:
-        """Add a new declarations class.
-        
-        Args:
-            decls_class: DeclsClass object to add
-        """
-        # self.decls_classes.append(decls_class)
-
-
 @dataclass
 class DeclsFile:
     """Model for Daikon declaration file generation."""
     version: float
     comparability: Comparability
-    decls_classes: List
+    decls_classes: List = field(default_factory=list)
     spec_parser: Optional[Any] = None
 
     operations: Dict[str, Any] = field(init=False, repr=False)
 
-    def __post_init__(self) -> None:
+    def __init__(
+        self,
+        version: float,
+        comparability: Comparability = Comparability.IMPLICIT,
+        decls_classes: Optional[List[DeclsClass]] = [],
+        spec_parser: Optional[Any] = None,
+        cache_dir=None
+    ) -> None:
+        self.version = version
+        self.comparability = comparability
+        self.decls_classes = decls_classes if decls_classes is not None else []
+        self.spec_parser = spec_parser
+        self.cache_file = os.path.join(
+            cache_dir, "declsFiles.decls")
+
         if not self.spec_parser or not hasattr(self.spec_parser, "operations"):
             raise ValueError("spec_parser with operations attribute is required")
 
@@ -50,11 +56,19 @@ class DeclsFile:
     def parse_operations(self) -> None:
         """Parse OpenAPI operations and generate DeclsClass definitions."""
         decls_classes = []
+        # paths = [ opt.endpoint_path for opt in self.operations.values()]
+        # common_path  = os.path.commonprefix(paths).rstrip("/")
+
         for operation_name, operation in (self.operations or {}).items():
-            endpoint = f"{operation.http_method.upper()}-{operation.endpoint_path}"
+            # endpoint_path = operation.endpoint_path.replace(common_path, "") # only get relative path
+            # operation.endpoint_path = endpoint_path
+            endpoint = f"{operation.http_method.lower()}-{operation.endpoint_path}"
+            # endpoint = f"{operation.http_method.upper()}-{endpoint_path}"
             decls_classes.append(self._process_operation(endpoint, operation_name, operation))
         self.decls_classes = decls_classes
+        # self.common_path =  common_path
         return decls_classes
+    
     # ----------------------------------------------------------------------
     # Internal helpers
     # ----------------------------------------------------------------------
@@ -66,10 +80,6 @@ class DeclsFile:
         variable_name_input: str = "input",
     ) -> None:
         """Parse a single operation and inject declarations into instrumentation."""
-        from .decls_enter import DeclsEnter
-        from .decls_exit import DeclsExit
-        from .nested_ppts import get_all_nested_decls_exits
-        from .variable import get_list_of_decls_variables
 
         decls_class = DeclsClass(endpoint)
 
@@ -87,7 +97,6 @@ class DeclsFile:
                 f"{HIERARCHY_SEPARATOR}Output"
                 f"{HIERARCHY_SEPARATOR}{status_code}"
             )
-            print(suffix)
             if isSuccessful(status_code) and api_response.content:
                 for media_type in api_response.content.values():
                     nested_exits = get_all_nested_decls_exits(
@@ -113,41 +122,22 @@ class DeclsFile:
             )
             for exit_ in decls_exits
         ]
-        print(decls_enters)
         decls_class.add_decls_enters(decls_enters)
         decls_class.add_decls_exits(decls_exits)
         return decls_class
 
-    # ----------------------------------------------------------------------
-    # Property helpers
-    # ----------------------------------------------------------------------
-    @property
-    def class_name(self) -> str:
-        return getattr(self, "_class_name", "")
+    def save_to_file(self) -> None:
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
 
-    @class_name.setter
-    def class_name(self, value: str) -> None:
-        self._class_name = value
-
-    @property
-    def decls_enters(self) -> List[Any]:
-        return getattr(self, "_decls_enters", [])
-
-    @decls_enters.setter
-    def decls_enters(self, value: List[Any]) -> None:
-        self._decls_enters = value
-
-    @property
-    def decls_exits(self) -> List[Any]:
-        return getattr(self, "_decls_exits", [])
-
-    @decls_exits.setter
-    def decls_exits(self, value: List[Any]) -> None:
-        self._decls_exits = value
+        with output_path.open("w", encoding="utf-8") as f:
+            # Input header lines for compatibility with Daikon
+            f.write("input-language OpenAPI\n")
+            f.write(str(self.decls_file))
 
     def __str__(self) -> str:
         """Convert to Daikon declarations format."""
-        res = f"decl-version {self.version}\nvar-comparability {self.comparability}\n"
+        res = f"decl-version {self.version}\nvar-comparability {self.comparability.lower()}\n"
         
         for decls_class in self.decls_classes:
             res += f"\n{decls_class}\n"

@@ -1,8 +1,10 @@
 """Test case model for Beet."""
 
+from dataclasses import dataclass
+import json
 from typing import Dict, Optional
 
-
+@dataclass
 class TestCase:
     """Represents a test case from API calls."""
     
@@ -13,6 +15,7 @@ class TestCase:
         path: str,
         http_method: str,
         parameters: Optional[Dict[str, str]] = None,
+        request_body: Optional[str] = None,
         status_code: Optional[str] = None,
         response_body: Optional[str] = None
     ):
@@ -23,11 +26,8 @@ class TestCase:
             operation_id: ID of the operation
             path: API path
             http_method: HTTP method
-            header_parameters: Header parameters
-            path_parameters: Path parameters
-            query_parameters: Query parameters
-            form_parameters: Form parameters
-            body_parameter: Request body
+            parameters: Header parameters
+            request_body: Request body
             status_code: Response status code
             response_body: Response body
         """
@@ -35,11 +35,29 @@ class TestCase:
         self.operation_id = operation_id
         self.path = path
         self.http_method = http_method
-        self.header_parameters = header_parameters or {}
-        self.path_parameters = path_parameters or {}
-        self.query_parameters = query_parameters or {}
-        self.form_parameters = form_parameters or {}
-        self.body_parameter = body_parameter
+        self.parameters = parameters or {}
+        self.request_body = request_body or {}
         self.status_code = status_code
         self.response_body = response_body
- 
+        
+    def get_test_case_id(self) -> str:
+        """Get the test case ID."""
+        return self.test_case_id
+    
+    def to_dict(self) -> Dict[str, any]:
+        """Convert TestCase to a dictionary with parsed response_body.
+        
+        Returns:
+            Dictionary representation of the test case with response_body parsed as JSON dict
+        """
+        
+        return {
+            "test_case_id": self.test_case_id,
+            "operation_id": self.operation_id,
+            "path": self.path,
+            "http_method": self.http_method,
+            "parameters": self.parameters,
+            "request_body": self.request_body,
+            "status_code": self.status_code,
+            "response_body": self.response_body
+        }   

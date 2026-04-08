@@ -12,15 +12,6 @@ if TYPE_CHECKING:
     from .decls_exit import DeclsExit
 
 
-class GenerateInstrumentation:
-    """Minimal local instrumentation placeholder."""
-    HIERARCHY_SEPARATOR = HIERARCHY_SEPARATOR
-
-    @classmethod
-    def add_new_decls_class(cls, decls_class: Any) -> None:
-        # Placeholder: if user needs global registry, extend here
-        pass
-
 
 @dataclass
 class DeclsClass:
@@ -72,8 +63,8 @@ class DeclsClass:
             for status_code, api_response in api_responses.items():
                 output_object_name = (
                     f"{operation_name}"
-                    f"{GenerateInstrumentation.HIERARCHY_SEPARATOR}Output"
-                    f"{GenerateInstrumentation.HIERARCHY_SEPARATOR}{status_code}"
+                    f"{HIERARCHY_SEPARATOR}Output"
+                    f"{HIERARCHY_SEPARATOR}{status_code}"
                 )
                 
                 # Get nested declarations for this response

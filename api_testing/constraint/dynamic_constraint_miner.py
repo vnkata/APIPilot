@@ -7,6 +7,9 @@ from urllib.parse import urlparse, parse_qs
 from typing import Any, Dict, List, Optional
 
 from api_testing.constraint.dynamic_constraints.decls_file import Comparability, DeclsFile
+from api_testing.constraint.dynamic_constraints.test_case import TestCase
+from api_testing.constraint.dynamic_constraints.utils.test_case_file_manager import TestCaseFileManager
+from api_testing.utils.http import isSuccessful
 from api_testing.utils.log import getLogger
 
 
@@ -29,15 +32,15 @@ class DynamicConstraintMiner:
     def extract_decls_classes(self) -> DeclsFile:
         """Parse operations from spec_parser into DeclsFile."""
         self.decls_file = DeclsFile(
-            version=1.0,
+            version=2.0,
             comparability=Comparability.IMPLICIT,
-            decls_classes=[],
             spec_parser=self.spec_parser,
+            cache_dir=self.cache_dir
         )
 
         # Existing API path conversion logic in DeclsFile
         self.decls_file.parse_operations()
-
+        self.save_decls_file(os.path.join(self.cache_dir, "test_cases.decls"))
         return self.decls_file
 
     def save_decls_file(self, output_path: str) -> None:
@@ -50,70 +53,17 @@ class DynamicConstraintMiner:
 
         with output_path.open("w", encoding="utf-8") as f:
             # Input header lines for compatibility with Daikon
-            f.write("input-language OpenAPI\n")
-            f.write("decl-version 2.0\n")
-            f.write("var-comparability implicit\n\n")
             f.write(str(self.decls_file))
 
         self.logger.info(f"Wrote declarations to {output_path}")
 
-    def extract_dtraces_from_har(self, har_path: str, output_path: str) -> None:
-        """Read a HAR file and write an approximate Daikon .dtrace file."""
-        with open(har_path, "r", encoding="utf-8") as f:
-            har_data = json.load(f)
+    def extract_dtraces(self):
+        testcase = TestCaseFileManager(cache_dir=self.cache_dir)
+        test_cases = testcase.parse_test_cases_from_history()
+        testcase.save_test_cases()
+        self.generate_dtrace_file(test_cases, self.cache_dir / "test_cases.dtrace")
 
-        if "log" not in har_data or "entries" not in har_data["log"]:
-            raise ValueError("Invalid HAR data: missing log.entries")
 
-        entries = har_data["log"]["entries"]
-        dtrace_path = Path(output_path)
-        dtrace_path.parent.mkdir(parents=True, exist_ok=True)
-
-        with dtrace_path.open("w", encoding="utf-8") as fout:
-            fout.write("input-language OpenAPI\n")
-            fout.write("decl-version 2.0\n")
-            fout.write("var-comparability implicit\n\n")
-
-            for i, entry in enumerate(entries, start=1):
-                request = entry.get("request", {})
-                response = entry.get("response", {})
-
-                method = request.get("method", "UNKNOWN").upper()
-                url = request.get("url", "")
-                parsed = urlparse(url)
-                endpoint_path = parsed.path
-
-                operation_id = self._resolve_operation_id(method, endpoint_path)
-                ppt_name = f"{operation_id}:::ENTER"
-
-                # Collate parameters from queryString and postData
-                params = self._extract_request_parameters(request)
-
-                fout.write(f"{ppt_name}:::ENTER\n")
-                fout.write("this_invocation_nonce\n")
-                fout.write(f"{i}\n")
-
-                # Add simple input parameters
-                for k, v in params.items():
-                    # convert list/values to stable string representation
-                    value = ",".join(v) if isinstance(v, list) else str(v)
-                    fout.write(f"{k}\n")
-                    fout.write(f"{value}\n")
-
-                fout.write("status_code\n")
-                fout.write(f"{response.get('status', '')}\n")
-
-                content = response.get("content", {})
-                if content:
-                    fout.write("response_body\n")
-                    body_value = content.get("text", "")
-                    if isinstance(body_value, str):
-                        body_value = body_value.replace("\n", "\\n")
-                    fout.write(f"{body_value}\n")
-
-                fout.write("\n")
-
-        self.logger.info(f"Wrote dtrace file to {dtrace_path}")
 
     def _resolve_operation_id(self, method: str, path: str) -> str:
         """Map request method+path to known operation name if possible."""
@@ -160,6 +110,74 @@ class DynamicConstraintMiner:
                 parameters.setdefault("body", []).append(str(text))
 
         return parameters
+
+    def generate_dtrace_file(self, test_cases: List[TestCase], output_path: str) -> None:
+        """Generate dtrace file from test cases array.
+        
+        Args:
+            test_cases: List of TestCase objects
+            output_path: Path to output .dtrace file
+        """
+        if not self.decls_file:
+            raise RuntimeError("DeclsFile is not generated. Call extract_decls_classes() first.")
+
+        output_path = Path(output_path)
+        output_path.parent.mkdir(parents=True, exist_ok=True)
+
+        test_case_count = 0
+
+        with output_path.open('w', encoding='utf-8') as dtrace_out:
+            dtrace_out.write("decl-version 2.0\n")
+            dtrace_out.write("var-comparability implicit\n\n")
+
+            for test_case in test_cases:
+                if test_case_count % 50 == 0:
+                    self.logger.info(f"Generated dtrace for {test_case_count} test cases")
+
+                test_case_count += 1
+                # test_case.path = test_case.path.replace(self.decls_file.common_path, "") # only get relative path
+
+                for decls_class in self.decls_file.decls_classes:
+                    test_case_path = f"{test_case.http_method.lower()}-{test_case.path}"
+                    if self._path_matches_endpoint(decls_class.class_name, test_case_path):
+                        self.logger.debug(f"Processing: {test_case.path} with status {test_case.status_code}")
+
+                        exits_for_status = [
+                            e for e in decls_class.decls_exits
+                            if int(e.status_code) == int(test_case.status_code or 0)
+                        ]
+
+                        for decls_exit in exits_for_status:
+                            enters_for_exit = [
+                                e for e in decls_class.decls_enters
+                                if (int(e.status_code) == int(decls_exit.status_code) and
+                                    e.name_suffix == decls_exit.name_suffix)
+                            ]
+
+                            if enters_for_exit:
+                                decls_enter = enters_for_exit[0]
+                                dtrace_content = decls_exit.generate_dtrace(test_case, decls_enter)
+                                dtrace_out.write(dtrace_content)
+
+        self.logger.info(f"Generated dtrace file: {output_path}")
+
+    def _path_matches_endpoint(self, endpoint: str, path: str) -> bool:
+        """Check if test case path matches the decls class endpoint.
+        
+        Args:
+            endpoint: Decls class endpoint (e.g., "GET-/api/users")
+            path: Test case path (e.g., "/api/users")
+            
+        Returns:
+            True if they match
+        """
+        # Extract path part from endpoint (after the method)
+        # if '-' in endpoint:
+        #     endpoint_path = endpoint.split('-', 1)[1]
+        # else:
+        #     endpoint_path = endpoint
+        # Simple match: check if path contains endpoint_path or vice versa
+        return endpoint.lower() == path.lower()
 
     def extract_constraints(self):
         """Optional stub for constraint extraction workflow."""

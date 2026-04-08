@@ -1,115 +1,61 @@
 """Test case file management utilities for Beet."""
 
+from dataclasses import asdict
+import glob
+import json
+import os
+from pathlib import Path
 from typing import Dict, List, Optional
+
+from api_testing.constraint.dynamic_constraints.test_case import TestCase
+from api_testing.utils import to_dict_helper
+from api_testing.utils.http import isSuccessful
 from . import csv_manager
 
 
 class TestCaseFileManager:
     """Manages parsing of test case CSV files."""
+    def __init__(
+        self,
+        cache_dir: Optional[str] = None
+    ) -> None:
+        self.cache_dir = cache_dir
+        self.testcases = []
     
-    def __init__(self, header: str):
-        """Initialize test case file manager.
-        
-        Args:
-            header: Header line from CSV
-        """
-        record = csv_manager.get_csv_record(header)
-        
-        self.test_case_id_index = self._get_index_of_element(record, "testCaseId")
-        self.operation_id_index = self._get_index_of_element(record, "operationId")
-        self.path_index = self._get_index_of_element(record, "path")
-        self.http_method_index = self._get_index_of_element(record, "httpMethod")
-        self.header_parameters_index = self._get_index_of_element(record, "headerParameters")
-        self.path_parameters_index = self._get_index_of_element(record, "pathParameters")
-        self.query_parameters_index = self._get_index_of_element(record, "queryParameters")
-        self.form_parameters_index = self._get_index_of_element(record, "formParameters")
-        self.body_parameter_index = self._get_index_of_element(record, "bodyParameter")
-        self.status_code_index = self._get_index_of_element(record, "statusCode")
-        self.response_body_index = self._get_index_of_element(record, "responseBody")
-    
-    def get_test_case(self, row: List[str]) -> 'TestCase':
-        """Parse a test case from CSV row.
-        
-        Args:
-            row: CSV row as list of strings
-            
-        Returns:
-            TestCase object
-        """
-        # Import here to avoid circular dependency
-        from agora.beet.model import TestCase
-        
-        header_params = self._string_to_map(row[self.header_parameters_index])
-        path_params = self._string_to_map(row[self.path_parameters_index])
-        query_params = self._string_to_map(row[self.query_parameters_index])
-        form_params = self._string_to_map(row[self.form_parameters_index])
-        
-        return TestCase(
-            test_case_id=row[self.test_case_id_index],
-            operation_id=row[self.operation_id_index],
-            path=row[self.path_index],
-            http_method=row[self.http_method_index],
-            header_parameters=header_params,
-            path_parameters=path_params,
-            query_parameters=query_params,
-            form_parameters=form_params,
-            body_parameter=row[self.body_parameter_index],
-            status_code=row[self.status_code_index],
-            response_body=row[self.response_body_index]
-        )
-    
-    @staticmethod
-    def _get_index_of_element(record: List[str], header: str) -> int:
-        """Find index of element in CSV header.
-        
-        Args:
-            record: CSV header record
-            header: Header name to find
-            
-        Returns:
-            Index of header
-            
-        Raises:
-            ValueError: If header not found
-        """
-        for i, col in enumerate(record):
-            if col.lower() == header.lower():
-                return i
-        raise ValueError(f"Element {header} not found in the csv headers")
-    
-    @staticmethod
-    def _string_to_map(str_val: str) -> Dict[str, str]:
-        """Convert string representation to dict.
-        
-        Args:
-            str_val: String like "key1=val1;key2=val2"
-            
-        Returns:
-            Dictionary of key-value pairs
-        """
-        if not str_val or str_val.strip() == "":
-            return {}
-        
-        result = {}
-        for pair in str_val.split(";"):
-            pair = pair.strip()
-            if "=" in pair:
-                key, value = pair.split("=", 1)
-                value = remove_newline_chars(value)
-                result[key] = value
-        
-        return result
+    def parse_test_cases_from_history(self):
+        files = glob.glob(f'{self.cache_dir}/history/*.har', recursive=True)
+        testcases = []
+        for file in files:
+            testcases.extend(self._process_har_file(file))
+        self.testcases = testcases 
+        return testcases
 
-
-def remove_newline_chars(s: str) -> str:
-    """Remove newline characters from string.
+    def _process_har_file(self, har_path: str) -> List[Dict[str, str]]:
+        """Parse a HAR file and extract test cases."""
+        test_cases = []
+        with open(har_path, "r", encoding="utf-8") as f:
+            har_data = json.load(f)
+            entries = har_data["log"]["entries"]
+            for i, entry in enumerate(entries, start=1):
+                request = entry.get("request", {})
+                response = entry.get("response", {})
+                if isSuccessful(response.get("status")):
+                    test_case = TestCase(
+                        test_case_id=f"{entry.get('_id', f'{request.get('method').lower()}-{request.get('path_template')}')}",
+                        operation_id=f"{request.get('method').lower()}-{request.get('path_template')}",
+                        path=request.get("path_template"),
+                        http_method=request.get("method"),
+                        parameters={param["name"]: param.get("value") for param in request.get("queryString", [])} | request.get("path_params", {}),
+                        request_body=request.get("postData", {}).get("text"),
+                        status_code=response.get("status"),
+                        response_body=response.get("content", {}).get("text"),
+                    )
+                    test_cases.append(test_case)
+                    # Here you would typically save the test case to a file or database
+                    print(f"Extracted test case from entry {i}: {test_case}")
+        return test_cases
     
-    Args:
-        s: Input string
-        
-    Returns:
-        String with newlines replaced by escape sequences
-    """
-    s = s.replace("\n", "\\n")
-    s = s.replace("\r", "\\r")
-    return s
+    def save_test_cases(self) -> None:
+        file_path = os.path.join(self.cache_dir, "test_cases.json")
+        with open(file_path, "w", encoding="utf-8") as f:
+            json.dump([to_dict_helper(tc) for tc in self.testcases], f)

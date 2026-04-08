@@ -11,6 +11,7 @@ from api_testing.constraint.dynamic_constraints.utils.json_manager import is_str
 from api_testing.constraint.dynamic_constraints.variable.array_variables import generate_decls_variables_of_array_exit
 from api_testing.constraint.dynamic_constraints.variable.exit_variables import generate_decls_variables_of_exit, generate_decls_variables_of_primitive_response
 from api_testing.constraint.dynamic_constraints.variable.variable_utils import ARRAY_NESTING_SEPARATOR, HIERARCHY_SEPARATOR
+from api_testing.models.specification_model import ItemProperties
 
 
 def get_list_of_json_elements_for_decls_exit(data: Any, route: List[str]) -> List[Any]:
@@ -87,7 +88,6 @@ class DeclsExit:
 
         # Determine behaviour based on schema_or_type
         self.exit_decls_variables = None
-
         if isinstance(schema_or_type, str) and variable_name is None:
             # Primitive response path
             self.name_suffix = ""
@@ -99,10 +99,9 @@ class DeclsExit:
                 "return",
             )
 
-        elif hasattr(schema_or_type, "get") and schema_or_type is not None:
+        elif isinstance(schema_or_type, ItemProperties) and schema_or_type is not None:
             # Object or array schema path
             schema_type = getattr(schema_or_type, "type", None)
-
             if schema_type and schema_type.lower() == "array":
                 self.is_nested_array = True
                 self.exit_decls_variables = generate_decls_variables_of_array_exit(
@@ -215,7 +214,7 @@ class DeclsExit:
     def generate_dtrace(self, test_case: 'TestCase', decls_enter: 'DeclsEnter') -> str:
         """Generate dtrace representation for this exit."""
         res = ""
-        response_body = test_case.get_response_body()
+        response_body = test_case.response_body
 
         if is_string_json_array(response_body):
             json_array = string_to_json_array(response_body)
@@ -241,6 +240,7 @@ class DeclsExit:
                 )
 
         else:
+
             json_obj = string_to_json_object(response_body)
             res += self.generate_single_dtrace_enter_and_exit(
                 [json_obj], test_case, decls_enter

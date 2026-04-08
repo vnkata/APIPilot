@@ -6,6 +6,7 @@
 from typing import List, Dict, Any, Optional
 from api_testing.constraint.dynamic_constraints.decls_exit import DeclsExit
 from api_testing.constraint.dynamic_constraints.variable.variable_utils import ARRAY_NESTING_SEPARATOR, ARRAY_TYPE_NAME, HIERARCHY_SEPARATOR, OBJECT_TYPE_NAME, PRIMITIVE_TYPES, translate_datatype
+from api_testing.models.specification_model import ItemProperties
 
 
 def get_all_nested_decls_exits(
@@ -14,7 +15,7 @@ def get_all_nested_decls_exits(
     variable_name_input: str,
     enter_variables,
     output_object_name: str,
-    media_type: Any,
+    media_type: ItemProperties,
     status_code: str
 ) -> List[DeclsExit]:
     """Get all nested exits for different response codes.
@@ -34,10 +35,9 @@ def get_all_nested_decls_exits(
     res: List[DeclsExit] = []
     parameter_type = media_type.type
     map_of_properties = media_type
-
     if (
         parameter_type
-        and parameter_type.lower() ==ARRAY_TYPE_NAME
+        and parameter_type.lower() == ARRAY_TYPE_NAME
     ):
         # Get the schema as ArraySchema
         array_schema = media_type
@@ -105,7 +105,6 @@ def get_all_nested_decls_exits(
 
             # If the element is of type array
             if schema_type and schema_type.lower() == "array":
-                print(schema)
                 array_schema = schema
                 decls_exit = DeclsExit(
                     endpoint,
@@ -136,32 +135,24 @@ def get_all_nested_decls_exits(
 
 
 def get_all_nested_schemas(
-    name_suffix: str, map_of_properties: Any
-) -> Dict[str, Any]:
+    name_suffix: str, map_of_properties: ItemProperties
+) -> Dict[str, ItemProperties]:
     """Get all nested schemas recursively.
     
     Args:
         name_suffix: Name suffix for the current schema
-        map_of_properties: Schema properties map
+        map_of_properties: ItemProperties schema object
         
     Returns:
         Dictionary of nested schemas
     """
-    res: Dict[str, Any] = {}
-
-    properties = (
-        map_of_properties.properties
-        if hasattr(map_of_properties, "properties")
-        else None
-    )
-
+    res: Dict[str, ItemProperties] = {}
+    if not hasattr(map_of_properties, "properties") or map_of_properties.properties is None:
+        return res
+    properties = map_of_properties.properties
     # Warnings if properties is None
     if properties is None:
-        additional_properties = (
-            map_of_properties.additional_properties
-            if hasattr(map_of_properties, "additional_properties")
-            else None
-        )
+        additional_properties = map_of_properties.additional_properties
         if additional_properties is None:
             print(
                 f"WARNING: No properties found for object: {name_suffix}"
@@ -174,8 +165,13 @@ def get_all_nested_schemas(
         parameter_names = properties.keys()
 
         for parameter_name in parameter_names:
-            schema = map_of_properties.properties[parameter_name]
-            parameter_type = schema.type if hasattr(schema, "type") else None
+            schema = properties[parameter_name]
+            if schema is None:
+                print(
+                    f"WARNING: No schema found for parameter: {parameter_name} in object: {name_suffix}"
+                )
+                continue
+            parameter_type = schema.type
 
             # If there is an allOf, parameter_type is None, but the schema contains all the properties
             if parameter_type is None or (
@@ -192,11 +188,10 @@ def get_all_nested_schemas(
                 )
 
             elif parameter_type and parameter_type.lower() == ARRAY_TYPE_NAME:  # If array
-                array_schema = map_of_properties.properties[parameter_name]
+                array_schema = properties[parameter_name]
                 items_datatype = (
                     array_schema.items.type
-                    if hasattr(array_schema, "items")
-                    and array_schema.items
+                    if array_schema.items
                     else None
                 )
                 nesting_suffix = (
@@ -217,8 +212,7 @@ def get_all_nested_schemas(
                     ] = array_schema
                     items_datatype = (
                         array_schema.items.type
-                        if hasattr(array_schema, "items")
-                        and array_schema.items
+                        if array_schema.items
                         else None
                     )
                     nesting_suffix += (
