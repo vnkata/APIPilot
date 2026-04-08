@@ -1,0 +1,3 @@
+[submodule "extensions/daikon"]
+	path = extensions/daikon
+	url = https://github.com/thanhtuit96/daikon.git
