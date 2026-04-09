@@ -25,7 +25,7 @@ def get_primitive_value_from_hierarchy(json_obj: Dict[str, Any], hierarchy: List
             return None
         value = json_obj[key]
         # Convert to string if not already
-        return str(value) if value is not None else None
+        return value
     else:
         json_son = json_obj.get(key)
         

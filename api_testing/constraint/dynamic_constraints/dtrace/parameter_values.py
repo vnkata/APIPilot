@@ -110,14 +110,12 @@ def get_value_of_parameter_for_dtrace_file(test_case, variable_name: str,
     
     elif "[..]" in variable_name:  # If array values
         hierarchy = variable_name.replace("[..]", "").split(".")
-        
         if len(hierarchy) > 1:
             # Get the array value (e.g., "element1%2Celement2%2Celement3")
             value = get_enter_parameter_value(test_case, hierarchy)
-            
             if value:
                 # Decode the value (e.g., "element1,element2,element3")
-                value = decode_string(value)
+                value = decode_string(value) if isinstance(value, str) else value
                 # Convert to array format
                 value = generate_dtrace_enter_value_of_array(test_case, value, dec_type, variable_name)
             else:

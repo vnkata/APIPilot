@@ -171,7 +171,6 @@ def _generate_decls_variables_of_exit_recursive(
         else:
             # Primitive type - create simple variable
             translated_type = translate_datatype(param_type) if param_type else "int"
-            
             decls_variable = DeclsVariable(
                 param_name,
                 parent_variable,

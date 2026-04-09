@@ -1,6 +1,7 @@
 """Variable model for Beet."""
 
 from dataclasses import dataclass, field
+import time
 from typing import List, Optional, Dict, Any
 from .variable.variable_utils import (
     encode_variable_name, DOUBLE_TYPE_NAME, BOOLEAN_TYPE_NAME, INTEGER_TYPE_NAME,
@@ -34,7 +35,8 @@ class DeclsVariable:
             self.variable_name = encode_variable_name(self.variable_name)
 
         self.var_kind = encode_variable_name(self.var_kind)
-
+        if self.dec_type == BOOLEAN_TYPE_NAME:
+            self.rep_type = INTEGER_TYPE_NAME
         if self.is_array:
             self.dec_type = f"{self.dec_type}[]"
             self.rep_type = f"{self.rep_type}[]"
@@ -70,6 +72,7 @@ class DeclsVariable:
         value = get_value_of_parameter_for_dtrace_file(
             test_case, self.variable_name, self.dec_type, self.rep_type
         )
+        
         modified = "1"
         # If a value is nonsensical, the value of modified must be 2 instead of 1
         # A parameter of type double with a null value is nonsensical
@@ -79,26 +82,29 @@ class DeclsVariable:
              self.rep_type.lower() == INTEGER_TYPE_NAME) and
             (value is None or value == "null")
         ):
-            # value = test_case.get_test_case_id()
             value = "nonsensical"
             modified = "2"
         
         # This happens with arrays
         if value is not None and value == "nonsensical":
             modified = "2"
-
+        #     time.sleep(200)  # sleep for 2 seconds
         # Convert value to string if not already
         if value is None:
             value = "null"
         elif isinstance(value, bool):
             value = int(value)
-        elif not isinstance(value, str):
-            value = str(value)
+            
+        # elif not isinstance(value, str):
+        #     value = str(value)
 
         res = f"{self.variable_name}\n{value}\n{modified}"
         # Son variables (enclosed variables)
         for enclosed_var in self.enclosed_variables:
             res += f"\n{enclosed_var.generate_dtrace_enter(test_case)}"
+        if self.variable_name == "input.Session" and value != "nonsensical":
+            if "[" in res:
+                print(res.replace("\n", "=>"),"", value)
 
         return res
 
@@ -123,6 +129,7 @@ class DeclsVariable:
             hierarchy = self.variable_name.split(".")
             hierarchy = hierarchy[1:]  # Remove class name
             value = get_primitive_value_from_hierarchy(json_obj, hierarchy)
+
 
             if value in STRINGS_TO_CONSIDER_AS_NULL:
                 value = None
@@ -155,7 +162,7 @@ class DeclsVariable:
 
                 if is_element_of_array:
                         value = f"[{value}]"
-
+            
         elif self.var_kind == ARRAY_TYPE_NAME:  # If array
             hierarchy = self.variable_name.replace("[..]", "").split(".")
             hierarchy = hierarchy[1:]  # Remove the class name from the hierarchy
@@ -191,6 +198,13 @@ class DeclsVariable:
         modified = "2" if is_nonsensical else "1"
         # if isinstance(value, bool) and value != "nonsensical":
         #     value = int(value)
+        # Convert value to string if not already
+        if value is None:
+            value = "null"
+        elif isinstance(value, bool):
+            value = int(value)
+        # elif not isinstance(value, str):
+        #     value = str(value)
         res = f"{self.variable_name}\n{value}\n{modified}"
 
         # Son variables (enclosed variables)

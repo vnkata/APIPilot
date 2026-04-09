@@ -4,6 +4,23 @@ from dataclasses import dataclass
 import json
 from typing import Dict, Optional
 
+def cast_value(value):
+    if isinstance(value, str):
+        if "[" in value and "]" in value:
+            try:
+                json_str = value.replace("True", "true").replace("False", "false")
+                val =  json.loads(json_str)
+                if isinstance(val, list) and len(val) == 1:
+                    return val[0]   
+                return val
+            except json.JSONDecodeError:
+                pass
+        if value.isdigit():
+            return int(value)
+        if value.lower() in ("true", "false"):
+            return value.lower() == "true"
+    return value
+
 @dataclass
 class TestCase:
     """Represents a test case from API calls."""
@@ -35,7 +52,7 @@ class TestCase:
         self.operation_id = operation_id
         self.path = path
         self.http_method = http_method
-        self.parameters = parameters or {}
+        self.parameters =  {k: cast_value(v) for k, v in parameters.items()}
         self.request_body = request_body or {}
         self.status_code = status_code
         self.response_body = response_body

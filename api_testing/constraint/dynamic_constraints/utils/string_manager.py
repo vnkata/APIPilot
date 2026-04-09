@@ -1,5 +1,6 @@
 """String management utilities for Beet."""
 
+import json
 from urllib.parse import quote, unquote
 
 
@@ -34,4 +35,13 @@ def decode_string(parameter_value: str) -> str:
     """
     if parameter_value is None:
         raise ValueError("parameter_value cannot be None")
-    return unquote(parameter_value)
+    if not isinstance(parameter_value, str):
+        return parameter_value
+    try:
+        val = json.loads(parameter_value)
+        if isinstance(val, list):
+            if len(val) == 1:
+                return val[0]
+        return val
+    except Exception as e:
+        return unquote(parameter_value)

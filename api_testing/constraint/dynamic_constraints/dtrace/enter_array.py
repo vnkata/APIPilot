@@ -27,7 +27,9 @@ def generate_dtrace_enter_value_of_array(test_case, elements: str, dectype: str,
     Returns:
         Dtrace format string for the array, or "nonsensical" if parsing fails
     """
-    if not elements or not elements.strip():
+    if isinstance(elements, str):
+        elements = elements.strip()
+    if not elements:
         return "nonsensical"
     
     # Convert the input into a JSON array
