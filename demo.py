@@ -1,5 +1,4 @@
 from api_testing import APITesting, GeminiModel
-from pathlib import Path
 import os
 
 from api_testing.memory.vectordb.qdrantdb import QdrantDB
@@ -7,7 +6,7 @@ from api_testing.models.embedding_models.huggingface_embedding_model import Hugg
 from api_testing.models.embedding_models.ollama_embedding_model import OllamaEmbeddingModel
 from dotenv import load_dotenv
 
-from api_testing.models.llms.AzureOpenAIModel import AzureOpenAIModel
+from api_testing.models.llms.azure_open_model import AzureOpenAIModel
 
 load_dotenv()
 
@@ -20,10 +19,10 @@ print("============= API Testing =============")
 # )
 # 
 llm = AzureOpenAIModel(
-    model="gpt-4.1",
+    model=os.getenv("AZURE_OPENAI_DEPLOYMENT") or "gpt-4.1",
     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
+    endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
+    api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview"),
     temperature=0.7,
 )
 
@@ -41,9 +40,11 @@ embedder = HuggingfaceEmbeddingModel(
 # )
 
 test = APITesting(
-    "localhost:80",
+    "http://localhost:30000/api/v4",
     model=llm,
     # vector_db=db,
     embedder=embedder,
-    spec_path="datasets/Bills-api.json",
+    spec_path="datasets\\GitLabIssues.json",
 )
+
+test.run_tests(num_generations=1, num_test_cases=5, mutation_ratio=0.5)

@@ -232,7 +232,10 @@ class OperationGraph:
            
                 #edge from dep_op to op
                 if len(similar_parameters) > 0:
-                    edges.append(OperationEdge(dep_op_properties, op_properties, similar_parameters))
+                    from_node = self.nodes.get(dep_op_properties.uuid)
+                    to_node = self.nodes.get(op_properties.uuid)
+                    if from_node and to_node:
+                        edges.append(OperationEdge(from_node, to_node, similar_parameters))
         
         return edges
     
@@ -341,9 +344,13 @@ class OperationGraph:
 
                     # Append edge only if this operation produced matches
                     if similarities:
+                        from_node = self.nodes.get(opt.uuid)
+                        to_node = self.nodes.get(operation.uuid)
+                        if not (from_node and to_node):
+                            continue
                         edges.append(OperationEdge(
-                            from_node=opt,
-                            to_node=operation,
+                            from_node=from_node,
+                            to_node=to_node,
                             similar_parameters=similarities
                         ))
             # for schema_name, mapping in results.items():
