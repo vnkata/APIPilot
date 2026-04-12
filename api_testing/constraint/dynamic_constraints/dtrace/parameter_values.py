@@ -5,15 +5,76 @@ Extracts parameter values from test cases for dtrace generation.
 Author: Juan C. Alonso (Java), converted to Python
 """
 
-from typing import Any, Dict, List, Optional
 import json
+from typing import Any, Dict, List, Optional
 
 from api_testing.constraint.dynamic_constraints.variable.variable_utils import (
-    decode_variable_name, PRIMITIVE_TYPES, STRING_TYPE_NAME, HIERARCHY_SEPARATOR
+    BOOLEAN_TYPE_NAME, DOUBLE_TYPE_NAME, HIERARCHY_SEPARATOR, INTEGER_TYPE_NAME,
+    PRIMITIVE_TYPES, STRING_TYPE_NAME, decode_variable_name
 )
 from api_testing.constraint.dynamic_constraints.dtrace.variable_values import get_primitive_value_from_hierarchy
 from api_testing.constraint.dynamic_constraints.utils.string_manager import decode_string, encode_string
 from api_testing.constraint.dynamic_constraints.dtrace.enter_array import generate_dtrace_enter_value_of_array
+
+
+TRUTHY_VALUES = {"true", "yes", "on", "1"}
+FALSY_VALUES = {"false", "no", "off", "0"}
+
+
+def _unwrap_single_value_container(value: Any) -> Any:
+    if isinstance(value, list) and len(value) == 1:
+        return value[0]
+
+    if isinstance(value, dict) and len(value) == 1:
+        key, nested_value = next(iter(value.items()))
+        if str(key).lower() in {"val", "value"}:
+            return nested_value
+
+    return value
+
+
+def _coerce_primitive_value_for_rep_type(value: Any, rep_type: str) -> Any:
+    value = _unwrap_single_value_container(value)
+    base_rep_type = rep_type.replace("[]", "").lower()
+
+    if base_rep_type == STRING_TYPE_NAME or value is None:
+        return value
+
+    if base_rep_type in {BOOLEAN_TYPE_NAME, INTEGER_TYPE_NAME}:
+        if isinstance(value, bool):
+            return int(value)
+        if isinstance(value, (int, float)):
+            return int(value)
+        if isinstance(value, str):
+            normalized_value = decode_string(value).strip().lower()
+            if normalized_value in TRUTHY_VALUES:
+                return 1
+            if normalized_value in FALSY_VALUES:
+                return 0
+            try:
+                return int(normalized_value)
+            except ValueError:
+                return "nonsensical"
+        return "nonsensical"
+
+    if base_rep_type == DOUBLE_TYPE_NAME:
+        if isinstance(value, bool):
+            return float(int(value))
+        if isinstance(value, (int, float)):
+            return float(value)
+        if isinstance(value, str):
+            normalized_value = decode_string(value).strip().lower()
+            if normalized_value in TRUTHY_VALUES:
+                return 1.0
+            if normalized_value in FALSY_VALUES:
+                return 0.0
+            try:
+                return float(normalized_value)
+            except ValueError:
+                return "nonsensical"
+        return "nonsensical"
+
+    return value
     
 def get_enter_parameter_value(test_case, hierarchy: List[str]) -> Optional[str]:
     """Get enter parameter value from various sources.
@@ -96,12 +157,14 @@ def get_value_of_parameter_for_dtrace_file(test_case, variable_name: str,
             value = get_enter_parameter_value(test_case, hierarchy)
         else:
             value = decode_variable_name(variable_name)
+
+        value = _coerce_primitive_value_for_rep_type(value, rep_type)
         
-        if rep_type == STRING_TYPE_NAME and value:
+        if rep_type == STRING_TYPE_NAME and value is not None:
             # Decode the parameter value (e.g., "street+address" → "street address", "1%2C2" → "1,2")
-            value = decode_string(value)
+            value = decode_string(value) if isinstance(value, str) else str(value)
             value = f'\"{value}\"'
-        elif value and isinstance(value, str):
+        elif value is not None and isinstance(value, str):
             # For non-string primitive types, if value is a string that should be quoted
             # (like "None", "null", etc.), we need to quote it to avoid Daikon warnings
             STRINGS_TO_QUOTE = ["None", "null", "undefined"]

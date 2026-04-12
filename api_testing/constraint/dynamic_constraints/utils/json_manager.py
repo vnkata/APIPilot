@@ -21,8 +21,7 @@ def string_to_json_array(input_str: str) -> list:
         if not isinstance(result, list):
             raise ValueError("Expected JSON array")
         return result
-    except json.JSONDecodeError as e:
-        print("Error converting the response body to string")
+    except json.JSONDecodeError:
         raise
 
 
@@ -43,8 +42,7 @@ def string_to_json_object(input_str: str) -> dict:
         if not isinstance(result, dict):
             raise ValueError("Expected JSON object")
         return result
-    except json.JSONDecodeError as e:
-        print("Error converting the response body to string")
+    except json.JSONDecodeError:
         raise
 
 
@@ -60,5 +58,5 @@ def is_string_json_array(input_str: str) -> bool:
     try:
         result = json.loads(input_str)
         return isinstance(result, list)
-    except json.JSONDecodeError:
+    except (json.JSONDecodeError, TypeError):
         return False

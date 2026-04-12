@@ -5,14 +5,44 @@ Generates dtrace enter values for array types.
 Author: Juan C. Alonso (Java), converted to Python
 """
 
+import ast
 import json
-from typing import List, Any, Optional
+from typing import Any, List, Optional
 
 from api_testing.constraint.dynamic_constraints.variable.variable_utils import STRING_TYPE_NAME
 from api_testing.constraint.dynamic_constraints.dtrace.exit_array import generate_dtrace_exit_value_of_json_array
 
 
-def generate_dtrace_enter_value_of_array(test_case, elements: str, dectype: str, variable_name: str) -> str:
+def _normalize_array_elements(elements: Any) -> Optional[List[Any]]:
+    if elements is None:
+        return None
+
+    if isinstance(elements, list):
+        return elements
+
+    if isinstance(elements, tuple):
+        return list(elements)
+
+    if not isinstance(elements, str):
+        return [elements]
+
+    stripped_elements = elements.strip()
+    if not stripped_elements:
+        return None
+
+    if stripped_elements.startswith("[") and stripped_elements.endswith("]"):
+        for parser in (json.loads, ast.literal_eval):
+            try:
+                parsed_value = parser(stripped_elements)
+                if isinstance(parsed_value, list):
+                    return parsed_value
+            except (ValueError, SyntaxError, json.JSONDecodeError, TypeError):
+                continue
+
+    return None
+
+
+def generate_dtrace_enter_value_of_array(test_case, elements: Any, dectype: str, variable_name: str) -> str:
     """Generate dtrace enter value for an array.
     
     Converts comma-separated input elements into a JSON array and calls 
@@ -27,6 +57,15 @@ def generate_dtrace_enter_value_of_array(test_case, elements: str, dectype: str,
     Returns:
         Dtrace format string for the array, or "nonsensical" if parsing fails
     """
+    normalized_elements = _normalize_array_elements(elements)
+    if normalized_elements is not None:
+        return generate_dtrace_exit_value_of_json_array(
+            test_case,
+            normalized_elements,
+            dectype,
+            variable_name,
+        )
+
     if isinstance(elements, str):
         elements = elements.strip()
     if not elements:
@@ -52,9 +91,8 @@ def generate_dtrace_enter_value_of_array(test_case, elements: str, dectype: str,
             json_str = f'[{elements}]'
         
         value_array = json.loads(json_str)
-    except (json.JSONDecodeError, ValueError) as e:
+    except (json.JSONDecodeError, ValueError):
         # If parsing fails, return nonsensical
-        print(f"Warning: Failed to parse array elements '{elements}' for type {dectype}: {e}")
         return "nonsensical"
     
     return generate_dtrace_exit_value_of_json_array(test_case, value_array, dectype, variable_name)

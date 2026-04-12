@@ -47,7 +47,7 @@ def get_all_nested_decls_exits(
         )
 
         while parameter_type and parameter_type.lower() == ARRAY_TYPE_NAME:
-            decls_exit = DeclsExit(
+            decls_exit = DeclsExit.from_array_schema(
                 endpoint,
                 operation_name,
                 variable_name_input,
@@ -80,7 +80,7 @@ def get_all_nested_decls_exits(
         and translate_datatype(parameter_type)
         in PRIMITIVE_TYPES
     ):
-        primitive_exit = DeclsExit(
+        primitive_exit = DeclsExit.from_primitive_type(
             endpoint,
             operation_name,
             variable_name_input,
@@ -106,7 +106,7 @@ def get_all_nested_decls_exits(
             # If the element is of type array
             if schema_type and schema_type.lower() == "array":
                 array_schema = schema
-                decls_exit = DeclsExit(
+                decls_exit = DeclsExit.from_array_schema(
                     endpoint,
                     operation_name,
                     variable_name_input,
@@ -119,7 +119,7 @@ def get_all_nested_decls_exits(
                 )
                 res.append(decls_exit)
             else:  # If the element is of type object
-                decls_exit = DeclsExit(
+                decls_exit = DeclsExit.from_object_schema(
                     endpoint,
                     operation_name,
                     variable_name_input,

@@ -17,7 +17,7 @@ class ExitArrayHandler:
     STRINGS_TO_CONSIDER_AS_NULL = ["null", "None", "", "undefined"]
     
     @staticmethod
-    def remove_new_line_chars(value: str) -> str:
+    def remove_new_line_chars(value: Any) -> str:
         """Escape newline characters for Daikon dtrace values.
         
         Args:
@@ -28,7 +28,8 @@ class ExitArrayHandler:
         """
         if value is None:
             return ""
-        return value.replace("\n", "\\n").replace("\r", "\\r")
+        string_value = value if isinstance(value, str) else str(value)
+        return string_value.replace("\n", "\\n").replace("\r", "\\r")
     
     @staticmethod
     def generate_dtrace_exit_value_of_json_array(test_case, elements: Optional[List[Any]], 
@@ -94,7 +95,7 @@ class ExitArrayHandler:
 
 
 # Backward compatibility - keep the original function as a wrapper
-def remove_new_line_chars(value: str) -> str:
+def remove_new_line_chars(value: Any) -> str:
     """Escape newline characters for Daikon dtrace values."""
     return ExitArrayHandler.remove_new_line_chars(value)
 

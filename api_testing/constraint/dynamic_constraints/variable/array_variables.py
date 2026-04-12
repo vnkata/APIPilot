@@ -1,6 +1,6 @@
 """Array variables handling for Beet."""
 
-from typing import Dict, List
+from typing import Any, Dict, List
 from api_testing.constraint.dynamic_constraints.decls_variable import DeclsVariable
 from api_testing.constraint.dynamic_constraints.variable.variable_utils import (
     encode_variable_name, translate_datatype,
@@ -41,7 +41,7 @@ def generate_decls_variables_of_array(
 
 
 def generate_decls_variables_of_array_exit(
-    array_schema: Dict,
+    array_schema: Dict | Any,
     dec_type: str,
     variable_name: str,
     var_kind: str,
@@ -69,8 +69,16 @@ def generate_decls_variables_of_array_exit(
     )
     
     items_datatype = None
-    if isinstance(array_schema, dict) and 'items' in array_schema:
-        items_datatype = array_schema['items'].get('type')
+    items_schema = None
+    if hasattr(array_schema, "items"):
+        items_schema = getattr(array_schema, "items", None)
+    elif isinstance(array_schema, dict):
+        items_schema = array_schema.get("items")
+
+    if hasattr(items_schema, "type"):
+        items_datatype = getattr(items_schema, "type", None)
+    elif isinstance(items_schema, dict):
+        items_datatype = items_schema.get("type")
     
     if items_datatype is None:
         items_datatype = 'string'

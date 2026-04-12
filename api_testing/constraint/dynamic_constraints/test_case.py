@@ -1,24 +1,55 @@
 """Test case model for Beet."""
 
-from dataclasses import dataclass
-import json
-from typing import Dict, Optional
+from __future__ import annotations
 
-def cast_value(value):
-    if isinstance(value, str):
-        if "[" in value and "]" in value:
+import ast
+import json
+import re
+from dataclasses import dataclass
+from typing import Any, Dict, Optional
+
+
+INTEGER_PATTERN = re.compile(r"^[+-]?\d+$")
+FLOAT_PATTERN = re.compile(r"^[+-]?(?:\d+\.\d*|\.\d+)(?:[eE][+-]?\d+)?$")
+
+
+def _unwrap_single_value_container(value: Any) -> Any:
+    if isinstance(value, list) and len(value) == 1:
+        return value[0]
+
+    if isinstance(value, dict) and len(value) == 1:
+        key, nested_value = next(iter(value.items()))
+        if str(key).lower() in {"val", "value"}:
+            return nested_value
+
+    return value
+
+
+def cast_value(value: Any) -> Any:
+    if not isinstance(value, str):
+        return value
+
+    normalized_value = value.strip()
+    lowered_value = normalized_value.lower()
+
+    if lowered_value in {"true", "false", "yes", "no", "on", "off"}:
+        return lowered_value in {"true", "yes", "on"}
+
+    if INTEGER_PATTERN.fullmatch(normalized_value):
+        return int(normalized_value)
+
+    if FLOAT_PATTERN.fullmatch(normalized_value):
+        return float(normalized_value)
+
+    if normalized_value.startswith(("[", "{")) and normalized_value.endswith(("]", "}")):
+        for parser in (json.loads, ast.literal_eval):
             try:
-                json_str = value.replace("True", "true").replace("False", "false")
-                val =  json.loads(json_str)
-                if isinstance(val, list) and len(val) == 1:
-                    return val[0]   
-                return val
-            except json.JSONDecodeError:
-                pass
-        if value.isdigit():
-            return int(value)
-        if value.lower() in ("true", "false"):
-            return value.lower() == "true"
+                parsed_value = parser(normalized_value)
+                normalized_parsed_value = _unwrap_single_value_container(parsed_value)
+                return cast_value(normalized_parsed_value)
+            except (ValueError, SyntaxError, json.JSONDecodeError, TypeError):
+                continue
+
     return value
 
 @dataclass

@@ -1,20 +1,21 @@
 
-
 import json
-import os
 from pathlib import Path
-from urllib.parse import urlparse, parse_qs
 from typing import Any, Dict, List, Optional
 
 from api_testing.constraint.dynamic_constraints.decls_file import Comparability, DeclsFile
+from api_testing.constraint.dynamic_constraints.invariant_extractor import InvariantExtractor
 from api_testing.constraint.dynamic_constraints.test_case import TestCase
 from api_testing.constraint.dynamic_constraints.utils.test_case_file_manager import TestCaseFileManager
-from api_testing.utils.http import isSuccessful
 from api_testing.utils.log import getLogger
 
 
 class DynamicConstraintMiner:
     """Dynamic constraint miner that maps API spec operations to Daikon .decls/.dtrace."""
+
+    DECLS_FILENAME = "test_cases.decls"
+    DTRACE_FILENAME = "test_cases.dtrace"
+    INVARIANTS_FILENAME = "invariants.csv"
 
     def __init__(self, spec_parser=None, model=None, cache_dir=None):
         self.spec_parser = spec_parser
@@ -29,6 +30,10 @@ class DynamicConstraintMiner:
         self.operations = self.spec_parser.operations
         self.decls_file: Optional[DeclsFile] = None
 
+    def _cache_path(self, filename: str) -> Path:
+        """Return an artifact path inside the miner cache directory."""
+        return self.cache_dir / filename
+
     def extract_decls_classes(self) -> DeclsFile:
         """Parse operations from spec_parser into DeclsFile."""
         self.decls_file = DeclsFile(
@@ -40,10 +45,10 @@ class DynamicConstraintMiner:
 
         # Existing API path conversion logic in DeclsFile
         self.decls_file.parse_operations()
-        self.save_decls_file(os.path.join(self.cache_dir, "test_cases.decls"))
+        self.save_decls_file(self._cache_path(self.DECLS_FILENAME))
         return self.decls_file
 
-    def save_decls_file(self, output_path: str) -> None:
+    def save_decls_file(self, output_path: str | Path) -> None:
         """Persist DeclsFile to disk in Daikon .decls format."""
         if not self.decls_file:
             raise RuntimeError("DeclsFile is not generated. Call extract_decls_classes() first.")
@@ -61,7 +66,39 @@ class DynamicConstraintMiner:
         testcase = TestCaseFileManager(cache_dir=self.cache_dir)
         test_cases = testcase.parse_test_cases_from_history()
         testcase.save_test_cases()
-        self.generate_dtrace_file(test_cases, self.cache_dir / "test_cases.dtrace")
+        self.generate_dtrace_file(test_cases, self._cache_path(self.DTRACE_FILENAME))
+
+    def extract_invariants(self, output_path: str | Path | None = None) -> Path:
+        """Run Daikon to extract invariants from generated decls and dtrace files."""
+        decls_path = self._cache_path(self.DECLS_FILENAME)
+        dtrace_path = self._cache_path(self.DTRACE_FILENAME)
+
+        missing_files = [path for path in (decls_path, dtrace_path) if not path.exists()]
+        if missing_files:
+            missing_paths = ", ".join(str(path) for path in missing_files)
+            raise FileNotFoundError(
+                "Missing required instrumentation files: "
+                f"{missing_paths}. Call extract_decls_classes() and extract_dtraces() first."
+            )
+
+        extractor = InvariantExtractor(cache_dir=self.cache_dir)
+        return extractor.extract_invariants(
+            decls_path=decls_path,
+            dtrace_path=dtrace_path,
+            output_path=output_path,
+        )
+
+    def mine_dynamic_constraints(self) -> Dict[str, Path]:
+        """Run the full dynamic mining workflow and return generated artifact paths."""
+        self.extract_decls_classes()
+        self.extract_dtraces()
+        invariants_path = self.extract_invariants()
+
+        return {
+            "decls_path": self._cache_path(self.DECLS_FILENAME),
+            "dtrace_path": self._cache_path(self.DTRACE_FILENAME),
+            "invariants_path": invariants_path,
+        }
 
 
 
@@ -111,7 +148,7 @@ class DynamicConstraintMiner:
 
         return parameters
 
-    def generate_dtrace_file(self, test_cases: List[TestCase], output_path: str) -> None:
+    def generate_dtrace_file(self, test_cases: List[TestCase], output_path: str | Path) -> None:
         """Generate dtrace file from test cases array.
         
         Args:
@@ -140,8 +177,6 @@ class DynamicConstraintMiner:
                 for decls_class in self.decls_file.decls_classes:
                     test_case_path = f"{test_case.http_method.lower()}-{test_case.path}"
                     if self._path_matches_endpoint(decls_class.class_name, test_case_path):
-                        self.logger.debug(f"Processing: {test_case.path} with status {test_case.status_code}")
-
                         exits_for_status = [
                             e for e in decls_class.decls_exits
                             if int(e.status_code) == int(test_case.status_code or 0)

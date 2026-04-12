@@ -1,5 +1,6 @@
 """DeclsExit model for Beet."""
 
+from json import JSONDecodeError
 from typing import TYPE_CHECKING, Optional, List, Any
 from unittest import TestCase
 
@@ -12,6 +13,10 @@ from api_testing.constraint.dynamic_constraints.variable.array_variables import 
 from api_testing.constraint.dynamic_constraints.variable.exit_variables import generate_decls_variables_of_exit, generate_decls_variables_of_primitive_response
 from api_testing.constraint.dynamic_constraints.variable.variable_utils import ARRAY_NESTING_SEPARATOR, HIERARCHY_SEPARATOR
 from api_testing.models.specification_model import ItemProperties
+from api_testing.utils.log import getLogger
+
+
+LOGGER = getLogger(__name__)
 
 
 def get_list_of_json_elements_for_decls_exit(data: Any, route: List[str]) -> List[Any]:
@@ -216,35 +221,46 @@ class DeclsExit:
         res = ""
         response_body = test_case.response_body
 
-        if is_string_json_array(response_body):
-            json_array = string_to_json_array(response_body)
+        try:
+            if is_string_json_array(response_body):
+                json_array = string_to_json_array(response_body)
 
-            if self.is_nested_array:
-                target_nesting_level = (
-                    self.name_suffix.split(ARRAY_NESTING_SEPARATOR).count("array")
-                )
-                json_arrays_to_generate_dtrace = get_json_arrays_of_specified_nesting_level(
-                    json_array,
-                    target_nesting_level,
-                    1,
-                )
-                for element in json_arrays_to_generate_dtrace:
-                    res += self.generate_single_dtrace_enter_and_exit_array(
-                        element, test_case, decls_enter
+                if self.is_nested_array:
+                    target_nesting_level = (
+                        self.name_suffix.split(ARRAY_NESTING_SEPARATOR).count("array")
                     )
+                    json_arrays_to_generate_dtrace = get_json_arrays_of_specified_nesting_level(
+                        json_array,
+                        target_nesting_level,
+                        1,
+                    )
+                    for element in json_arrays_to_generate_dtrace:
+                        res += self.generate_single_dtrace_enter_and_exit_array(
+                            element, test_case, decls_enter
+                        )
 
+                else:
+                    flat_list = do_bubble_sort(json_array)
+                    res += self.generate_single_dtrace_enter_and_exit(
+                        flat_list, test_case, decls_enter
+                    )
             else:
-                flat_list = do_bubble_sort(json_array)
+                json_obj = string_to_json_object(response_body)
                 res += self.generate_single_dtrace_enter_and_exit(
-                    flat_list, test_case, decls_enter
+                    [json_obj], test_case, decls_enter
                 )
-
-        else:
-
-            json_obj = string_to_json_object(response_body)
-            res += self.generate_single_dtrace_enter_and_exit(
-                [json_obj], test_case, decls_enter
+        except (JSONDecodeError, TypeError, ValueError) as exc:
+            response_preview = repr(response_body)[:160]
+            LOGGER.warning(
+                "Skipping dtrace generation for test case %s at %s because the response body "
+                "is not a JSON object/array compatible with the declared schema: %s. "
+                "Response preview: %s",
+                getattr(test_case, "test_case_id", "<unknown>"),
+                self.get_exit_name(),
+                exc,
+                response_preview,
             )
+            return ""
 
         return res
 
