@@ -5,7 +5,7 @@ import logging
 import random
 from time import sleep
 from api_testing.configuration.configuration_parser import ConfigurationParser
-from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
+# from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
 from api_testing.feedback import FeedbackAnalyzer
 from api_testing.generators.executor import Executor, Strategy
 from api_testing.generators.requestor import Requestor
@@ -257,6 +257,7 @@ class APITesting:
         self.operation_graph.plot_graph()
     
     def run_tests(self,num_generations=1, num_test_cases=20, mutation_ratio=0.0):
+        print("Building operation graph...")
         self.operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
             model=self.model,

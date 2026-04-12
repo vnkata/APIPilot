@@ -1,24 +1,28 @@
 import copy
-from dataclasses import asdict, field, fields, replace
+from dataclasses import asdict, replace
 from enum import Enum, auto
 import random
-from typing import Any, Dict
+from typing import TYPE_CHECKING, Any, Dict
 
 from api_testing.generators.naive_value_generator import NaiveValueGenerator
 from api_testing.generators.requestor import Requestor
 from api_testing.generators.smart_value_generator import SmartValueGenerator
+from api_testing.inputs.header_request_generator import HeaderRequestGenerator
 from api_testing.models.generator_model import ItemGenerator, ParameterGenerator
 from api_testing.models.http_data import RequestData
 from api_testing.models.specification_model import ItemProperties, OperationProperties, ParameterProperties
 from api_testing.utils import flatten_item_properties, get_required_body_params
-from fake_useragent import UserAgent
-import time
+
+if TYPE_CHECKING:
+  from api_testing.models.configuration_model import FieldConfiguration
+
 
 class Strategy(Enum):
   SMART_VALUE = auto()      # use GPT
   NAIVE_VALUE = auto()      # combine params
-  COUNTER_VALUE = auto()    # sinh giá trị đối nghịch / edge-case
+  COUNTER_VALUE = auto()    # sinh gia tri doi nghich / edge-case
   FUZZY_VALUE = auto()      # sinh data fuzzy
+
 
 def merge_config(
         p: ParameterProperties | ItemProperties | Dict[str, Any] = None,
@@ -29,18 +33,16 @@ def merge_config(
 
         conf = conf or {}
 
-        # -------------------------
         # CASE 1: Request Body (ItemProperties)
-        # -------------------------
         if isinstance(p, ItemProperties):
             schema_type = getattr(p, "type", None)
-            # 🔥 ARRAY
+            # ARRAY
             if schema_type == "array":
                 item_schema = getattr(p, "items", None)
 
                 generator = ItemGenerator.from_dict(p.to_dict())
 
-                # apply config (áp dụng cho whole array nếu có key đặc biệt)
+                # apply config cho whole array neu co key dac biet
                 if "__self__" in conf:
                     generator.strategy = conf["__self__"]
                 return {
@@ -49,7 +51,7 @@ def merge_config(
                     "description": p.description,
                     "items": merge_config(item_schema, conf),
                 }
-            # 🔥 OBJECT
+            # OBJECT
             elif schema_type == "object" or getattr(p, "properties", None) is not None:
                 result = {}
                 flatten_items = flatten_item_properties(p)
@@ -57,11 +59,9 @@ def merge_config(
                 for k, v in flatten_items.items():
                     param_data = v.to_dict()
                     generator = ItemGenerator.from_dict(param_data)
-                    # required → nullable = False
                     if k in required:
                         generator.nullable = False
 
-                    # apply config
                     if k in conf:
                         generator.strategy = conf[k]
 
@@ -72,7 +72,7 @@ def merge_config(
                     "properties": result,
                 }
 
-            # 🔥 PRIMITIVE
+            # PRIMITIVE
             else:
                 generator = ItemGenerator.from_dict(p.to_dict())
 
@@ -84,9 +84,7 @@ def merge_config(
                     "__generator__": generator,
                 }
 
-        # -------------------------
         # CASE 2: Parameters (dict)
-        # -------------------------
         result = {}
         for k, v in p.items():
             param_data = v.to_dict()
@@ -101,8 +99,8 @@ def merge_config(
 
 
 class Executor:
-  def __init__(self, api_url: str=None, strategy: Strategy = Strategy.SMART_VALUE, operation: OperationProperties = None, cache_dir=None,model=None,configuration=None,
-               num_test_cases=1, context_pool=None, mutation_ratio = 0.1):
+  def __init__(self, api_url: str = None, strategy: Strategy = Strategy.SMART_VALUE, operation: OperationProperties = None, cache_dir=None, model=None, configuration=None,
+               num_test_cases=1, context_pool=None, mutation_ratio=0.1):
     self.api_url = api_url
     self.strategy = strategy
     self.operation = operation
@@ -114,55 +112,63 @@ class Executor:
     self.num_test_cases = num_test_cases
     self.mutation_ratio = mutation_ratio
 
+  def _mutate_headers_with_generator(self, headers: Dict[str, str]) -> Dict[str, str]:
+    mutated_headers = dict(headers or {})
+    rounds = random.randint(2, 5)
+
+    for _ in range(rounds):
+      generator = HeaderRequestGenerator(base_headers=mutated_headers)
+      fuzzed = generator.next_fuzz_value()
+      if isinstance(fuzzed, dict):
+        mutated_headers = fuzzed
+
+    return mutated_headers
+
   def mutator(self, requests: list["RequestData"], body_schema) -> list["RequestData"]:
     if not requests:
-        return []
+      return []
 
     mutated = []
     operation_mimetypes = set(self.operation.minetypes or [])
 
-    # Một số MIME sai phổ biến để induce 4xx
     invalid_mimes = [
-        "application/xml",
-        "text/plain",
-        "multipart/form-data",
-        "application/x-www-form-urlencoded",
-        "application/invalid"
+      "application/xml",
+      "text/plain",
+      "multipart/form-data",
+      "application/x-www-form-urlencoded",
+      "application/invalid",
     ]
-    ua = UserAgent()
-    # covert_to_array = body_schema and isinstance(body_schema, ItemProperties) and (body_schema.type == "array" or body_schema.items) 
-    for req in requests:
-        # chỉ mutate một phần theo ratio + chỉ khi expected 4xx
-        if req.expected_code == "4xx":
-            new_mime = req.mime_type
-            if random.random() < self.mutation_ratio:
-                # chọn mime sai (không nằm trong operation)
-                candidate_mimes = list(set(invalid_mimes) - operation_mimetypes)
-                if not candidate_mimes:
-                    candidate_mimes = invalid_mimes  # fallback
-                new_mime = random.choice(candidate_mimes)
-            new_headers = {}
-            if random.random() < self.mutation_ratio:                
-                new_headers = { "User-Agent": ua.random }
-            http_method = req.http_method
-            if random.random() < self.mutation_ratio:
-                # chọn mime sai (không nằm trong operation)
-                candidate_mimes = list(set(["DELETE","GET","POST", "PUT", "PATCH", "OPTIONS", "HEAD", "TRACE"]) - set([req.http_method]))
-                http_method = random.choice(candidate_mimes)
-            
-            mutated_req = replace(
-                req,
-                http_method=http_method,
-                mime_type=new_mime,
-                headers={**req.headers, "Content-Type": new_mime, **new_headers}
-            )
 
-            mutated.append(mutated_req)
-        else:       
-            mutated.append(req)
+    for req in requests:
+      new_headers = dict(req.headers or {})
+      new_mime = req.mime_type
+      http_method = req.http_method
+
+      # Header mutation chi chay cho 4xx.
+      if req.expected_code == "4xx":
+        if random.random() < self.mutation_ratio:
+          new_headers = self._mutate_headers_with_generator(new_headers)
+
+        if random.random() < self.mutation_ratio:
+          candidate_mimes = list(set(invalid_mimes) - operation_mimetypes)
+          if not candidate_mimes:
+            candidate_mimes = invalid_mimes
+          new_mime = random.choice(candidate_mimes)
+
+        if random.random() < self.mutation_ratio:
+          candidate_methods = list(set(["DELETE", "GET", "POST", "PUT", "PATCH", "OPTIONS", "HEAD", "TRACE"]) - set([req.http_method]))
+          http_method = random.choice(candidate_methods)
+
+      mutated_req = replace(
+        req,
+        http_method=http_method,
+        mime_type=new_mime,
+        headers={**new_headers, "Content-Type": new_mime},
+      )
+      mutated.append(mutated_req)
 
     return mutated
-     
+
   def generate_values(self):
       req_body = self.operation.request_body
       operation_mimetypes = self.operation.minetypes
@@ -179,7 +185,6 @@ class Executor:
           "PRIVATE-TOKEN": "wziZeCMoE2xunx8zzWws"
       }
 
-      # 2. Cập nhật Content-Type dựa trên mime (giả sử 'mime' là biến chứa type)
       if mime == "application/octet-stream":
         headers["Content-Type"] = "application/octet-stream"
       base_request = RequestData(
@@ -192,17 +197,18 @@ class Executor:
 
       params = self.operation.parameters
       body_schema = req_body.get(mime, {})
-      
+
       def build_requests(values):
         return [
-						replace(base_request,
-										parameters=v.get("parameters"),
-                                        expected_code=v.get("expected_code"),
-										body=v.get("requestBody"))
-						for v in values
-				]
-      
-    
+            replace(
+              base_request,
+              parameters=v.get("parameters"),
+              expected_code=v.get("expected_code"),
+              body=v.get("requestBody"),
+            )
+            for v in values
+        ]
+
       match self.strategy:
           case Strategy.SMART_VALUE:
               params = merge_config(params, self.configuration.params)
@@ -218,28 +224,21 @@ class Executor:
               values = build_requests(values)
               return self.mutator(values, req_body.get(mime, {}))
           case Strategy.COUNTER_VALUE | Strategy.FUZZY_VALUE:
-              # TODO: implement later (read config, merge, etc.)
               return []
 
           case _:
               raise NotImplementedError("Strategy not implemented")
 
       return []
-  
-  def generate_smart_values(self,operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
-    """
-    Generate smart values for parameters and request body using LLMs
-    :param operation_properties: Dictionary mapping of operation properties
-    :param requirements: RequestRequirements object that contains any parameters or request body requirements
-    :return: a tuple of the generated parameters and request body
-    """
-    value_generator = SmartValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, mutation_ratio = self.mutation_ratio)
+
+  def generate_smart_values(self, operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
+    value_generator = SmartValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool=self.context_pool, mutation_ratio=self.mutation_ratio)
     return value_generator.exec()
-  
-  def generate_naive_values(self,operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
-    value_generator = NaiveValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, cache_dir=self.cache_dir,  mutation_ratio = self.mutation_ratio)
+
+  def generate_naive_values(self, operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
+    value_generator = NaiveValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool=self.context_pool, cache_dir=self.cache_dir, mutation_ratio=self.mutation_ratio)
     return value_generator.exec()
-  
+
   def exec(self):
     data = self.generate_values()
     for item in data:

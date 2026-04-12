@@ -1,21 +1,24 @@
 # APIPilot: REST API Testing with Verified LLM-Inferred Dependencies and Response-Driven Refinement
+
 APIPilot is a verification-guided framework for REST API testing that infers and validates operation dependencies using LLMs and execution feedback, enabling reliable workflow generation and iterative refinement.
+
 ## Architecture
+
 ![Reflexion RL diagram](./figures/architecture.png)
 
 ## Available Baseline Tools
 
 - **RESTifAI** (`RESTifAI`): A LLM-based REST API testing framework designed to generate reusable and executable production-ready test suites. The approach validates OpenAPI specifications through structural conformance testing and verifying business logic scenarios through functional test case generation.
-  *Reference*: https://doi.org/10.48550/arXiv.2512.08706
-  *Repository*: https://github.com/casablancahotelsoftware/RESTifAI
+  _Reference_: https://doi.org/10.48550/arXiv.2512.08706
+  _Repository_: https://github.com/casablancahotelsoftware/RESTifAI
 
 - **AutoRestTest** (`AutoRestTest`): A mutation-based API testing methodology that leverages LLM-generated request values combined with reinforcement learning techniques to maximize the detection of unique HTTP 500 server errors and successful 2xx responses across distinct API operations.  
-  *Reference*: https://doi.org/10.48550/arXiv.2501.08600  
-  *Repository*: https://github.com/selab-gatech/AutoRestTest/
+  _Reference_: https://doi.org/10.48550/arXiv.2501.08600  
+  _Repository_: https://github.com/selab-gatech/AutoRestTest/
 
 - **KAT** (`KAT`): A novel AI-driven approach that leverages the large language model GPT in conjunction with advanced prompting techniques to autonomously generate test cases to validate RESTful APIs.  
-  *Reference*: https://doi.org/10.48550/arXiv.2407.10227
-   
+  _Reference_: https://doi.org/10.48550/arXiv.2407.10227
+
 ## Evaluation Dataset: API Services
 
 The experimental evaluation encompasses 11 diverse REST API services, selected to represent varying complexity levels and domain-specific characteristics:
@@ -23,34 +26,36 @@ The experimental evaluation encompasses 11 diverse REST API services, selected t
 #### Locally Deployed Services
 
 - **genome-nexus**: A bioinformatics service providing genomic variant annotation capabilities  
-  *Source*: https://github.com/genome-nexus/genome-nexus
+  _Source_: https://github.com/genome-nexus/genome-nexus
 - **language-tool**: A natural language processing service offering grammar and linguistic analysis  
-  *Source*: https://github.com/languagetool-org/languagetool  
+  _Source_: https://github.com/languagetool-org/languagetool
 - **rest-countries**: A geographical information service providing country-specific metadata  
-  *Source*: https://github.com/apilayer/restcountries
+  _Source_: https://github.com/apilayer/restcountries
 - **GitLab**: A web-based DevOps lifecycle tool providing Git repository management, issue tracking, and CI/CD pipeline features
-  *Source*: https://gitlab.com/gitlab-org/gitlab
+  _Source_: https://gitlab.com/gitlab-org/gitlab
 - **Jhipster Sample Application**: Jhipster Sample Application API
-  *Source*: https://github.com/jhipster/jhipster-sample-app
+  _Source_: https://github.com/jhipster/jhipster-sample-app
 - **Petstore**: This is a sample server Petstore server.
-  *Source*: https://github.com/swagger-api/swagger-petstore
+  _Source_: https://github.com/swagger-api/swagger-petstore
 - **Spring PetClinic**: Spring PetClinic Sample Application.
 
-  *Source*: https://github.com/spring-projects/spring-petclinic
+  _Source_: https://github.com/spring-projects/spring-petclinic
+
 #### Remotely Hosted Services
+
 - **Bills API**: API to get and search for information regarding Bills, their stages, associated amendments and publications.
 - **Canada Holidays API**: This API lists all 31 public holidays for all 13 provinces and territories in Canada, including federal holidays.
 - **fdic**: Federal Deposit Insurance Corporation banking institution data service  
-  *Documentation*: https://api.fdic.gov/banks/docs/
+  _Documentation_: https://api.fdic.gov/banks/docs/
 - **ohsome**: OpenStreetMap geospatial data analysis and statistics service  
-  *Documentation*: https://docs.ohsome.org/ohsome-api/v1/
-
+  _Documentation_: https://docs.ohsome.org/ohsome-api/v1/
 
 #### Results
 
 The `results/` directory stores structured outputs and analysis artifacts produced during the API testing and fault discovery process. It serves as the primary location for reproducible results and post-execution analysis.
-* `results/results.xlsx`: A central report spreadsheet summarizing statistics across multiple runs.
-* `results/unique_500_entries.jsonl`: A JSON Lines file containing 185 entries of 500-error cases grouped by operations.
+
+- `results/results.xlsx`: A central report spreadsheet summarizing statistics across multiple runs.
+- `results/unique_500_entries.jsonl`: A JSON Lines file containing 185 entries of 500-error cases grouped by operations.
 
 **Happy testing! 🚀**
 
@@ -60,7 +65,7 @@ The `results/` directory stores structured outputs and analysis artifacts produc
 
 This section shows common ways to run the repository and use the main APIs programmatically.
 
-1) Quick demo (recommended)
+1. Quick demo (recommended)
 
 ```bash
 # create venv and install deps
@@ -72,7 +77,7 @@ pip install -r requirements.txt
 python demo.py
 ```
 
-2) Run programmatically from Python
+2. Run programmatically from Python
 
 ```python
 from api_testing import APITesting
@@ -93,7 +98,7 @@ tester = APITesting(
 tester.run_tests(num_generations=2, num_test_cases=30, mutation_ratio=0.2)
 ```
 
-3) Advanced: use `Executor` directly
+3. Advanced: use `Executor` directly
 
 ```python
 from api_testing.generators.executor import Executor, Strategy
@@ -112,7 +117,30 @@ entries = executor.exec()
 ```
 
 Notes:
+
 - Replace `<YOUR_KEY>` with your LLM API key or configure environment variables.
 - Use `SpecificationParser` to parse OpenAPI/Swagger files and obtain `OperationProperties` objects when using `Executor` directly. For most use-cases, `APITesting` and `demo.py` already show practical end-to-end flows.
 
 If you'd like, I can expand the `Executor` example to show how to build an `OperationProperties` from a spec or add a complete runnable snippet that uses a local sample spec.
+
+4. Generate endpoint-level 500 report from HAR history
+
+```bash
+# Input can be either a cache folder that contains history/
+python endpoint_500_report.py \
+  --dir ".cache/GitLab Issues API 2"
+
+# Or directly a history folder
+python endpoint_500_report.py \
+  --dir ".cache/GitLab Issues API 2/history"
+
+# If auto-detect spec fails, pass spec explicitly
+python endpoint_500_report.py \
+  --dir ".cache/GitLab Issues API 2/history" \
+  --spec "datasets/GitLabIssues.json"
+```
+
+Outputs are written inside `--dir`:
+
+- `endpoint_500_report.csv`: one row per endpoint in spec, with `has_500` (0/1).
+- `endpoint_500_summary.json`: total endpoints in spec and total endpoints that hit HTTP 500.

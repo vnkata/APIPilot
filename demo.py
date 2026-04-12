@@ -19,7 +19,7 @@ print("============= API Testing =============")
 # )
 # 
 llm = AzureOpenAIModel(
-    model=os.getenv("AZURE_OPENAI_DEPLOYMENT") or "gpt-4.1",
+    model=os.getenv("AZURE_OPENAI_DEPLOYMENT") or "gpt-4.1-mini",
     api_key=os.getenv("AZURE_OPENAI_API_KEY"),
     endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
     api_version=os.getenv("AZURE_OPENAI_API_VERSION", "2024-12-01-preview"),
@@ -40,11 +40,11 @@ embedder = HuggingfaceEmbeddingModel(
 # )
 
 test = APITesting(
-    "http://localhost:30000/api/v4",
+    "https://4dc7-2402-800-6375-3723-9c5b-6be1-25ad-de6d.ngrok-free.app/api/v4",
     model=llm,
     # vector_db=db,
     embedder=embedder,
-    spec_path="datasets\\GitLabIssues.json",
+    spec_path="datasets\\GitLabBranch.json",
 )
 
 test.run_tests(num_generations=1, num_test_cases=5, mutation_ratio=0.5)
