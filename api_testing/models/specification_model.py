@@ -202,9 +202,12 @@ class ItemProperties:
             return json.dumps(dict_items, indent=2)
         if self.type == 'array':
             if not self.items:
-                return "array"
-            if self.xrefs:
-                return f"array of {self.xrefs} object"
+                return "an array"
+            print(self.items)
+            if self.items.type in ('object'):
+                xrefs = self.items.xrefs if self.items.xrefs else None
+                if xrefs:
+                    return f"array of {xrefs} object"
             return f"array of {self.items.to_human_readable()}"            # return dict_items
         return ''
 

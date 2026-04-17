@@ -156,6 +156,8 @@ def is_nested_path_end_with(
     ending_path: str,
     delimiter: str = '.'
 ) -> bool:
+    nested_path = nested_path.replace("[]", "")  # Remove array indicators
+    ending_path = ending_path.replace("[]", "")
     segments: List[str] = nested_path.split(delimiter)
     ending_segment: List[str] = ending_path.split(delimiter)
     if not segments or not ending_segment:
