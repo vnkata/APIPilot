@@ -256,7 +256,7 @@ class APITesting:
         )
         self.operation_graph.plot_graph()
     
-    def run_tests(self,num_generations=1, num_test_cases=20, mutation_ratio=0.0):
+    def run_tests(self,num_generations=1,   num_test_cases=20, mutation_ratio=0.0, header_mutation_ratio=0.5):
         print("Building operation graph...")
         self.operation_graph = OperationGraph(
             spec_parser=self.spec_parser,
@@ -369,6 +369,7 @@ class APITesting:
                 num_test_cases=num_test_cases,
                 configuration=configurations.get(node.name),
                 mutation_ratio=mutation_ratio,
+                header_mutation_ratio=header_mutation_ratio,
                 context_pool=context_pool
             ) 
             responses = executor.exec()
@@ -404,8 +405,9 @@ class APITesting:
             print("🌳"*10, " RUN GENERATIONS ", str(idx+1), "🌳"*10)
 
             traverse_forest_dfs(forest, context)
-        
-        print("Success rate", total_success/total_testcase)
+        if total_testcase == 0:
+            print("No test cases executed.")
+        print("Success rate", total_success/total_testcase if total_testcase > 0 else 0)
         print(successFull)
         print("Success rate", len(successFull.keys()))
 

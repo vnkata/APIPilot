@@ -40,11 +40,11 @@ embedder = HuggingfaceEmbeddingModel(
 # )
 
 test = APITesting(
-    "https://4dc7-2402-800-6375-3723-9c5b-6be1-25ad-de6d.ngrok-free.app/api/v4",
+    "http://localhost:30000/api/v4",
     model=llm,
     # vector_db=db,
     embedder=embedder,
-    spec_path="datasets\\GitLabBranch.json",
+    spec_path="datasets\\GitLabGroups.json",
 )
 
-test.run_tests(num_generations=1, num_test_cases=5, mutation_ratio=0.5)
+test.run_tests(num_generations=1, num_test_cases=20, mutation_ratio=0.5)
