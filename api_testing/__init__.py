@@ -1,4 +1,5 @@
 from collections import defaultdict, deque
+import concurrent.futures
 import copy
 import json
 import logging
@@ -49,6 +50,9 @@ import os
 from api_testing.utils.log import configure_logging
 from typing import List, Dict, Set, Any
 import argparse
+
+
+DEFAULT_SETUP_MAX_WORKERS = max(1, int(os.getenv("API_TESTING_SETUP_MAX_WORKERS", "2")))
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -256,15 +260,34 @@ class APITesting:
         )
         self.operation_graph.plot_graph()
     
-    def run_tests(self,num_generations=1,   num_test_cases=20, mutation_ratio=0.0, header_mutation_ratio=0.5):
-        print("Building operation graph...")
-        self.operation_graph = OperationGraph(
-            spec_parser=self.spec_parser,
-            model=self.model,
-            embedding_model=self.embedder,
-            cache_dir=self.project_dir
-        )
-        parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
+    def run_tests(self, num_generations=1, num_test_cases=20, mutation_ratio=0.0, header_mutation_ratio=0.5,
+                  async_mode: bool = False, max_request_workers: Optional[int] = None):
+        def build_graph_for_run():
+            return OperationGraph(
+                spec_parser=self.spec_parser,
+                model=self.model,
+                embedding_model=self.embedder,
+                cache_dir=self.project_dir,
+            )
+
+        def load_config_for_run():
+            return ConfigurationParser(
+                spec_parser=self.spec_parser,
+                model=self.model,
+                cache_dir=self.project_dir,
+            )
+
+        print("Building operation graph and configuration...")
+        if async_mode:
+            with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_SETUP_MAX_WORKERS) as setup_pool:
+                graph_future = setup_pool.submit(build_graph_for_run)
+                config_future = setup_pool.submit(load_config_for_run)
+                self.operation_graph = graph_future.result()
+                parser = config_future.result()
+        else:
+            self.operation_graph = build_graph_for_run()
+            parser = load_config_for_run()
+
         configurations = { f"{conf.method}-{conf.endpoint}": conf for conf in parser.configurations}
         nodes = self.operation_graph.nodes
         context = ContextualMemory(cache_dir=self.project_dir)
@@ -370,7 +393,8 @@ class APITesting:
                 configuration=configurations.get(node.name),
                 mutation_ratio=mutation_ratio,
                 header_mutation_ratio=header_mutation_ratio,
-                context_pool=context_pool
+                context_pool=context_pool,
+                max_request_workers=max_request_workers
             ) 
             responses = executor.exec()
             feedback = feedback_analyzer.evaluate(seq_path, operation=nodes.get(node.name),  responses=responses, producer_mapping=producer_mapping,context_pool=context_pool)

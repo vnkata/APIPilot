@@ -1,6 +1,8 @@
 ﻿import copy
+import concurrent.futures
 from dataclasses import asdict, field, fields, replace
 from enum import Enum, auto
+import os
 import random
 from typing import Any, Dict
 
@@ -9,12 +11,16 @@ from api_testing.generators.requestor import Requestor
 from api_testing.generators.smart_value_generator import SmartValueGenerator
 from api_testing.inputs.header_request_generator import HeaderRequestGenerator
 from api_testing.inputs.request_params_mutator import ParamsMutator
+from api_testing.models.configuration_model import FieldConfiguration
 from api_testing.models.generator_model import ItemGenerator, ParameterGenerator
 from api_testing.models.http_data import RequestData
 from api_testing.models.specification_model import ItemProperties, OperationProperties, ParameterProperties
 from api_testing.utils import flatten_item_properties, get_required_body_params
 from fake_useragent import UserAgent
 import time
+
+
+DEFAULT_MAX_REQUEST_WORKERS = int(os.getenv("API_TESTING_MAX_REQUEST_WORKERS", "10"))
 
 class Strategy(Enum):
   SMART_VALUE = auto()      # use GPT
@@ -104,7 +110,8 @@ def merge_config(
 
 class Executor:
   def __init__(self, api_url: str=None, strategy: Strategy = Strategy.SMART_VALUE, operation: OperationProperties = None, cache_dir=None,model=None,configuration=None,
-                             num_test_cases=1, context_pool=None, mutation_ratio = 0.1, header_mutation_ratio = 0.5):
+                                                         num_test_cases=1, context_pool=None, mutation_ratio = 0.1, header_mutation_ratio = 0.5,
+                                                         max_request_workers: int = DEFAULT_MAX_REQUEST_WORKERS):
     self.api_url = api_url
     self.strategy = strategy
     self.operation = operation
@@ -118,6 +125,7 @@ class Executor:
     self.header_mutation_ratio = header_mutation_ratio
     self.header_request_generator = HeaderRequestGenerator()
     self.params_mutator = ParamsMutator()
+    self.max_request_workers = max(1, int(max_request_workers or DEFAULT_MAX_REQUEST_WORKERS))
   def _mutate_headers_with_generator(self, headers: Dict[str, str]) -> Dict[str, str]:
     if not headers:
       return {}
@@ -266,7 +274,25 @@ class Executor:
   
   def exec(self):
     data = self.generate_values()
-    for item in data:
-      print("HTTP Request", asdict(item))
-      self.sender.exec(request_data=item)
+    if not data:
+      return self.sender.entries
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=self.max_request_workers) as pool:
+        future_to_request = {
+                pool.submit(self.sender.exec, request_data=item): item
+                for item in data
+        }
+
+        for future in concurrent.futures.as_completed(future_to_request):
+            item = future_to_request[future]
+            print("HTTP Request", asdict(item))
+            try:
+                future.result()
+            except Exception as exc:
+                print(f"Request failed for {item.http_method} {item.endpoint_path}: {exc}")
+
+    # Persist once per batch to reduce lock contention and disk I/O.
+    self.sender.flush()
+
     return self.sender.entries
+

@@ -2,7 +2,7 @@ import csv
 import json
 from pathlib import Path
 
-from api_testing.generators.endpoint_500_report import generate_endpoint_500_report
+from endpoint_500_report import generate_endpoint_500_report
 
 
 def _write_json(path: Path, payload: dict) -> None:
