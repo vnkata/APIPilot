@@ -1,0 +1,85 @@
+# For invariants ...
+# New invariants
+daikon.inv.unary.string.IsUrl.enabled = true
+daikon.inv.unary.string.FixedLengthString.enabled = true
+daikon.inv.unary.string.IsNumeric.enabled = true
+daikon.inv.unary.string.IsEmail.enabled = true
+daikon.inv.unary.string.dates.IsDateYYYYMMDD.enabled = true
+daikon.inv.unary.string.dates.IsDateDDMMYYYY.enabled = true
+daikon.inv.unary.string.dates.IsDateMMDDYYYY.enabled = true
+daikon.inv.unary.string.dates.IsHour.enabled = true
+daikon.inv.unary.string.dates.IsHourWithSeconds.enabled = true
+daikon.inv.unary.string.dates.IsHourAMPM.enabled = true
+daikon.inv.unary.string.dates.IsTimestampYYYYMMHHThhmmssmm.enabled = true
+
+daikon.inv.unary.stringsequence.SequenceFixedLengthString.enabled = true
+daikon.inv.unary.stringsequence.SequenceStringElementsAreUrl.enabled = true
+daikon.inv.unary.stringsequence.SequenceStringElementsAreNumeric.enabled = true
+daikon.inv.unary.stringsequence.SequenceStringElementsAreEmail.enabled = true
+daikon.inv.unary.stringsequence.dates.SequenceStringElementsAreDateYYYYMMDD.enabled = true
+daikon.inv.unary.stringsequence.dates.SequenceStringElementsAreDateDDMMYYYY.enabled = true
+daikon.inv.unary.stringsequence.dates.SequenceStringElementsAreDateMMDDYYYY.enabled = true
+daikon.inv.unary.stringsequence.dates.SequenceStringElementsAreHour.enabled = true
+daikon.inv.unary.stringsequence.dates.SequenceStringElementsAreHourWithSeconds.enabled = true
+daikon.inv.unary.stringsequence.dates.SequenceStringElementsAreHourAMPM.enabled = true
+daikon.inv.unary.stringsequence.dates.SequenceStringElementsAreTimestampYYYYMMHHThhmmssmm.enabled = true
+
+
+# Enabled invariants
+daikon.inv.binary.twoString.StdString.SubString.enabled = true
+daikon.inv.binary.twoSequence.SubSequence.enabled = true
+daikon.inv.binary.twoSequence.SubSequenceFloat.enabled = true
+daikon.inv.binary.twoSequence.SubSet.enabled = true
+daikon.inv.binary.twoSequence.SubSetFloat.enabled = true
+daikon.inv.binary.twoSequence.SuperSequence.enabled = true
+daikon.inv.binary.twoSequence.SuperSequenceFloat.enabled = true
+daikon.inv.binary.twoSequence.SuperSet.enabled = true
+daikon.inv.binary.twoSequence.SuperSetFloat.enabled = true
+
+
+# Disabled/Suppressed invariants
+daikon.inv.unary.scalar.NonZero.enabled = false
+daikon.inv.unary.scalar.NonZeroFloat.enabled = false
+daikon.inv.unary.scalar.RangeInt.PowerOfTwo.enabled = false
+daikon.inv.unary.sequence.EltNonZero.enabled = false
+daikon.inv.unary.sequence.EltNonZeroFloat.enabled = false
+daikon.inv.unary.sequence.EltRangeInt.PowerOfTwo.enabled = false
+daikon.inv.binary.twoScalar.IntNonEqual.enabled = false
+daikon.inv.binary.twoScalar.FloatNonEqual.enabled = false
+daikon.inv.binary.twoScalar.LinearBinary.enabled = false
+daikon.inv.binary.twoScalar.LinearBinaryFloat.enabled = false
+daikon.inv.binary.twoString.StringNonEqual.enabled = false
+daikon.inv.binary.twoString.StringLessThan.enabled = false
+daikon.inv.binary.twoString.StringGreaterThan.enabled = false
+daikon.inv.binary.twoString.StringLessEqual.enabled = false
+daikon.inv.binary.twoString.StringGreaterEqual.enabled = false
+daikon.inv.binary.twoSequence.SeqSeqStringLessThan.enabled = false
+daikon.inv.binary.twoSequence.SeqSeqStringGreaterThan.enabled = false
+daikon.inv.binary.twoSequence.SeqSeqStringLessEqual.enabled = false
+daikon.inv.binary.twoSequence.SeqSeqStringGreaterEqual.enabled = false
+daikon.inv.binary.twoSequence.PairwiseStringLessThan.enabled = false
+daikon.inv.binary.twoSequence.PairwiseStringGreaterThan.enabled = false
+daikon.inv.binary.twoSequence.PairwiseStringLessEqual.enabled = false
+daikon.inv.binary.twoSequence.PairwiseStringGreaterEqual.enabled = false
+daikon.inv.ternary.threeScalar.LinearTernary.enabled = false
+daikon.inv.ternary.threeScalar.LinearTernaryFloat.enabled = false
+daikon.inv.binary.twoScalar.NumericInt.Divides.enabled = false
+daikon.inv.binary.twoScalar.NumericInt.Square.enabled = false
+daikon.inv.binary.twoScalar.NumericFloat.Divides.enabled = false
+daikon.inv.binary.twoScalar.NumericFloat.Square.enabled = false
+daikon.inv.binary.twoSequence.PairwiseNumericInt.Divides.enabled = false
+daikon.inv.binary.twoSequence.PairwiseNumericInt.Square.enabled = false
+daikon.inv.binary.twoSequence.PairwiseNumericFloat.Divides.enabled = false
+daikon.inv.binary.twoSequence.PairwiseNumericFloat.Square.enabled = false
+daikon.inv.binary.twoSequence.PairwiseLinearBinary.enabled = false
+daikon.inv.binary.twoSequence.PairwiseLinearBinaryFloat.enabled = false
+
+# For derived variables ...
+
+# daikon.derive.unary.SequenceInitial.enabled = 1
+# daikon.derive.unary.SequenceSum.enabled = 1
+
+# For splitters ...
+
+# daikon.split.SplitterList.all_splitters = true
+# daikon.split.SplitterFactory.compiler = javac

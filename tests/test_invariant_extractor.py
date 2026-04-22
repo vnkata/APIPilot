@@ -156,10 +156,52 @@ class TestInvariantExtractor:
         assert output_path.exists()
         assert run_mock.call_count == 2
         fallback_command = run_mock.call_args_list[1].args[0]
-        assert fallback_command[0] == "java"
+        assert Path(fallback_command[0]).name.lower() in {"java", "java.exe"}
         assert fallback_command[1] == "-cp"
         assert str(javafx_jar) in fallback_command[2]
         assert fallback_command[3] == "daikon.Daikon"
+
+    def test_extract_invariants_uses_java_from_java_home_when_path_lookup_fails(self, tmp_path: Path):
+        decls_path, dtrace_path, jar_path = _create_daikon_input_files(tmp_path)
+        java_home = tmp_path / "jdk-21"
+        java_binary = java_home / "bin" / ("java.exe" if os.name == "nt" else "java")
+        java_binary.parent.mkdir(parents=True, exist_ok=True)
+        java_binary.write_text("placeholder", encoding="utf-8")
+        extractor = InvariantExtractor(
+            cache_dir=decls_path.parent,
+            repo_root=tmp_path,
+            jar_path=jar_path,
+        )
+
+        with patch.dict(os.environ, {"JAVA_HOME": str(java_home)}, clear=False):
+            with patch(
+                "api_testing.constraint.dynamic_constraints.invariant_extractor.shutil.which",
+                return_value=None,
+            ):
+                with patch(
+                    "api_testing.constraint.dynamic_constraints.invariant_extractor.subprocess.run",
+                    return_value=subprocess.CompletedProcess([], 0, f"{EXPECTED_INVARIANTS_HEADER}\nrow\n", ""),
+                ) as run_mock:
+                    extractor.extract_invariants()
+
+        command = run_mock.call_args.args[0]
+        assert Path(command[0]).resolve() == java_binary.resolve()
+
+    def test_extract_invariants_raises_clear_error_when_java_runtime_is_missing(self, tmp_path: Path):
+        decls_path, dtrace_path, jar_path = _create_daikon_input_files(tmp_path)
+        extractor = InvariantExtractor(
+            cache_dir=decls_path.parent,
+            repo_root=tmp_path,
+            jar_path=jar_path,
+        )
+
+        with patch.dict(os.environ, {}, clear=True):
+            with patch(
+                "api_testing.constraint.dynamic_constraints.invariant_extractor.shutil.which",
+                return_value=None,
+            ):
+                with pytest.raises(RuntimeError, match="Java runtime not found"):
+                    extractor.extract_invariants()
 
     def test_extract_invariants_prepares_runtime_config(self, tmp_path: Path):
         decls_path, dtrace_path, jar_path = _create_daikon_input_files(
@@ -204,13 +246,14 @@ class TestInvariantExtractor:
         decls_path = cache_dir / "test_cases.decls"
         dtrace_path = cache_dir / "test_cases.dtrace"
         jar_path = repo_root / "tools" / "daikon" / "daikon_modified.jar"
-
-        if not shutil.which("java"):
-            pytest.skip("Java runtime is not available on PATH.")
         if not (decls_path.exists() and dtrace_path.exists() and jar_path.exists()):
             pytest.skip("Daikon integration fixtures are not available.")
 
         extractor = InvariantExtractor(cache_dir=cache_dir, repo_root=repo_root, jar_path=jar_path)
+        try:
+            extractor._resolve_java_executable()
+        except RuntimeError as exc:
+            pytest.skip(str(exc))
         output_path = cache_dir / "invariants.integration.csv"
 
         written_path = extractor.extract_invariants(

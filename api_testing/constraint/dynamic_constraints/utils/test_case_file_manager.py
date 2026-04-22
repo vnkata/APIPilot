@@ -3,6 +3,7 @@
 import glob
 import json
 import os
+from pathlib import Path
 from typing import Dict, List, Optional
 
 from api_testing.constraint.dynamic_constraints.test_case import TestCase
@@ -57,3 +58,26 @@ class TestCaseFileManager:
         file_path = os.path.join(self.cache_dir, "test_cases.json")
         with open(file_path, "w", encoding="utf-8") as f:
             json.dump([to_dict_helper(tc) for tc in self.testcases], f)
+
+    def load_test_cases(self, file_path: str | os.PathLike[str] | None = None) -> List[TestCase]:
+        resolved_path = Path(file_path) if file_path is not None else Path(self.cache_dir) / "test_cases.json"
+        if not resolved_path.exists():
+            raise FileNotFoundError(f"Test cases file not found: {resolved_path}")
+
+        with resolved_path.open("r", encoding="utf-8") as f:
+            payload = json.load(f)
+
+        self.testcases = [
+            TestCase(
+                test_case_id=item.get("test_case_id", ""),
+                operation_id=item.get("operation_id", ""),
+                path=item.get("path", ""),
+                http_method=item.get("http_method", ""),
+                parameters=item.get("parameters") or {},
+                request_body=item.get("request_body"),
+                status_code=item.get("status_code"),
+                response_body=item.get("response_body"),
+            )
+            for item in payload
+        ]
+        return self.testcases

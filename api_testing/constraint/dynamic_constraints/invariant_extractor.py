@@ -26,6 +26,7 @@ class InvariantExtractor:
         cache_dir: str | Path,
         jar_path: str | Path | None = None,
         repo_root: str | Path | None = None,
+        java_executable: str | Path | None = None,
     ) -> None:
         self.cache_dir = Path(cache_dir)
         self.repo_root = Path(repo_root).resolve() if repo_root else Path(__file__).resolve().parents[3]
@@ -34,6 +35,8 @@ class InvariantExtractor:
             if jar_path
             else (self.repo_root / "tools" / "daikon" / "daikon_modified.jar").resolve()
         )
+        self.java_executable = str(java_executable) if java_executable is not None else None
+        self._resolved_java_executable: str | None = None
         self.logger = getLogger(__name__)
 
     def extract_invariants(
@@ -100,7 +103,8 @@ class InvariantExtractor:
         self.logger.info("Prepared Daikon runtime config at %s", target)
 
     def _run_daikon(self, decls_path: Path, dtrace_path: Path) -> str:
-        command = ["java", "-jar", str(self.jar_path), str(decls_path), str(dtrace_path)]
+        java_executable = self._resolve_java_executable()
+        command = [java_executable, "-jar", str(self.jar_path), str(decls_path), str(dtrace_path)]
         result = self._run_process(command)
         if result.returncode == 0:
             return result.stdout
@@ -118,12 +122,67 @@ class InvariantExtractor:
         javafx_jar = self._ensure_javafx_base_jar()
         classpath_separator = ";" if os.name == "nt" else ":"
         classpath = f"{self.jar_path}{classpath_separator}{javafx_jar}"
-        command = ["java", "-cp", classpath, "daikon.Daikon", str(decls_path), str(dtrace_path)]
+        command = [
+            self._resolve_java_executable(),
+            "-cp",
+            classpath,
+            "daikon.Daikon",
+            str(decls_path),
+            str(dtrace_path),
+        ]
         result = self._run_process(command)
         if result.returncode == 0:
             return result.stdout
 
         raise RuntimeError(self._build_failure_message("Daikon fallback execution failed", result))
+
+    def _resolve_java_executable(self) -> str:
+        if self._resolved_java_executable is not None:
+            return self._resolved_java_executable
+
+        tried_candidates: list[str] = []
+
+        if self.java_executable is not None:
+            resolved = self._resolve_configured_java(self.java_executable, tried_candidates)
+            self._resolved_java_executable = resolved
+            return resolved
+
+        java_on_path = shutil.which("java")
+        tried_candidates.append("PATH:java")
+        if java_on_path:
+            self._resolved_java_executable = java_on_path
+            return java_on_path
+
+        java_home = os.getenv("JAVA_HOME")
+        if java_home:
+            binary_name = "java.exe" if os.name == "nt" else "java"
+            java_home_candidate = Path(java_home) / "bin" / binary_name
+            tried_candidates.append(str(java_home_candidate))
+            if java_home_candidate.exists():
+                self._resolved_java_executable = str(java_home_candidate.resolve())
+                return self._resolved_java_executable
+
+        raise RuntimeError(self._build_java_runtime_error(tried_candidates))
+
+    def _resolve_configured_java(
+        self,
+        configured_java: str,
+        tried_candidates: list[str],
+    ) -> str:
+        configured_text = configured_java.strip()
+        if not configured_text:
+            raise RuntimeError(self._build_java_runtime_error(tried_candidates, configured_java))
+
+        configured_path = Path(configured_text)
+        if configured_path.exists():
+            return str(configured_path.resolve())
+
+        tried_candidates.append(configured_text)
+        java_on_path = shutil.which(configured_text)
+        if java_on_path:
+            return java_on_path
+
+        raise RuntimeError(self._build_java_runtime_error(tried_candidates, configured_java))
 
     def _run_process(self, command: list[str]) -> subprocess.CompletedProcess[str]:
         self.logger.info("Running Daikon command (cwd=%s): %s", self.repo_root, " ".join(command))
@@ -210,4 +269,20 @@ class InvariantExtractor:
             f"Exit code: {result.returncode}\n"
             f"Stdout: {stdout_tail}\n"
             f"Stderr: {stderr_tail}"
+        )
+
+    @staticmethod
+    def _build_java_runtime_error(
+        tried_candidates: list[str],
+        configured_java: str | None = None,
+    ) -> str:
+        java_home = os.getenv("JAVA_HOME")
+        configured_text = configured_java or "<not provided>"
+        tried = ", ".join(tried_candidates) if tried_candidates else "<none>"
+        return (
+            "Java runtime not found for Daikon execution. "
+            f"Configured java_executable={configured_text}. "
+            f"Current JAVA_HOME={java_home!r}. "
+            f"Tried: {tried}. "
+            "Ensure `java` is available on PATH or that JAVA_HOME points to a valid JDK/JRE."
         )

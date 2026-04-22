@@ -4,6 +4,10 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from api_testing.constraint.dynamic_constraints.decls_file import Comparability, DeclsFile
+from api_testing.constraint.dynamic_constraints.invariant_classifier import (
+    CLASSIFIED_INVARIANTS_FILENAME as DEFAULT_CLASSIFIED_INVARIANTS_FILENAME,
+    InvariantClassifier,
+)
 from api_testing.constraint.dynamic_constraints.invariant_extractor import InvariantExtractor
 from api_testing.constraint.dynamic_constraints.test_case import TestCase
 from api_testing.constraint.dynamic_constraints.utils.test_case_file_manager import TestCaseFileManager
@@ -16,6 +20,7 @@ class DynamicConstraintMiner:
     DECLS_FILENAME = "test_cases.decls"
     DTRACE_FILENAME = "test_cases.dtrace"
     INVARIANTS_FILENAME = "invariants.csv"
+    CLASSIFIED_INVARIANTS_FILENAME = DEFAULT_CLASSIFIED_INVARIANTS_FILENAME
 
     def __init__(self, spec_parser=None, model=None, cache_dir=None):
         self.spec_parser = spec_parser
@@ -98,6 +103,61 @@ class DynamicConstraintMiner:
             "decls_path": self._cache_path(self.DECLS_FILENAME),
             "dtrace_path": self._cache_path(self.DTRACE_FILENAME),
             "invariants_path": invariants_path,
+        }
+
+    def classify_invariants(
+        self,
+        output_path: str | Path | None = None,
+        *,
+        persist_debug_artifacts: bool = False,
+    ) -> Path:
+        """Classify an existing ``invariants.csv`` artifact.
+
+        Preconditions:
+        - ``extract_invariants()`` has already produced ``cache_dir/invariants.csv``.
+        - ``self.model`` implements the LLM interface expected by
+          ``InvariantClassifier``.
+
+        Returns the path to ``classified_invariants.csv``. Per-row classifier
+        failures are handled by the classifier as ``inconclusive`` rows.
+        """
+        invariants_path = self._cache_path(self.INVARIANTS_FILENAME)
+        if not invariants_path.exists():
+            raise FileNotFoundError(
+                f"Missing invariants file: {invariants_path}. Call extract_invariants() first."
+            )
+        if self.model is None:
+            raise RuntimeError("DynamicConstraintMiner.model is required to classify invariants.")
+
+        classifier = InvariantClassifier(
+            spec_parser=self.spec_parser,
+            model=self.model,
+            cache_dir=self.cache_dir,
+        )
+        return classifier.classify_invariants(
+            input_path=invariants_path,
+            output_path=output_path,
+            persist_debug_artifacts=persist_debug_artifacts,
+        )
+
+    def mine_and_classify_dynamic_constraints(
+        self,
+        *,
+        persist_debug_artifacts: bool = False,
+    ) -> Dict[str, Path]:
+        """Run mining and then classify the mined invariants.
+
+        The legacy ``mine_dynamic_constraints()`` behavior is unchanged; this
+        method is the explicit end-to-end path for callers that want both raw
+        and classified invariant artifacts.
+        """
+        artifacts = self.mine_dynamic_constraints()
+        classified_invariants_path = self.classify_invariants(
+            persist_debug_artifacts=persist_debug_artifacts,
+        )
+        return {
+            **artifacts,
+            "classified_invariants_path": classified_invariants_path,
         }
 
 

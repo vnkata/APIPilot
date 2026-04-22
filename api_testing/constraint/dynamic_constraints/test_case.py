@@ -83,7 +83,7 @@ class TestCase:
         self.operation_id = operation_id
         self.path = path
         self.http_method = http_method
-        self.parameters =  {k: cast_value(v) for k, v in parameters.items()}
+        self.parameters = {k: cast_value(v) for k, v in (parameters or {}).items()}
         self.request_body = request_body or {}
         self.status_code = status_code
         self.response_body = response_body
