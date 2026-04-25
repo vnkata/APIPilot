@@ -452,7 +452,7 @@ class NaiveValueGenerator:
                     for k, v in (self.request_body or {}).items()
                 )
             # judge_datas = deduplicate_items(judge_datas)
-            params = {
+            base_params = {
                 "endpoint": f"{self.operation.http_method.upper()} {self.operation.endpoint_path}",
                 "summary": " ".join(filter(None, [self.operation.summary, self.operation.description])),
                 "parameters": "\n".join(
@@ -460,11 +460,16 @@ class NaiveValueGenerator:
                     for k, v in self.parameters.items()
                 ),
                 "requestBody": rb_desc,
-                "test_datas": json.dumps(judge_datas, separators=(",", ":"), ensure_ascii=False, default=to_placeholder)
             }
-            
-            judge_results = self.semantic_oracle_judge.exec(**params)
-            judge_results = judge_results.dict().get("datas")
+
+            JUDGE_BATCH_SIZE = 5
+            all_judge_results = []
+            chunks = [judge_datas[i:i+JUDGE_BATCH_SIZE] for i in range(0, len(judge_datas), JUDGE_BATCH_SIZE)]
+            for chunk_idx, chunk in enumerate(chunks):
+                params = {**base_params, "test_datas": json.dumps(chunk, separators=(",", ":"), ensure_ascii=False, default=to_placeholder)}
+                chunk_results = self.semantic_oracle_judge.exec(**params)
+                all_judge_results.extend(chunk_results.dict().get("datas"))
+            judge_results = all_judge_results
             original_map = {
                 int(item.get("idx")): item
                 for item in judge_datas
