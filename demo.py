@@ -1,5 +1,6 @@
 from api_testing import APITesting, GeminiModel
 import os
+import time
 
 from api_testing.memory.vectordb.qdrantdb import QdrantDB
 from api_testing.models.embedding_models.huggingface_embedding_model import HuggingfaceEmbeddingModel
@@ -11,6 +12,7 @@ from api_testing.models.llms.azure_open_model import AzureOpenAIModel
 load_dotenv()
 
 print("============= API Testing =============")
+start_time = time.perf_counter()
 
 # llm = GeminiModel(
 #     model_name="gemini-2.5-flash",
@@ -40,11 +42,21 @@ embedder = HuggingfaceEmbeddingModel(
 # )
 
 test = APITesting(
-    "https://0d01-2402-800-6375-3723-e9b0-35df-eea5-cfe5.ngrok-free.app/api/v4",
+    "http://localhost:30000/api/v4",
     model=llm,
     # vector_db=db,
     embedder=embedder,
-    spec_path="datasets\\GitLabProject.json",
+    spec_path="datasets\\GitLabBranch.json",
+)
+test.run_tests(
+    num_generations=1,
+    num_test_cases=20,
+    mutation_ratio=0.5,
+    async_mode=True,
+    async_max_concurrent=50  # Only this matters for async mode
 )
 
-test.run_tests(num_generations=1, num_test_cases=20, mutation_ratio=0.5)
+elapsed = time.perf_counter() - start_time
+print(f"\n========================================")
+print(f"Total execution time: {elapsed:.2f} seconds ({elapsed/60:.2f} minutes)")
+print(f"========================================")

@@ -5,6 +5,7 @@ import json
 import logging
 import random
 from time import sleep
+import asyncio
 from api_testing.configuration.configuration_parser import ConfigurationParser
 # from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
 from api_testing.feedback import FeedbackAnalyzer
@@ -53,6 +54,7 @@ import argparse
 
 
 DEFAULT_SETUP_MAX_WORKERS = max(1, int(os.getenv("API_TESTING_SETUP_MAX_WORKERS", "2")))
+DEFAULT_ASYNC_MAX_CONCURRENT = int(os.getenv("API_TESTING_ASYNC_MAX_CONCURRENT", "50"))
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -96,6 +98,18 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
         type=int,
         default=100,
         help="TUI display width (default: 100)",
+    )
+    parser.add_argument(
+        "--async",
+        dest="async_mode",
+        action="store_true",
+        help="Enable async HTTP requests for faster execution (uses httpx.AsyncClient)",
+    )
+    parser.add_argument(
+        "--async-max-concurrent",
+        type=int,
+        default=DEFAULT_ASYNC_MAX_CONCURRENT,
+        help=f"Maximum concurrent async requests (default: {DEFAULT_ASYNC_MAX_CONCURRENT})",
     )
     return parser.parse_args()
 
@@ -261,7 +275,8 @@ class APITesting:
         self.operation_graph.plot_graph()
     
     def run_tests(self, num_generations=1, num_test_cases=20, mutation_ratio=0.0, header_mutation_ratio=0.5,
-                  async_mode: bool = False, max_request_workers: Optional[int] = None):
+                  async_mode: bool = False, max_request_workers: Optional[int] = None,
+                  async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT):
         def build_graph_for_run():
             return OperationGraph(
                 spec_parser=self.spec_parser,
@@ -384,7 +399,7 @@ class APITesting:
                         producer_mapping[k] = data
                     producer_obj.genParameters = {"pool": [data]}
             executor = Executor(
-                api_url = self.base_url, 
+                api_url = self.base_url,
                 strategy= Strategy.NAIVE_VALUE,
                 operation=nodes.get(node.name),
                 cache_dir=self.project_dir,
@@ -394,9 +409,16 @@ class APITesting:
                 mutation_ratio=mutation_ratio,
                 header_mutation_ratio=header_mutation_ratio,
                 context_pool=context_pool,
-                max_request_workers=max_request_workers
-            ) 
-            responses = executor.exec()
+                max_request_workers=max_request_workers,
+                use_async=async_mode,
+                async_max_concurrent=async_max_concurrent,
+            )
+
+            if async_mode:
+                import asyncio
+                responses = asyncio.run(executor.exec_async())
+            else:
+                responses = executor.exec()
             feedback = feedback_analyzer.evaluate(seq_path, operation=nodes.get(node.name),  responses=responses, producer_mapping=producer_mapping,context_pool=context_pool)
             adjug = feedback_analyzer.adjust(node.name, context_pool, producer_mapping,  self.operation_graph, graph_analyst= graph_analyst)
             if adjug:

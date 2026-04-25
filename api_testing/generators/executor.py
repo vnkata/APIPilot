@@ -1,13 +1,15 @@
-﻿import copy
+﻿import asyncio
+import copy
 import concurrent.futures
 from dataclasses import asdict, field, fields, replace
 from enum import Enum, auto
 import os
 import random
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from api_testing.generators.naive_value_generator import NaiveValueGenerator
 from api_testing.generators.requestor import Requestor
+from api_testing.generators.async_requestor import AsyncRequestor, AsyncRequestBatch
 from api_testing.generators.smart_value_generator import SmartValueGenerator
 from api_testing.inputs.header_request_generator import HeaderRequestGenerator
 from api_testing.inputs.request_params_mutator import ParamsMutator
@@ -21,6 +23,7 @@ import time
 
 
 DEFAULT_MAX_REQUEST_WORKERS = int(os.getenv("API_TESTING_MAX_REQUEST_WORKERS", "10"))
+DEFAULT_ASYNC_MAX_CONCURRENT = int(os.getenv("API_TESTING_ASYNC_MAX_CONCURRENT", "50"))
 
 class Strategy(Enum):
   SMART_VALUE = auto()      # use GPT
@@ -109,16 +112,40 @@ def merge_config(
 
 
 class Executor:
-  def __init__(self, api_url: str=None, strategy: Strategy = Strategy.SMART_VALUE, operation: OperationProperties = None, cache_dir=None,model=None,configuration=None,
-                                                         num_test_cases=1, context_pool=None, mutation_ratio = 0.1, header_mutation_ratio = 0.5,
-                                                         max_request_workers: int = DEFAULT_MAX_REQUEST_WORKERS):
+  def __init__(
+      self,
+      api_url: str = None,
+      strategy: Strategy = Strategy.SMART_VALUE,
+      operation: OperationProperties = None,
+      cache_dir = None,
+      model = None,
+      configuration = None,
+      num_test_cases = 1,
+      context_pool = None,
+      mutation_ratio = 0.1,
+      header_mutation_ratio = 0.5,
+      max_request_workers: int = DEFAULT_MAX_REQUEST_WORKERS,
+      use_async: bool = False,
+      async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT,
+  ):
     self.api_url = api_url
     self.strategy = strategy
     self.operation = operation
     self.cache_dir = cache_dir or "."
     self.model = model
     self.configuration = configuration
-    self.sender = Requestor(api_url=self.api_url, cache_dir=self.cache_dir)
+    self.use_async = use_async
+    self.async_max_concurrent = async_max_concurrent
+
+    if use_async:
+      self.async_sender = AsyncRequestor(api_url=self.api_url, cache_dir=self.cache_dir)
+      self.async_batch = AsyncRequestBatch(self.async_sender, max_concurrent=async_max_concurrent)
+      self.sender = None
+    else:
+      self.sender = Requestor(api_url=self.api_url, cache_dir=self.cache_dir)
+      self.async_sender = None
+      self.async_batch = None
+
     self.context_pool = context_pool
     self.num_test_cases = num_test_cases
     self.mutation_ratio = mutation_ratio
@@ -295,4 +322,35 @@ class Executor:
     self.sender.flush()
 
     return self.sender.entries
+
+  async def exec_async(self):
+    """
+    Execute test cases using async HTTP requests.
+
+    This method generates test values and sends all HTTP requests concurrently
+    using httpx.AsyncClient, providing significant speedup over the synchronous
+    version when dealing with I/O-bound API testing.
+
+    Returns:
+        List of HAR entries from the async requestor.
+    """
+    if not self.use_async:
+      raise RuntimeError("exec_async() called but use_async=False. Set use_async=True in constructor.")
+
+    data = self.generate_values()
+    if not data:
+      return self.async_sender.entries
+
+    for item in data:
+      print("HTTP Request (async)", asdict(item))
+
+    results = await self.async_batch.execute(data)
+
+    for item, result in zip(data, results):
+      if result is None:
+        print(f"Request failed for {item.http_method} {item.endpoint_path}")
+
+    await self.async_sender.flush()
+
+    return self.async_sender.entries
 

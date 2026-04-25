@@ -79,13 +79,20 @@ class Requestor:
       - multipart/form-data
       - text/plain
       - application/xml / text/xml
+
+    Thread-local storage optimization:
+      - Uses thread-local entries to reduce lock contention
+      - Report updates still use lock (rare operation)
+      - Entries use thread-local storage with merge at flush
     """
     def __init__(self, api_url: str, cache_dir: str = "."):
         self.api_url = api_url.rstrip("/")
         self.session_id = str(uuid.uuid4())
         self.entries: list[Dict[str, Any]] = []
-        self._lock = threading.Lock()
+        self._entries_lock = threading.Lock()
+        self._report_lock = threading.Lock()
         self._dirty = False
+        self._local = threading.local()
         _cache_dir = os.path.join(
             cache_dir, "history")
         if not os.path.exists(_cache_dir):
@@ -96,6 +103,12 @@ class Requestor:
         self.cache_file = os.path.join(
             _cache_dir, self.session_id + ".har")
         self.logger = getLogger(__name__)
+
+    def _get_local_entries(self) -> list:
+        """Get thread-local entries list, creating if needed."""
+        if not hasattr(self._local, 'entries'):
+            self._local.entries = []
+        return self._local.entries
 
     # ----------------------------------------------------------------------
     # Main execution method
@@ -337,18 +350,26 @@ class Requestor:
             },
         }
 
-        # Keep critical section minimal: update in-memory state only.
-        with self._lock:
+        # Keep critical section minimal: report uses lock, entries use thread-local
+        with self._report_lock:
             self.report.add(ruuid, response.status_code)
-            self.entries.append(entry)
+
+        self._get_local_entries().append(entry)
+        with self._entries_lock:
             self._dirty = True
 
     def flush(self):
         """Persist aggregated report and HAR once after request batch completes."""
-        with self._lock:
+        with self._entries_lock:
+            # Merge thread-local entries into shared list
+            if hasattr(self._local, 'entries') and self._local.entries:
+                self.entries.extend(self._local.entries)
+                self._local.entries = []
+
             if not self._dirty:
                 return
-            self.report.save()
+            with self._report_lock:
+                self.report.save()
             self._save_har()
             self._dirty = False
         
