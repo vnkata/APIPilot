@@ -1,4 +1,4 @@
-﻿import asyncio
+import asyncio
 import copy
 import concurrent.futures
 from dataclasses import asdict, field, fields, replace
@@ -298,6 +298,19 @@ class Executor:
   def generate_naive_values(self,operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
     value_generator = NaiveValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, cache_dir=self.cache_dir,  mutation_ratio = self.mutation_ratio)
     return value_generator.exec()
+
+  async def generate_naive_values_async(self, operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
+    value_generator = NaiveValueGenerator(
+        operation=operation,
+        parameters=parameters,
+        request_body=request_body,
+        model=self.model,
+        num_test_cases=self.num_test_cases,
+        context_pool=self.context_pool,
+        cache_dir=self.cache_dir,
+        mutation_ratio=self.mutation_ratio
+    )
+    return await value_generator.exec_async()
   
   def exec(self):
     data = self.generate_values()
@@ -337,7 +350,16 @@ class Executor:
     if not self.use_async:
       raise RuntimeError("exec_async() called but use_async=False. Set use_async=True in constructor.")
 
-    data = self.generate_values()
+    if self.strategy == Strategy.NAIVE_VALUE:
+      params = merge_config(self.operation.parameters, self.configuration.params)
+      body_schema = merge_config(
+          self.operation.request_body.get(self.operation.minetypes[0], {}),
+          self.configuration.request_body
+      )
+      data = await self.generate_naive_values_async(self.operation, params, body_schema)
+    else:
+      data = self.generate_values()
+
     if not data:
       return self.async_sender.entries
 

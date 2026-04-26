@@ -3,6 +3,7 @@ import copy
 import json
 import os
 import random
+import threading
 
 def build_entity_prefix_map(xref_map):
     entity_prefix = {}
@@ -134,6 +135,7 @@ class ContextualMemory:
         self.cache = {}
         self.current_uuid = None
         self.priority_resources = []
+        self._lock = threading.Lock()
         self.cache_file = os.path.join(
             cache_dir, "contextual_memory.json")
         self.load_or_initialize_cache()
@@ -451,10 +453,29 @@ class ContextualMemory:
         return [i[key] for i in self.contexts.get(entity_name, []) if key in i]
 
     def copy(self):
-        
-        new_memory = ContextualMemory()
+
+        new_memory = ContextualMemory(cache_dir=os.path.dirname(self.cache_file) or ".")
         new_memory.contexts = copy.deepcopy(self.contexts)
         return new_memory
+
+    def merge(self, other: 'ContextualMemory'):
+        """
+        Merge another ContextualMemory into this one.
+        Thread-safe: acquires lock before merging.
+        Skips per-node whitelists (current_uuid keys).
+        """
+        with self._lock:
+            for entity, items in other.contexts.items():
+                if entity == other.current_uuid:
+                    continue
+                if entity not in self.contexts:
+                    self.contexts[entity] = []
+                existing = {str(x) for x in self.contexts[entity]}
+                for item in items:
+                    if str(item) not in existing:
+                        self.contexts[entity].append(item)
+                        existing.add(str(item))
+            self.export_to_file()
 
     def __repr__(self):
         return f"ContextualMemory({list(self.contexts.keys())})"

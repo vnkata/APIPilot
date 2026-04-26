@@ -49,8 +49,18 @@ Request Body:
     self.logger = getLogger(__name__)
 
   def exec(self, *args, **kargs):
-    prompt = self.PROMPT.format(*args, **kargs) ## pass
+    prompt = self.PROMPT.format(*args, **kargs)
     response, _ = self.llm.generate(
+      system_prompt=self.SYSTEM_PROMPT,
+      prompt=prompt,
+      schema=Verdict
+    )
+    self.logger.debug("SemanticOracleJudge Response: " + response.model_dump_json(indent=2))
+    return response
+
+  async def a_exec(self, *args, **kargs):
+    prompt = self.PROMPT.format(*args, **kargs)
+    response, _ = await self.llm.a_generate(
       system_prompt=self.SYSTEM_PROMPT,
       prompt=prompt,
       schema=Verdict

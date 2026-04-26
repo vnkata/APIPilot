@@ -446,11 +446,160 @@ class APITesting:
             for root_node in sort_children_by_method(forest.values()):
                 print(f"\n🌳 Root: {root_node.name}")
                 traverse_dfs(root_node, depth=1, context_pool=context , seq_path=[root_node.name])
-                
+
+        def _find_node_in_forest(forest, node_name):
+            """Find TreeNode by name across all trees in the forest."""
+            def search(node):
+                if node.name == node_name:
+                    return node
+                for child in node.children.values():
+                    result = search(child)
+                    if result:
+                        return result
+                return None
+            for root in forest.values():
+                result = search(root)
+                if result:
+                    return result
+            return None
+
+        async def _execute_node_async(node, depth, context_pool, parent, seq_path, forest_lock=None):
+            """Execute a single node and return responses."""
+            nonlocal total_testcase, total_success, forest
+
+            print("  " * depth + f"• {node.name} ")
+
+            configuration = copy.copy(configurations.get(node.name))
+            producer = { param: conf for param, conf in configuration.params.items() if conf.type == "ProducerGenerator"}
+            producer_mapping = {}
+            context_pool.set_current(node.name)
+
+            prefix_groups = defaultdict(set)
+            for k, params in node.matched_params.items():
+                for p in params:
+                    sp = p.get("source_param")
+                    if sp:
+                        prefix_groups[sp.rsplit(".", 1)[0]].add(k)
+
+            best_prefix = max(prefix_groups, key=lambda x: len(prefix_groups[x]), default=None)
+            common_res = None
+            for k, producer_obj in producer.items():
+                candidates = node.matched_params.get(k)
+                if not candidates:
+                    continue
+                prioritized = [p for p in candidates if best_prefix and p.get("source_param","").startswith(best_prefix)]
+                param = random.choice(prioritized or candidates)
+                se = param.get("source_endpoint")
+                sp = param.get("source_param")
+                resource = producer_map.get(se, {}).get(sp)
+                resource = resource.split(",")[0] if resource else None
+                if parent is not None:
+                    if resource and resource not in self.operation_graph.nodes[parent.name].schemas.keys():
+                        key = sp.split(".")[-1]
+                        if key in self.operation_graph.nodes[parent.name].required_parameters:
+                            key = key + ":path"
+                        data = {"resource": resource, "key": key, "need_change": True, **param}
+                    else:
+                        common_res = resource
+                        data = {"resource": resource, "key": sp.split(".")[-1], **param}
+                else:
+                    data = {"resource": resource, "key": sp.split(".")[-1], **param}
+                producer_mapping[k] = data
+            for k, producer_obj in producer.items():
+                if k in producer_mapping:
+                    data = producer_mapping[k]
+                    if data.get("need_change"):
+                        if common_res is not None:
+                            data["resource"] = common_res
+                        del data["need_change"]
+                        producer_mapping[k] = data
+                    producer_obj.genParameters = {"pool": [data]}
+
+            executor = Executor(
+                api_url=self.base_url,
+                strategy=Strategy.NAIVE_VALUE,
+                operation=nodes.get(node.name),
+                cache_dir=self.project_dir,
+                model=self.model,
+                num_test_cases=num_test_cases,
+                configuration=configurations.get(node.name),
+                mutation_ratio=mutation_ratio,
+                header_mutation_ratio=header_mutation_ratio,
+                context_pool=context_pool,
+                max_request_workers=max_request_workers,
+                use_async=True,
+                async_max_concurrent=async_max_concurrent,
+            )
+
+            responses = await executor.exec_async()
+            feedback = feedback_analyzer.evaluate(seq_path, operation=nodes.get(node.name), responses=responses, producer_mapping=producer_mapping, context_pool=context_pool)
+            adjug = feedback_analyzer.adjust(node.name, context_pool, producer_mapping, self.operation_graph, graph_analyst=graph_analyst)
+            if adjug and forest_lock:
+                async with forest_lock:
+                    forest = graph_analyst.export_to_forest()
+
+            success_responses = [
+                entry
+                for entry in responses if isSuccessful(entry.get("response",{}).get("status",0))
+            ]
+            context_pool.update_with_responses(success_responses, properties.get(node.name))
+            print("success", len(success_responses), "with context_pool", context_pool)
+            total_success += len(success_responses)
+            total_testcase += len(responses)
+            context_pool.clear_current()
+
+            if len(success_responses) > 0:
+                successFull.update({node.name: 1})
+                for child in sort_children_by_method(node.children.values()):
+                    await _execute_node_async(child, depth + 1, context_pool, node, seq_path + [child.name], forest_lock=forest_lock)
+
+            return responses
+
+        async def _execute_tree_parallel(root_node, tree_context, semaphore, forest_lock):
+            """Execute an entire tree with bounded concurrency."""
+            async with semaphore:
+                print(f"\n🌳 Root: {root_node.name}")
+                await _execute_node_async(root_node, depth=1, context_pool=tree_context, parent=None, seq_path=[root_node.name], forest_lock=forest_lock)
+                return tree_context
+
+        async def traverse_forest_parallel_async(forest, shared_context, max_workers=10):
+            """
+            Execute forest with parallel root nodes.
+            Each root tree runs in parallel (bounded by semaphore).
+            Each tree's descendants run sequentially within that tree.
+            Results are merged back to shared_context at the end.
+            """
+            semaphore = asyncio.Semaphore(max_workers)
+            forest_lock = asyncio.Lock()
+            roots = list(forest.values())
+
+            print(f"\n🚀 Starting {len(roots)} trees with max {max_workers} concurrent workers")
+
+            tasks = []
+            for root_node in sort_children_by_method(roots):
+                tree_context = shared_context.copy()
+                task = _execute_tree_parallel(root_node, tree_context, semaphore, forest_lock)
+                tasks.append(task)
+
+            tree_contexts = await asyncio.gather(*tasks)
+
+            print(f"\n📦 Merging {len(tree_contexts)} tree contexts...")
+            for tree_ctx in tree_contexts:
+                shared_context.merge(tree_ctx)
+
+            return shared_context
+
         for idx in range(num_generations):
             print("🌳"*10, " RUN GENERATIONS ", str(idx+1), "🌳"*10)
 
-            traverse_forest_dfs(forest, context)
+            if async_mode:
+                asyncio.run(traverse_forest_parallel_async(
+                    forest=forest,
+                    shared_context=context,
+                    max_workers=max_request_workers or DEFAULT_MAX_REQUEST_WORKERS
+                ))
+            else:
+                traverse_forest_dfs(forest, context)
         if total_testcase == 0:
             print("No test cases executed.")
         print("Success rate", total_success/total_testcase if total_testcase > 0 else 0)
