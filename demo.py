@@ -53,6 +53,7 @@ test.run_tests(
     num_test_cases=20,
     mutation_ratio=0.5,
     async_mode=True,
+    
     async_max_concurrent=50  # Only this matters for async mode
 )
 
