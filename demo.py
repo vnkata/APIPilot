@@ -46,14 +46,15 @@ test = APITesting(
     model=llm,
     # vector_db=db,
     embedder=embedder,
-    spec_path="datasets\\GitLabBranch.json",
+    spec_path="datasets\\GitLabIssues.json",
 )
 test.run_tests(
     num_generations=1,
     num_test_cases=20,
     mutation_ratio=0.5,
     async_mode=True,
-    async_max_concurrent=50  # Only this matters for async mode
+    max_request_workers=10,  
+    async_max_concurrent=20  # Only this matters for async mode
 )
 
 elapsed = time.perf_counter() - start_time
