@@ -311,7 +311,71 @@ class Executor:
         mutation_ratio=self.mutation_ratio
     )
     return await value_generator.exec_async()
-  
+
+  async def generate_smart_values_async(self, operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
+    value_generator = SmartValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool=self.context_pool, mutation_ratio=self.mutation_ratio)
+    return await value_generator.exec_async()
+
+  async def generate_values_async(self):
+      req_body = self.operation.request_body
+      operation_mimetypes = self.operation.minetypes
+
+      if req_body:
+          mime = random.choice(list(req_body.keys()))
+      elif operation_mimetypes:
+          mime = random.choice(operation_mimetypes)
+      else:
+          mime = "application/json"
+      headers = {
+          "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+          "Accept": "*/*",
+          "PRIVATE-TOKEN": "wziZeCMoE2xunx8zzWws"
+      }
+
+      if mime == "application/octet-stream":
+        headers["Content-Type"] = "application/octet-stream"
+      base_request = RequestData(
+          uuid=self.operation.uuid,
+          endpoint_path=self.operation.endpoint_path,
+          http_method=self.operation.http_method,
+          mime_type=mime,
+          headers=headers
+      )
+
+      params = self.operation.parameters
+      body_schema = req_body.get(mime, {})
+
+      def build_requests(values):
+        return [
+            replace(base_request,
+                    parameters=v.get("parameters"),
+                    expected_code=v.get("expected_code"),
+                    body=v.get("requestBody"))
+            for v in values
+        ]
+
+      match self.strategy:
+          case Strategy.SMART_VALUE:
+              params = merge_config(params, self.configuration.params)
+              body_schema = merge_config(body_schema, self.configuration.request_body)
+              values = await self.generate_smart_values_async(self.operation, params, body_schema)
+              values = build_requests(values)
+              return self.mutator(values, req_body.get(mime, {}))
+
+          case Strategy.NAIVE_VALUE:
+              params = merge_config(params, self.configuration.params)
+              body_schema = merge_config(body_schema, self.configuration.request_body)
+              values = await self.generate_naive_values_async(self.operation, params, body_schema)
+              values = build_requests(values)
+              return self.mutator(values, req_body.get(mime, {}))
+          case Strategy.COUNTER_VALUE | Strategy.FUZZY_VALUE:
+              return []
+
+          case _:
+              raise NotImplementedError("Strategy not implemented")
+
+      return []
+
   def exec(self):
     data = self.generate_values()
     if not data:
@@ -350,15 +414,7 @@ class Executor:
     if not self.use_async:
       raise RuntimeError("exec_async() called but use_async=False. Set use_async=True in constructor.")
 
-    if self.strategy == Strategy.NAIVE_VALUE:
-      params = merge_config(self.operation.parameters, self.configuration.params)
-      body_schema = merge_config(
-          self.operation.request_body.get(self.operation.minetypes[0], {}),
-          self.configuration.request_body
-      )
-      data = await self.generate_naive_values_async(self.operation, params, body_schema)
-    else:
-      data = self.generate_values()
+    data = await self.generate_values_async()
 
     if not data:
       return self.async_sender.entries

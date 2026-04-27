@@ -42,4 +42,31 @@ class SmartValueGenerator:
             print("update " ,k, "with ", result[k] )
     return results
 
+  async def exec_async(self):
+    params = {
+      "endpoint": f"{self.operation.http_method.upper()} {self.operation.endpoint_path}",
+      "summary": ((self.operation.summary or "") + " " + (self.operation.description or "")).strip(),
+      "num_test_cases": self.num_test_cases,
+      "specific_endpoint_params": "\n".join([
+        f"- {k} : {v.to_human_readable()}"
+        for k, v in self.parameters.items()
+      ]),
+      "specific_endpoint_body": None
+    }
+    if len(self.request_body) > 0:
+      params["specific_endpoint_body"] = self.request_body.to_human_readable()
+    results = await self._generator.a_exec(**params)
+    results = results.dict().get("datas")
+    #
+    producer_parameters = { k: v for k,v in self.parameters.items() if v.strategy is not None and v.strategy.type == "ProducerGenerator"}
+    for result in results:
+      parameter = result.get("parameters")
+      for k,_ in parameter.items():
+        if k in producer_parameters:
+          newVal = producer_parameters.get(k).generator.next_value(context_pool=self.context_pool)
+          if newVal is not None:
+            result[k] = newVal
+            print("update " ,k, "with ", result[k] )
+    return results
+
   
