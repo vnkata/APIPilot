@@ -1,10 +1,9 @@
 import json
 import os
+import threading
 from collections import defaultdict
 
-
-class StatusCodeReport:
-    """
+"""
     Collect and export status code statistics per endpoint.
 
     Example output:
@@ -15,49 +14,46 @@ class StatusCodeReport:
         "200": 361
       }
     }
-    """
+"""
+class StatusCodeReport:
+    _save_lock = threading.Lock()
+    _instance = None
 
-    def __init__(self, report_file: str):
+    def __init__(self, report_file: str, _global=False):
         self.report_file = report_file
         self.data = defaultdict(lambda: defaultdict(int))
-        self.load()
+        if _global and os.path.exists(report_file):
+            self.load()
 
-    # ---------------------------------------------------------
-    # record response
-    # ---------------------------------------------------------
+    @staticmethod
+    def make_shared(report_file: str) -> 'StatusCodeReport':
+        if StatusCodeReport._instance is None:
+            StatusCodeReport._instance = StatusCodeReport(report_file, _global=True)
+        return StatusCodeReport._instance
+
     def add(self, endpoint: str, status_code: int):
-        """
-        Add a status code record for an endpoint.
-        """
         endpoint = endpoint.strip("/")
         status_code = str(status_code)
         self.data[endpoint][status_code] += 1
 
-    # ---------------------------------------------------------
-    # export json
-    # ---------------------------------------------------------
     def save(self):
-        """
-        Save report to json file.
-        """
         os.makedirs(os.path.dirname(self.report_file), exist_ok=True)
+        with StatusCodeReport._save_lock:
+            if os.path.exists(self.report_file):
+                with open(self.report_file, "r", encoding="utf-8") as f:
+                    existing = json.load(f)
+                for ep, codes in existing.items():
+                    for code, count in codes.items():
+                        self.data[ep][code] = count
+            with open(self.report_file, "w", encoding="utf-8") as f:
+                json.dump(dict(self.data), f, indent=2, ensure_ascii=False)
+                f.flush()
 
-        with open(self.report_file, "w", encoding="utf-8") as f:
-            json.dump(self.data, f, indent=2, ensure_ascii=False)
-            f.flush()
-    # ---------------------------------------------------------
-    # load existing report (optional)
-    # ---------------------------------------------------------
     def load(self):
-        """
-        Load existing report file if present.
-        """
         if not os.path.exists(self.report_file):
             return
-
         with open(self.report_file, "r", encoding="utf-8") as f:
             raw = json.load(f)
-
         for endpoint, codes in raw.items():
             for code, count in codes.items():
                 self.data[endpoint][code] = count

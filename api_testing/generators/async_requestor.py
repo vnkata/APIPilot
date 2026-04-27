@@ -4,7 +4,6 @@ from datetime import datetime
 import json
 import os
 import re
-import threading
 import time
 from typing import Any, Dict, Optional
 import uuid
@@ -129,7 +128,6 @@ class AsyncRequestor:
         self.session_id = str(uuid.uuid4())
         self.entries: list[Dict[str, Any]] = []
         self._entries_lock = asyncio.Lock()
-        self._report_lock = threading.Lock()
         self._dirty = False
         self._dirty_lock = asyncio.Lock()
 
@@ -138,7 +136,7 @@ class AsyncRequestor:
             print(f"History dir not found, I'll create dir {_cache_dir}")
             os.makedirs(_cache_dir)
 
-        self.report = StatusCodeReport(report_file=os.path.join(cache_dir, "reports.json"))
+        self.report = StatusCodeReport.make_shared(os.path.join(cache_dir, "reports.json"))
         self.cache_file = os.path.join(_cache_dir, self.session_id + ".har")
         self.logger = getLogger(__name__)
 
@@ -384,8 +382,7 @@ class AsyncRequestor:
             },
         }
 
-        with self._report_lock:
-            self.report.add(ruuid, response.status_code)
+        self.report.add(ruuid, response.status_code)
 
         async with self._entries_lock:
             self.entries.append(entry)
@@ -399,8 +396,7 @@ class AsyncRequestor:
             if not self._dirty:
                 return
 
-            with self._report_lock:
-                self.report.save()
+            self.report.save()
 
             await self._save_har()
             self._dirty = False

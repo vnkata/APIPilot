@@ -17,3 +17,4 @@ tools/**/*
 .hypothesis/
 .config/opencode
 opencode.json
+GEMINI.md
