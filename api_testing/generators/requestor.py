@@ -162,7 +162,7 @@ class Requestor:
             duration_ms = (time.perf_counter() - start_time) * 1000
             response_data = ResponseData.from_requests(response)
             # Record to HAR
-            print(parameters)
+            self.logger.info(f"Parameters: {parameters}")
             self._record_har_entry(
                 ruuid=request_data.uuid, method=method, url=url, headers=headers, path_parameters=path_parameters, 
                 params=parameters, body=body, response=response_data,
@@ -178,7 +178,7 @@ class Requestor:
                 ruuid=request_data.uuid, method=method, url=url, headers=headers, path_parameters=path_parameters, 
                 params=parameters, body=body, response=response_data, duration_ms=duration_ms, expected_code=request_data.expected_code, base_path=base_path
             )
-            print("Lỗi: Request đã quá thời gian chờ 5 phút!")
+            self.logger.error("Lỗi: Request đã quá thời gian chờ 5 phút!")
             return response_data
         except requests.exceptions.RequestException as e:
             response_data = ResponseData.from_requests(None)
@@ -196,7 +196,7 @@ class Requestor:
                 expected_code=request_data.expected_code,
                 base_path=base_path,
             )
-            print(f"Lỗi hệ thống: {e}")
+            self.logger.error(f"Lỗi hệ thống: {e}")
             return response_data
         
     # ----------------------------------------------------------------------
