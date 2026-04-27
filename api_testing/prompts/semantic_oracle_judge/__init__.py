@@ -65,5 +65,8 @@ Request Body:
       prompt=prompt,
       schema=Verdict
     )
-    self.logger.debug("SemanticOracleJudge Response: " + response.model_dump_json(indent=2))
+    if isinstance(response, str):
+        self.logger.debug(f"SemanticOracleJudge Response (parse failed): {response[:500]}")
+    else:
+        self.logger.debug("SemanticOracleJudge Response: " + response.model_dump_json(indent=2))
     return response

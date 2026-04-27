@@ -114,14 +114,19 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
         )
 
         text = response.choices[0].message.content.strip()
-        
+
         if schema:
             try:
                 parsed = schema.model_validate_json(text)
                 return parsed, 0
             except Exception:
-                logging.error("Async JSON parse failed")
-                return text, 0
+                try:
+                    cleaned = text.strip("```json").strip("```").strip()
+                    parsed = schema.model_validate_json(cleaned)
+                    return parsed, 0
+                except Exception as e:
+                    logging.error(f"Async JSON parse failed: {e}\nResponse: {text[:500]}")
+                    return text, 0
 
         return text, 0
 
