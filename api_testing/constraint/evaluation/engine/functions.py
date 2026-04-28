@@ -4,7 +4,11 @@ from datetime import datetime
 class RuleFunctions:
     # --- Logical Operators ---
     @staticmethod
-    def eq(a, b): return a == b
+    def eq(a, b): 
+        a_num = int(a)
+        b_num = int(b)
+        if a_num is not None and b_num is not None:
+            return a_num == b_num
 
     @staticmethod
     def neq(a, b): return a != b
@@ -13,13 +17,21 @@ class RuleFunctions:
     def gt(a, b): return a > b
 
     @staticmethod
-    def gte(a, b): return a >= b
+    def gte(a, b): 
+        a_num = int(a)
+        b_num = int(b)
+        if a_num is not None and b_num is not None:
+            return a_num >= b_num
 
     @staticmethod
     def lt(a, b): return a < b
 
     @staticmethod
-    def lte(a, b): return a <= b
+    def lte(a, b): 
+        a_num = int(a)
+        b_num = int(b)
+        if a_num is not None and b_num is not None:
+            return a_num <= b_num
 
     @staticmethod
     def and_op(*args): return all(args)
@@ -44,13 +56,27 @@ class RuleFunctions:
     def size_of(val):
         try:
             return len(val)
-        except: return 0
+        except Exception as e:
+            print(f"Error in size_of: {e}") 
+            return 0
 
     @staticmethod
     def contains(collection, item):
         try:
             return item in collection
         except: return False
+
+    @staticmethod
+    def default(val, fallback):
+        return val if val is not None else fallback
+
+    @staticmethod
+    def is_null(val):
+        return val is None
+
+    @staticmethod
+    def to_string(val):
+        return str(val)
 
     # --- API / Validation Functions ---
     @staticmethod
@@ -103,3 +129,9 @@ class RuleFunctions:
     @staticmethod
     def exists(val):
         return val is not None
+    
+    @staticmethod
+    def all_op(collection, evaluator_fn):
+        if not isinstance(collection, list): return False
+        if not collection: return True # Empty list thỏa mãn 'all'
+        return all(evaluator_fn(item) for item in collection)

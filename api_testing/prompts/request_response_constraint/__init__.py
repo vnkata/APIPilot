@@ -163,17 +163,85 @@ Use:
   ]
 }
 ```
-
----
-
-### Expected Behavior
-
-* Range filters → separate constraints (`id_after`, `id_before`)
-* Time filters → separate constraints
-* Access control → single param constraint
-* Sorting → **ONE combined constraint with default()**
-* Search → map to relevant text fields
-* No duplication, no over-generation"""
+### DSL Examples
+```json
+{
+  "constraints": [
+    {
+      "parameter": "id",
+      "predicate": "implies(exists(input.id), eq(return.id, input.id))",
+      "property": "return.id"
+    },
+    {
+      "parameter": "status",
+      "predicate": "implies(exists(input.status), eq(return.status, input.status))",
+      "property": "return.status"
+    },
+    {
+      "parameter": "id_after",
+      "predicate": "implies(exists(input.id_after), gt(return.id, input.id_after))",
+      "property": "return.id"
+    },
+    {
+      "parameter": "id_before",
+      "predicate": "implies(exists(input.id_before), lt(return.id, input.id_before))",
+      "property": "return.id"
+    },
+    {
+      "parameter": "created_after",
+      "predicate": "implies(exists(input.created_after), gte(return.created_at, input.created_after))",
+      "property": "return.created_at"
+    },
+    {
+      "parameter": "created_before",
+      "predicate": "implies(exists(input.created_before), lte(return.created_at, input.created_before))",
+      "property": "return.created_at"
+    },
+    {
+      "parameter": "q",
+      "predicate": "implies(exists(input.q), or(contains(return.name, input.q), contains(return.description, input.q)))",
+      "property": "return.name, return.description"
+    },
+    {
+      "parameter": "category",
+      "predicate": "implies(exists(input.category), eq(return.category, input.category))",
+      "property": "return.category"
+    },
+    {
+      "parameter": "tags",
+      "predicate": "implies(exists(input.tags), in(input.tags, return.tags))",
+      "property": "return.tags"
+    },
+    {
+      "parameter": "limit",
+      "predicate": "lte(sizeOf(return), default(input.limit, 20))",
+      "property": "return"
+    },
+    {
+      "parameter": "offset",
+      "predicate": "implies(exists(input.offset), gte(sizeOf(return), 0))",
+      "property": "return"
+    },
+    {
+      "parameter": "order_by, sort",
+      "predicate": "isSortedBy(return, default(input.order_by,'created_at'), default(input.sort,'desc'))",
+      "property": "return"
+    }
+  ]
+}```
+### Expected Behavior (IMPORTANT)
+* **Range filters** → define as separate constraints (e.g., `id_after`, `id_before`)
+* **Time filters** → define as separate constraints
+* **Access control** → use a single-parameter constraint
+* **Sorting** → define as **one combined constraint using `default()`**
+* **Search** → map to the appropriate text fields
+**Field requirements:**
+* `parameter`: Must be non-null, include all parameters used in the predicate, and start with `input`
+* `property`: Must be non-null, include all response fields referenced in the predicate, and start with `return`
+**General rules:**
+* Avoid duplication and over-generation
+* Remove any constraint where `parameter` or `property` is null or missing
+"""
     PROMPT = """
         Please review the following details for the endpoint and its associated parameters to identify the constraints needed for data retrieval:
         Endpoint: {endpoint}

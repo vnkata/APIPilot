@@ -191,25 +191,25 @@ class OperationEdge:
 
     def __init__(
         self,
-        from_node: OperationNode,
-        to_node: OperationNode,
+        from_node: OperationProperties,
+        to_node: OperationProperties,
         similar_parameters: Optional[List[SimilarityValue]] = None
     ):
         """
         Initialize an operation edge.
 
         Args:
-            from_node: Source operation node
-            to_node: Target operation node
+            from_node: Source operation properties (OperationNode or OperationProperties)
+            to_node: Target operation properties (OperationNode or OperationProperties)
             similar_parameters: List of parameter similarities between operations
 
         Raises:
             ValueError: If nodes are invalid
         """
-        if not isinstance(from_node, OperationNode):
-            raise ValueError("from_node must be an OperationNode")
-        if not isinstance(to_node, OperationNode):
-            raise ValueError("to_node must be an OperationNode")
+        if not isinstance(from_node, OperationProperties):
+            raise ValueError("from_node must be an OperationProperties instance")
+        if not isinstance(to_node, OperationProperties):
+            raise ValueError("to_node must be an OperationProperties instance")
 
         self.from_node = from_node
         self.to_node = to_node

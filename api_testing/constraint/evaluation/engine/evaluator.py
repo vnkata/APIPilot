@@ -1,43 +1,106 @@
+
 from lark import Transformer, v_args
 from .functions import RuleFunctions
+
 
 @v_args(inline=True)
 class DSLTransformer(Transformer):
     def __init__(self, context):
         self.context = context
         self.funcs = RuleFunctions()
+        from api_testing.utils.log import getLogger
+        self.logger = getLogger(__name__)
 
-    # Xử lý các kiểu dữ liệu cơ bản
-    def string(self, s): return s.strip("'\"")
-    def number(self, n): return float(n)
-    def list(self, *items): return list(items)
-    
+    # ===== Basic types =====
+    def string(self, s):
+        return s.strip("'\"")
+
+    def number(self, n):
+        return float(n)
+
+    def list(self, *items):
+        return list(items)
+
+    # =========================================================
+    # 🔥 FLAT VARIABLE RESOLVER (KHÔNG nested, KHÔNG split ".")
+    # =========================================================
     def variable(self, name):
-        # Truy xuất sâu nếu cần (ví dụ: "user.id")
-        return self.context.get(str(name))
+        key = str(name)
 
+        try:
+            # support DSLEvaluationContext hoặc dict
+            if hasattr(self.context, "get"):
+                value = self.context.get(key)
+            else:
+                value = self.context.get(key, None)
+
+            return value
+
+        except Exception as e:
+            self.logger.error(f"Variable resolve error: {key} -> {e}")
+            return None
+
+    # =========================================================
+    # 🔥 FUNCTION DISPATCH + VECTORIZE
+    # =========================================================
     def func(self, name, *args):
         raw_name = str(name)
-        
-        # Mapping các trường hợp đặc biệt
+
         special_map = {
             "in": "is_in",
             "and": "and_op",
             "or": "or_op",
-            "not": "not_op"
+            "not": "not_op",
+            "str": "to_string",
+            "sizeOf": "size_of",
+            "isNull": "is_null",
+            "toString": "to_string",
+            "isEmail": "is_email",
+            "isURL": "is_url",
+            "isDate": "is_date",
+            "isRegex": "is_regex",
+            "isSortedBy": "is_sorted_by",
         }
-        
-        if raw_name in special_map:
-            method_name = special_map[raw_name]
-        else:
-            # Chuyển camelCase (sizeOf) -> snake_case (size_of)
-            method_name = ''.join(['_' + i.lower() if i.isupper() else i for i in raw_name]).lstrip('_')
+
+        method_name = special_map.get(raw_name) or ''.join(
+            ['_' + c.lower() if c.isupper() else c for c in raw_name]
+        ).lstrip('_')
 
         func_ptr = getattr(self.funcs, method_name, None)
-        if func_ptr:
-            return func_ptr(*args)
+
+        if not func_ptr:
+            raise AttributeError(f"Undefined DSL function: {raw_name}")
+
+        try:
             
-        raise AttributeError(f"Quy tắc '{raw_name}' chưa được định nghĩa.")
+            if any(arg is None for arg in args):
+                return None
+
+            result = func_ptr(*args)
+
+            if result is False:
+                self.logger.warning(
+                    f"DSL validation failed: {args} {raw_name}({', '.join(map(str, args))})"
+                )
+            return result
+
+        except Exception as e:
+            self.logger.error(
+                f"DSL function error: {raw_name}({args}) -> {e}"
+            )
+            raise
+
+    def func_call(self, name, *args):
+        return self.func(name, *args)
 
     def expr(self, name, *args):
         return self.func(name, *args)
+
+    # ===== Utility =====
+    @staticmethod
+    def all_op(collection, evaluator_fn):
+        if not isinstance(collection, list):
+            return False
+        if not collection:
+            return True
+        return all(evaluator_fn(item) for item in collection)

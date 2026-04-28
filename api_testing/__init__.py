@@ -246,6 +246,10 @@ class APITesting:
             cache_dir=self.project_dir
         )
         miner.mining()
+        cache = os.path.join(self.project_dir, "test_cases.json")
+        valid = miner.verify_constraints(history=cache)
+        print("Valid constraints", valid)
+
     def run_tests(self,num_generations=1, num_test_cases=20, mutation_ratio=0.0):
         self.operation_graph = OperationGraph(
             spec_parser=self.spec_parser,

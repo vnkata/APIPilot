@@ -4,7 +4,7 @@ from typing import List, Optional
 class ReqResConstraintVerdict(BaseModel):
     parameter: Optional[str] = None
     predicate: str
-    property: str
+    property: Optional[str] = None
 
 
 class Verdict(BaseModel):

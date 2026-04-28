@@ -186,6 +186,7 @@ class GeminiModel(APITestingBaseLLMModel):
             )
             cleaned = re.sub(r"^```json\s*|\s*```$", "", response.text.strip(), flags=re.MULTILINE)
             usage = getattr(response, "usage_metadata", None)
+            print("GeminiModel raw response:", response.text)
             if usage:
                 prompt_tokens = getattr(usage, "prompt_token_count", 0)
                 completion_tokens = getattr(usage, "candidates_token_count", 0)
