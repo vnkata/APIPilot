@@ -145,7 +145,7 @@ class Executor:
             if random.random() < self.mutation_ratio:                
                 new_headers = { "User-Agent": ua.random }
             http_method = req.http_method
-            if random.random() < self.mutation_ratio:
+            if random.random() < 0.4:  # 40% chance to mutate HTTP method
                 # chọn mime sai (không nằm trong operation)
                 candidate_mimes = list(set(["DELETE","GET","POST", "PUT", "PATCH", "OPTIONS", "HEAD", "TRACE"]) - set([req.http_method]))
                 http_method = random.choice(candidate_mimes)
@@ -176,6 +176,7 @@ class Executor:
       headers = {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Accept": "*/*",
+          "PRIVATE-TOKEN": "zmy1FupqQvgL9BgG1sqw"
       }
 
       # 2. Cập nhật Content-Type dựa trên mime (giả sử 'mime' là biến chứa type)
@@ -242,6 +243,6 @@ class Executor:
   def exec(self):
     data = self.generate_values()
     for item in data:
-      print("HTTP Request", asdict(item))
+    #   print("HTTP Request", asdict(item))
       self.sender.exec(request_data=item)
     return self.sender.entries

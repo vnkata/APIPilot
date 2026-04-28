@@ -352,7 +352,7 @@ class APITesting:
                             data["resource"] = common_res
                         del data["need_change"]
                         producer_mapping[k] = data
-                    producer_obj.genParameters = {"pool": [data]}
+                    producer_obj.genParameters = {"pool": [data]}            
             executor = Executor(
                 api_url = self.base_url, 
                 strategy= Strategy.NAIVE_VALUE,
@@ -383,7 +383,7 @@ class APITesting:
                 successFull.update({node.name: 1})
                 for child in sort_children_by_method(node.children.values()):
                     traverse_dfs(child, depth + 1, context_pool, node, seq_path=seq_path + [child.name])
-            
+                
             # save pool
            
 

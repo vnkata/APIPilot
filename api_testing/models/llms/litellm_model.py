@@ -59,7 +59,7 @@ class LiteLLMModel(APITestingBaseLLMModel):
             max_tokens: Maximum tokens to generate
             **kwargs: Additional arguments passed to litellm
         """
-        self.model_name = model or "gpt-4o-mini"
+        self.model_name = model or "gpt-4.1-mini"
 
         if temperature < 0:
             raise ValueError("Temperature must be >= 0.")

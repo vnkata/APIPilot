@@ -1,0 +1,34 @@
+daikon.inv.binary.sequenceScalar.SeqIntEqual: Represents an invariant between a long scalar and a a sequence of long values. Prints as x[] elements == y where x is a long sequence and y is a long scalar.
+daikon.inv.binary.sequenceString.MemberString: Represents String scalars that are always members of a sequence of String values. Prints as x in y[] where x is a String scalar and y[] is a sequence of String.
+daikon.inv.binary.twoScalar.FloatGreaterThan: Represents an invariant of > between two double scalars. Prints as x > y.
+daikon.inv.binary.twoScalar.FloatLessThan: Represents an invariant of < between two double scalars. Prints as x < y.
+daikon.inv.binary.twoScalar.FloatNonEqual: Represents an invariant of != between two double scalars. Prints as x != y.
+daikon.inv.binary.twoScalar.IntEqual: Represents an invariant of == between two long scalars. Prints as x == y.
+daikon.inv.binary.twoScalar.IntGreaterEqual: Represents an invariant of >= between two long scalars. Prints as x >= y.
+daikon.inv.binary.twoScalar.IntGreaterThan: Represents an invariant of > between two long scalars. Prints as x > y.
+daikon.inv.binary.twoScalar.IntLessEqual: Represents an invariant of <= between two long scalars. Prints as x <= y.
+daikon.inv.binary.twoScalar.IntLessThan: Represents an invariant of < between two long scalars. Prints as x < y.
+daikon.inv.binary.twoScalar.IntNonEqual: Represents an invariant of != between two long scalars. Prints as x != y.
+daikon.inv.binary.twoScalar.NumericInt$Divides: Represents the divides without remainder invariant between two long scalars. Prints as x % y == 0.
+daikon.inv.binary.twoScalar.NumericInt$Square: Represents the square invariant between two long scalars. Prints as x = y**2.
+daikon.inv.binary.twoSequence.SuperSet: Represents two sequences of long values where one of the sequences is a subset of the other; that is each element of one sequence appears in the other. Prints as either x[] is a subset of y[] or as x[] is a superset of y[].
+daikon.inv.binary.twoString.StdString$SubString: Represents the substring invariant between two String scalars. Prints as x is a substring of y.
+daikon.inv.binary.twoString.StringEqual: Represents an invariant of == between two String scalars. Prints as x == y.
+daikon.inv.unary.scalar.LowerBound: Represents the invariant x >= c, where c is a constant and x is a long scalar.
+daikon.inv.unary.scalar.LowerBoundFloat: Represents the invariant x >= c, where c is a constant and x is a double scalar.
+daikon.inv.unary.scalar.NonZero: Represents long scalars that are non-zero. Prints as x != 0, or as x != null for pointer types.
+daikon.inv.unary.scalar.NonZeroFloat: Represents double scalars that are non-zero. Prints as x != 0.
+daikon.inv.unary.scalar.OneOfFloat: Represents double variables that take on only a few distinct values. Prints as either x == c (when there is only one value) or as x one of {c1, c2, c3} (when there are multiple values).
+daikon.inv.unary.scalar.OneOfScalar: Represents long variables that take on only a few distinct values. Prints as either x == c (when there is only one value) or as x one of {c1, c2, c3} (when there are multiple values).
+daikon.inv.unary.sequence.EltNonZero: Represents the invariant "x != 0" where x represents all of the elements of a sequence of long. Prints as x[] elements != 0.
+daikon.inv.unary.sequence.OneOfSequence: Represents long[] variables that take on only a few distinct values. Prints as either x == c (when there is only one value) or as x one of {c1, c2, c3} (when there are multiple values).
+daikon.inv.unary.string.FixedLengthString: Indicates that the value of a string variable always has a fixed length n. Represented as LENGTH(x)==n.
+daikon.inv.unary.string.IsNumeric: Indicates that the characters of a string variable are always numeric. Represented as x is Numeric.
+daikon.inv.unary.string.IsUrl: Indicates that the value of a string variable is always a URL. Represented as x is Url.
+daikon.inv.unary.string.OneOfString: Represents String variables that take on only a few distinct values. Prints as either x == c (when there is only one value) or as x one of {c1, c2, c3} (when there are multiple values).
+daikon.inv.unary.string.dates.IsDateYYYYMMDD: Indicates that the value of a string variable is always a date following the format YYYY/MM/DD or YYYY-MM-DD (the separator can be "/" or "-"). Represented as x is a Date. Format YYYY/MM/DD.
+daikon.inv.unary.string.dates.IsTimestampYYYYMMHHThhmmssmm: Indicates that the value of a string variable is always a timestamp. Represented as x is Timestamp. Format: YYYY-MM-DDTHH:MM:SS.mmZ (Miliseconds are optional).
+daikon.inv.unary.stringsequence.EltOneOfString: Represents sequences of String values where the elements of the sequence take on only a few distinct values. Prints as either x[] elements == c (when there is only one value), or as x[] elements one of {c1, c2, c3} (when there are multiple values).
+daikon.inv.unary.stringsequence.OneOfStringSequence: Represents String[] variables that take on only a few distinct values. Prints as either x == c (when there is only one value) or as x one of {c1, c2, c3} (when there are multiple values).
+daikon.inv.unary.stringsequence.SequenceFixedLengthString: Indicates that all the elements of an array of strings have a fixed length n. Represented as All the elements of x have LENGTH=n.
+daikon.inv.unary.stringsequence.SequenceStringElementsAreUrl: Indicates that all elements of an array of strings are URLs. Represented as All the elements of x are URLs.
