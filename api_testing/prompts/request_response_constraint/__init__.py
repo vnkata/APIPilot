@@ -1,73 +1,160 @@
-import time
-import uuid
-from api_testing.prompts.request_response_constraint.schema import Verdict
-from api_testing.utils.log import getLogger, logger
+import json
+from .schema import Verdict
+from api_testing.utils.log import getLogger
 
 
 class RequestResponseConstraint:
+#     SYSTEM_PROMPT = """
+# You are given a set of request parameters and an API response schema. Your task is to infer constraints that describe how input parameters influence response properties, and express them using a formal, machine-readable Domain-Specific Language (DSL).
+# ---
+# ### Objective
+# For each single, pair, or triple of input parameters, identify whether they impose constraints on one or more response properties.
+# ⚠️ **Only include constraints where BOTH `parameter` and `property` are present (non-null).**
+# Discard any constraint that does not map input parameters to specific response properties.
+# ---
+# ### DSL Specification
+# Use the following DSL primitives:
+# #### Logical operators
+# * `eq(a, b)`, `neq(a, b)`
+# * `gt(a, b)`, `gte(a, b)`, `lt(a, b)`, `lte(a, b)`
+# * `and(expr1, expr2, ...)`, `or(expr1, expr2, ...)`, `not(expr)`
+# * `implies(expr1, expr2)`
+# #### Set and domain
+# * `in(x, [v1, v2, ...])`
+# #### Existence
+# * `exists(x)`, `isNull(x)`
+# #### Functions
+# * `sizeOf(x)`
+# * `contains(x, y)`
+# #### API-specific predicates
+# * `isSortedBy(return, field, order)`
+# * `default(input.x, v)`
+# * `between(x, min, max)`
+# ---
+# ### Naming Convention
+# * Input parameters: `input.<param>`
+# * Response fields: `return.<field>`
+# * Nested fields: `return.a.b.c`
+# ---
+# ### Constraint Format
+# Return a JSON object:
+# ```json
+# {
+#   "constraint": [
+#     {
+#       "parameter": "<param_list>",
+#       "predicate": "<DSL_expression>",
+#       "property": "<response_fields>"
+#     }
+#   ]
+# }
+# ```
+# ---
+# ### Rules
+# * Each `parameter` must include all input parameters involved (single, pair, or triple).
+# * Each `property` must include all response fields involved.
+# * The predicate must be fully machine-readable using the DSL.
+# * Use `default(...)` when a parameter has a default value.
+# * Use `implies(...)` for conditional constraints.
+# * Use abstract predicates if needed, but only when they map to a concrete response property.
+# * Ensure input and output refer to the same concept when using `eq`.
+# * ❗ **Exclude any constraint where `property` is null or missing.**
+# ---
+# ### Output Requirement
+# Only return the JSON object following the specified format. Do not include explanations.
+#     """
     SYSTEM_PROMPT = """
-**Refined Prompt (Filtered Constraints Only)**
-
-You are given a set of request parameters and an API response schema. Your task is to infer constraints that describe how input parameters influence response properties, and express them using a formal, machine-readable Domain-Specific Language (DSL).
-
+You are given a set of request parameters and an API response schema. Your task is to infer constraints describing how input parameters influence response properties, and express them using a formal DSL.
 ---
 
 ### Objective
 
-For each single, pair, or triple of input parameters, identify whether they impose constraints on one or more response properties.
+Identify constraints where **individual parameters or minimal necessary parameter groups** affect response fields.
 
-⚠️ **Only include constraints where BOTH `parameter` and `property` are present (non-null).**
-Discard any constraint that does not map input parameters to specific response properties.
+* Prefer **single-parameter constraints** when possible.
+* Only create **multi-parameter constraints when they jointly define one behavior** (e.g., sorting).
+* Avoid redundant or overlapping constraints.
+
+⚠️ Only include constraints where BOTH `parameter` and `property` are non-null.
 
 ---
 
 ### DSL Specification
 
-Use the following DSL primitives:
+Use:
 
-#### Logical operators
+**Logical**
 
-* `eq(a, b)`, `neq(a, b)`
-* `gt(a, b)`, `gte(a, b)`, `lt(a, b)`, `lte(a, b)`
-* `and(expr1, expr2, ...)`, `or(expr1, expr2, ...)`, `not(expr)`
-* `implies(expr1, expr2)`
+* `eq, neq, gt, gte, lt, lte`
+* `and, or, not, implies`
 
-#### Set and domain
+**Set**
 
-* `in(x, [v1, v2, ...])`
+* `in`
 
-#### Existence
+**Existence**
 
-* `exists(x)`, `isNull(x)`
+* `exists, isNull`
 
-#### Functions
+**Functions**
 
-* `sizeOf(x)`
-* `contains(x, y)`
+* `sizeOf, contains`
 
-#### API-specific predicates
+**API-specific**
 
 * `isSortedBy(return, field, order)`
 * `default(input.x, v)`
-* `between(x, min, max)`
+* `between`
+
+---
+
+### Key Rules (STRICT)
+
+1. **No redundant constraints**
+
+   * Do NOT generate both single and combined versions if one is sufficient.
+   * Example: if sorting depends on both params → ONLY output one constraint with `"order_by, sort"`.
+
+2. **Group parameters ONLY when necessary**
+
+   * Use combined parameters **only if they jointly control one property**.
+   * Example:
+
+     ```
+     isSortedBy(return, default(input.order_by,'created_at'), default(input.sort,'desc'))
+     ```
+
+3. **Inline default values**
+
+   * Always use `default()` inside predicates.
+   * ❌ Do NOT create separate default constraints.
+
+4. **Use `implies(exists(...), ...)` for filters**
+
+   * Except when behavior is unconditional (e.g., sorting).
+
+5. **Property must be precise**
+
+   * Include ALL response fields referenced in predicate.
+
+6. **Avoid vague mappings**
+
+   * Every constraint must clearly bind input → response field.
 
 ---
 
 ### Naming Convention
 
-* Input parameters: `input.<param>`
-* Response fields: `return.<field>`
-* Nested fields: `return.a.b.c`
+* Input: `input.x`
+* Output: `return.field` (or nested)
 
 ---
 
-### Constraint Format
-
-Return a JSON object:
+### Output Format
 
 ```json
 {
-  "constraint": [
+  "constraints": [
     {
       "parameter": "<param_list>",
       "predicate": "<DSL_expression>",
@@ -76,52 +163,85 @@ Return a JSON object:
   ]
 }
 ```
-
----
-
-### Rules
-
-* Each `parameter` must include all input parameters involved (single, pair, or triple).
-* Each `property` must include all response fields involved.
-* The predicate must be fully machine-readable using the DSL.
-* Use `default(...)` when a parameter has a default value.
-* Use `implies(...)` for conditional constraints.
-* Use abstract predicates if needed, but only when they map to a concrete response property.
-* Ensure input and output refer to the same concept when using `eq`.
-* ❗ **Exclude any constraint where `property` is null or missing.**
-
----
-
-### Output Requirement
-
-Only return the JSON object following the specified format. Do not include explanations.
-
-    """
-    # SYSTEM_PROMPT = """
-    # Given a set of request parameters and an API response schema, your task is to determine how each parameter influences the response. For each single, pair, or triple of request parameters, evaluate whether they constrain specific response properties.
-    # Some cases can help determine a corresponding attribute:
-    # - If the input parameter is null or omitted, the default value defined for the query parameter will be used (if a default is specified).
-    # - The input parameter is used for filtering, and its corresponding attribute—representing the actual value after filtering—must exist within the same object as the input parameter.
-    # - Constraints on input parameters—such as min, max, format, or allowed values (e.g., enum) - should align with the constraints of the corresponding response properties .For example, if input.limit ∈ (1, 2, 3) and input.limit = response.limit, then response.limit must also satisfy response.limit ∈ (1, 2, 3).
-    # - The input parameter and the corresponding response attribute should represent the same concept and interpret their values consistently.
-    # Eg:
-    #     - ((input.limit or 20)  >= sizeOf(return)) and sizeOf(return) >= 0 and sizeOf(return) <= 100 # 20 is default value of input.limit
-    #     - ((input.month or 1) = monthOfDay(return.date)) and (input.month >= 1 and input.month <=12)
-    #     ....
-    #     Returns a list of objects containing parameter, brief description, and property fields, representing how constraints are reflected in the JSON object. Each single, pair, or triple must consist of one or more input parameters, and each property must be one or more fields from the response schema.
-    #     {
-    #     "constraint": [
-    #             {
-    #             "parameter": "<param_list>",
-    #             "predicate": "<logical_expression>",
-    #             "property": "<response_fields>"
-    #             }
-    #         ]
-    #     }
-    # # IMPORTANT:
-    # - The description specifies how many input parameters are required, and the parameter must include all of them.
-    # - The description specifies how many return properties are required, and the property must include all of them.
-    # """
+### DSL Examples
+```json
+{
+  "constraints": [
+    {
+      "parameter": "id",
+      "predicate": "implies(exists(input.id), eq(return.id, input.id))",
+      "property": "return.id"
+    },
+    {
+      "parameter": "status",
+      "predicate": "implies(exists(input.status), eq(return.status, input.status))",
+      "property": "return.status"
+    },
+    {
+      "parameter": "id_after",
+      "predicate": "implies(exists(input.id_after), gt(return.id, input.id_after))",
+      "property": "return.id"
+    },
+    {
+      "parameter": "id_before",
+      "predicate": "implies(exists(input.id_before), lt(return.id, input.id_before))",
+      "property": "return.id"
+    },
+    {
+      "parameter": "created_after",
+      "predicate": "implies(exists(input.created_after), gte(return.created_at, input.created_after))",
+      "property": "return.created_at"
+    },
+    {
+      "parameter": "created_before",
+      "predicate": "implies(exists(input.created_before), lte(return.created_at, input.created_before))",
+      "property": "return.created_at"
+    },
+    {
+      "parameter": "q",
+      "predicate": "implies(exists(input.q), or(contains(return.name, input.q), contains(return.description, input.q)))",
+      "property": "return.name, return.description"
+    },
+    {
+      "parameter": "category",
+      "predicate": "implies(exists(input.category), eq(return.category, input.category))",
+      "property": "return.category"
+    },
+    {
+      "parameter": "tags",
+      "predicate": "implies(exists(input.tags), in(input.tags, return.tags))",
+      "property": "return.tags"
+    },
+    {
+      "parameter": "limit",
+      "predicate": "lte(sizeOf(return), default(input.limit, 20))",
+      "property": "return"
+    },
+    {
+      "parameter": "offset",
+      "predicate": "implies(exists(input.offset), gte(sizeOf(return), 0))",
+      "property": "return"
+    },
+    {
+      "parameter": "order_by, sort",
+      "predicate": "isSortedBy(return, default(input.order_by,'created_at'), default(input.sort,'desc'))",
+      "property": "return"
+    }
+  ]
+}```
+### Expected Behavior (IMPORTANT)
+* **Range filters** → define as separate constraints (e.g., `id_after`, `id_before`)
+* **Time filters** → define as separate constraints
+* **Access control** → use a single-parameter constraint
+* **Sorting** → define as **one combined constraint using `default()`**
+* **Search** → map to the appropriate text fields
+**Field requirements:**
+* `parameter`: Must be non-null, include all parameters used in the predicate, and start with `input`
+* `property`: Must be non-null, include all response fields referenced in the predicate, and start with `return`
+**General rules:**
+* Avoid duplication and over-generation
+* Remove any constraint where `parameter` or `property` is null or missing
+"""
     PROMPT = """
         Please review the following details for the endpoint and its associated parameters to identify the constraints needed for data retrieval:
         Endpoint: {endpoint}
@@ -140,14 +260,14 @@ Only return the JSON object following the specified format. Do not include expla
 
 
     def exec(self, *args, **kargs):
-        print(args, kargs)
         prompt = self.PROMPT.format(*args, **kargs) ## pass
         self.logger.debug("RequestResponseConstraint Prompt: " + prompt)
 
         response, _ = self.llm.generate(
             system_prompt=self.SYSTEM_PROMPT,
             prompt=prompt,
-            # schema=Verdict
+            schema=Verdict
         )
-        self.logger.debug("RequestResponseConstraint Response: " + response)
-
+        # Filter out constraints where parameter is None
+        self.logger.debug("RequestResponseConstraint Response: " +  response.model_dump_json(indent=2))
+        return json.loads(response.model_dump_json(indent=2)) 

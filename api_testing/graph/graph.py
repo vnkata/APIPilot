@@ -213,23 +213,6 @@ class OperationGraph:
                                     in_value="parameter to parameter via heuristic"
                                 ))
 
-                # prefix_len = sum(
-                #     1 for a, b in zip(dep_parts, op_parts)
-                #     if a == b or (a.startswith("{") and b.startswith("{"))
-                # )
-
-                # if prefix_len >= 2: 
-                #     shared_vars = {
-                #         a.strip("{}") for a, b in zip(dep_parts, op_parts)
-                #         if a.startswith("{") and b.startswith("{") and a == b
-                #     }
-                #     for v in shared_vars:
-                #         similar_parameters.append(SimilarityValue(
-                #             value1=v,
-                #             value2=v,
-                #             in_value="parameter to parameter via heuristic"
-                #         ))
-           
                 #edge from dep_op to op
                 if len(similar_parameters) > 0:
                     edges.append(OperationEdge(dep_op_properties, op_properties, similar_parameters))

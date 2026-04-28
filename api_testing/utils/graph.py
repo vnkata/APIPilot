@@ -150,18 +150,36 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
                 keep_schemas[schema_name] = schema
     return keep_schemas
 
-    
+
 def is_nested_path_end_with(
-    nested_path: str, 
+    nested_path: str,
     ending_path: str,
     delimiter: str = '.'
 ) -> bool:
-    segments: List[str] = nested_path.split(delimiter)
-    ending_segment: List[str] = ending_path.split(delimiter)
-    if not segments or not ending_segment:
-        return False
-        
-    last_segment: str = segments[-1]
-    ending_segment: str = ending_segment[-1]
+    def normalize(path: str) -> List[str]:
+        return [seg for seg in path.replace("[]", "").split(delimiter) if seg]
 
-    return last_segment == ending_segment
+    nested_segments = normalize(nested_path)
+    ending_segments = normalize(ending_path)
+
+    if len(ending_segments) > len(nested_segments):
+        return False
+
+    return nested_segments[-len(ending_segments):] == ending_segments
+
+# def is_nested_path_end_with(
+#     nested_path: str, 
+#     ending_path: str,
+#     delimiter: str = '.'
+# ) -> bool:
+#     nested_path = nested_path.replace("[]", "")  # Remove array indicators
+#     ending_path = ending_path.replace("[]", "")
+#     segments: List[str] = nested_path.split(delimiter)
+#     ending_segment: List[str] = ending_path.split(delimiter)
+#     if not segments or not ending_segment:
+#         return False
+        
+#     last_segment: str = segments[-1]
+#     ending_segment: str = ending_segment[-1]
+
+#     return last_segment == ending_segment
