@@ -231,7 +231,7 @@ class APITesting:
         )
         self.logger = getLogger(__name__)
         if cache_dir_created:
-            self.logger.info("Created cache directory at %s", self.project_dir)
+            self.logger.debug("Created cache directory at %s", self.project_dir)
         initTracker(dir=self.project_dir, model=self.model.get_model_name())
         self.spec_parser.load_or_initialize(cache_dir=self.project_dir)
         # self._preprocess_()
@@ -273,7 +273,7 @@ class APITesting:
         # extract contrains
         constraints = {}
         for operation, details in self.spec_parser.operations.items():
-            self.logger.info("Extract constraints for %s", operation)
+            self.logger.debug("Extract constraints for %s", operation)
             simple = details.simple_operation()
             # parameters
             parameters = '\n'.join([
@@ -330,7 +330,7 @@ class APITesting:
                 cache_dir=self.project_dir,
             )
 
-        self.logger.info("Building operation graph and configuration")
+        self.logger.debug("Building operation graph and configuration")
         if async_mode:
             with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_SETUP_MAX_WORKERS) as setup_pool:
                 graph_future = setup_pool.submit(build_graph_for_run)
@@ -486,7 +486,7 @@ class APITesting:
         def traverse_forest_dfs(forest,context):
             """Duyệt toàn bộ rừng"""
             for root_node in sort_children_by_method(forest.values()):
-                self.logger.info("Root: %s", root_node.name)
+                self.logger.debug("Root: %s", root_node.name)
                 traverse_dfs(root_node, depth=1, context_pool=context , seq_path=[root_node.name])
 
         def _find_node_in_forest(forest, node_name):
@@ -604,7 +604,7 @@ class APITesting:
         async def _execute_tree_parallel(root_node, tree_context, semaphore, forest_lock):
             """Execute an entire tree with bounded concurrency."""
             async with semaphore:
-                self.logger.info("Root: %s", root_node.name)
+                self.logger.debug("Root: %s", root_node.name)
                 await _execute_node_async(root_node, depth=1, context_pool=tree_context, parent=None, seq_path=[root_node.name], forest_lock=forest_lock)
                 return tree_context
 
@@ -619,7 +619,7 @@ class APITesting:
             forest_lock = asyncio.Lock()
             roots = list(forest.values())
 
-            self.logger.info(
+            self.logger.debug(
                 "Starting %s trees with max %s concurrent workers",
                 len(roots),
                 max_workers,
@@ -633,14 +633,14 @@ class APITesting:
 
             tree_contexts = await asyncio.gather(*tasks)
 
-            self.logger.info("Merging %s tree contexts", len(tree_contexts))
+            self.logger.debug("Merging %s tree contexts", len(tree_contexts))
             for tree_ctx in tree_contexts:
                 shared_context.merge(tree_ctx)
 
             return shared_context
 
         for idx in range(num_generations):
-            self.logger.info("Run generation %s/%s", idx + 1, num_generations)
+            self.logger.debug("Run generation %s/%s", idx + 1, num_generations)
 
             if async_mode:
                 asyncio.run(traverse_forest_parallel_async(
@@ -652,11 +652,11 @@ class APITesting:
                 traverse_forest_dfs(forest, context)
         if total_testcase == 0:
             self.logger.warning("No test cases executed")
-        self.logger.info(
+        self.logger.debug(
             "Success rate: %s",
             total_success/total_testcase if total_testcase > 0 else 0,
         )
         self.logger.debug("Successful endpoints map: %s", successFull)
-        self.logger.info("Successful endpoint count: %s", len(successFull.keys()))
+        self.logger.debug("Successful endpoint count: %s", len(successFull.keys()))
 
     

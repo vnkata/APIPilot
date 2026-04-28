@@ -177,7 +177,7 @@ class TraceManager:
             # Save usage
             self._save_usage()
 
-            self.logger.info(f"LLM call completed - Model: {model}, Cost: ${cost:.6f}")
+            self.logger.debug(f"LLM call completed - Model: {model}, Cost: ${cost:.6f}")
 
         except Exception as e:
             self.logger.error(f"Error in LLM callback: {e}")
@@ -260,7 +260,7 @@ class TraceManager:
         """Reset session usage counter."""
         self.session_usage = LLMUsage()
         self._save_usage()
-        self.logger.info("Session usage reset")
+        self.logger.debug("Session usage reset")
 
     @classmethod
     def get_instance(cls) -> Optional["TraceManager"]:
@@ -277,7 +277,7 @@ class TraceManager:
     def close(self):
         """Clean up and save final state."""
         self._save_usage()
-        self.logger.info("TraceManager closed")
+        self.logger.debug("TraceManager closed")
 
 
 # Convenience function for backward compatibility

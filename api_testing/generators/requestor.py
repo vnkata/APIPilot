@@ -162,7 +162,7 @@ class Requestor:
             duration_ms = (time.perf_counter() - start_time) * 1000
             response_data = ResponseData.from_requests(response)
             # Record to HAR
-            self.logger.info(f"Parameters: {parameters}")
+            self.logger.debug(f"Parameters: {parameters}")
             self._record_har_entry(
                 ruuid=request_data.uuid, method=method, url=url, headers=headers, path_parameters=path_parameters, 
                 params=parameters, body=body, response=response_data,
