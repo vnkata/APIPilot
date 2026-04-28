@@ -111,6 +111,38 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
         default=DEFAULT_ASYNC_MAX_CONCURRENT,
         help=f"Maximum concurrent async requests (default: {DEFAULT_ASYNC_MAX_CONCURRENT})",
     )
+    parser.add_argument(
+        "-g",
+        "--generations",
+        type=int,
+        default=1,
+        help="Number of test generations to run (default: 1)",
+    )
+    parser.add_argument(
+        "-c",
+        "--test-cases",
+        type=int,
+        default=20,
+        help="Number of test cases per endpoint (default: 20)",
+    )
+    parser.add_argument(
+        "--mutation-ratio",
+        type=float,
+        default=0.0,
+        help="Ratio of mutated requests to induce 4xx errors (default: 0.0)",
+    )
+    parser.add_argument(
+        "--header-mutation-ratio",
+        type=float,
+        default=0.5,
+        help="Ratio of header mutations (default: 0.5)",
+    )
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=None,
+        help="Maximum concurrent request workers (default: auto)",
+    )
     return parser.parse_args()
 
 def sort_children_by_method(children_values):
