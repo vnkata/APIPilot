@@ -6,6 +6,7 @@ import logging
 import random
 from time import sleep
 import asyncio
+from dotenv import load_dotenv
 from api_testing.configuration.configuration_parser import ConfigurationParser
 # from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
 from api_testing.feedback import FeedbackAnalyzer
@@ -46,6 +47,13 @@ from typing import Dict, Optional, Set, Union, List
 from api_testing.dataset import SpecificationParser
 from api_testing.graph import OperationGraph
 from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMModel
+from api_testing.config.config_loader import (
+    apply_cli_overrides,
+    build_embedder,
+    build_llm,
+    load_config,
+)
+from api_testing.config.config_wizard import run_wizard
 import shutil
 import os
 from api_testing.utils.log import configure_logging, getLogger
@@ -62,12 +70,23 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  apitesting                    # Run with TUI and configuration wizard
-  apitesting --quick            # Quick setup (essential settings only)
-  apitesting --skip-wizard      # Skip wizard, use configurations.toml directly
+  apitesting                    # Run with wizard and write configurations.toml
+  apitesting --init-config      # Create configurations.toml and exit
+  apitesting --skip-wizard      # Use configurations.toml directly
 
 For more information, visit: https://github.com/thanhtuit96/API-Testing
         """,
+    )
+    parser.add_argument(
+        "--config",
+        type=str,
+        default=None,
+        help="Path to configurations.toml (default: configurations.toml)",
+    )
+    parser.add_argument(
+        "--init-config",
+        action="store_true",
+        help="Run the configuration wizard and exit",
     )
     parser.add_argument(
         "--skip-wizard",
@@ -87,55 +106,43 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
         help="Override specification path (relative to project root)",
     )
     parser.add_argument(
-        "-t",
-        "--time",
-        type=int,
-        default=None,
-        help="Override test duration in seconds",
-    )
-    parser.add_argument(
-        "--width",
-        type=int,
-        default=100,
-        help="TUI display width (default: 100)",
-    )
-    parser.add_argument(
         "--async",
         dest="async_mode",
         action="store_true",
+        default=None,
         help="Enable async HTTP requests for faster execution (uses httpx.AsyncClient)",
     )
     parser.add_argument(
         "--async-max-concurrent",
         type=int,
-        default=DEFAULT_ASYNC_MAX_CONCURRENT,
+        default=None,
         help=f"Maximum concurrent async requests (default: {DEFAULT_ASYNC_MAX_CONCURRENT})",
     )
     parser.add_argument(
         "-g",
         "--generations",
         type=int,
-        default=1,
-        help="Number of test generations to run (default: 1)",
+        default=None,
+        help="Number of test generations to run",
     )
     parser.add_argument(
         "-c",
         "--test-cases",
         type=int,
-        default=20,
-        help="Number of test cases per endpoint (default: 20)",
+        default=None,
+        help="Number of test cases per endpoint",
     )
     parser.add_argument(
         "--mutation-ratio",
         type=float,
-        default=0.0,
-        help="Ratio of mutated requests to induce 4xx errors (default: 0.0)",
+        default=None,
+        help="Ratio of mutated requests to induce 4xx errors",
     )
     parser.add_argument(
         "--header-mutation-ratio",
         type=float,
-        default=0.5,
-        help="Ratio of header mutations (default: 0.5)",
+        default=None,
+        help="Ratio of header mutations",
     )
     parser.add_argument(
         "--max-workers",
@@ -144,6 +151,46 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
         help="Maximum concurrent request workers (default: auto)",
     )
     return parser.parse_args()
+
+
+def main():
+    load_dotenv()
+    args = parse_args()
+
+    config_path = args.config or "configurations.toml"
+    if args.init_config:
+        run_wizard(config_path, quick_mode=args.quick)
+        return
+
+    if not args.skip_wizard:
+        run_wizard(config_path, quick_mode=args.quick)
+
+    config = load_config(config_path)
+    config = apply_cli_overrides(config, args)
+
+    llm = build_llm(config)
+    embedder = build_embedder(config)
+    headers = config.get("headers", {})
+
+    tester = APITesting(
+        base_url=config["project"]["base_url"],
+        base_title=config["project"].get("base_title") or None,
+        spec_path=config["project"]["spec_path"],
+        model=llm,
+        embedder=embedder,
+    )
+
+    run = config["run"]
+    tester.run_tests(
+        num_generations=run["num_generations"],
+        num_test_cases=run["num_test_cases"],
+        mutation_ratio=run["mutation_ratio"],
+        header_mutation_ratio=run["header_mutation_ratio"],
+        async_mode=run["async_mode"],
+        max_request_workers=run["max_request_workers"],
+        async_max_concurrent=run["async_max_concurrent"],
+        headers=headers,
+    )
 
 def sort_children_by_method(children_values):
     # Định nghĩa trọng số ưu tiên
@@ -314,7 +361,8 @@ class APITesting:
     
     def run_tests(self, num_generations=1, num_test_cases=20, mutation_ratio=0.0, header_mutation_ratio=0.5,
                   async_mode: bool = False, max_request_workers: Optional[int] = None,
-                  async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT):
+                  async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT,
+                  headers: Optional[Dict[str, str]] = None):
         def build_graph_for_run():
             return OperationGraph(
                 spec_parser=self.spec_parser,
@@ -450,6 +498,7 @@ class APITesting:
                 max_request_workers=max_request_workers,
                 use_async=async_mode,
                 async_max_concurrent=async_max_concurrent,
+                default_headers=headers,
             )
 
             if async_mode:
@@ -571,6 +620,7 @@ class APITesting:
                 max_request_workers=max_request_workers,
                 use_async=True,
                 async_max_concurrent=async_max_concurrent,
+                default_headers=headers,
             )
 
             responses = await executor.exec_async()

@@ -127,6 +127,7 @@ class Executor:
       max_request_workers: int = DEFAULT_MAX_REQUEST_WORKERS,
       use_async: bool = False,
       async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT,
+      default_headers: Optional[Dict[str, str]] = None,
   ):
     self.api_url = api_url
     self.strategy = strategy
@@ -136,6 +137,7 @@ class Executor:
     self.configuration = configuration
     self.use_async = use_async
     self.async_max_concurrent = async_max_concurrent
+    self.default_headers = {str(k): str(v) for k, v in (default_headers or {}).items()}
 
     if use_async:
       self.async_sender = AsyncRequestor(api_url=self.api_url, cache_dir=self.cache_dir)
@@ -235,8 +237,8 @@ class Executor:
       headers = {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Accept": "*/*",
-          "PRIVATE-TOKEN": "wziZeCMoE2xunx8zzWws"
       }
+      headers.update(self.default_headers)
 
       # 2. Cập nhật Content-Type dựa trên mime (giả sử 'mime' là biến chứa type)
       if mime == "application/octet-stream":
@@ -329,8 +331,8 @@ class Executor:
       headers = {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Accept": "*/*",
-          "PRIVATE-TOKEN": "wziZeCMoE2xunx8zzWws"
       }
+      headers.update(self.default_headers)
 
       if mime == "application/octet-stream":
         headers["Content-Type"] = "application/octet-stream"

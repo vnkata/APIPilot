@@ -1,0 +1,145 @@
+# ===========================================================
+# APITesting Configuration
+# ===========================================================
+# This file configures the APITesting CLI and demo.
+# Values support ${ENV_VAR} syntax for environment variable
+# interpolation. Unused provider sections are ignored.
+# ===========================================================
+
+[project]
+# Relative path from project root to the OpenAPI specification.
+# Supports .yaml and .json; MUST be OpenAPI 3.0.
+spec_path = "datasets/CanadaHoliday.json"
+
+# Base URL of the API under test. If not set, extracted from
+# the spec's "servers" field.
+base_url = "https://canada-holidays.ca"
+
+# Optional display title for this project. Used in cache
+# directory names and logs. Defaults to spec title.
+base_title = "Canada"
+
+# -----------------------------------------------------------
+# LLM Configuration
+# -----------------------------------------------------------
+# Controls the language model used for value generation,
+# parameter inference, and request mutation.
+
+[llm]
+# LLM engine / provider. Supports:
+#   azure_openai  - Azure OpenAI API (default)
+#   openai        - OpenAI API (OpenRouter, etc.)
+#   gemini        - Google Gemini API
+#   ollama        - Local Ollama server
+provider = "azure_openai"
+
+# Model name or deployment. For Azure: your deployment name.
+# For OpenAI/Gemini: the model string (e.g., gpt-4.1-mini).
+model = "gpt-4.1-mini-2"
+
+# Sampling temperature (0.0 = deterministic, higher = creative).
+# 0.7 is a good default for balanced quality/speed.
+temperature = 0.7
+
+# -----------------------------------------------------------
+# Provider-Specific LLM Settings
+# -----------------------------------------------------------
+# Fill in only the section for your chosen [llm] provider.
+# Unused sections are ignored.
+
+[llm.azure_openai]
+# Azure OpenAI API key (or ${AZURE_OPENAI_API_KEY} env var).
+api_key = "${AZURE_OPENAI_API_KEY}"
+# Azure OpenAI endpoint (e.g., https://my-resource.openai.azure.com).
+endpoint = "${AZURE_OPENAI_ENDPOINT}"
+# Azure API version (default: 2024-12-01-preview).
+api_version = "2024-12-01-preview"
+
+[llm.openai]
+# OpenAI API key (or ${OPENAI_API_KEY} env var).
+api_key = "${OPENAI_API_KEY}"
+# Base URL for the API (default: https://api.openai.com/v1).
+# Use for OpenRouter, local proxies, etc.
+base_url = "https://api.openai.com/v1"
+
+[llm.gemini]
+# Google Gemini API key (or ${GOOGLE_API_KEY} env var).
+api_key = "${GOOGLE_API_KEY}"
+# Vertex AI project (alternative to api_key for enterprise).
+project = ""
+# Vertex AI region (required if project is set).
+location = ""
+
+[llm.ollama]
+# Base URL of the Ollama server.
+base_url = "http://localhost:11434"
+
+# -----------------------------------------------------------
+# Embedding Model Configuration
+# -----------------------------------------------------------
+# Controls the embedding model used for operation similarity
+# and dependency graph construction.
+
+[embedding]
+# Embedding provider: huggingface or ollama.
+provider = "huggingface"
+
+# Model name for embeddings.
+# For HuggingFace: a sentence-transformers model ID.
+# For Ollama: the model name on the Ollama server.
+model = "google/embeddinggemma-300m"
+# Use half-precision float16 (saves GPU memory, may be slightly
+# less accurate). Default: false.
+use_half = false
+
+[embedding.ollama]
+# Base URL of the Ollama server for embeddings.
+base_url = "http://localhost:11434"
+
+# -----------------------------------------------------------
+# Test Run Settings
+# -----------------------------------------------------------
+# Controls how tests are generated and executed.
+
+[run]
+# Number of test generation iterations. Each iteration rebuilds
+# the operation graph and Q-table from scratch.
+num_generations = 1
+
+# Number of test cases generated per endpoint per generation.
+num_test_cases = 20
+
+# Probability of mutating request parameters to induce 4xx
+# errors (0.0 = none, 1.0 = all). Default: 0.0.
+mutation_ratio = 0.5
+
+# Probability of applying header fuzzing mutations.
+# Default: 0.5.
+header_mutation_ratio = 0.5
+
+# Use async HTTP client (httpx.AsyncClient) for higher
+# throughput on multi-endpoint runs. Default: false.
+async_mode = true
+
+# Maximum concurrent threads for parallel tree execution.
+# Controls how many endpoint trees run simultaneously.
+# Default: 10.
+max_request_workers = 10
+
+# Cap on concurrent async HTTP requests within each thread.
+# Default: 20.
+async_max_concurrent = 20
+
+# -----------------------------------------------------------
+# Custom Request Headers
+# -----------------------------------------------------------
+# Static headers included with every HTTP request.
+# Supports ${ENV_VAR} syntax for environment variable interpolation.
+# Examples: PRIVATE-TOKEN, Authorization, X-API-Key, etc.
+
+[headers]
+# Uncomment and set your API token, or use env var interpolation.
+# PRIVATE-TOKEN = "${GITLAB_PRIVATE_TOKEN}"
+# Authorization = "Bearer ${ACCESS_TOKEN}"
+# X-API-Key = "your-static-key"
+PRIVATE-TOKEN = "wziZeCMoE2xunx8zzWws"
