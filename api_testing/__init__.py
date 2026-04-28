@@ -48,7 +48,7 @@ from api_testing.graph import OperationGraph
 from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMModel
 import shutil
 import os
-from api_testing.utils.log import configure_logging
+from api_testing.utils.log import configure_logging, getLogger
 from typing import List, Dict, Set, Any
 import argparse
 
@@ -111,6 +111,38 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
         default=DEFAULT_ASYNC_MAX_CONCURRENT,
         help=f"Maximum concurrent async requests (default: {DEFAULT_ASYNC_MAX_CONCURRENT})",
     )
+    parser.add_argument(
+        "-g",
+        "--generations",
+        type=int,
+        default=1,
+        help="Number of test generations to run (default: 1)",
+    )
+    parser.add_argument(
+        "-c",
+        "--test-cases",
+        type=int,
+        default=20,
+        help="Number of test cases per endpoint (default: 20)",
+    )
+    parser.add_argument(
+        "--mutation-ratio",
+        type=float,
+        default=0.0,
+        help="Ratio of mutated requests to induce 4xx errors (default: 0.0)",
+    )
+    parser.add_argument(
+        "--header-mutation-ratio",
+        type=float,
+        default=0.5,
+        help="Ratio of header mutations (default: 0.5)",
+    )
+    parser.add_argument(
+        "--max-workers",
+        type=int,
+        default=None,
+        help="Maximum concurrent request workers (default: auto)",
+    )
     return parser.parse_args()
 
 def sort_children_by_method(children_values):
@@ -160,6 +192,7 @@ class APITesting:
         self.test_single_endpoint = test_single_endpoint
         self.operation_graph = None
         self.tracer = None
+        self.logger = logging.getLogger(__name__)
         self._load_()
         
         if self.test_single_endpoint:
@@ -176,8 +209,9 @@ class APITesting:
             self.base_url = self.spec_parser.get_api_url()
         # mkir project if not exist
         self.project_dir = os.path.join(os.getcwd(), ".cache", self.base_title)
+        cache_dir_created = False
         if not os.path.exists(self.project_dir):
-            print(f"Cache dir not found, I'll create dir {self.project_dir}")
+            cache_dir_created = True
             os.makedirs(self.project_dir)
             # change pwd to project_dir
             _, file_extension = os.path.splitext(self.spec_path)
@@ -190,10 +224,14 @@ class APITesting:
         #     level=logging.DEBUG
         # )
         configure_logging(
+            class_name=__name__,
             log_dir=self.project_dir,
             llm_model=self.model.get_model_name(),
             level=logging.DEBUG
         )
+        self.logger = getLogger(__name__)
+        if cache_dir_created:
+            self.logger.info("Created cache directory at %s", self.project_dir)
         initTracker(dir=self.project_dir, model=self.model.get_model_name())
         self.spec_parser.load_or_initialize(cache_dir=self.project_dir)
         # self._preprocess_()
@@ -235,7 +273,7 @@ class APITesting:
         # extract contrains
         constraints = {}
         for operation, details in self.spec_parser.operations.items():
-            print("EXTRACT CONSTRAINTS", operation)
+            self.logger.info("Extract constraints for %s", operation)
             simple = details.simple_operation()
             # parameters
             parameters = '\n'.join([
@@ -292,7 +330,7 @@ class APITesting:
                 cache_dir=self.project_dir,
             )
 
-        print("Building operation graph and configuration...")
+        self.logger.info("Building operation graph and configuration")
         if async_mode:
             with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_SETUP_MAX_WORKERS) as setup_pool:
                 graph_future = setup_pool.submit(build_graph_for_run)
@@ -347,7 +385,7 @@ class APITesting:
             nonlocal total_testcase, total_success, forest
             context_pool = context_pool or ContextualMemory()
             # 
-            print("  " * depth + f"• {node.name} ")
+            self.logger.debug("%s• %s", "  " * depth, node.name)
 
             configuration = copy.copy(configurations.get(node.name))
             # test
@@ -429,7 +467,11 @@ class APITesting:
                 for entry in responses if isSuccessful(entry.get("response",{}).get("status",0)) 
             ]
             context_pool.update_with_responses(success_responses, properties.get(node.name))
-            print("success", len(success_responses) , "with context_pool", context_pool)
+            self.logger.debug(
+                "Success %s with context_pool %s",
+                len(success_responses),
+                context_pool,
+            )
             total_success +=  len(success_responses)
             total_testcase +=  len(responses)
             context_pool.clear_current()
@@ -444,7 +486,7 @@ class APITesting:
         def traverse_forest_dfs(forest,context):
             """Duyệt toàn bộ rừng"""
             for root_node in sort_children_by_method(forest.values()):
-                print(f"\n🌳 Root: {root_node.name}")
+                self.logger.info("Root: %s", root_node.name)
                 traverse_dfs(root_node, depth=1, context_pool=context , seq_path=[root_node.name])
 
         def _find_node_in_forest(forest, node_name):
@@ -467,7 +509,7 @@ class APITesting:
             """Execute a single node and return responses."""
             nonlocal total_testcase, total_success, forest
 
-            print("  " * depth + f"• {node.name} ")
+            self.logger.debug("%s• %s", "  " * depth, node.name)
 
             configuration = copy.copy(configurations.get(node.name))
             producer = { param: conf for param, conf in configuration.params.items() if conf.type == "ProducerGenerator"}
@@ -543,7 +585,11 @@ class APITesting:
                 for entry in responses if isSuccessful(entry.get("response",{}).get("status",0))
             ]
             context_pool.update_with_responses(success_responses, properties.get(node.name))
-            print("success", len(success_responses), "with context_pool", context_pool)
+            self.logger.debug(
+                "Success %s with context_pool %s",
+                len(success_responses),
+                context_pool,
+            )
             total_success += len(success_responses)
             total_testcase += len(responses)
             context_pool.clear_current()
@@ -558,7 +604,7 @@ class APITesting:
         async def _execute_tree_parallel(root_node, tree_context, semaphore, forest_lock):
             """Execute an entire tree with bounded concurrency."""
             async with semaphore:
-                print(f"\n🌳 Root: {root_node.name}")
+                self.logger.info("Root: %s", root_node.name)
                 await _execute_node_async(root_node, depth=1, context_pool=tree_context, parent=None, seq_path=[root_node.name], forest_lock=forest_lock)
                 return tree_context
 
@@ -573,7 +619,11 @@ class APITesting:
             forest_lock = asyncio.Lock()
             roots = list(forest.values())
 
-            print(f"\n🚀 Starting {len(roots)} trees with max {max_workers} concurrent workers")
+            self.logger.info(
+                "Starting %s trees with max %s concurrent workers",
+                len(roots),
+                max_workers,
+            )
 
             tasks = []
             for root_node in sort_children_by_method(roots):
@@ -583,14 +633,14 @@ class APITesting:
 
             tree_contexts = await asyncio.gather(*tasks)
 
-            print(f"\n📦 Merging {len(tree_contexts)} tree contexts...")
+            self.logger.info("Merging %s tree contexts", len(tree_contexts))
             for tree_ctx in tree_contexts:
                 shared_context.merge(tree_ctx)
 
             return shared_context
 
         for idx in range(num_generations):
-            print("🌳"*10, " RUN GENERATIONS ", str(idx+1), "🌳"*10)
+            self.logger.info("Run generation %s/%s", idx + 1, num_generations)
 
             if async_mode:
                 asyncio.run(traverse_forest_parallel_async(
@@ -601,9 +651,12 @@ class APITesting:
             else:
                 traverse_forest_dfs(forest, context)
         if total_testcase == 0:
-            print("No test cases executed.")
-        print("Success rate", total_success/total_testcase if total_testcase > 0 else 0)
-        print(successFull)
-        print("Success rate", len(successFull.keys()))
+            self.logger.warning("No test cases executed")
+        self.logger.info(
+            "Success rate: %s",
+            total_success/total_testcase if total_testcase > 0 else 0,
+        )
+        self.logger.debug("Successful endpoints map: %s", successFull)
+        self.logger.info("Successful endpoint count: %s", len(successFull.keys()))
 
     
