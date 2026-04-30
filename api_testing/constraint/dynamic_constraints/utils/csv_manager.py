@@ -83,7 +83,7 @@ def create_csv_with_header(path: str, header: str) -> None:
     Args:
         path: Path to CSV file
         header: Header row
-    """
+    """ 
     file_manager.delete_file(path)
     file_manager.create_file_if_not_exists(path)
     write_csv_row(path, header)

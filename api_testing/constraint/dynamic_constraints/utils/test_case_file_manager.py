@@ -1,6 +1,7 @@
 """Test case file management utilities for Beet."""
 
 import glob
+from hashlib import sha256
 import json
 import os
 from pathlib import Path
@@ -26,33 +27,54 @@ class TestCaseFileManager:
         self.testcases = testcases
         return testcases
 
-    def _process_har_file(self, har_path: str) -> List[Dict[str, str]]:
-        """Parse a HAR file and extract test cases."""
-        test_cases = []
+    def _process_har_file(self, har_path: str) -> List[Dict]:
+        """Parse a HAR file, normalize testcases to JSON, and deduplicate."""
+        
+        def _normalize_testcase(tc: Dict) -> str:
+            """Create a stable hash key from testcase JSON."""
+            # sort keys to ensure deterministic representation
+            normalized = json.dumps(tc, sort_keys=True, separators=(",", ":"))
+            return sha256(normalized.encode("utf-8")).hexdigest()
+
+        unique_map: Dict[str, Dict] = {}
+
         with open(har_path, "r", encoding="utf-8") as f:
             har_data = json.load(f)
-            entries = har_data["log"]["entries"]
-            for i, entry in enumerate(entries, start=1):
-                request = entry.get("request", {})
-                response = entry.get("response", {})
-                if isSuccessful(response.get("status")):
-                    default_test_case_id = f"{request.get('method', '').lower()}-{request.get('path_template')}"
-                    test_case = TestCase(
-                        test_case_id=entry.get("_id", default_test_case_id),
-                        operation_id=f"{request.get('method').lower()}-{request.get('path_template')}",
-                        path=request.get("path_template"),
-                        http_method=request.get("method"),
-                        parameters={
-                            param["name"]: param.get("value")
-                            for param in request.get("queryString", [])
-                        }
-                        | request.get("path_params", {}),
-                        request_body=request.get("postData", {}).get("text"),
-                        status_code=response.get("status"),
-                        response_body=response.get("content", {}).get("text"),
-                    )
-                    test_cases.append(test_case)
-        return test_cases
+
+        for entry in har_data.get("log", {}).get("entries", []):
+            request = entry.get("request", {})
+            response = entry.get("response", {})
+
+            if not isSuccessful(response.get("status")):
+                continue
+
+            method = (request.get("method") or "").lower()
+            path = request.get("path_template")
+
+            parameters = {
+                param["name"]: param.get("value")
+                for param in request.get("queryString", [])
+            }
+            parameters.update(request.get("path_params", {}))
+
+            test_case = {
+                "test_case_id": entry.get("_id") or f"{method}-{path}",
+                "operation_id": f"{method}-{path}",
+                "path": path,
+                "http_method": method,
+                "parameters": parameters,
+                "request_body": request.get("postData", {}).get("text"),
+                "status_code": response.get("status"),
+                "response_body": response.get("content", {}).get("text"),
+            }
+
+            key = _normalize_testcase(test_case)
+
+            # deduplicate
+            if key not in unique_map:
+                unique_map[key] = TestCase(**test_case)
+
+        return list(unique_map.values())
 
     def save_test_cases(self) -> None:
         file_path = os.path.join(self.cache_dir, "test_cases.json")

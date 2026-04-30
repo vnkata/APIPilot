@@ -13,7 +13,7 @@ from api_testing.prompts.invariant_classification.schema import (
 from api_testing.utils.log import getLogger
 
 
-class InvariantClassificationPrompt:
+class InvariantClassification:
     """Prompt wrapper for LLM-based invariant classification."""
 
     DEBUG_ENV_VAR = "INVARIANT_CLASSIFICATION_DEBUG"
