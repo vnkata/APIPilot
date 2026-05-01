@@ -7,6 +7,7 @@ import os
 import random
 from typing import Any, Dict, Optional
 
+from api_testing.events import get_emitter, EventType, Phase, OperationStatus
 from api_testing.generators.naive_value_generator import NaiveValueGenerator
 from api_testing.generators.requestor import Requestor
 from api_testing.generators.async_requestor import AsyncRequestor, AsyncRequestBatch
@@ -400,6 +401,22 @@ class Executor:
     # Persist once per batch to reduce lock contention and disk I/O.
     self.sender.flush()
 
+    emitter = get_emitter()
+    for entry in self.sender.entries:
+      status_code = entry.get("response", {}).get("status", 0)
+      status = OperationStatus.SUCCESS if str(status_code)[0] == "2" else OperationStatus.FAIL
+      emitter.emit(
+        EventType.OPERATION_UPDATE,
+        phase=Phase.TEST_EXECUTION,
+        operation_name=self.operation.uuid,
+        operation_method=self.operation.http_method,
+        operation_path=self.operation.endpoint_path,
+        status=status,
+        status_code=status_code,
+        duration_ms=entry.get("time"),
+        response_size=entry.get("response", {}).get("content", {}).get("size"),
+      )
+
     return self.sender.entries
 
   async def exec_async(self):
@@ -431,6 +448,22 @@ class Executor:
         print(f"Request failed for {item.http_method} {item.endpoint_path}")
 
     await self.async_sender.flush()
+
+    emitter = get_emitter()
+    for entry in self.async_sender.entries:
+      status_code = entry.get("response", {}).get("status", 0)
+      status = OperationStatus.SUCCESS if str(status_code)[0] == "2" else OperationStatus.FAIL
+      emitter.emit(
+        EventType.OPERATION_UPDATE,
+        phase=Phase.TEST_EXECUTION,
+        operation_name=self.operation.uuid,
+        operation_method=self.operation.http_method,
+        operation_path=self.operation.endpoint_path,
+        status=status,
+        status_code=status_code,
+        duration_ms=entry.get("time"),
+        response_size=entry.get("response", {}).get("content", {}).get("size"),
+      )
 
     return self.async_sender.entries
 
