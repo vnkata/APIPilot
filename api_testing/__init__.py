@@ -56,7 +56,8 @@ from api_testing.config.config_loader import (
 from api_testing.config.config_wizard import run_wizard
 import shutil
 import os
-from api_testing.utils.log import configure_logging, getLogger
+from api_testing.events import get_emitter, EventType, Phase, OperationStatus
+from api_testing.utils.log import configure_logging, getLogger, set_console_level
 from typing import List, Dict, Set, Any
 import argparse
 
@@ -280,6 +281,7 @@ class APITesting:
             llm_model=self.model.get_model_name(),
             level=logging.DEBUG
         )
+        set_console_level(logging.INFO)
         self.logger = getLogger(__name__)
         if cache_dir_created:
             self.logger.debug("Created cache directory at %s", self.project_dir)
@@ -383,6 +385,8 @@ class APITesting:
             )
 
         self.logger.debug("Building operation graph and configuration")
+        emitter = get_emitter()
+        emitter.emit(EventType.PHASE_START, Phase.GRAPH_BUILD, message="Building operation graph...")
         if async_mode:
             with concurrent.futures.ThreadPoolExecutor(max_workers=DEFAULT_SETUP_MAX_WORKERS) as setup_pool:
                 graph_future = setup_pool.submit(build_graph_for_run)
@@ -392,6 +396,9 @@ class APITesting:
         else:
             self.operation_graph = build_graph_for_run()
             parser = load_config_for_run()
+
+        emitter.emit(EventType.PHASE_COMPLETE, Phase.GRAPH_BUILD,
+                    message=f"Graph built with {len(nodes)} operations")
 
         configurations = { f"{conf.method}-{conf.endpoint}": conf for conf in parser.configurations}
         nodes = self.operation_graph.nodes
@@ -427,11 +434,20 @@ class APITesting:
             
         parser.update_conf(self.operation_graph, producer_map)
 
+        emitter.emit(EventType.PHASE_START, Phase.CONFIG_BUILD, message="Building configuration...")
+        emitter.emit(EventType.PHASE_COMPLETE, Phase.CONFIG_BUILD,
+                    message=f"Configuration built for {len(configurations)} operations")
+
         # pick
         graph_analyst = GraphAnalyzer(graph=self.operation_graph, cache_dir=self.project_dir)
         feedback_analyzer = FeedbackAnalyzer(model=self.model, embed=self.embedder, cache_dir=self.project_dir)
 
+        emitter.emit(EventType.PHASE_START, Phase.GRAPH_ANALYZE, message="Analyzing dependency graph...")
+
         forest = graph_analyst.export_to_forest()
+
+        emitter.emit(EventType.PHASE_COMPLETE, Phase.GRAPH_ANALYZE,
+                    message=f"Found {len(forest)} root operations")
       
         def traverse_dfs(node, depth=0, context_pool: ContextualMemory = None, parent=None, seq_path = []):
             nonlocal total_testcase, total_success, forest
@@ -488,6 +504,18 @@ class APITesting:
                         del data["need_change"]
                         producer_mapping[k] = data
                     producer_obj.genParameters = {"pool": [data]}
+
+            emitter.emit(
+                EventType.OPERATION_UPDATE,
+                phase=Phase.TEST_EXECUTION,
+                operation_name=node.name,
+                operation_method=node.name.split('-')[0] if '-' in node.name else '',
+                operation_path=node.name,
+                status=OperationStatus.RUNNING,
+                generation=idx + 1,
+                total_generations=num_generations,
+            )
+
             executor = Executor(
                 api_url = self.base_url,
                 strategy= Strategy.NAIVE_VALUE,
@@ -610,6 +638,15 @@ class APITesting:
                         producer_mapping[k] = data
                     producer_obj.genParameters = {"pool": [data]}
 
+            emitter.emit(
+                EventType.OPERATION_UPDATE,
+                phase=Phase.TEST_EXECUTION,
+                operation_name=node.name,
+                operation_method=node.name.split('-')[0] if '-' in node.name else '',
+                operation_path=node.name,
+                status=OperationStatus.RUNNING,
+            )
+
             executor = Executor(
                 api_url=self.base_url,
                 strategy=Strategy.NAIVE_VALUE,
@@ -693,6 +730,10 @@ class APITesting:
 
             return shared_context
 
+        emitter.emit(EventType.PHASE_START, Phase.TEST_EXECUTION,
+                    message=f"Executing tests for {num_generations} generation(s)",
+                    total_generations=num_generations)
+
         for idx in range(num_generations):
             self.logger.debug("Run generation %s/%s", idx + 1, num_generations)
 
@@ -712,5 +753,6 @@ class APITesting:
         )
         self.logger.debug("Successful endpoints map: %s", successFull)
         self.logger.debug("Successful endpoint count: %s", len(successFull.keys()))
+        emitter.emit(EventType.EXECUTION_COMPLETE, Phase.FINAL_REPORT, message="All generations complete")
 
     
