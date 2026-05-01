@@ -1,5 +1,8 @@
 from api_testing.events import get_emitter, EventType, Phase, EventData
-from api_testing.tui import TUIDisplay, ProgressTracker, ReportGenerator, DEFAULT_THEME
+from api_testing.tui.display import TUIDisplay
+from api_testing.tui.progress import ProgressTracker
+from api_testing.tui.report import ReportGenerator
+from api_testing.tui.themes import DEFAULT_THEME
 from api_testing.tui.progress import OperationProgress
 
 class TUIApp:
