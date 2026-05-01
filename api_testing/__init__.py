@@ -70,9 +70,9 @@ def parse_args():
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  apitesting                    # Run with wizard and write configurations.toml
-  apitesting --init-config      # Create configurations.toml and exit
-  apitesting --skip-wizard      # Use configurations.toml directly
+  apitesting                    # Run TUI wizard and write configurations.toml
+  apitesting --init-config     # Create configurations.toml and exit
+  apitesting --skip-wizard     # Use configurations.toml directly
 
 For more information, visit: https://github.com/thanhtuit96/API-Testing
         """,
@@ -86,12 +86,12 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
     parser.add_argument(
         "--init-config",
         action="store_true",
-        help="Run the configuration wizard and exit",
+        help="Run TUI wizard to create configurations.toml and exit",
     )
     parser.add_argument(
         "--skip-wizard",
         action="store_true",
-        help="Skip configuration wizard and use configurations.toml directly",
+        help="Skip wizard and run tests using configurations.toml",
     )
     parser.add_argument(
         "--quick",
@@ -162,11 +162,15 @@ def main():
         run_wizard(config_path, quick_mode=args.quick)
         return
 
-    if not args.skip_wizard:
-        run_wizard(config_path, quick_mode=args.quick)
-
     config = load_config(config_path)
     config = apply_cli_overrides(config, args)
+
+    if not config["project"]["spec_path"]:
+        print("[yellow]No spec_path configured. Running wizard...[/yellow]")
+        print()
+        run_wizard(config_path, quick_mode=args.quick)
+        config = load_config(config_path)
+        config = apply_cli_overrides(config, args)
 
     llm = build_llm(config)
     embedder = build_embedder(config)

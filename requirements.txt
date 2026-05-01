@@ -10,6 +10,7 @@ chardet
 ruamel.yaml
 tenacity
 tomli
+rich>=13.7.0
 langchain_text_splitters
 hypothesis
 charboundary

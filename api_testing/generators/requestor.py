@@ -98,7 +98,7 @@ class Requestor:
         if not os.path.exists(_cache_dir):
             print(f"History dir not found, I'll create dir {_cache_dir}")
             os.makedirs(_cache_dir)
-        self.report = StatusCodeReport(report_file=os.path.join(
+        self.report = StatusCodeReport.make_shared(os.path.join(
             cache_dir, "reports.json"))
         self.cache_file = os.path.join(
             _cache_dir, self.session_id + ".har")
@@ -196,7 +196,7 @@ class Requestor:
                 expected_code=request_data.expected_code,
                 base_path=base_path,
             )
-            self.logger.error(f"Lỗi hệ thống: {e}")
+            self.logger.error(f"System error: {e}")
             return response_data
         
     # ----------------------------------------------------------------------

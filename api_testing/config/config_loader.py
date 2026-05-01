@@ -34,7 +34,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
     },
     "llm": {
         "provider": "azure_openai",
-        "model": "gpt-4.1-mini",
+        "model": "gpt-4.1-mini-2",
         "temperature": 0.7,
         "azure_openai": {
             "api_key": "${AZURE_OPENAI_API_KEY}",
@@ -130,8 +130,6 @@ def _require(value: Any, key_path: str) -> None:
 
 
 def validate_config(config: Dict[str, Any]) -> None:
-    _require(config.get("project", {}).get("spec_path"), "project.spec_path")
-    _require(config.get("project", {}).get("base_url"), "project.base_url")
 
     llm = config.get("llm", {})
     provider = llm.get("provider")
