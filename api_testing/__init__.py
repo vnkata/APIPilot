@@ -5,6 +5,7 @@ import json
 import logging
 import random
 from time import sleep
+import time
 import asyncio
 from dotenv import load_dotenv
 from api_testing.configuration.configuration_parser import ConfigurationParser
@@ -57,6 +58,7 @@ from api_testing.config.config_wizard import run_wizard
 import shutil
 import os
 from api_testing.events import get_emitter, EventType, Phase, OperationStatus
+from api_testing.tui.app import TUIApp
 from api_testing.utils.log import configure_logging, getLogger, set_console_level
 from typing import List, Dict, Set, Any
 import argparse
@@ -185,8 +187,12 @@ def main():
         embedder=embedder,
     )
 
+    tui_app = TUIApp()
+    tui_app.start()
+    start_time = time.perf_counter()
+
     run = config["run"]
-    tester.run_tests(
+    total_testcase, successFull = tester.run_tests(
         num_generations=run["num_generations"],
         num_test_cases=run["num_test_cases"],
         mutation_ratio=run["mutation_ratio"],
@@ -195,6 +201,18 @@ def main():
         max_request_workers=run["max_request_workers"],
         async_max_concurrent=run["async_max_concurrent"],
         headers=headers,
+    )
+
+    elapsed = time.perf_counter() - start_time
+    tui_app.stop()
+    tui_app.print_final_report(
+        title=tester.base_title,
+        duration_seconds=elapsed,
+        total_requests=total_testcase,
+        status_distribution={},
+        total_operations=len(successFull),
+        successful_operations=len(successFull),
+        unique_5xx_errors=0,
     )
 
 def sort_children_by_method(children_values):
@@ -755,5 +773,6 @@ class APITesting:
         self.logger.debug("Successful endpoint count: %s", len(successFull.keys()))
         emitter.emit(EventType.PHASE_COMPLETE, Phase.TEST_EXECUTION, message="Test execution complete")
         emitter.emit(EventType.EXECUTION_COMPLETE, Phase.FINAL_REPORT, message="All generations complete")
+        return total_testcase, successFull
 
     
