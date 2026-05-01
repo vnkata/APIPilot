@@ -753,6 +753,7 @@ class APITesting:
         )
         self.logger.debug("Successful endpoints map: %s", successFull)
         self.logger.debug("Successful endpoint count: %s", len(successFull.keys()))
+        emitter.emit(EventType.PHASE_COMPLETE, Phase.TEST_EXECUTION, message="Test execution complete")
         emitter.emit(EventType.EXECUTION_COMPLETE, Phase.FINAL_REPORT, message="All generations complete")
 
     
