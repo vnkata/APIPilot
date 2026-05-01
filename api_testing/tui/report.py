@@ -78,7 +78,7 @@ class ReportGenerator:
         )
         summary_table.add_row(
             "Unique 5xx Errors",
-            f"[{self.theme.error if unique_5xx_errors > 0 else self.theme.success}]{unique_5xx_errors}[/]",
+            f"[{self.theme.error if unique_5xx_errors > 0 else self.theme.success}]{unique_5xx_errors}[/{self.theme.error if unique_5xx_errors > 0 else self.theme.success}]",
         )
 
         panel = Panel(
