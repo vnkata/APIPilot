@@ -24,7 +24,7 @@ class ProgressTracker:
         })
 
     def add_operation(self, name: str, method: str, path: str, generation: int = 0):
-        key = f"{generation}:{name}"
+        key = f"{generation}:{method}:{path}"
         self._operations[key] = OperationProgress(
             name=name,
             method=method,
@@ -33,21 +33,20 @@ class ProgressTracker:
         )
         self._generation_stats[generation]["total"] += 1
 
-    def update_operation(self, name: str, generation: int, status: OperationStatus,
+    def update_operation(self, name: str, method: str, path: str, generation: int, status: OperationStatus,
                          status_code: Optional[int] = None, duration_ms: Optional[float] = None,
                          response_size: Optional[int] = None):
-        key = f"{generation}:{name}"
+        key = f"{generation}:{method}:{path}"
         if key in self._operations:
             op = self._operations[key]
+            if status == OperationStatus.SUCCESS and op.status != OperationStatus.SUCCESS:
+                self._generation_stats[generation]["completed"] += 1
+            elif status == OperationStatus.FAIL and op.status != OperationStatus.FAIL:
+                self._generation_stats[generation]["failed"] += 1
             op.status = status
             op.status_code = status_code
             op.duration_ms = duration_ms
             op.response_size = response_size
-
-            if status == OperationStatus.SUCCESS:
-                self._generation_stats[generation]["completed"] += 1
-            elif status == OperationStatus.FAIL:
-                self._generation_stats[generation]["failed"] += 1
 
     def get_operations(self):
         return list(self._operations.values())
