@@ -170,7 +170,7 @@ class TUIDisplay:
         current_gen = max(generation_counts.keys()) if generation_counts else 0
 
         table_panel = self._build_execution_table(operations)
-        stats_panel = self._build_stats_table(stats[0], stats[1], stats[2], current_gen, 1)
+        stats_panel = self._build_stats_table(stats[0], stats[1], stats[2], current_gen, self._tracker.get_max_generation())
 
         header = Text()
         header.append("⚡ ", style=f"bold {self.theme.warning}")

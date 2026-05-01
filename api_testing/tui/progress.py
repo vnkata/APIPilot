@@ -51,6 +51,9 @@ class ProgressTracker:
     def get_operations(self):
         return list(self._operations.values())
 
+    def get_max_generation(self) -> int:
+        return max(self._generation_stats.keys()) if self._generation_stats else 0
+
     def get_generation_stats(self, generation: int) -> dict:
         return self._generation_stats.get(generation, {"completed": 0, "failed": 0, "total": 0})
 
