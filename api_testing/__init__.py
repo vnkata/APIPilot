@@ -66,6 +66,7 @@ import argparse
 
 DEFAULT_SETUP_MAX_WORKERS = max(1, int(os.getenv("API_TESTING_SETUP_MAX_WORKERS", "2")))
 DEFAULT_ASYNC_MAX_CONCURRENT = int(os.getenv("API_TESTING_ASYNC_MAX_CONCURRENT", "50"))
+DEFAULT_MAX_REQUEST_WORKERS = int(os.getenv("API_TESTING_MAX_REQUEST_WORKERS", "10"))
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -192,28 +193,29 @@ def main():
     start_time = time.perf_counter()
 
     run = config["run"]
-    total_testcase, successFull = tester.run_tests(
-        num_generations=run["num_generations"],
-        num_test_cases=run["num_test_cases"],
-        mutation_ratio=run["mutation_ratio"],
-        header_mutation_ratio=run["header_mutation_ratio"],
-        async_mode=run["async_mode"],
-        max_request_workers=run["max_request_workers"],
-        async_max_concurrent=run["async_max_concurrent"],
-        headers=headers,
-    )
-
-    elapsed = time.perf_counter() - start_time
-    tui_app.stop()
-    tui_app.print_final_report(
-        title=tester.base_title,
-        duration_seconds=elapsed,
-        total_requests=total_testcase,
-        status_distribution={},
-        total_operations=len(successFull),
-        successful_operations=len(successFull),
-        unique_5xx_errors=0,
-    )
+    try:
+        total_testcase, successFull = tester.run_tests(
+            num_generations=run["num_generations"],
+            num_test_cases=run["num_test_cases"],
+            mutation_ratio=run["mutation_ratio"],
+            header_mutation_ratio=run["header_mutation_ratio"],
+            async_mode=run["async_mode"],
+            max_request_workers=run["max_request_workers"],
+            async_max_concurrent=run["async_max_concurrent"],
+            headers=headers,
+        )
+    finally:
+        elapsed = time.perf_counter() - start_time
+        tui_app.stop()
+        tui_app.print_final_report(
+            title=tester.base_title,
+            duration_seconds=elapsed,
+            total_requests=total_testcase,
+            status_distribution={},
+            total_operations=len(successFull),
+            successful_operations=len(successFull),
+            unique_5xx_errors=0,
+        )
 
 def sort_children_by_method(children_values):
     # Định nghĩa trọng số ưu tiên
@@ -415,11 +417,10 @@ class APITesting:
             self.operation_graph = build_graph_for_run()
             parser = load_config_for_run()
 
-        emitter.emit(EventType.PHASE_COMPLETE, Phase.GRAPH_BUILD,
-                    message=f"Graph built with {len(nodes)} operations")
-
         configurations = { f"{conf.method}-{conf.endpoint}": conf for conf in parser.configurations}
         nodes = self.operation_graph.nodes
+        emitter.emit(EventType.PHASE_COMPLETE, Phase.GRAPH_BUILD,
+                    message=f"Graph built with {len(nodes)} operations")
         context = ContextualMemory(cache_dir=self.project_dir)
 
         total_testcase = 0
