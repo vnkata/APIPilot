@@ -129,19 +129,19 @@ class TUIDisplay:
         return blocks
 
     def _build_operation_text(self) -> Text:
-        """Build a single Text object with all operations."""
+        """Build a single Text object with all operations preserving colors."""
         try:
             operations = self._build_operations_list()
             if not operations:
                 return Text.from_markup("[dim]Waiting for operations...[/dim]")
 
-            lines = []
+            parts = []
             for op in operations:
                 if isinstance(op, Text):
-                    lines.append(op.plain)
+                    parts.append(op)
                 else:
-                    lines.append(str(op))
-            return Text.from_markup("\n".join(lines))
+                    parts.append(Text(str(op)))
+            return Text("\n").join(parts)
         except Exception:
             return Text.from_markup("[dim]Updating...[/dim]")
 
