@@ -177,8 +177,8 @@ class TUIDisplay:
         self._live = Live(
             self._build_display(),
             console=self.console,
-            refresh_per_second=30,
-            transient=False,
+            refresh_per_second=60,
+            transient=True,
         )
         self._stop_event = threading.Event()
         self._update_thread = threading.Thread(target=self._run_update_loop, daemon=True)
@@ -186,7 +186,7 @@ class TUIDisplay:
         self._update_thread.start()
 
     def _run_update_loop(self):
-        while not self._stop_event.wait(0.033):
+        while not self._stop_event.wait(0.017):  # ~60 FPS
             self.update_live_display()
 
     def update_live_display(self):
