@@ -59,7 +59,7 @@ import shutil
 import os
 from api_testing.events import get_emitter, EventType, Phase, OperationStatus
 from api_testing.tui.app import TUIApp
-from api_testing.utils.log import configure_logging, getLogger, set_console_level
+from api_testing.utils.log import configure_logging, getLogger, restore_console_logging, set_console_level
 from typing import List, Dict, Set, Any
 import argparse
 
@@ -210,6 +210,7 @@ def main():
         print(f"Error during test execution: {e}")
     finally:
         elapsed = time.perf_counter() - start_time
+        restore_console_logging()
         tui_app.stop()
         tui_app.print_final_report(
             title=tester.base_title,
@@ -303,9 +304,9 @@ class APITesting:
             class_name=__name__,
             log_dir=self.project_dir,
             llm_model=self.model.get_model_name(),
-            level=logging.ERROR
+            level=logging.DEBUG,
         )
-        set_console_level(logging.ERROR)
+        set_console_level(logging.DEBUG)
         self.logger = getLogger(__name__)
         if cache_dir_created:
             self.logger.debug("Created cache directory at %s", self.project_dir)

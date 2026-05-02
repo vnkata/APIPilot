@@ -22,6 +22,9 @@ def extract_context(data, xref_map, prefix="", base_dict=None, entity_prefix=Non
     if base_dict is None:
         base_dict = {}
 
+    if not isinstance(xref_map, dict):
+        return defaultdict(list)
+
     if entity_prefix is None:
         entity_prefix = build_entity_prefix_map(xref_map)
 
@@ -171,7 +174,6 @@ class ContextualMemory:
     def update_with_responses(self, responses, producer_properties):
         for entry in responses:
             try:
-                # lấy response text
                 results = (
                     entry.get("response", {})
                     .get("content", {})
@@ -179,12 +181,21 @@ class ContextualMemory:
                 )
                 if not results:
                     continue
-                response_json = json.loads(results)
-                # path params của request
+                if results == "<<binary data>>" or not results.strip():
+                    continue
+                try:
+                    response_json = json.loads(results)
+                except json.JSONDecodeError:
+                    continue
                 base_dict = entry.get("request", {}).get("path_params", {})
+                if base_dict is None:
+                    base_dict = {}
                 base_dict = {f"{key}:path": value for key, value in base_dict.items()}
 
-                # extract entities từ response
+                if producer_properties is None:
+                    continue
+                if not isinstance(producer_properties, dict):
+                    continue
                 context = extract_context(response_json, producer_properties, base_dict=base_dict)
                 if not context:
                     continue

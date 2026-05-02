@@ -21,6 +21,7 @@ class TUIDisplay:
         self._start_time: float = 0
         self._update_thread: Optional[threading.Thread] = None
         self._stop_event: Optional[threading.Event] = None
+        self._display_lock = threading.Lock()
 
     def clear(self):
         self.console.clear()
@@ -178,7 +179,7 @@ class TUIDisplay:
             self._build_display(),
             console=self.console,
             refresh_per_second=60,
-            transient=True,
+            transient=False,
         )
         self._stop_event = threading.Event()
         self._update_thread = threading.Thread(target=self._run_update_loop, daemon=True)
@@ -191,19 +192,21 @@ class TUIDisplay:
 
     def update_live_display(self):
         if self._live and self._tracker:
-            try:
-                self._live.update(self._build_display())
-            except Exception as e:
-                import sys
-                print(f"Live update error: {e}", file=sys.stderr)
+            with self._display_lock:
+                try:
+                    self._live.update(self._build_display())
+                except Exception:
+                    pass
 
     def stop_live_display(self):
-        if self._stop_event:
-            self._stop_event.set()
-        if self._update_thread:
-            self._update_thread.join(timeout=0.5)
-        if self._live:
-            self._live.stop()
-            self._live = None
-            self._update_thread = None
+        with self._display_lock:
+            if self._stop_event:
+                self._stop_event.set()
+            if self._update_thread:
+                self._update_thread.join(timeout=2.0)
+                self._update_thread = None
+            if self._live:
+                self._live.stop()
+                self._live = None
             self._stop_event = None
+            self._tracker = None

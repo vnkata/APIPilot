@@ -5,7 +5,7 @@ from api_testing.tui.display import TUIDisplay
 from api_testing.tui.progress import ProgressTracker
 from api_testing.tui.report import ReportGenerator
 from api_testing.tui.themes import DEFAULT_THEME
-from api_testing.utils.log import suppress_console_logging, restore_console_logging
+from api_testing.utils.log import suppress_console_logging
 
 class TUIApp:
     def __init__(self, theme=DEFAULT_THEME, width=100):
@@ -22,6 +22,7 @@ class TUIApp:
         self._emitter.start()
 
     def stop(self):
+        self._emitter.drain_queue()
         self._emitter.stop()
         self._emitter.unsubscribe(self._on_event)
 
@@ -67,7 +68,6 @@ class TUIApp:
 
     def _handle_execution_complete(self, event: EventData):
         self.display.stop_live_display()
-        restore_console_logging()
 
     def print_final_report(self, **kwargs):
         self.report_gen.print_final_report(**kwargs)

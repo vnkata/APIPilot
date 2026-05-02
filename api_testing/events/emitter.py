@@ -72,5 +72,14 @@ class EventEmitter:
         if self._processor_thread:
             self._processor_thread.join(timeout=1.0)
 
+    def drain_queue(self) -> None:
+        """Drain all pending events from the queue."""
+        while True:
+            try:
+                self._event_queue.get_nowait()
+                self._event_queue.task_done()
+            except queue.Empty:
+                break
+
 def get_emitter() -> EventEmitter:
     return EventEmitter.get()

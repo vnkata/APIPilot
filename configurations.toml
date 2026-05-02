@@ -1,7 +1,7 @@
 [project]
-spec_path = "datasets/CanadaHoliday.json"  # Path to your OpenAPI specification file (.json or .yaml). Must be OpenAPI 3.0. Relative to project root.
-base_url = "https://canada-holidays.ca"  # Base URL of the API under test (e.g. http://localhost:30000/api/v4). If blank, extracted from spec servers field.
-base_title = "13"  # Display name for this project, used in cache folder names and logs. Leave blank to auto-detect from spec.
+spec_path = "datasets/Bills-api.json"  # Path to your OpenAPI specification file (.json or .yaml). Must be OpenAPI 3.0. Relative to project root.
+base_url = "https://bills-api.parliament.uk/"  # Base URL of the API under test (e.g. http://localhost:30000/api/v4). If blank, extracted from spec servers field.
+base_title = "bill"  # Display name for this project, used in cache folder names and logs. Leave blank to auto-detect from spec.
 
 [llm]
 provider = "azure_openai"  # Which LLM backend to use: azure_openai | openai | gemini | ollama
@@ -35,8 +35,8 @@ base_url = "http://localhost:11434"  # Base URL of your Ollama server for embedd
 
 [run]
 num_generations = 1  # Number of full test rounds to run. Each round rebuilds the operation dependency graph from scratch. More rounds = more thorough but slower.
-num_test_cases = 10  # Number of test cases generated per endpoint per round. Higher = more coverage but slower.
-mutation_ratio = 0.5  # Probability of intentionally breaking request parameters (e.g. sending invalid values) to test if the API returns proper 4xx errors. 0.0 = off, 0.5 = half mutated, 1.0 = all mutated.
+num_test_cases = 2  # Number of test cases generated per endpoint per round. Higher = more coverage but slower.
+mutation_ratio = 0.3  # Probability of intentionally breaking request parameters (e.g. sending invalid values) to test if the API returns proper 4xx errors. 0.0 = off, 0.5 = half mutated, 1.0 = all mutated.
 header_mutation_ratio = 0.5  # Probability of fuzzing HTTP headers during testing. 0.0 = off, 0.5 = half fuzzed, 1.0 = all fuzzed.
 async_mode = true  # Use async HTTP requests for much higher throughput when testing many endpoints. Recommended for large APIs. y/n
 max_request_workers = 10  # Maximum number of parallel threads used during test execution. Controls how many endpoint trees run at the same time.

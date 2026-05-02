@@ -23,15 +23,17 @@ def configure_logging(class_name: str = __name__, log_dir=None, level=None, llm_
     console_level = console_level or _console_level
 
     os.makedirs(log_dir, exist_ok=True)
-    log = logging.getLogger(class_name)
 
-    if logger is not None and log.name == logger.name:
-        for handler in log.handlers[:]:
-            log.remove_handler(handler)
+    if logger is not None:
         for handler in logger.handlers[:]:
+            if isinstance(handler, logging.FileHandler):
+                handler.close()
             logger.remove_handler(handler)
 
+    log = logging.getLogger(class_name)
     log.setLevel(level)
+    log.handlers.clear()
+
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
