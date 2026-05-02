@@ -1,12 +1,15 @@
+import time
 from api_testing.events import get_emitter, EventType, Phase, EventData
+from api_testing.events.emitter import EventEmitter
 from api_testing.tui.display import TUIDisplay
 from api_testing.tui.progress import ProgressTracker
 from api_testing.tui.report import ReportGenerator
 from api_testing.tui.themes import DEFAULT_THEME
-from api_testing.tui.progress import OperationProgress
+from api_testing.utils.log import suppress_console_logging, restore_console_logging
 
 class TUIApp:
     def __init__(self, theme=DEFAULT_THEME, width=100):
+        EventEmitter.reset()
         self.display = TUIDisplay(theme=theme, width=width)
         self.tracker = ProgressTracker()
         self.report_gen = ReportGenerator(theme=theme, width=width)
@@ -34,39 +37,37 @@ class TUIApp:
 
     def _handle_phase_start(self, event: EventData):
         phase_name = event.phase.value.replace("_", " ").title() if event.phase else "Unknown"
-        self.display.print_phase_start(phase_name, event.message or "")
         self._current_phase = event.phase
 
         if event.phase == Phase.TEST_EXECUTION:
+            suppress_console_logging()
             self.display.start_live_display(self.tracker, "API Testing")
+        else:
+            self.display.print_phase_start(phase_name, event.message or "")
 
     def _handle_phase_complete(self, event: EventData):
         phase_name = event.phase.value.replace("_", " ").title() if event.phase else "Unknown"
-        self.display.print_phase_complete(phase_name, event.message or "")
+
+        if self._current_phase == Phase.TEST_EXECUTION:
+            pass
+        else:
+            self.display.print_phase_complete(phase_name, event.message or "")
 
     def _handle_operation_update(self, event: EventData):
-        if event.operation_name:
-            self.tracker.add_operation(
+        if event.operation_name and event.status_code is not None:
+            self.tracker.add_operation_result(
                 name=event.operation_name,
                 method=event.operation_method or "",
                 path=event.operation_path or "",
                 generation=event.generation,
-            )
-            self.tracker.update_operation(
-                name=event.operation_name,
-                method=event.operation_method or "",
-                path=event.operation_path or "",
-                generation=event.generation,
-                status=event.status,
                 status_code=event.status_code,
-                duration_ms=event.duration_ms,
-                response_size=event.response_size,
             )
             if self._current_phase == Phase.TEST_EXECUTION:
                 self.display.update_live_display()
 
     def _handle_execution_complete(self, event: EventData):
         self.display.stop_live_display()
+        restore_console_logging()
 
     def print_final_report(self, **kwargs):
         self.report_gen.print_final_report(**kwargs)

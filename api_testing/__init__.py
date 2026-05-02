@@ -193,6 +193,8 @@ def main():
     start_time = time.perf_counter()
 
     run = config["run"]
+    total_testcase = 0
+    successFull = {}
     try:
         total_testcase, successFull = tester.run_tests(
             num_generations=run["num_generations"],
@@ -204,6 +206,8 @@ def main():
             async_max_concurrent=run["async_max_concurrent"],
             headers=headers,
         )
+    except Exception as e:
+        print(f"Error during test execution: {e}")
     finally:
         elapsed = time.perf_counter() - start_time
         tui_app.stop()
@@ -299,9 +303,9 @@ class APITesting:
             class_name=__name__,
             log_dir=self.project_dir,
             llm_model=self.model.get_model_name(),
-            level=logging.DEBUG
+            level=logging.ERROR
         )
-        set_console_level(logging.INFO)
+        set_console_level(logging.ERROR)
         self.logger = getLogger(__name__)
         if cache_dir_created:
             self.logger.debug("Created cache directory at %s", self.project_dir)

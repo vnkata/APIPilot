@@ -392,11 +392,10 @@ class Executor:
 
         for future in concurrent.futures.as_completed(future_to_request):
             item = future_to_request[future]
-            print("HTTP Request", asdict(item))
             try:
                 future.result()
             except Exception as exc:
-                print(f"Request failed for {item.http_method} {item.endpoint_path}: {exc}")
+                pass
 
     # Persist once per batch to reduce lock contention and disk I/O.
     self.sender.flush()
@@ -438,14 +437,7 @@ class Executor:
     if not data:
       return self.async_sender.entries
 
-    for item in data:
-      print("HTTP Request (async)", asdict(item))
-
     results = await self.async_batch.execute(data)
-
-    for item, result in zip(data, results):
-      if result is None:
-        print(f"Request failed for {item.http_method} {item.endpoint_path}")
 
     await self.async_sender.flush()
 

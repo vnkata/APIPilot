@@ -416,6 +416,9 @@ class ContextualMemory:
     
     def remove(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        if not isinstance(endpoint_ctx, dict):
+            endpoint_ctx = {}
+            self.contexts[self.current_uuid] = endpoint_ctx
         blacklist = endpoint_ctx.setdefault("blacklist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in blacklist}
@@ -424,6 +427,8 @@ class ContextualMemory:
     
     def is_blacklisted(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        if not isinstance(endpoint_ctx, dict):
+            return False
         blacklist = endpoint_ctx.setdefault("blacklist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in blacklist}
@@ -433,6 +438,8 @@ class ContextualMemory:
     
     def in_whitelist(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        if not isinstance(endpoint_ctx, dict):
+            return False
         whitelist = endpoint_ctx.setdefault("whitelist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in whitelist}
@@ -442,6 +449,9 @@ class ContextualMemory:
 
     def add(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        if not isinstance(endpoint_ctx, dict):
+            endpoint_ctx = {}
+            self.contexts[self.current_uuid] = endpoint_ctx
         whitelist = endpoint_ctx.setdefault("whitelist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in whitelist}

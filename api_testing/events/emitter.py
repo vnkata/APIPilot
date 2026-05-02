@@ -1,6 +1,7 @@
 import logging
 import threading
 import queue
+import sys
 from typing import Callable, List, Optional
 from .types import EventData, EventType, Phase
 
@@ -24,6 +25,14 @@ class EventEmitter:
                 cls._instance = cls()
             return cls._instance
 
+    @classmethod
+    def reset(cls) -> None:
+        """Reset the singleton instance. Call this before creating a new TUIApp."""
+        with cls._lock:
+            if cls._instance is not None:
+                cls._instance.stop()
+                cls._instance = None
+
     def subscribe(self, callback: Callable[[EventData], None]) -> None:
         with self._subscriber_lock:
             self._subscribers.append(callback)
@@ -46,7 +55,8 @@ class EventEmitter:
                 for subscriber in subscribers:
                     try:
                         subscriber(event)
-                    except Exception:
+                    except Exception as e:
+                        print(f"Event subscriber error: {e}", file=sys.stderr)
                         logger.exception("Exception in event subscriber")
                 self._event_queue.task_done()
             except queue.Empty:

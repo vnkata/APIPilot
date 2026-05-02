@@ -22,10 +22,15 @@ def configure_logging(class_name: str = __name__, log_dir=None, level=None, llm_
     llm_model = llm_model or _log_llm_model
     console_level = console_level or _console_level
 
-    print(f"Logging to {log_dir} at level {level} for model {llm_model}")
-
     os.makedirs(log_dir, exist_ok=True)
     log = logging.getLogger(class_name)
+
+    if logger is not None and log.name == logger.name:
+        for handler in log.handlers[:]:
+            log.remove_handler(handler)
+        for handler in logger.handlers[:]:
+            logger.remove_handler(handler)
+
     log.setLevel(level)
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
@@ -51,3 +56,9 @@ def set_console_level(level: int):
         for handler in logger.handlers:
             if isinstance(handler, logging.StreamHandler):
                 handler.setLevel(level)
+
+def suppress_console_logging():
+    set_console_level(logging.CRITICAL + 1)
+
+def restore_console_logging(level: int = logging.INFO):
+    set_console_level(level)

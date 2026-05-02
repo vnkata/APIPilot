@@ -39,7 +39,6 @@ class SmartValueGenerator:
           newVal = producer_parameters.get(k).generator.next_value(context_pool=self.context_pool)
           if newVal is not None:
             result[k] = newVal
-            print("update " ,k, "with ", result[k] )
     return results
 
   async def exec_async(self):
@@ -66,7 +65,6 @@ class SmartValueGenerator:
           newVal = producer_parameters.get(k).generator.next_value(context_pool=self.context_pool)
           if newVal is not None:
             result[k] = newVal
-            print("update " ,k, "with ", result[k] )
     return results
 
   

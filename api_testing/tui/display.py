@@ -1,15 +1,15 @@
-from typing import Optional, List, Dict
+import time
+import threading
+from typing import Optional
 from rich.console import Console
 from rich.live import Live
 from rich.panel import Panel
-from rich.table import Table
 from rich.text import Text
 from rich.align import Align
-from rich.box import ROUNDED, DOUBLE
-from rich.columns import Columns
+from rich.box import ROUNDED
 
 from .themes import DEFAULT_THEME, TUITheme
-from .progress import ProgressTracker, OperationProgress
+from .progress import ProgressTracker, OperationData
 
 class TUIDisplay:
     def __init__(self, theme: TUITheme = DEFAULT_THEME, width: int = 100):
@@ -18,6 +18,9 @@ class TUIDisplay:
         self.width = width
         self._live: Optional[Live] = None
         self._tracker: Optional[ProgressTracker] = None
+        self._start_time: float = 0
+        self._update_thread: Optional[threading.Thread] = None
+        self._stop_event: Optional[threading.Event] = None
 
     def clear(self):
         self.console.clear()
@@ -32,7 +35,7 @@ class TUIDisplay:
 
         panel = Panel(
             content,
-            box=DOUBLE,
+            box=ROUNDED,
             border_style=self.theme.primary,
             padding=(1, 2),
         )
@@ -67,130 +70,140 @@ class TUIDisplay:
         symbol, color = symbols.get(status, (self.theme.symbol_bullet, self.theme.symbol_bullet_color))
         self.console.print(f"  [{color}]{symbol}[/{color}] {message}")
 
-    def _build_execution_table(self, operations: List[OperationProgress], title_suffix: str = "") -> Panel:
-        table = Table(
-            box=ROUNDED,
-            border_style=self.theme.accent,
-            show_header=True,
-            header_style=f"bold {self.theme.secondary}",
-            padding=(0, 1),
-        )
-        table.add_column("#", width=4, justify="center")
-        table.add_column("Operation", width=25)
-        table.add_column("Method", width=6, justify="center")
-        table.add_column("Path", width=35)
-        table.add_column("Status", width=8, justify="center")
-        table.add_column("Duration", width=10, justify="right")
-        table.add_column("Size", width=10, justify="right")
+    def _get_status_color(self, status_code: int) -> str:
+        if 200 <= status_code < 300:
+            return self.theme.success
+        elif 300 <= status_code < 400:
+            return self.theme.info
+        elif 400 <= status_code < 500:
+            return self.theme.warning
+        elif 500 <= status_code < 600:
+            return self.theme.error
+        return self.theme.text_dim
 
-        for idx, op in enumerate(operations, 1):
-            status_str = op.status.value
-            status_color = self.theme.text_dim
-            if op.status.value == "success":
-                status_color = self.theme.success
-                status_str = str(op.status_code) if op.status_code else "OK"
-            elif op.status.value == "fail":
-                status_color = self.theme.error
-                status_str = str(op.status_code) if op.status_code else "ERR"
-            elif op.status.value == "running":
-                status_color = self.theme.warning
-                status_str = "..."
+    def _build_status_line(self, op: OperationData) -> Text:
+        if not op.status_codes or not isinstance(op.status_codes, dict):
+            return Text("")
+        sorted_codes = sorted(op.status_codes.items(), key=lambda x: x[1], reverse=True)
+        if not sorted_codes:
+            return Text("")
+        max_count = sorted_codes[0][1] if sorted_codes else 1
+        bar_width = 10
 
-            duration_str = f"{op.duration_ms:.0f}ms" if op.duration_ms else "-"
-            size_str = f"{op.response_size}B" if op.response_size else "-"
+        parts = []
+        for code, count in sorted_codes:
+            filled = int((count / max_count) * bar_width) if max_count > 0 else 0
+            bar = "█" * filled + "░" * (bar_width - filled)
+            color = self._get_status_color(code)
+            parts.append(f"[{color}]{code} ({count}) {bar}[/{color}]")
 
-            table.add_row(
-                str(idx),
-                op.name[:25],
-                f"[{self.theme.info}]{op.method}[/{self.theme.info}]",
-                op.path[:35],
-                f"[{status_color}]{status_str}[/{status_color}]",
-                duration_str,
-                size_str,
-            )
+        return Text.from_markup("  ".join(parts))
 
-        header = Text()
-        header.append("EXECUTION", style=f"bold {self.theme.primary}")
-        if title_suffix:
-            header.append(f" - {title_suffix}", style=self.theme.text_dim)
+    def _build_operation_block(self, op: OperationData) -> list:
+        """Returns list of Text lines: name + one per status code."""
+        lines = []
+        lines.append(Text.from_markup(f"[bold]{op.name}[/bold]"))
+        if op.status_codes and isinstance(op.status_codes, dict) and op.status_codes:
+            try:
+                max_count = max(op.status_codes.values())
+            except (TypeError, ValueError):
+                max_count = 1
+            for code, count in sorted(op.status_codes.items(), key=lambda x: x[1], reverse=True):
+                filled = int((count / max_count) * 10)
+                bar = "█" * filled + "░" * (10 - filled)
+                color = self._get_status_color(code)
+                lines.append(Text.from_markup(f"  [{color}]{code:>3}[/{color}] ({count:>3}) [dim]{bar}[/dim]"))
+        else:
+            lines.append(Text.from_markup(f"  [dim]Waiting...[/dim]"))
+        return lines
 
-        return Panel(
-            table,
-            title=header,
-            title_align="left",
-            box=DOUBLE,
-            border_style=self.theme.primary,
-            padding=(1, 1),
-        )
-
-    def _build_stats_table(self, completed: int, failed: int, total: int, generation: int, total_gen: int) -> Panel:
-        table = Table(box=None, show_header=False, padding=(0, 2))
-        table.add_column("Metric", style=self.theme.text_dim, ratio=2)
-        table.add_column("Value", style=f"bold {self.theme.text}", justify="right", ratio=1)
-
-        success_rate = (completed / max(total, 1)) * 100
-        success_color = self.theme.success if success_rate >= 70 else (self.theme.warning if success_rate >= 40 else self.theme.error)
-
-        table.add_row("Completed:", f"[{self.theme.success}]{completed:,}[/{self.theme.success}]")
-        table.add_row("Failed:", f"[{self.theme.error}]{failed:,}[/{self.theme.error}]")
-        table.add_row("Success Rate:", f"[{success_color}]{success_rate:.1f}%[/{success_color}]")
-        table.add_row("Generation:", f"[{self.theme.info}]{generation}/{total_gen}[/{self.theme.info}]")
-
-        header = Text()
-        header.append("STATISTICS", style=f"bold {self.theme.primary}")
-
-        return Panel(
-            table,
-            title=header,
-            title_align="left",
-            box=ROUNDED,
-            border_style=self.theme.info,
-            padding=(0, 1),
-        )
-
-    def start_live_display(self, tracker: ProgressTracker, title: str = "API Testing"):
-        self._tracker = tracker
-        self._live = Live(
-            self._generate_live_display(title),
-            console=self.console,
-            refresh_per_second=4,
-            transient=False,
-        )
-        self._live.start()
-
-    def _generate_live_display(self, title: str):
+    def _build_operations_list(self) -> list:
         if not self._tracker:
-            return Panel(Text("Initializing..."), title=title)
+            return [Text.from_markup("[dim]Waiting for operations...[/dim]")]
 
-        operations = self._tracker.get_operations()
-        stats = self._tracker.get_total_completed(), self._tracker.get_total_failed(), self._tracker.get_total_operations()
+        blocks = []
+        for op in self._tracker.get_operations():
+            blocks.extend(self._build_operation_block(op))
+            blocks.append(Text(""))
 
-        from collections import Counter
-        generation_counts = Counter(op.generation for op in operations)
-        current_gen = max(generation_counts.keys()) if generation_counts else 0
+        return blocks
 
-        table_panel = self._build_execution_table(operations)
-        stats_panel = self._build_stats_table(stats[0], stats[1], stats[2], current_gen, self._tracker.get_max_generation())
+    def _build_operation_text(self) -> Text:
+        """Build a single Text object with all operations."""
+        try:
+            operations = self._build_operations_list()
+            if not operations:
+                return Text.from_markup("[dim]Waiting for operations...[/dim]")
+
+            lines = []
+            for op in operations:
+                if isinstance(op, Text):
+                    lines.append(op.plain)
+                else:
+                    lines.append(str(op))
+            return Text.from_markup("\n".join(lines))
+        except Exception:
+            return Text.from_markup("[dim]Updating...[/dim]")
+
+    def _build_display(self) -> Panel:
+        elapsed = time.time() - self._start_time
+        total_requests = self._tracker.get_total_requests() if self._tracker else 0
 
         header = Text()
-        header.append("⚡ ", style=f"bold {self.theme.warning}")
-        header.append(title.upper(), style=f"bold {self.theme.primary}")
-        header.append(" ⚡", style=f"bold {self.theme.warning}")
+        header.append(">> ", style=f"bold {self.theme.warning}")
+        header.append("API TESTING", style=f"bold {self.theme.primary}")
+        header.append(" <<", style=f"bold {self.theme.warning}")
+        header.append("    Total: ", style=self.theme.text_dim)
+        header.append(f"{total_requests:,}", style=f"bold {self.theme.success}")
+        header.append("   Elapsed: ", style=self.theme.text_dim)
+        header.append(f"{elapsed:.1f}s", style=f"bold {self.theme.text}")
+
+        content = self._build_operation_text()
 
         return Panel(
-            Columns([stats_panel, table_panel], expand=True),
+            content,
             title=header,
-            title_align="center",
-            box=DOUBLE,
+            title_align="left",
+            box=ROUNDED,
             border_style=self.theme.primary,
             padding=(1, 2),
         )
 
+    def start_live_display(self, tracker: ProgressTracker, title: str = "API Testing"):
+        if self._live:
+            self.stop_live_display()
+        self._tracker = tracker
+        self._start_time = time.time()
+        self._live = Live(
+            self._build_display(),
+            console=self.console,
+            refresh_per_second=30,
+            transient=False,
+        )
+        self._stop_event = threading.Event()
+        self._update_thread = threading.Thread(target=self._run_update_loop, daemon=True)
+        self._live.start()
+        self._update_thread.start()
+
+    def _run_update_loop(self):
+        while not self._stop_event.wait(0.033):
+            self.update_live_display()
+
     def update_live_display(self):
         if self._live and self._tracker:
-            self._live.update(self._generate_live_display("API Testing"))
+            try:
+                self._live.update(self._build_display())
+            except Exception as e:
+                import sys
+                print(f"Live update error: {e}", file=sys.stderr)
 
     def stop_live_display(self):
+        if self._stop_event:
+            self._stop_event.set()
+        if self._update_thread:
+            self._update_thread.join(timeout=0.5)
         if self._live:
             self._live.stop()
             self._live = None
+            self._update_thread = None
+            self._stop_event = None

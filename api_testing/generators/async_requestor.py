@@ -133,7 +133,6 @@ class AsyncRequestor:
 
         _cache_dir = os.path.join(cache_dir, "history")
         if not os.path.exists(_cache_dir):
-            print(f"History dir not found, I'll create dir {_cache_dir}")
             os.makedirs(_cache_dir)
 
         self.report = StatusCodeReport.make_shared(os.path.join(cache_dir, "reports.json"))

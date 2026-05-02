@@ -96,7 +96,6 @@ class Requestor:
         _cache_dir = os.path.join(
             cache_dir, "history")
         if not os.path.exists(_cache_dir):
-            print(f"History dir not found, I'll create dir {_cache_dir}")
             os.makedirs(_cache_dir)
         self.report = StatusCodeReport.make_shared(os.path.join(
             cache_dir, "reports.json"))
@@ -252,7 +251,6 @@ class Requestor:
                         binary_content = raw_data.encode('utf-8')
                         
                     except Exception as e:
-                        print(f"Conversion failed: {e}")
                         binary_content = b""
                     body = binary_content
                 else:
@@ -350,27 +348,25 @@ class Requestor:
             },
         }
 
-        # Keep critical section minimal: report uses lock, entries use thread-local
+        # Keep critical section minimal: report uses lock
         with self._report_lock:
             self.report.add(ruuid, response.status_code)
 
-        self._get_local_entries().append(entry)
         with self._entries_lock:
+            self.entries.append(entry)
             self._dirty = True
 
     def flush(self):
         """Persist aggregated report and HAR once after request batch completes."""
         with self._entries_lock:
-            # Merge thread-local entries into shared list
-            if hasattr(self._local, 'entries') and self._local.entries:
-                self.entries.extend(self._local.entries)
-                self._local.entries = []
-
             if not self._dirty:
+                self.logger.debug("flush: nothing dirty, skipping")
                 return
-            with self._report_lock:
-                self.report.save()
-            self._save_har()
+            self.logger.debug(f"flush: {len(self.entries)} total entries to save")
+        with self._report_lock:
+            self.report.save()
+        self._save_har()
+        with self._entries_lock:
             self._dirty = False
         
     def _save_har(self):

@@ -12,12 +12,12 @@ class TUITheme:
     error: str = "red"
     info: str = "cyan"
 
-    symbol_success: str = "✓"
-    symbol_error: str = "✗"
-    symbol_warning: str = "⚠"
-    symbol_info: str = "●"
-    symbol_progress: str = "→"
-    symbol_bullet: str = "◆"
+    symbol_success: str = "[OK]"
+    symbol_error: str = "[X]"
+    symbol_warning: str = "[!]"
+    symbol_info: str = "[*]"
+    symbol_progress: str = ">>"
+    symbol_bullet: str = "[>]"
 
     symbol_success_color: str = "green"
     symbol_error_color: str = "red"
