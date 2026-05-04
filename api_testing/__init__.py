@@ -207,7 +207,9 @@ def main():
             headers=headers,
         )
     except Exception as e:
-        print(f"Error during test execution: {e}")
+        import traceback
+        traceback.print_exc()
+        raise e
     finally:
         elapsed = time.perf_counter() - start_time
         restore_console_logging()

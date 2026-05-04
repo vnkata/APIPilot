@@ -719,8 +719,10 @@ class NaiveValueGenerator:
 
                 elif body_type == "object":
                     props = self.request_body.get("properties", {})
+                    def to_hr(v):
+                        return v.to_human_readable() if isinstance(v, ItemProperties) else ItemProperties.from_dict(v).to_human_readable() if isinstance(v, dict) else str(v)
                     rb_desc = "\n".join(
-                        f"- {k} : {v.to_human_readable()}"
+                        f"- {k} : {to_hr(v)}"
                         for k, v in props.items()
                     )
 
@@ -729,8 +731,10 @@ class NaiveValueGenerator:
                     rb_desc = gen.to_human_readable() if gen else "Primitive request body"
 
             else:
+                def to_hr(v):
+                    return v.to_human_readable() if isinstance(v, ItemProperties) else ItemProperties.from_dict(v).to_human_readable() if isinstance(v, dict) else str(v)
                 rb_desc = "\n".join(
-                    f"- {k} : {v.to_human_readable()}"
+                    f"- {k} : {to_hr(v)}"
                     for k, v in (self.request_body or {}).items()
                 )
 

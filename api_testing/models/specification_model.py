@@ -205,7 +205,8 @@ class ItemProperties:
                 return "array"
             if self.xrefs:
                 return f"array of {self.xrefs} object"
-            return f"array of {self.items.to_human_readable()}"            # return dict_items
+            items = self.items if isinstance(self.items, ItemProperties) else ItemProperties.from_dict(self.items)
+            return f"array of {items.to_human_readable()}"            # return dict_items
         return ''
 
 @dataclass

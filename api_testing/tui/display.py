@@ -100,34 +100,35 @@ class TUIDisplay:
 
         return Text.from_markup("  ".join(parts))
 
-    def _build_operation_block(self, op: OperationData) -> list:
-        """Returns list of Text lines: name + one per status code."""
-        lines = []
-        lines.append(Text.from_markup(f"[bold]{op.name}[/bold]"))
+    def _build_compact_operation_line(self, op: OperationData) -> Text:
+        """Build a single compact line for an operation."""
+        name = op.name
+        max_name_len = self.width - 35
+
+        if len(name) > max_name_len:
+            name = name[:max_name_len - 3] + "..."
+
+        parts = [Text.from_markup(f"[bold]{name}[/bold]  ")]
+
         if op.status_codes and isinstance(op.status_codes, dict) and op.status_codes:
-            try:
-                max_count = max(op.status_codes.values())
-            except (TypeError, ValueError):
-                max_count = 1
-            for code, count in sorted(op.status_codes.items(), key=lambda x: x[1], reverse=True):
-                filled = int((count / max_count) * 10)
-                bar = "█" * filled + "░" * (10 - filled)
+            sorted_codes = sorted(op.status_codes.items(), key=lambda x: x[1], reverse=True)
+            for code, count in sorted_codes:
                 color = self._get_status_color(code)
-                lines.append(Text.from_markup(f"  [{color}]{code:>3}[/{color}] ({count:>3}) [dim]{bar}[/dim]"))
+                parts.append(Text.from_markup(f"[{color}]{code}({count})[/{color}] "))
         else:
-            lines.append(Text.from_markup(f"  [dim]Waiting...[/dim]"))
-        return lines
+            parts.append(Text.from_markup("[dim]Waiting...[dim]"))
+
+        return Text("").join(parts)
 
     def _build_operations_list(self) -> list:
         if not self._tracker:
             return [Text.from_markup("[dim]Waiting for operations...[/dim]")]
 
-        blocks = []
+        lines = []
         for op in self._tracker.get_operations():
-            blocks.extend(self._build_operation_block(op))
-            blocks.append(Text(""))
+            lines.append(self._build_compact_operation_line(op))
 
-        return blocks
+        return lines
 
     def _build_operation_text(self) -> Text:
         """Build a single Text object with all operations preserving colors."""
