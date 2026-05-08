@@ -175,8 +175,7 @@ class Executor:
           mime = "application/json"
       headers = {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "*/*",
-          "PRIVATE-TOKEN": "zmy1FupqQvgL9BgG1sqw"
+          "Accept": "*/*"
       }
 
       # 2. Cập nhật Content-Type dựa trên mime (giả sử 'mime' là biến chứa type)

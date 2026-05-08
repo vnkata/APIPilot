@@ -5,6 +5,8 @@ import logging
 import random
 from time import sleep
 from api_testing.configuration.configuration_parser import ConfigurationParser
+from api_testing.constraint import ConstraintMiner
+from api_testing.constraint.dynamic_constraint_miner import DynamicConstraintMiner
 from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
 from api_testing.feedback import FeedbackAnalyzer
 from api_testing.generators.executor import Executor, Strategy
@@ -129,7 +131,8 @@ class APITesting:
                                            APITestingVectorDB]] = None,
                  test_single_endpoint: Optional[str] = None,  # New parameter
                  # async_mode=False,
-
+                 constraint_mining=True,
+                 
                  ):
         self.base_url = base_url
         self.base_title = base_title
@@ -142,6 +145,7 @@ class APITesting:
         self.test_single_endpoint = test_single_endpoint
         self.operation_graph = None
         self.tracer = None
+        self.mining_constraints = constraint_mining
         self._load_()
         
         if self.test_single_endpoint:
@@ -238,17 +242,16 @@ class APITesting:
             cache_dir=self.project_dir
         )
         self.operation_graph.plot_graph()
-    def mining_constraints(self):
-        miner = StaticConstraintMiner(
-            spec_parser=self.spec_parser,
-            model=self.model,
-            embedding_model=self.embedder,
-            cache_dir=self.project_dir
-        )
-        miner.mining()
-        cache = os.path.join(self.project_dir, "test_cases.json")
-        valid = miner.verify_constraints(history=cache)
-        print("Valid constraints", valid)
+    # def mining_constraints(self):
+    #     miner = StaticConstraintMiner(
+    #         spec_parser=self.spec_parser,
+    #         model=self.model,
+    #         embedding_model=self.embedder,
+    #         cache_dir=self.project_dir
+    #     )
+    #     miner.mining()
+        # cache = os.path.join(self.project_dir, "test_cases.json")
+        # valid = miner.verify_constraints(history=cache)
 
     def run_tests(self,num_generations=1, num_test_cases=20, mutation_ratio=0.0):
         self.operation_graph = OperationGraph(
@@ -257,6 +260,15 @@ class APITesting:
             embedding_model=self.embedder,
             cache_dir=self.project_dir
         )
+        if self.mining_constraints:
+            self.miner = ConstraintMiner(
+                spec_parser=self.spec_parser,
+                model=self.model,
+                embedding_model=self.embedder,
+                cache_dir=self.project_dir
+            )
+            self.miner.static_mining()
+
         parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
         configurations = { f"{conf.method}-{conf.endpoint}": conf for conf in parser.configurations}
         nodes = self.operation_graph.nodes
@@ -397,6 +409,11 @@ class APITesting:
             print("🌳"*10, " RUN GENERATIONS ", str(idx+1), "🌳"*10)
 
             traverse_forest_dfs(forest, context)
+            if self.mining_constraints:
+                self.miner.dynamic_mining()
+                self.constraint_arbitration()
+            # merge constraints
+
         
         print("Success rate", total_success/total_testcase)
         print(successFull)

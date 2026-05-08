@@ -337,9 +337,9 @@ class HAREntryBuilder:
         params = request_kwargs.get("params", {}) or {}
         
         query_string = [
-            {"name": str(k), "value": str(v)} for k, v in params.items()
+            {"name": str(k), "value": v} for k, v in params.items()
         ]
-        
+         
         post_data_text = HAREntryBuilder._extract_post_data(request_kwargs)
         response_body = HAREntryBuilder._extract_response_body(response)
         
@@ -519,7 +519,6 @@ class Requestor:
             
             # Execute request
             duration_ms, response_data = self._execute_request(method, url, request_kwargs)
-            
             # Record to HAR
             self._record_har_entry(
                 ruuid=request_data.uuid,

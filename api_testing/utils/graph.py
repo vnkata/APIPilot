@@ -154,7 +154,8 @@ def get_best_mathching_schema(embedding_model, operation, schemas, threshold=0.7
 def is_nested_path_end_with(
     nested_path: str,
     ending_path: str,
-    delimiter: str = '.'
+    delimiter: str = '.',
+    equal=False
 ) -> bool:
     def normalize(path: str) -> List[str]:
         return [seg for seg in path.replace("[]", "").split(delimiter) if seg]
@@ -164,7 +165,8 @@ def is_nested_path_end_with(
 
     if len(ending_segments) > len(nested_segments):
         return False
-
+    if equal and len(ending_segments) != len(nested_segments):
+        return False
     return nested_segments[-len(ending_segments):] == ending_segments
 
 # def is_nested_path_end_with(

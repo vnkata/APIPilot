@@ -1,5 +1,6 @@
 
 from collections import defaultdict
+from importlib import resources
 import json
 import os
 from pathlib import Path
@@ -19,6 +20,7 @@ from api_testing.constraint.dynamic_constraints.invariant_extractor import Invar
 from api_testing.constraint.dynamic_constraints.test_case import TestCase
 from api_testing.constraint.dynamic_constraints.utils.csv_manager import read_csv
 from api_testing.constraint.dynamic_constraints.utils.test_case_file_manager import TestCaseFileManager
+from api_testing.models.specification_model import ItemProperties
 from api_testing.prompts.invariant_classification import InvariantClassification
 from api_testing.utils import flatten_json_schema
 from api_testing.utils.graph import is_nested_path_end_with
@@ -64,7 +66,6 @@ class DynamicConstraintMiner:
     DECLS_FILENAME = "test_cases.decls"
     DTRACE_FILENAME = "test_cases.dtrace"
     INVARIANTS_FILENAME = "invariants.csv"
-    # CLASSIFIED_INVARIANTS_FILENAME = DEFAULT_CLASSIFIED_INVARIANTS_FILENAME
     MAIN_CACHE = "dynamic_constraint_miner.json"
 
     def __init__(self, spec_parser=None, model=None, cache_dir=None):
@@ -80,8 +81,25 @@ class DynamicConstraintMiner:
         self.operations = self.spec_parser.operations
         self.decls_file: Optional[DeclsFile] = None
         self.extractor = InvariantExtractor(cache_dir=self.cache_dir)
-        # self.classifier = InvariantClassification(model=self.model)
+        self._invariant_kinds = self._load_invariant_kinds()
 
+        self.classifier = InvariantClassification(llm=self.model)
+        
+    @staticmethod
+    def _load_invariant_kinds() -> dict[str, str]:
+        resource_text = resources.files(
+            "api_testing.constraint.dynamic_constraints.resources"
+        ).joinpath("invariant_kinds.txt").read_text(encoding="utf-8")
+
+        invariant_kinds: dict[str, str] = {}
+        for raw_line in resource_text.splitlines():
+            line = raw_line.strip()
+            if not line or ":" not in line:
+                continue
+            invariant_type, _, description = line.partition(":")
+            invariant_kinds[invariant_type.strip()] = description.strip()
+        return invariant_kinds
+    
     def _cache_path(self, filename: str) -> Path:
         """Return an artifact path inside the miner cache directory."""
         return self.cache_dir / filename
@@ -121,6 +139,23 @@ class DynamicConstraintMiner:
         test_cases = random.sample(test_cases, 50)
         self.generate_dtrace_file(test_cases, self._cache_path(self.DTRACE_FILENAME))
 
+    @staticmethod
+    def _load_json_file(filepath: Path) -> Dict[str, Any]:
+        """
+        Load data from JSON file.
+        
+        Args:
+            filepath: Path to the JSON file
+            
+        Returns:
+            Loaded data dictionary
+        """
+        try:
+            with open(filepath, 'r', encoding='utf-8') as f:
+                return json.load(f)
+        except Exception as e:
+            raise IOError(f"Failed to load JSON from {filepath}: {str(e)}")
+        
     def extract_invariants(self) -> Path:
         """Run Daikon to extract invariants from generated decls and dtrace files."""
         decls_path = self._cache_path(self.DECLS_FILENAME)
@@ -150,7 +185,6 @@ class DynamicConstraintMiner:
             variables = invariant_dict.get("variables", "")
             variables = remove_outer_parens(variables).split(",") if variables else []
             for item in variables:
-                # print(f"item: {item}")
                 item = item.strip()
                 if 'return' in item:
                     variable = item.replace("[..]", "").replace(
@@ -165,12 +199,17 @@ class DynamicConstraintMiner:
                         pptReturnPrefix = invariant_dict.get("pptname", "")[matches.start()+5:indexEnd]
                         pptReturnPrefix = pptReturnPrefix.replace("&", ".")
                         outputVariablesPath = pptReturnPrefix
-                        variable = variable.replace("return", outputVariablesPath)
-                        variable = f"return.{variable}"
-                        invariant_dict["variable"] = variable
+                        variable_old = variable
+
+                        variable = variable.replace("return", f"return.{outputVariablesPath}")
+                        invariant_dict["invariant"] = invariant_dict["invariant"].replace(variable_old, variable)
+                        if "variable" not in invariant_dict:
+                            invariant_dict["variable"] = variable
+                            invariant_dict["response_container_path"] = outputVariablesPath
                     else:
-                        invariant_dict["variable"] = variable
-                    break
+                        if "variable" not in invariant_dict:
+                            invariant_dict["variable"] = variable
+                            invariant_dict["response_container_path"] = None
             if ":::ENTER" in invariant_dict.get("pptname"):
                 continue
             endpoint = invariant_dict.get("pptname", "").split("&")[0]
@@ -181,34 +220,45 @@ class DynamicConstraintMiner:
 
     def mining(self) -> Dict[str, Path]:
         """Run the full dynamic mining workflow and return generated artifact paths."""
+        cache_file = self.cache_dir / self.MAIN_CACHE
+        if cache_file.exists():
+            self.logger.debug(f"Loading cached request-response constraints from {cache_file}")
+            cache = self._load_json_file(cache_file)
+            return cache.get("constraints", {})
+        
         self.extract_decls_classes()
         self.extract_dtraces()
-        invariants = self.extract_invariants()
+        raw_invariants = self.extract_invariants()
+
+        invariants = self.classify_invariants(raw_invariants)
+        # print(f"Classified invariants: {invariants}")
         group_invariants = group_invariants_by_variable(invariants)
-        print(group_invariants)
+        print(f"Grouped invariants by variable: {group_invariants}")
         final_invariants = {}
         for opt in self.operations.values():
             if not opt.successful_responses:
                 continue
-            invariants_for_opt = group_invariants.get(opt.uuid, [])
-            print(invariants_for_opt.keys())
+            invariants_for_opt = group_invariants.get(opt.uuid, {})
             final_invariants[opt.uuid] = {}
             flatten_responses = flatten_json_schema(opt.successful_responses.to_dict())
             for response_path, props in flatten_responses.items():
                 for property, invariant in invariants_for_opt.items():
-                    if is_nested_path_end_with(response_path, property.replace("return.", "")):
+                    if is_nested_path_end_with(response_path, property.replace("return.", ""), equal=True):
                         final_invariants[opt.uuid]["return." + response_path] = invariant
                         print(f"Found invariant {invariant} for property {property} in response path {response_path} of operation {opt.uuid}")
                         # Here you can add logic to associate the invariant with the operation and property
         for endpoint, invariants in final_invariants.items():
             for property, invariant_list in invariants.items():
                 if len(invariant_list) <= 1:
-                    print(invariant_list)
                     final_invariants[endpoint][property] = invariant_list[0].get("invariant") if invariant_list else None
                 else:
                     final_invariants[endpoint][property] = "and(" + ",".join([item.get("invariant") for item in invariant_list]) +")"
 
-        self.constraints = final_invariants
+        self.constraints = {
+            "raw": raw_invariants,
+            "group_invariants": group_invariants,
+            "constraints": final_invariants
+        }
         self._save_constraints_to_cache()
         return final_invariants
     def _save_constraints_to_cache(self) -> None:
@@ -231,74 +281,60 @@ class DynamicConstraintMiner:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
             raise IOError(f"Failed to save JSON to {filepath}: {str(e)}")
-        
-    # def classify_invariants(
-    #     self, invariants: Dict[str, List[Dict[str, Any]]]
-    # ) -> Dict[str, List[Dict[str, Any]]]:
-    #     """Classify invariants using the InvariantClassifier."""
-    #     classified_invariants = {}
-    #     for endpoint, inv_list in invariants.items():
-    #         self.logger.info(f"Classifying invariants for endpoint: {endpoint} with {len(inv_list)} invariants")
-    #         params = {
-    #            "invariant": 
-    #         }
-    #         self.classifier.exec()
-    #     return classified_invariants
-    # def classify_invariants(
-    #     self,
-    #     output_path: str | Path | None = None,
-    #     *,  
-    #     persist_debug_artifacts: bool = False,
-    # ) -> Path:
-    #     """Classify an existing ``invariants.csv`` artifact.
+    
 
-    #     Preconditions:
-    #     - ``extract_invariants()`` has already produced ``cache_dir/invariants.csv``.
-    #     - ``self.model`` implements the LLM interface expected by
-    #       ``InvariantClassifier``.
 
-    #     Returns the path to ``classified_invariants.csv``. Per-row classifier
-    #     failures are handled by the classifier as ``inconclusive`` rows.
-    #     """
-    #     invariants_path = self._cache_path(self.INVARIANTS_FILENAME)
-    #     if not invariants_path.exists():
-    #         raise FileNotFoundError(
-    #             f"Missing invariants file: {invariants_path}. Call extract_invariants() first."
-    #         )
-    #     if self.model is None:
-    #         raise RuntimeError("DynamicConstraintMiner.model is required to classify invariants.")
+    def classify_invariants(
+        self, invariants: Dict[str, List[Dict[str, Any]]]
+    ) -> Dict[str, List[Dict[str, Any]]]:
+        """Classify invariants using the InvariantClassifier."""
+        classified_invariants = {}
+        for endpoint, inv_list in invariants.items():
+            classified_invariants[endpoint] = []
+            self.logger.info(f"Classifying invariants for endpoint: {endpoint} with {len(inv_list)} invariants")
+            data = []
+            for i, inv in enumerate(inv_list): 
+                self.logger.debug(f"Classifying invariant: {inv}")
+                params = {
+                    "invariant": inv.get("invariant"),
+                    "invariant_type": inv.get("invariantType"),  
+                    "invariant_description": self._invariant_kinds.get(inv.get("invariantType", ""), "No description available."),
+                    "variables": inv.get("variables", ""),
+                    "endpoint": inv.get("endpoint", ""),
+                    "response_container_path": inv.get("response_container_path", ""),
+                    "spec_excerpt": "",  # You can enhance this by providing relevant spec excerpts
+                    "examples_block": [],  # Optionally provide examples for the classifi er   
+                    "evidence_checks_block": [],  # Optionally provide evidence checks for the classifier
+                }
+                str = f"""#{i+1}: Invariant: {params['invariant']}
+Invariant Type: {params['invariant_type']} 
+Invariant description: {params['invariant_description']}
+The return fields refer to the path {params['response_container_path'] or "__ROOT__"} in the response body ."""
+                data.append(str)
+                # Here you would call self.classifier.exec() with the appropriate parameters
+            operation = self.operations.get(endpoint)
+            flatten_responses = flatten_json_schema(operation.successful_responses.to_dict())
 
-    #     classifier = InvariantClassifier(
-    #         spec_parser=self.spec_parser,
-    #         model=self.model,
-    #         cache_dir=self.cache_dir,
-    #     )
-    #     return classifier.classify_invariants(
-    #         input_path=invariants_path,
-    #         output_path=output_path,
-    #         persist_debug_artifacts=persist_debug_artifacts,
-    #     )
-
-    # def mine_and_classify_dynamic_constraints(
-    #     self,
-    #     *,
-    #     persist_debug_artifacts: bool = False,
-    # ) -> Dict[str, Path]:
-    #     """Run mining and then classify the mined invariants.
-
-    #     The legacy ``mine_dynamic_constraints()`` behavior is unchanged; this
-    #     method is the explicit end-to-end path for callers that want both raw
-    #     and classified invariant artifacts.
-    #     """
-    #     artifacts = self.mine_dynamic_constraints()
-    #     classified_invariants_path = self.classify_invariants(
-    #         persist_debug_artifacts=persist_debug_artifacts,
-    #     )
-    #     return {
-    #         **artifacts,
-    #         "classified_invariants_path": classified_invariants_path,
-    #     }
-
+            params = {
+                "endpoint": f"{operation.http_method.upper()} {operation.endpoint_path}" if operation else endpoint,
+                "summary": operation.summary or operation.description or "",
+                "parameters": "\n".join([
+                    f"- {k} : {v.to_human_readable()}"
+                    for k, v in operation.parameters.items()
+                ]),
+                "responses": "\n".join([
+                    f"- {k.replace("[]", "")} : {ItemProperties.from_dict(v).to_human_readable()}"
+                    for k, v in flatten_responses.items()
+                ]),
+                "invariants": "\n".join(data)
+            }
+            classified = self.classifier.exec(**params)
+            for item in classified:
+                invariant = inv_list[item.id-1]
+                if item.classification == "true-positive":
+                    classified_invariants[endpoint].append(invariant)
+        return classified_invariants
+    
     def _resolve_operation_id(self, method: str, path: str) -> str:
         """Map request method+path to known operation name if possible."""
         # Find best match by path ending

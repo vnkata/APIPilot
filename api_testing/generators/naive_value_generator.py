@@ -310,7 +310,6 @@ class NaiveValueGenerator:
             # --- Generate parameter values ---
             params, params_mutated = generate_fields(self.parameters, params_selected, should_mutate)
             body_mutated = False
-            print(f"Test case {i+1}: selected params: {params_selected}, selected body fields: {body_selected}, should_mutate: {should_mutate}")
             body = [] 
 
             if is_array_body:

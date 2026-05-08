@@ -14,15 +14,6 @@ from api_testing.prompts.response_constraints import ResponseConstraints
 from api_testing.utils import flatten_json_schema
 from api_testing.utils.graph import is_nested_path_end_with
 from api_testing.utils.log import getLogger
-
-
-@dataclass
-class ConstraintResult:
-    """Result container for constraint mining operations."""
-    request_response: Dict[str, List[Dict[str, Any]]]
-    response_properties: Dict[str, Dict[str, Any]]
-    common: Dict[str, Dict[str, str]]
-
 from collections import defaultdict
 
 def merge_list_of_dicts(dict_list):
@@ -79,7 +70,7 @@ class StaticConstraintMiner:
         self.response_constraint = ResponseConstraints(llm=model)
         self.request_response_constraint = RequestResponseConstraint(llm=model)
 
-    def mining(self) -> ConstraintResult:
+    def mining(self) -> Dict[str, Dict[str, str]]:
         """
         Mine all constraint types and aggregate results.
         
@@ -94,11 +85,7 @@ class StaticConstraintMiner:
         if cache_file.exists():
             self.logger.debug(f"Loading cached request-response constraints from {cache_file}")
             cache = self._load_json_file(cache_file)
-            return ConstraintResult(
-                request_response=cache.get("request_response", []),
-                response_properties=cache.get("response_properties", {}),
-                common=cache.get("common", {})
-            )
+            return cache.get("common", {})
         try:
             self.logger.info("Starting constraint mining process")
             req_res_constraints = self._mine_request_response_constraints()
@@ -115,11 +102,7 @@ class StaticConstraintMiner:
             self._save_constraints_to_cache()
             self.logger.info("Constraint mining completed successfully")
             
-            return ConstraintResult(
-                request_response=req_res_constraints,
-                response_properties=res_constraints,
-                common=common_constraints
-            )
+            return common_constraints
         except Exception as e:
             self.logger.error(f"Error during constraint mining: {str(e)}")
             raise
@@ -186,7 +169,6 @@ class StaticConstraintMiner:
             merged_results = merge_list_of_dicts(results)
             truekeys = list(filter_always_true(merged_results).keys())
             all_constraints_passed = { k: v for k, v in all_constraints.get(op_id, {}).items() if k in truekeys }
-            print(all_constraints_passed)
             self.constraints["final_verification"] = self.constraints.get("final_verification", {})
             self.constraints["final_verification"][op_id] = all_constraints_passed
         

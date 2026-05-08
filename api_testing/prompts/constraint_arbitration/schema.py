@@ -6,10 +6,10 @@ from typing import List
 from pydantic import BaseModel, Field
 
 
-class Invariant(BaseModel):
+class ConstraintArbitrationResult(BaseModel):
     id: int
-    classification: str
+    answer: int
 
 
 class Verdict(BaseModel):
-    datas: List[Invariant]
+    datas: List[ConstraintArbitrationResult]
