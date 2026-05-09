@@ -122,6 +122,10 @@ FIELD_DESCRIPTIONS: Dict[str, tuple[str, str]] = {
         "Async mode",
         "Use async HTTP requests for much higher throughput when testing many endpoints. Recommended for large APIs. y/n",
     ),
+    "run.debug": (
+        "Debug mode",
+        "When true, skip the TUI and print logs to the terminal.",
+    ),
     "run.max_request_workers": (
         "Max request workers",
         "Maximum number of parallel threads used during test execution. Controls how many endpoint trees run at the same time.",
@@ -166,6 +170,7 @@ def _build_summary_table(config: Dict[str, Any]) -> Table:
                 "run.mutation_ratio",
                 "run.header_mutation_ratio",
                 "run.async_mode",
+                "run.debug",
                 "run.max_request_workers",
                 "run.async_max_concurrent",
             ],
@@ -434,6 +439,14 @@ def run_wizard(path: str, quick_mode: bool = False) -> Dict[str, Any]:
             )
             config["run"]["async_mode"] = async_mode
 
+            _, debug_help = FIELD_DESCRIPTIONS["run.debug"]
+            config["run"]["debug"] = _confirm_field(
+                "Debug mode (skip TUI, print logs)",
+                debug_help,
+                default=bool(config["run"]["debug"]),
+                console=console,
+            )
+
             _, mw_help = FIELD_DESCRIPTIONS["run.max_request_workers"]
             max_workers = _prompt_field(
                 "Max request workers",
@@ -506,6 +519,15 @@ def run_wizard(path: str, quick_mode: bool = False) -> Dict[str, Any]:
 def _prompt_field(label: str, help_text: str, **kwargs) -> Any:
     console.print(f"[dim]{help_text}[/dim]")
     return Prompt.ask(f"[cyan]{label}[/cyan]", **kwargs)
+
+
+def _confirm_field(label: str, help_text: str, *, default: bool, console: Console) -> bool:
+    console.print(f"[dim]{help_text}[/dim]")
+    return Confirm.ask(
+        f"[cyan]{label}[/cyan]",
+        default=default,
+        console=console,
+    )
 
 
 def _toml_value(value: Any) -> str:
@@ -583,6 +605,7 @@ def _render_toml(config: Dict[str, Any]) -> str:
     lines.append(f"mutation_ratio = {_toml_value(run.get('mutation_ratio', 0.0))}")
     lines.append(f"header_mutation_ratio = {_toml_value(run.get('header_mutation_ratio', 0.5))}")
     lines.append(f"async_mode = {_toml_value(run.get('async_mode', False))}")
+    lines.append(f"debug = {_toml_value(run.get('debug', False))}")
     lines.append(f"max_request_workers = {_toml_value(run.get('max_request_workers', 10))}")
     lines.append(f"async_max_concurrent = {_toml_value(run.get('async_max_concurrent', 20))}")
     lines.append("")
@@ -651,6 +674,7 @@ def _render_toml_with_comments(config: Dict[str, Any]) -> str:
     lines.append(f"mutation_ratio = {_toml_value(run.get('mutation_ratio', 0.0))}{_comment('run.mutation_ratio')}")
     lines.append(f"header_mutation_ratio = {_toml_value(run.get('header_mutation_ratio', 0.5))}{_comment('run.header_mutation_ratio')}")
     lines.append(f"async_mode = {_toml_value(run.get('async_mode', False))}{_comment('run.async_mode')}")
+    lines.append(f"debug = {_toml_value(run.get('debug', False))}{_comment('run.debug')}")
     lines.append(f"max_request_workers = {_toml_value(run.get('max_request_workers', 10))}{_comment('run.max_request_workers')}")
     lines.append(f"async_max_concurrent = {_toml_value(run.get('async_max_concurrent', 20))}{_comment('run.async_max_concurrent')}")
     lines.append("")

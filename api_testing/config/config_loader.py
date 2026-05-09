@@ -68,6 +68,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "mutation_ratio": 0.0,
         "header_mutation_ratio": 0.5,
         "async_mode": False,
+        "debug": False,
         "max_request_workers": 10,
         "async_max_concurrent": 20,
     },

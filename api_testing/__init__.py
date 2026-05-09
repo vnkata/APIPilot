@@ -59,7 +59,13 @@ import shutil
 import os
 from api_testing.events import get_emitter, EventType, Phase, OperationStatus
 from api_testing.tui.app import TUIApp
-from api_testing.utils.log import configure_logging, getLogger, restore_console_logging, set_console_level
+from api_testing.utils.log import (
+    configure_logging,
+    getLogger,
+    restore_console_logging,
+    set_console_level,
+    suppress_console_logging,
+)
 from typing import List, Dict, Set, Any
 import argparse
 
@@ -77,6 +83,8 @@ Examples:
   apitesting                    # Run TUI wizard and write configurations.toml
   apitesting --init-config     # Create configurations.toml and exit
   apitesting --skip-wizard     # Use configurations.toml directly
+
+Tip: set run.debug = true in configurations.toml to disable TUI.
 
 For more information, visit: https://github.com/thanhtuit96/API-Testing
         """,
@@ -179,6 +187,8 @@ def main():
     llm = build_llm(config)
     embedder = build_embedder(config)
     headers = config.get("headers", {})
+    run = config["run"]
+    debug_mode = bool(run.get("debug", False))
 
     tester = APITesting(
         base_url=config["project"]["base_url"],
@@ -188,11 +198,16 @@ def main():
         embedder=embedder,
     )
 
-    tui_app = TUIApp()
-    tui_app.start()
-    start_time = time.perf_counter()
+    tui_app = None
+    if debug_mode:
+        set_console_level(logging.DEBUG)
+    else:
+        set_console_level(logging.INFO)
+        tui_app = TUIApp()
+        tui_app.start()
+        suppress_console_logging()
 
-    run = config["run"]
+    start_time = time.perf_counter()
     total_testcase = 0
     successFull = {}
     try:
@@ -212,17 +227,18 @@ def main():
         raise e
     finally:
         elapsed = time.perf_counter() - start_time
-        restore_console_logging()
-        tui_app.stop()
-        tui_app.print_final_report(
-            title=tester.base_title,
-            duration_seconds=elapsed,
-            total_requests=total_testcase,
-            status_distribution={},
-            total_operations=len(successFull),
-            successful_operations=len(successFull),
-            unique_5xx_errors=0,
-        )
+        if not debug_mode and tui_app is not None:
+            restore_console_logging()
+            tui_app.stop()
+            tui_app.print_final_report(
+                title=tester.base_title,
+                duration_seconds=elapsed,
+                total_requests=total_testcase,
+                status_distribution={},
+                total_operations=len(successFull),
+                successful_operations=len(successFull),
+                unique_5xx_errors=0,
+            )
 
 def sort_children_by_method(children_values):
     # Định nghĩa trọng số ưu tiên
