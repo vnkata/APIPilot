@@ -1,6 +1,17 @@
 import asyncio
 from pathlib import Path
 import zipfile
+import logging
+import sys
+
+logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
+logging.getLogger("transformers").setLevel(logging.ERROR)
+for _h in logging.root.handlers[:]:
+    if _h.stream == sys.stderr or hasattr(_h, 'terminator'):
+        pass
+
+logger = logging.getLogger(__name__)
+
 from api_testing.models.base_model import APITestingBaseEmbeddingModel
 from typing import Any, Optional, List
 import torch
@@ -45,13 +56,12 @@ class HuggingfaceEmbeddingModel(APITestingBaseEmbeddingModel):
 
     def load_model(self, async_mode=False, use_half=False):
         if HuggingfaceEmbeddingModel._model_instance is None:
-            print("Loading Huggingface model:", self.model_name,
-                  " wtih device: ", self.device)
+            logger.debug("Loading Huggingface model: %s with device: %s", self.model_name, self.device)
             from sentence_transformers import SentenceTransformer
             if self.model_name == default_huggingface_embedding_model and not os.path.exists(default_huggingface_embedding_model):
                 with zipfile.ZipFile(Path(f"{os.path.dirname(__file__)}/embeddinggemma-300m.zip"), 'r') as zip_ref:
                     zip_ref.extractall(Path(os.path.dirname(__file__)))
-                    print("Extracted Default Model")
+                    logger.debug("Extracted Default Model")
             HuggingfaceEmbeddingModel._model_instance = SentenceTransformer(
                 self.model_name,
                 device=self.device,

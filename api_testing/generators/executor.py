@@ -129,6 +129,8 @@ class Executor:
       use_async: bool = False,
       async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT,
       default_headers: Optional[Dict[str, str]] = None,
+      generation: int = 1,
+      total_generations: int = 1,
   ):
     self.api_url = api_url
     self.strategy = strategy
@@ -139,6 +141,8 @@ class Executor:
     self.use_async = use_async
     self.async_max_concurrent = async_max_concurrent
     self.default_headers = {str(k): str(v) for k, v in (default_headers or {}).items()}
+    self.generation = generation
+    self.total_generations = total_generations
 
     if use_async:
       self.async_sender = AsyncRequestor(api_url=self.api_url, cache_dir=self.cache_dir)
@@ -414,6 +418,8 @@ class Executor:
         status_code=status_code,
         duration_ms=entry.get("time"),
         response_size=entry.get("response", {}).get("content", {}).get("size"),
+        generation=self.generation,
+        total_generations=self.total_generations,
       )
 
     return self.sender.entries
@@ -455,6 +461,8 @@ class Executor:
         status_code=status_code,
         duration_ms=entry.get("time"),
         response_size=entry.get("response", {}).get("content", {}).get("size"),
+        generation=self.generation,
+        total_generations=self.total_generations,
       )
 
     return self.async_sender.entries

@@ -186,6 +186,7 @@ def main():
 
     llm = build_llm(config)
     embedder = build_embedder(config)
+    embedder.load_model()
     headers = config.get("headers", {})
     run = config["run"]
     debug_mode = bool(run.get("debug", False))
@@ -573,6 +574,8 @@ class APITesting:
                 use_async=async_mode,
                 async_max_concurrent=async_max_concurrent,
                 default_headers=headers,
+                generation=idx + 1,
+                total_generations=num_generations,
             )
 
             if async_mode:
@@ -687,6 +690,8 @@ class APITesting:
                 operation_method=node.name.split('-')[0] if '-' in node.name else '',
                 operation_path=node.name,
                 status=OperationStatus.RUNNING,
+                generation=idx + 1,
+                total_generations=num_generations,
             )
 
             executor = Executor(
@@ -704,6 +709,8 @@ class APITesting:
                 use_async=True,
                 async_max_concurrent=async_max_concurrent,
                 default_headers=headers,
+                generation=idx + 1,
+                total_generations=num_generations,
             )
 
             responses = await executor.exec_async()

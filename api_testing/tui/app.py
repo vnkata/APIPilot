@@ -27,17 +27,27 @@ class TUIApp:
         self._emitter.unsubscribe(self._on_event)
 
     def _on_event(self, event: EventData):
-        if event.event_type == EventType.PHASE_START:
-            self._handle_phase_start(event)
-        elif event.event_type == EventType.PHASE_COMPLETE:
-            self._handle_phase_complete(event)
-        elif event.event_type == EventType.OPERATION_UPDATE:
-            self._handle_operation_update(event)
-        elif event.event_type == EventType.EXECUTION_COMPLETE:
-            self._handle_execution_complete(event)
+        try:
+            if event.event_type == EventType.PHASE_START:
+                self._handle_phase_start(event)
+            elif event.event_type == EventType.PHASE_COMPLETE:
+                self._handle_phase_complete(event)
+            elif event.event_type == EventType.OPERATION_UPDATE:
+                self._handle_operation_update(event)
+            elif event.event_type == EventType.EXECUTION_COMPLETE:
+                self._handle_execution_complete(event)
+        except Exception as e:
+            # Re-raise with more context if possible, or just let EventEmitter catch it
+            # But let's log the event data to help debug
+            import sys
+            print(f"Error processing event {event.event_type}: {e}", file=sys.stderr)
+            print(f"Event data: {event}", file=sys.stderr)
+            raise e
 
     def _handle_phase_start(self, event: EventData):
-        phase_name = event.phase.value.replace("_", " ").title() if event.phase else "Unknown"
+        if not event or not event.phase:
+            return
+        phase_name = event.phase.value.replace("_", " ").title()
         self._current_phase = event.phase
 
         if event.phase == Phase.TEST_EXECUTION:
@@ -47,7 +57,9 @@ class TUIApp:
             self.display.print_phase_start(phase_name, event.message or "")
 
     def _handle_phase_complete(self, event: EventData):
-        phase_name = event.phase.value.replace("_", " ").title() if event.phase else "Unknown"
+        if not event or not event.phase:
+            return
+        phase_name = event.phase.value.replace("_", " ").title()
 
         if self._current_phase == Phase.TEST_EXECUTION:
             pass
@@ -55,16 +67,17 @@ class TUIApp:
             self.display.print_phase_complete(phase_name, event.message or "")
 
     def _handle_operation_update(self, event: EventData):
-        if event.operation_name and event.status_code is not None:
+        if event and event.operation_name and event.status_code is not None:
+            # Ensure generation is at least an int for comparison safety
+            gen = event.generation if isinstance(event.generation, int) else 0
+            
             self.tracker.add_operation_result(
                 name=event.operation_name,
                 method=event.operation_method or "",
                 path=event.operation_path or "",
-                generation=event.generation,
+                generation=gen,
                 status_code=event.status_code,
             )
-            if self._current_phase == Phase.TEST_EXECUTION:
-                self.display.update_live_display()
 
     def _handle_execution_complete(self, event: EventData):
         self.display.stop_live_display()

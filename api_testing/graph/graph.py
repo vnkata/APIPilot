@@ -460,12 +460,14 @@ class OperationGraph:
     def plot_graph(self):
         G = nx.DiGraph(directed=True)
         ODG_pyvis = net.Network(height="100vh", width="100vw", bgcolor="white",
-                                font_color="black", notebook=True, directed=True, neighborhood_highlight=True)
+                                font_color="black", notebook=True, directed=True, neighborhood_highlight=True,
+                                cdn_resources='in_line')
         ODG_pyvis.barnes_hut(gravity=-8000, central_gravity=1.5,
                              spring_length=200, spring_strength=0.05)
 
         ODG_pyvis_opt = net.Network(height="100vh", width="100vw", bgcolor="white",
-                                font_color="black", notebook=True, directed=True, neighborhood_highlight=True)
+                                font_color="black", notebook=True, directed=True, neighborhood_highlight=True,
+                                cdn_resources='in_line')
         ODG_pyvis_opt.barnes_hut(gravity=-8000, central_gravity=1.5,
                              spring_length=200, spring_strength=0.05)
         
@@ -497,8 +499,12 @@ class OperationGraph:
         # print(f"Total clusters found: {len(clusters)}")
         # for i, cluster in enumerate(clusters):
         #     print(f"Cluster {i+1}: {cluster}")
-        ODG_pyvis.show(self.cache_file.replace("json", "html"))
-        ODG_pyvis_opt.show(self.cache_file.replace("json", "optional.html"))
+        html_path = self.cache_file.replace("json", "html")
+        with open(html_path, "w", encoding="utf-8") as f:
+            f.write(ODG_pyvis.html)
+        optional_path = self.cache_file.replace("json", "optional.html")
+        with open(optional_path, "w", encoding="utf-8") as f:
+            f.write(ODG_pyvis_opt.html)
 
         # add 2 graphs
 

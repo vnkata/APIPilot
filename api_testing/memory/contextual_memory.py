@@ -489,7 +489,7 @@ class ContextualMemory:
             for entity, items in other.contexts.items():
                 if entity == other.current_uuid:
                     continue
-                if entity not in self.contexts:
+                if entity not in self.contexts or not isinstance(self.contexts[entity], list):
                     self.contexts[entity] = []
                 existing = {str(x) for x in self.contexts[entity]}
                 for item in items:

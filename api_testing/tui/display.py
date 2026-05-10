@@ -71,7 +71,9 @@ class TUIDisplay:
         symbol, color = symbols.get(status, (self.theme.symbol_bullet, self.theme.symbol_bullet_color))
         self.console.print(f"  [{color}]{symbol}[/{color}] {message}")
 
-    def _get_status_color(self, status_code: int) -> str:
+    def _get_status_color(self, status_code: Optional[int]) -> str:
+        if status_code is None:
+            return self.theme.text_dim
         if 200 <= status_code < 300:
             return self.theme.success
         elif 300 <= status_code < 400:
@@ -179,7 +181,7 @@ class TUIDisplay:
         self._live = Live(
             self._build_display(),
             console=self.console,
-            refresh_per_second=60,
+            refresh_per_second=4,
             transient=False,
         )
         self._stop_event = threading.Event()
@@ -188,7 +190,7 @@ class TUIDisplay:
         self._update_thread.start()
 
     def _run_update_loop(self):
-        while not self._stop_event.wait(0.017):  # ~60 FPS
+        while not self._stop_event.wait(0.25):  # 4 FPS
             self.update_live_display()
 
     def update_live_display(self):

@@ -23,7 +23,10 @@ class ProgressTracker:
         })
         self._total_requests: int = 0
 
-    def add_operation_result(self, name: str, method: str, path: str, generation: int, status_code: int):
+    def add_operation_result(self, name: str, method: str, path: str, generation: Optional[int], status_code: Optional[int]):
+        generation = generation if generation is not None else 0
+        status_code = status_code if status_code is not None else 0
+        
         key = f"{generation}:{method}:{path}"
         is_new_operation = key not in self._operations
         self._total_requests += 1
@@ -58,7 +61,13 @@ class ProgressTracker:
         return list(self._operations.values())
 
     def get_max_generation(self) -> int:
-        return max(self._generation_stats.keys()) if self._generation_stats else 0
+        if not self._generation_stats:
+            return 0
+        try:
+            valid_keys = [k for k in self._generation_stats.keys() if isinstance(k, (int, float))]
+            return int(max(valid_keys)) if valid_keys else 0
+        except Exception:
+            return 0
 
     def get_generation_stats(self, generation: int) -> dict:
         return self._generation_stats.get(generation, {"completed": 0, "failed": 0, "total": 0})

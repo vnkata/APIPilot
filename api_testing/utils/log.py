@@ -56,7 +56,7 @@ def set_console_level(level: int):
     _console_level = level
     if logger:
         for handler in logger.handlers:
-            if isinstance(handler, logging.StreamHandler):
+            if isinstance(handler, logging.StreamHandler) and not isinstance(handler, logging.FileHandler):
                 handler.setLevel(level)
 
 def suppress_console_logging():
