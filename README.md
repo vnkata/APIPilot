@@ -63,10 +63,12 @@ The `results/` directory stores structured outputs and analysis artifacts produc
 
 ## How to use the tool
 
-### Setup
+### 1. Setup
+
+First, create a virtual environment and install the required dependencies:
 
 ```bash
-# create venv and install deps
+# Create venv and install deps
 python -m venv .venv
 .venv\Scripts\activate      # Windows
 # source .venv/bin/activate  # Linux/macOS
@@ -74,86 +76,108 @@ python -m venv .venv
 pip install -r requirements.txt
 ```
 
-Copy `.env.example` to `.env` and configure your API keys (Azure OpenAI, OpenAI, Gemini, etc.):
+Next, copy `.env.example` to `.env` and configure your API keys (e.g., Azure OpenAI, OpenAI, Gemini, etc.). These keys will be used by the configuration file.
 
 ```bash
 cp .env.example .env
-# then edit .env with your API credentials
+# Edit .env with your API credentials
 ```
 
 ---
 
-### 1. CLI (Recommended)
+### 2. Configuration (`configurations.toml`)
 
-The CLI uses a rich TUI wizard — prompts guide you through every setting, then preview the config before saving.
+APIPilot is driven by a `configurations.toml` file. You can create this file manually or use the built-in wizard to generate it for you.
+
+#### Initialization (Recommended)
+
+Run the following command to start the interactive wizard, which will guide you through setting up your project, LLM, and run parameters, then save them to `configurations.toml`:
 
 ```bash
-# Full TUI wizard — prompts for all settings then runs
-python -m api_testing
-
-# Quick wizard — essential settings only (skips run parameters)
-python -m api_testing --quick
-
-# Create config and exit (no tests)
+# Initialize configuration using the interactive wizard
 python -m api_testing --init-config
-
-# Print all field descriptions (reference), then exit
-python -m api_testing --explain
-
-# Skip wizard and run from existing config
-python -m api_testing --skip-wizard
-
-# Custom config path
-python -m api_testing --config path/to/my_config.toml
-
-# Override individual settings from config
-python -m api_testing --skip-wizard --spec datasets/my_api.json --async
 ```
 
-#### CLI Flags
+#### Manual Configuration & Parameters
 
-| Flag | Description |
-|------|-------------|
-| `--config PATH` | Path to config file (default: `configurations.toml`) |
-| `--init-config` | Run TUI wizard and write config, then exit |
-| `--skip-wizard` | Skip wizard, load config and run immediately |
-| `--quick` | Quick wizard (essential settings only) |
-| `--explain` | Print all field descriptions and exit |
-| `-s, --spec PATH` | Override spec path |
-| `--async` | Enable async HTTP mode |
-| `--async-max-concurrent N` | Max concurrent async requests |
-| `-g, --generations N` | Number of test generations |
-| `-c, --test-cases N` | Test cases per endpoint |
-| `--mutation-ratio N` | Parameter mutation probability (0.0–1.0) |
-| `--header-mutation-ratio N` | Header mutation probability (0.0–1.0) |
-| `--max-workers N` | Max concurrent request workers |
+If you prefer to edit `configurations.toml` directly, ensure the following essential parameters are set:
+
+| Section | Parameter | Description |
+|---------|-----------|-------------|
+| **`[project]`** | `spec_path` | Path to your OpenAPI 3.0 spec (`.json` or `.yaml`). |
+| | `base_url` | The root URL of the API (e.g., `http://localhost:8080`). |
+| **`[llm]`** | `provider` | Your LLM backend: `openai`, `azure_openai`, `gemini`, or `ollama`. |
+| | `model` | The specific model name (e.g., `gpt-4o`, `gemini-1.5-pro`). |
+| **`[run]`** | `num_generations` | Number of test rounds (higher = more coverage). |
+| | `num_test_cases` | Test cases per endpoint per round. |
+| | `async_mode` | Set to `true` for high-performance parallel testing. |
+
+**Important**: For security, use `${ENV_VAR}` syntax for API keys in the `[llm.<provider>]` sections (e.g., `api_key = "${OPENAI_API_KEY}"`). These will be read from your `.env` file automatically.
 
 ---
 
-### 2. Demo (config-driven)
+### 3. Running the Tests
 
-The simplest way to run without the wizard is to edit `configurations.toml` with your settings, then:
+Once configured, you can run the tests immediately by skipping the interactive wizard. This is the fastest way to execute tests based on your `configurations.toml` settings.
+
+```bash
+# Run using the settings in configurations.toml
+python -m api_testing --skip-wizard
+```
+
+Alternatively, you can use the provided demo script which also loads `configurations.toml` by default:
 
 ```bash
 python demo.py
 ```
 
-`demo.py` loads settings from `configurations.toml` automatically. See the annotated template in `configurations.toml` for all available options.
+---
+
+## Alternative Execution Methods
+
+### 1. Interactive CLI Wizard
+
+If you prefer a guided setup, the CLI includes a rich TUI wizard. It will prompt you for settings and allow you to preview the configuration before running.
+
+```bash
+# Start the full TUI wizard
+python -m api_testing
+
+# Essential settings only (skips advanced parameters)
+python -m api_testing --quick
+
+# Create/update config and exit without running tests
+python -m api_testing --init-config
+```
+
+#### Useful CLI Flags
+
+| Flag | Description |
+|------|-------------|
+| `--config PATH` | Use a custom config file (default: `configurations.toml`) |
+| `--skip-wizard` | Load config and run immediately without prompts |
+| `--explain` | Print descriptions of all configuration fields and exit |
+| `-s, --spec PATH` | Override the `spec_path` from the config |
+| `-g, --generations N`| Number of test rounds |
+| `-c, --test-cases N` | Test cases per endpoint |
+| `--async` | Force enable async HTTP mode |
 
 ---
 
-### 3. Programmatic (Python API)
+### 2. Programmatic Usage (Python API)
 
-For fine-grained control, use the Python API directly:
+For integrating APIPilot into your own scripts or CI/CD pipelines:
 
 ```python
 from api_testing import APITesting
 from api_testing.models.llms.openai_model import OpenAIModel
 from api_testing.models.embedding_models.huggingface_embedding_model import HuggingfaceEmbeddingModel
 
-llm = OpenAIModel(model="gpt-4.1-mini", api_key="<YOUR_KEY>")
+# Initialize LLM and Embedder
+llm = OpenAIModel(model="gpt-4o", api_key="<YOUR_KEY>")
 embedder = HuggingfaceEmbeddingModel()
 
+# Initialize the tester
 tester = APITesting(
     base_url="https://api.example.com/v1",
     spec_path="datasets/my_api.json",
@@ -161,20 +185,20 @@ tester = APITesting(
     embedder=embedder,
 )
 
+# Run tests
 tester.run_tests(
     num_generations=2,
     num_test_cases=30,
     mutation_ratio=0.2,
-    async_mode=True,
-    max_request_workers=10,
-    async_max_concurrent=20,
-    headers={"PRIVATE-TOKEN": "my-token"},
+    async_mode=True
 )
 ```
 
 ---
 
-### 4. Advanced: use `Executor` directly
+### 3. Advanced: Direct Executor Access
+
+You can also use the `Executor` directly for low-level control over specific operation testing:
 
 ```python
 from api_testing.generators.executor import Executor, Strategy
@@ -182,44 +206,11 @@ from api_testing.generators.executor import Executor, Strategy
 executor = Executor(
     api_url="https://api.example.com",
     strategy=Strategy.NAIVE_VALUE,
-    operation=<OperationProperties instance>,
+    operation=my_operation_instance,
     cache_dir=".cache/example",
     num_test_cases=10,
 )
 
-entries = executor.exec()
+results = executor.exec()
 ```
 
----
-
-### 5. Generate endpoint-level 500 report from HAR history
-
-```bash
-python endpoint_500_report.py \
-  --dir ".cache/GitLab Issues API 2"
-
-python endpoint_500_report.py \
-  --dir ".cache/GitLab Issues API 2/history" \
-  --spec "datasets/GitLabIssues.json"
-```
-
-Outputs:
-- `endpoint_500_report.csv` — one row per endpoint with `has_500` flag
-- `endpoint_500_summary.json` — total endpoints vs. endpoints that hit HTTP 500
-
----
-
-### Configuration File (`configurations.toml`)
-
-The config file is TOML with these sections:
-
-| Section | Purpose |
-|---------|---------|
-| `[project]` | `spec_path`, `base_url`, `base_title` |
-| `[llm]` | Provider, model, temperature |
-| `[llm.*]` | Provider-specific credentials (fill the one you use) |
-| `[embedding]` | Embedding provider and model |
-| `[run]` | Test generation and execution parameters |
-| `[headers]` | Static headers for every request |
-
-Sensitive values support `${ENV_VAR}` interpolation — never hardcode secrets in the config file. See the commented template in `configurations.toml` for full documentation of every field.

@@ -18,3 +18,4 @@ tools/**/*
 .config/opencode
 opencode.json
 GEMINI.md
+.gemini
