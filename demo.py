@@ -1,49 +1,38 @@
-from api_testing import APITesting, GeminiModel
-from pathlib import Path
-import os
-
-from api_testing.memory.vectordb.qdrantdb import QdrantDB
-from api_testing.models.embedding_models.huggingface_embedding_model import HuggingfaceEmbeddingModel
-from api_testing.models.embedding_models.ollama_embedding_model import OllamaEmbeddingModel
+from api_testing import APITesting
+from api_testing.config.config_loader import build_embedder, build_llm, load_config
 from dotenv import load_dotenv
-
-from api_testing.models.llms.AzureOpenAIModel import AzureOpenAIModel
+import time
 
 load_dotenv()
 
 print("============= API Testing =============")
+start_time = time.perf_counter()
 
-# llm = GeminiModel(
-#     model_name="gemini-2.5-flash",
-#     api_key="xx",
-#     temperature=0.7,
-# )
-# 
-llm = AzureOpenAIModel(
-    model="gpt-4.1",
-    api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-    azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"),
-    azure_deployment=os.getenv("AZURE_OPENAI_DEPLOYMENT"),
-    temperature=0.7,
-)
-
-embedder = HuggingfaceEmbeddingModel(  
-    model="google/embeddinggemma-300m", use_half=False)
-
-
-# db = QdrantDB(
-#     collection="GitLab_Qwen3Embedding06B",
-#     path="./.cache/GitLab Branch API",
-#     host="host.docker.internal",
-#     port=6333,
-#     api_key="123456789",
-#     embedder=embedder
-# )
+config = load_config("configurations.toml")
+llm = build_llm(config)
+embedder = build_embedder(config)
 
 test = APITesting(
-    "localhost:80",
+    base_url=config["project"]["base_url"],
+    base_title=config["project"].get("base_title") or None,
+    spec_path=config["project"]["spec_path"],
     model=llm,
-    # vector_db=db,
     embedder=embedder,
-    spec_path="datasets/Bills-api.json",
 )
+
+run = config["run"]
+test.run_tests(
+    num_generations=run["num_generations"],
+    num_test_cases=run["num_test_cases"],
+    mutation_ratio=run["mutation_ratio"],
+    header_mutation_ratio=run["header_mutation_ratio"],
+    async_mode=run["async_mode"],
+    max_request_workers=run["max_request_workers"],
+    async_max_concurrent=run["async_max_concurrent"],
+    headers=config.get("headers", {}),
+)
+
+elapsed = time.perf_counter() - start_time
+print("\n========================================")
+print(f"Total execution time: {elapsed:.2f} seconds ({elapsed/60:.2f} minutes)")
+print("========================================")

@@ -48,9 +48,20 @@ Additionally, you are provided with a list of all data schemas and their attribu
 
   
   def exec(self, *args, **kargs):
-    prompt = self.PROMPT.format(*args, **kargs) ## pass
+    prompt = self.PROMPT.format(*args, **kargs)
     self.logger.debug("OpSchemaDeps Prompt: " + prompt)
     response, _ = self.llm.generate(
+      system_prompt=self.SYSTEM_PROMPT,
+      prompt=prompt,
+      schema=Verdict
+    )
+    self.logger.debug("OpSchemaDeps Response: " + response.model_dump_json(indent=2))
+    return response.schemas
+
+  async def a_exec(self, *args, **kargs):
+    prompt = self.PROMPT.format(*args, **kargs)
+    self.logger.debug("OpSchemaDeps Prompt: " + prompt)
+    response, _ = await self.llm.a_generate(
       system_prompt=self.SYSTEM_PROMPT,
       prompt=prompt,
       schema=Verdict

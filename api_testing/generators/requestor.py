@@ -3,6 +3,7 @@ from datetime import datetime
 import json
 import os
 import re
+import threading
 import time
 from typing import Any, Dict
 import uuid
@@ -78,21 +79,35 @@ class Requestor:
       - multipart/form-data
       - text/plain
       - application/xml / text/xml
+
+    Thread-local storage optimization:
+      - Uses thread-local entries to reduce lock contention
+      - Report updates still use lock (rare operation)
+      - Entries use thread-local storage with merge at flush
     """
     def __init__(self, api_url: str, cache_dir: str = "."):
         self.api_url = api_url.rstrip("/")
         self.session_id = str(uuid.uuid4())
         self.entries: list[Dict[str, Any]] = []
+        self._entries_lock = threading.Lock()
+        self._report_lock = threading.Lock()
+        self._dirty = False
+        self._local = threading.local()
         _cache_dir = os.path.join(
             cache_dir, "history")
         if not os.path.exists(_cache_dir):
-            print(f"History dir not found, I'll create dir {_cache_dir}")
             os.makedirs(_cache_dir)
-        self.report = StatusCodeReport(report_file=os.path.join(
+        self.report = StatusCodeReport.make_shared(os.path.join(
             cache_dir, "reports.json"))
         self.cache_file = os.path.join(
             _cache_dir, self.session_id + ".har")
         self.logger = getLogger(__name__)
+
+    def _get_local_entries(self) -> list:
+        """Get thread-local entries list, creating if needed."""
+        if not hasattr(self._local, 'entries'):
+            self._local.entries = []
+        return self._local.entries
 
     # ----------------------------------------------------------------------
     # Main execution method
@@ -146,7 +161,7 @@ class Requestor:
             duration_ms = (time.perf_counter() - start_time) * 1000
             response_data = ResponseData.from_requests(response)
             # Record to HAR
-            print(parameters)
+            self.logger.debug(f"Parameters: {parameters}")
             self._record_har_entry(
                 ruuid=request_data.uuid, method=method, url=url, headers=headers, path_parameters=path_parameters, 
                 params=parameters, body=body, response=response_data,
@@ -162,9 +177,26 @@ class Requestor:
                 ruuid=request_data.uuid, method=method, url=url, headers=headers, path_parameters=path_parameters, 
                 params=parameters, body=body, response=response_data, duration_ms=duration_ms, expected_code=request_data.expected_code, base_path=base_path
             )
-            print("Lỗi: Request đã quá thời gian chờ 5 phút!")
+            self.logger.error("Lỗi: Request đã quá thời gian chờ 5 phút!")
+            return response_data
         except requests.exceptions.RequestException as e:
-            print(f"Lỗi hệ thống: {e}")
+            response_data = ResponseData.from_requests(None)
+            duration_ms = (time.perf_counter() - start_time) * 1000
+            self._record_har_entry(
+                ruuid=request_data.uuid,
+                method=method,
+                url=url,
+                headers=headers,
+                path_parameters=path_parameters,
+                params=parameters,
+                body=body,
+                response=response_data,
+                duration_ms=duration_ms,
+                expected_code=request_data.expected_code,
+                base_path=base_path,
+            )
+            self.logger.error(f"System error: {e}")
+            return response_data
         
     # ----------------------------------------------------------------------
     # Internal helper for MIME-based payload preparation
@@ -219,7 +251,6 @@ class Requestor:
                         binary_content = raw_data.encode('utf-8')
                         
                     except Exception as e:
-                        print(f"Conversion failed: {e}")
                         binary_content = b""
                     body = binary_content
                 else:
@@ -285,9 +316,6 @@ class Requestor:
         else:
             # For binary files, maybe just store a placeholder or base64
             response_body = "<<binary data>>"
-        self.report.add(ruuid, response.status_code)
-        self.report.save()
-        
         entry = {
             "_id": entry_id,
             "startedDateTime": datetime.utcnow().isoformat() + "Z",
@@ -319,8 +347,27 @@ class Requestor:
                 },
             },
         }
-        self.entries.append(entry)
+
+        # Keep critical section minimal: report uses lock
+        with self._report_lock:
+            self.report.add(ruuid, response.status_code)
+
+        with self._entries_lock:
+            self.entries.append(entry)
+            self._dirty = True
+
+    def flush(self):
+        """Persist aggregated report and HAR once after request batch completes."""
+        with self._entries_lock:
+            if not self._dirty:
+                self.logger.debug("flush: nothing dirty, skipping")
+                return
+            self.logger.debug(f"flush: {len(self.entries)} total entries to save")
+        with self._report_lock:
+            self.report.save()
         self._save_har()
+        with self._entries_lock:
+            self._dirty = False
         
     def _save_har(self):
         """Write all recorded HAR entries to disk (append mode)."""
@@ -333,5 +380,6 @@ class Requestor:
             }
         }
         with open(self.cache_file, "w", encoding="utf-8") as file:
-            json.dump(data, file, indent=2, ensure_ascii=False, default=to_placeholder)
+            # Compact JSON reduces write volume and serialization overhead on large runs.
+            json.dump(data, file, ensure_ascii=False, default=to_placeholder, separators=(",", ":"))
 

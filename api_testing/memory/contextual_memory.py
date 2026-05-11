@@ -3,6 +3,7 @@ import copy
 import json
 import os
 import random
+import threading
 
 def build_entity_prefix_map(xref_map):
     entity_prefix = {}
@@ -20,6 +21,9 @@ def extract_context(data, xref_map, prefix="", base_dict=None, entity_prefix=Non
 
     if base_dict is None:
         base_dict = {}
+
+    if not isinstance(xref_map, dict):
+        return defaultdict(list)
 
     if entity_prefix is None:
         entity_prefix = build_entity_prefix_map(xref_map)
@@ -134,6 +138,7 @@ class ContextualMemory:
         self.cache = {}
         self.current_uuid = None
         self.priority_resources = []
+        self._lock = threading.Lock()
         self.cache_file = os.path.join(
             cache_dir, "contextual_memory.json")
         self.load_or_initialize_cache()
@@ -169,7 +174,6 @@ class ContextualMemory:
     def update_with_responses(self, responses, producer_properties):
         for entry in responses:
             try:
-                # lấy response text
                 results = (
                     entry.get("response", {})
                     .get("content", {})
@@ -177,12 +181,21 @@ class ContextualMemory:
                 )
                 if not results:
                     continue
-                response_json = json.loads(results)
-                # path params của request
+                if results == "<<binary data>>" or not results.strip():
+                    continue
+                try:
+                    response_json = json.loads(results)
+                except json.JSONDecodeError:
+                    continue
                 base_dict = entry.get("request", {}).get("path_params", {})
+                if base_dict is None:
+                    base_dict = {}
                 base_dict = {f"{key}:path": value for key, value in base_dict.items()}
 
-                # extract entities từ response
+                if producer_properties is None:
+                    continue
+                if not isinstance(producer_properties, dict):
+                    continue
                 context = extract_context(response_json, producer_properties, base_dict=base_dict)
                 if not context:
                     continue
@@ -414,6 +427,9 @@ class ContextualMemory:
     
     def remove(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        if not isinstance(endpoint_ctx, dict):
+            endpoint_ctx = {}
+            self.contexts[self.current_uuid] = endpoint_ctx
         blacklist = endpoint_ctx.setdefault("blacklist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in blacklist}
@@ -422,6 +438,8 @@ class ContextualMemory:
     
     def is_blacklisted(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        if not isinstance(endpoint_ctx, dict):
+            return False
         blacklist = endpoint_ctx.setdefault("blacklist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in blacklist}
@@ -431,6 +449,8 @@ class ContextualMemory:
     
     def in_whitelist(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        if not isinstance(endpoint_ctx, dict):
+            return False
         whitelist = endpoint_ctx.setdefault("whitelist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in whitelist}
@@ -440,6 +460,9 @@ class ContextualMemory:
 
     def add(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        if not isinstance(endpoint_ctx, dict):
+            endpoint_ctx = {}
+            self.contexts[self.current_uuid] = endpoint_ctx
         whitelist = endpoint_ctx.setdefault("whitelist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in whitelist}
@@ -451,10 +474,29 @@ class ContextualMemory:
         return [i[key] for i in self.contexts.get(entity_name, []) if key in i]
 
     def copy(self):
-        
-        new_memory = ContextualMemory()
+
+        new_memory = ContextualMemory(cache_dir=os.path.dirname(self.cache_file) or ".")
         new_memory.contexts = copy.deepcopy(self.contexts)
         return new_memory
+
+    def merge(self, other: 'ContextualMemory'):
+        """
+        Merge another ContextualMemory into this one.
+        Thread-safe: acquires lock before merging.
+        Skips per-node whitelists (current_uuid keys).
+        """
+        with self._lock:
+            for entity, items in other.contexts.items():
+                if entity == other.current_uuid:
+                    continue
+                if entity not in self.contexts or not isinstance(self.contexts[entity], list):
+                    self.contexts[entity] = []
+                existing = {str(x) for x in self.contexts[entity]}
+                for item in items:
+                    if str(item) not in existing:
+                        self.contexts[entity].append(item)
+                        existing.add(str(item))
+            self.export_to_file()
 
     def __repr__(self):
         return f"ContextualMemory({list(self.contexts.keys())})"

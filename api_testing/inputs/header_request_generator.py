@@ -98,8 +98,8 @@ class HeaderRequestGenerator(RandomGenerator):
         elif strategy == FuzzStrategy.STRUCTURE:
             val = fuzzed_headers.pop(target_key)
             if self.rand.random() > 0.5:
-                fuzzed_headers[f"{target_key} "] = val 
+                fuzzed_headers[f"{target_key}_"] = val
             else:
-                fuzzed_headers[f" {target_key}"] = val
+                fuzzed_headers[f"_{target_key}"] = val
 
         return fuzzed_headers
