@@ -128,7 +128,7 @@ class ConstraintMiner:
                         for k, v in operation.parameters.items()
                     ]),
                     "responses": "\n".join([
-                        f"- {k.replace("[]", "")} : {ItemProperties.from_dict(v).to_human_readable()}"
+                        f"- {k.replace('[]', '')} : {ItemProperties.from_dict(v).to_human_readable()}"
                         for k, v in flatten_responses.items()
                     ]),
                     "constraints": "\n".join(data)

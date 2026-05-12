@@ -323,7 +323,7 @@ The return fields refer to the path {params['response_container_path'] or "__ROO
                     for k, v in operation.parameters.items()
                 ]),
                 "responses": "\n".join([
-                    f"- {k.replace("[]", "")} : {ItemProperties.from_dict(v).to_human_readable()}"
+                    f"- {k.replace('[]', '')} : {ItemProperties.from_dict(v).to_human_readable()}"
                     for k, v in flatten_responses.items()
                 ]),
                 "invariants": "\n".join(data)

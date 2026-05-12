@@ -1,4 +1,5 @@
 import logging
+import os
 import random
 import re
 from api_testing.models.base_model import APITestingBaseLLMModel
@@ -72,10 +73,10 @@ class GeminiModel(APITestingBaseLLMModel):
             or default_gemini_model
         )
 
-        # Get API key from key handler if not provided
-        self.api_key = api_key
-        self.project = project
-        self.location = location
+        # Get API key and Vertex AI settings from the environment if not provided.
+        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        self.project = project or os.getenv("GOOGLE_CLOUD_PROJECT")
+        self.location = location or os.getenv("GOOGLE_CLOUD_LOCATION")
         self.use_vertexai = False
         if temperature < 0:
             raise ValueError("Temperature must be >= 0.")

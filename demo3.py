@@ -11,7 +11,8 @@ from api_testing import APITesting
 from api_testing.models.llms.openai_model import OpenAIModel
 from api_testing.models.embedding_models.huggingface_embedding_model import HuggingfaceEmbeddingModel
 
-llm = GeminiModel(model_name="gemini-2.5-flash-lite",
+load_dotenv()
+llm = GeminiModel(model_name="gemini-2.5-flash-lite", api_key=os.getenv("GOOGLE_API_KEY"),
                   temperature=0, 
 )
 embedder = HuggingfaceEmbeddingModel()
