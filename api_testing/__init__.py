@@ -411,7 +411,7 @@ class APITesting:
             traverse_forest_dfs(forest, context)
             if self.mining_constraints:
                 self.miner.dynamic_mining()
-                self.constraint_arbitration()
+                self.miner.constraint_arbitration()
             # merge constraints
 
         
