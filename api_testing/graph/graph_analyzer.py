@@ -317,6 +317,50 @@ class GraphAnalyzer:
         with open(self.cache_file, "w", encoding="utf-8") as f:
             json.dump(self.operation_sequences, f, indent=4, ensure_ascii=False)
 
+    def compute_levels(self, forest: dict) -> dict[int, list]:
+        """
+        Assign execution level to each node in forest.
+        Level 0 = root nodes (no incoming edges from other forest trees)
+        Level N = nodes that depend on level N-1 within their tree
+
+        Returns: dict mapping level -> list of node names at that level
+        """
+        levels = {}
+
+        def assign_level(node, level: int):
+            if node.name not in levels or level > levels[node.name]:
+                levels[node.name] = level
+            for child in node.children.values():
+                assign_level(child, level + 1)
+
+        for root in forest.values():
+            assign_level(root, 0)
+
+        level_groups = {}
+        for node_name, level in levels.items():
+            level_groups.setdefault(level, []).append(node_name)
+
+        return level_groups
+
+    def find_node_in_forest(self, forest: dict, node_name: str):
+        """
+        Find a TreeNode by name across all trees in the forest.
+        """
+        def search(node):
+            if node.name == node_name:
+                return node
+            for child in node.children.values():
+                result = search(child)
+                if result:
+                    return result
+            return None
+
+        for root in forest.values():
+            result = search(root)
+            if result:
+                return result
+        return None
+
     def export_to_forest(self):
         """
         Build a forest (dict of root_uuid -> TreeNode) from operation_sequences.

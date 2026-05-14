@@ -1,10 +1,12 @@
 import logging
 import os
+from xml.sax import handler
 
 logger = None
 _log_dir = "./logs"
 _log_level = logging.DEBUG
 _log_llm_model = 'default'
+_console_level = logging.INFO
 
 def getLogger(name: str|None = None):
     global logger
@@ -14,31 +16,52 @@ def getLogger(name: str|None = None):
         logger.name = name
     return logger
 
-def configure_logging(class_name: str = __name__, log_dir=None, level=None, llm_model=None):
-    
-    global logger, _log_dir, _log_level, _log_llm_model
+def configure_logging(class_name: str = __name__, log_dir=None, level=None, llm_model=None, console_level=None):
+    global logger, _log_dir, _log_level, _log_llm_model, _console_level
     log_dir = os.path.join(log_dir, "logs") if log_dir else _log_dir
     level = level or _log_level
     llm_model = llm_model or _log_llm_model
-    print(f"Logging to {log_dir} at level {level} for model {llm_model}")
+    console_level = console_level or _console_level
+
     os.makedirs(log_dir, exist_ok=True)
+
+    if logger is not None:
+        for handler in logger.handlers[:]:
+            if isinstance(handler, logging.FileHandler):
+                handler.close()
+                logger.removeHandler(handler)
+    
     log = logging.getLogger(class_name)
     log.setLevel(level)
+    log.handlers.clear()
+
     formatter = logging.Formatter(
         '%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    handler.setLevel(level)
-    log.addHandler(handler)
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    console_handler.setLevel(console_level)
+    log.addHandler(console_handler)
 
-    # Define the log file path with TRACE_ID
     log_path = os.path.join(log_dir, f"{llm_model}.log")
-    file_handler = logging.FileHandler(log_path, encoding="utf-8")  # Create a file handler
-    file_handler.setFormatter(formatter)  # Set the same formatter
+    file_handler = logging.FileHandler(log_path, encoding="utf-8")
+    file_handler.setFormatter(formatter)
     file_handler.setLevel(level)
-    log.addHandler(file_handler)  # Add the file handler to the logger
-    
+    log.addHandler(file_handler)
+
     logger = log
     return logger
 
+def set_console_level(level: int):
+    global _console_level, logger
+    _console_level = level
+    if logger:
+        for handler in logger.handlers:
+            if isinstance(handler, logging.StreamHandler) and not isinstance(handler, logging.FileHandler):
+                handler.setLevel(level)
+
+def suppress_console_logging():
+    set_console_level(logging.CRITICAL + 1)
+
+def restore_console_logging(level: int = logging.INFO):
+    set_console_level(level)

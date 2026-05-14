@@ -58,4 +58,16 @@ Parameters:
     )
     self.logger.debug("SmartValueGenerate Response: " + response.model_dump_json(indent=2))
     return response
+  async def a_exec(self, *args, **kwargs):
+    body = kwargs.get("specific_endpoint_body")
+    request_body_part = f"Request Body Schema:\n{body}" if body else ""
+    prompt = self.PROMPT.format(request_body_part=request_body_part, **kwargs) ## pass
+    self.logger.debug("SmartValueGenerate Prompt: " + prompt)
+    response, _ = await self.llm.a_generate(
+      system_prompt=self.SYSTEM_PROMPT,
+      prompt=prompt,
+      schema=Verdict
+    )
+    self.logger.debug("SmartValueGenerate Response: " + response.model_dump_json(indent=2))
+    return response
   
