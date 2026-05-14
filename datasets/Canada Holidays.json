@@ -14,9 +14,11 @@
       "url": "https://github.com/pcraig3/hols/blob/main/LICENSE"
     }
   },
-  "servers": [{
-    "url": "https://canada-holidays.ca"
-  }],
+  "servers": [
+    {
+      "url": "https://canada-holidays.ca"
+    }
+  ],
   "paths": {
     "/api/v1/holidays": {
       "get": {
@@ -41,14 +43,16 @@
                 "examples": {
                   "/holidays": {
                     "value": {
-                      "holidays": [{
+                      "holidays": [
+                        {
                           "id": 1,
                           "date": "2023-01-01",
                           "nameEn": "New Year’s Day",
                           "nameFr": "Jour de l’An",
                           "federal": 1,
                           "observedDate": "2023-01-02",
-                          "provinces": [{
+                          "provinces": [
+                            {
                               "id": "AB",
                               "nameEn": "Alberta",
                               "nameFr": "Alberta",
@@ -148,13 +152,15 @@
                           "nameFr": "Journée Louis Riel",
                           "federal": 0,
                           "observedDate": "2023-02-20",
-                          "provinces": [{
-                            "id": "MB",
-                            "nameEn": "Manitoba",
-                            "nameFr": "Manitoba",
-                            "sourceLink": "https://www.gov.mb.ca/labour/standards/doc,gen-holidays-after-april-30-07,factsheet.html#q12",
-                            "sourceEn": "General holidays in Manitoba"
-                          }]
+                          "provinces": [
+                            {
+                              "id": "MB",
+                              "nameEn": "Manitoba",
+                              "nameFr": "Manitoba",
+                              "sourceLink": "https://www.gov.mb.ca/labour/standards/doc,gen-holidays-after-april-30-07,factsheet.html#q12",
+                              "sourceEn": "General holidays in Manitoba"
+                            }
+                          ]
                         }
                       ]
                     }
@@ -166,7 +172,8 @@
         },
         "operationId": "Holidays",
         "description": "Returns Canadian public holidays. Each holiday lists the regions that observe it.",
-        "parameters": [{
+        "parameters": [
+          {
             "schema": {
               "type": "integer",
               "default": 2026,
@@ -241,13 +248,15 @@
                 "examples": {
                   "/provinces": {
                     "value": {
-                      "provinces": [{
+                      "provinces": [
+                        {
                           "id": "AB",
                           "nameEn": "Alberta",
                           "nameFr": "Alberta",
                           "sourceLink": "https://www.alberta.ca/alberta-general-holidays.aspx#jumplinks-1",
                           "sourceEn": "General holidays in Alberta",
-                          "holidays": [{
+                          "holidays": [
+                            {
                               "id": 1,
                               "date": "2023-01-01",
                               "nameEn": "New Year’s Day",
@@ -279,7 +288,8 @@
                           "nameFr": "Colombie-Britannique",
                           "sourceLink": "https://www2.gov.bc.ca/gov/content/employment-business/employment-standards-advice/employment-standards/statutory-holidays#body",
                           "sourceEn": "Statutory Holidays in British Columbia",
-                          "holidays": [{
+                          "holidays": [
+                            {
                               "id": 1,
                               "date": "2023-01-01",
                               "nameEn": "New Year’s Day",
@@ -314,7 +324,8 @@
           }
         },
         "operationId": "Provinces",
-        "parameters": [{
+        "parameters": [
+          {
             "schema": {
               "type": "integer",
               "default": 2026,
@@ -372,7 +383,8 @@
                         "nameFr": "Manitoba",
                         "sourceLink": "https://www.gov.mb.ca/labour/standards/doc,gen-holidays-after-april-30-07,factsheet.html#q12",
                         "sourceEn": "General holidays in Manitoba",
-                        "holidays": [{
+                        "holidays": [
+                          {
                             "id": 1,
                             "date": "2023-01-01",
                             "nameEn": "New Year’s Day",
@@ -481,7 +493,8 @@
         },
         "operationId": "Province",
         "description": "Returns a Canadian province or territory with its associated holidays. Returns a 404 response for invalid abbreviations.",
-        "parameters": [{
+        "parameters": [
+          {
             "schema": {
               "type": "integer",
               "default": 2026,
@@ -514,45 +527,49 @@
           "provinces"
         ]
       },
-      "parameters": [{
-        "schema": {
-          "type": "string",
-          "enum": [
-            "AB",
-            "BC",
-            "MB",
-            "NB",
-            "NL",
-            "NS",
-            "NT",
-            "NU",
-            "ON",
-            "PE",
-            "QC",
-            "SK",
-            "YT"
-          ],
-          "example": "MB"
-        },
-        "name": "provinceId",
-        "in": "path",
-        "required": true,
-        "description": "A Canadian province abbreviation"
-      }]
+      "parameters": [
+        {
+          "schema": {
+            "type": "string",
+            "enum": [
+              "AB",
+              "BC",
+              "MB",
+              "NB",
+              "NL",
+              "NS",
+              "NT",
+              "NU",
+              "ON",
+              "PE",
+              "QC",
+              "SK",
+              "YT"
+            ],
+            "example": "MB"
+          },
+          "name": "provinceId",
+          "in": "path",
+          "required": true,
+          "description": "A Canadian province abbreviation"
+        }
+      ]
     },
     "/api/v1/holidays/{holidayId}": {
-      "parameters": [{
-        "schema": {
-          "type": "integer",
-          "example": 2,
-          "minimum": 1,
-          "maximum": 34
-        },
-        "name": "holidayId",
-        "in": "path",
-        "required": true,
-        "description": "Primary key for a holiday"
-      }],
+      "parameters": [
+        {
+          "schema": {
+            "type": "integer",
+            "example": 2,
+            "minimum": 1,
+            "maximum": 34
+          },
+          "name": "holidayId",
+          "in": "path",
+          "required": true,
+          "description": "Primary key for a holiday"
+        }
+      ],
       "get": {
         "summary": "Get a holiday by id",
         "responses": {
@@ -579,7 +596,8 @@
                         "nameFr": "Lendemain de Noël",
                         "federal": 1,
                         "observedDate": "2023-12-26",
-                        "provinces": [{
+                        "provinces": [
+                          {
                             "id": "NL",
                             "nameEn": "Newfoundland and Labrador",
                             "nameFr": "Terre-Neuve-et-Labrador",
@@ -606,7 +624,8 @@
                         "nameFr": "Lendemain de Noël",
                         "federal": 1,
                         "observedDate": "2024-12-26",
-                        "provinces": [{
+                        "provinces": [
+                          {
                             "id": "NL",
                             "nameEn": "Newfoundland and Labrador",
                             "nameFr": "Terre-Neuve-et-Labrador",
@@ -697,7 +716,8 @@
         },
         "operationId": "Holiday",
         "description": "Returns one Canadian statutory holiday by integer id. Returns a 404 response for invalid ids.",
-        "parameters": [{
+        "parameters": [
+          {
             "schema": {
               "type": "integer",
               "default": 2026,
@@ -770,7 +790,8 @@
               "nameFr": "Lendemain de Noël",
               "federal": 1,
               "observedDate": "2024-12-26",
-              "provinces": [{
+              "provinces": [
+                {
                   "id": "NL",
                   "nameEn": "Newfoundland and Labrador",
                   "nameFr": "Terre-Neuve-et-Labrador",
@@ -902,7 +923,8 @@
               "nameFr": "Saskatchewan",
               "sourceLink": "https://www.saskatchewan.ca/business/employment-standards/public-statutory-holidays/list-of-saskatchewan-public-holidays",
               "sourceEn": "Saskatchewan Public Holidays",
-              "holidays": [{
+              "holidays": [
+                {
                   "id": 1,
                   "date": "2023-01-01",
                   "nameEn": "New Year’s Day",
@@ -1100,7 +1122,8 @@
     },
     "securitySchemes": {}
   },
-  "tags": [{
+  "tags": [
+    {
       "name": "info",
       "description": "Get welcome message and links"
     },

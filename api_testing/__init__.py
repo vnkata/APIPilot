@@ -802,6 +802,13 @@ class APITesting:
         self.logger.debug("Successful endpoint count: %s", len(successFull.keys()))
         emitter.emit(EventType.PHASE_COMPLETE, Phase.TEST_EXECUTION, message="Test execution complete")
         emitter.emit(EventType.EXECUTION_COMPLETE, Phase.FINAL_REPORT, message="All generations complete")
+        print("Success rate", total_success/total_testcase)
+        print(successFull)
+        print("Success rate", len(successFull.keys()))
         return total_testcase, successFull
+        # merge constraints
+
+        
+
 
     

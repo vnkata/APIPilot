@@ -13,9 +13,10 @@
   "paths": {
     "/groups": {
       "get": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Get a list of visible groups for the authenticated user. When accessed without authentication, only public groups are returned.",
-        "operationId": "getGroups",
         "parameters": [
           {
             "name": "page",
@@ -72,7 +73,11 @@
             "schema": {
               "type": "string",
               "default": "name",
-              "enum": ["name", "path", "id"]
+              "enum": [
+                "name",
+                "path",
+                "id"
+              ]
             }
           },
           {
@@ -82,7 +87,10 @@
             "schema": {
               "type": "string",
               "default": "asc",
-              "enum": ["desc", "asc"]
+              "enum": [
+                "desc",
+                "asc"
+              ]
             }
           },
           {
@@ -115,7 +123,14 @@
             "description": "Limit to groups where current user has at least this access level",
             "schema": {
               "type": "integer",
-              "enum": [0, 10, 20, 30, 40, 50]
+              "enum": [
+                0,
+                10,
+                20,
+                30,
+                40,
+                50
+              ]
             }
           },
           {
@@ -154,9 +169,10 @@
         }
       },
       "post": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Creates a new project group. Available only for users who can create groups.",
-        "operationId": "createGroup",
         "parameters": [
           {
             "name": "visibility",
@@ -164,7 +180,11 @@
             "description": "The group's visibility. Can be private,internal, orpublic.",
             "schema": {
               "type": "string",
-              "enum": ["private", "internal", "public"]
+              "enum": [
+                "private",
+                "internal",
+                "public"
+              ]
             }
           },
           {
@@ -197,7 +217,11 @@
             "description": "Determine if developers can create projects in the group. Can benoone(No one),maintainer(Maintainers), or developer(Developers + Maintainers).",
             "schema": {
               "type": "string",
-              "enum": ["noone", "maintainer", "developer"]
+              "enum": [
+                "noone",
+                "maintainer",
+                "developer"
+              ]
             }
           },
           {
@@ -214,7 +238,10 @@
             "description": "Allowed to create subgroups. Can be owner(Owners), or maintainer(Maintainers).",
             "schema": {
               "type": "string",
-              "enum": ["owner", "maintainer"]
+              "enum": [
+                "owner",
+                "maintainer"
+              ]
             }
           },
           {
@@ -263,13 +290,17 @@
             "description": "SeeOptions fordefault_branch_protection. Default to the global level default branch protection setting.",
             "schema": {
               "type": "integer",
-              "enum": [0, 1, 2]
+              "enum": [
+                0,
+                1,
+                2
+              ]
             }
           },
           {
             "name": "shared_runners_setting",
             "in": "query",
-            "description": "SeeOptions forshared_runners_setting. Enable or disable shared runners for a group’s subgroups and projects.",
+            "description": "SeeOptions forshared_runners_setting. Enable or disable shared runners for a group\u2019s subgroups and projects.",
             "schema": {
               "type": "string",
               "enum": [
@@ -284,7 +315,10 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "required": ["name", "path"],
+                "required": [
+                  "name",
+                  "path"
+                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -308,7 +342,10 @@
             },
             "multipart/form-data": {
               "schema": {
-                "required": ["name", "path"],
+                "required": [
+                  "name",
+                  "path"
+                ],
                 "properties": {
                   "name": {
                     "type": "string",
@@ -359,9 +396,10 @@
     },
     "/groups/{id}": {
       "get": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Get all details of a group. This endpoint can be accessed without authentication if the group is publicly accessible.",
-        "operationId": "getGroupById",
         "parameters": [
           {
             "name": "id",
@@ -383,7 +421,7 @@
           {
             "name": "with_projects",
             "in": "query",
-            "description": "Include details from projects that belong to the specified group (defaults totrue). (Deprecated,scheduled for removal in API v5. To get the details of all projects within a group, use thelist a group’s projects endpoint.)",
+            "description": "Include details from projects that belong to the specified group (defaults totrue). (Deprecated,scheduled for removal in API v5. To get the details of all projects within a group, use thelist a group\u2019s projects endpoint.)",
             "schema": {
               "type": "boolean",
               "default": true
@@ -414,9 +452,10 @@
         }
       },
       "put": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Updates the project group. Only available to group owners and administrators.",
-        "operationId": "updateGroup",
         "parameters": [
           {
             "name": "id",
@@ -465,7 +504,11 @@
             "description": "The visibility level of the group. Can beprivate,internal, orpublic.",
             "schema": {
               "type": "string",
-              "enum": ["private", "internal", "public"]
+              "enum": [
+                "private",
+                "internal",
+                "public"
+              ]
             }
           },
           {
@@ -490,7 +533,11 @@
             "description": "Determine if developers can create projects in the group. Can benoone(No one),maintainer(Maintainers), or developer(Developers + Maintainers).",
             "schema": {
               "type": "string",
-              "enum": ["noone", "maintainer", "developer"]
+              "enum": [
+                "noone",
+                "maintainer",
+                "developer"
+              ]
             }
           },
           {
@@ -507,7 +554,10 @@
             "description": "Allowed to create subgroups. Can beowner(Owners), ormaintainer(Maintainers).",
             "schema": {
               "type": "string",
-              "enum": ["owner", "maintainer"]
+              "enum": [
+                "owner",
+                "maintainer"
+              ]
             }
           },
           {
@@ -548,7 +598,11 @@
             "description": "SeeOptions fordefault_branch_protection.",
             "schema": {
               "type": "integer",
-              "enum": [0, 1, 2]
+              "enum": [
+                0,
+                1,
+                2
+              ]
             }
           }
         ],
@@ -591,9 +645,10 @@
         }
       },
       "delete": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Removes group, and queues a background job to delete all projects in the group as well.",
-        "operationId": "deleteGroup",
         "parameters": [
           {
             "name": "id",
@@ -625,9 +680,10 @@
     },
     "/groups/{id}/share": {
       "post": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Share group with another group.",
-        "operationId": "shareGroup",
         "parameters": [
           {
             "name": "id",
@@ -654,7 +710,13 @@
             "required": true,
             "schema": {
               "type": "integer",
-              "enum": [10, 20, 30, 40, 50]
+              "enum": [
+                10,
+                20,
+                30,
+                40,
+                50
+              ]
             }
           },
           {
@@ -693,9 +755,10 @@
     },
     "/groups/{id}/share/{group_id}": {
       "delete": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Unshare the group from another group. Returns 204 and no content on success.",
-        "operationId": "unshareGroup",
         "parameters": [
           {
             "name": "id",
@@ -736,9 +799,10 @@
     },
     "/groups/{id}/subgroups": {
       "get": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Get a list of visible direct subgroups in this group. When accessed without authentication, only public groups are returned.",
-        "operationId": "getGroupSubgroups",
         "parameters": [
           {
             "name": "page",
@@ -804,7 +868,11 @@
             "schema": {
               "type": "string",
               "default": "name",
-              "enum": ["name", "path", "id"]
+              "enum": [
+                "name",
+                "path",
+                "id"
+              ]
             }
           },
           {
@@ -814,7 +882,10 @@
             "schema": {
               "type": "string",
               "default": "asc",
-              "enum": ["asc", "desc"]
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           },
           {
@@ -847,7 +918,14 @@
             "description": "Limit to groups where current user has at least thisaccess level",
             "schema": {
               "type": "integer",
-              "enum": [0, 10, 20, 30, 40, 50]
+              "enum": [
+                0,
+                10,
+                20,
+                30,
+                40,
+                50
+              ]
             }
           }
         ],
@@ -880,9 +958,10 @@
     },
     "/groups/{id}/hooks": {
       "get": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Get a list of group hooks",
-        "operationId": "getGroupHooks",
         "parameters": [
           {
             "name": "id",
@@ -921,9 +1000,10 @@
         }
       },
       "post": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Adds a hook to a specified group.",
-        "operationId": "createGroupHook",
         "parameters": [
           {
             "name": "id",
@@ -1082,9 +1162,10 @@
     },
     "/groups/{id}/hooks/{hook_id}": {
       "get": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Get a list of group hooks",
-        "operationId": "getGroupHookById",
         "parameters": [
           {
             "name": "hook_id",
@@ -1129,9 +1210,10 @@
         }
       },
       "put": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Edits a hook for a specified group.",
-        "operationId": "updateGroupHook",
         "parameters": [
           {
             "name": "id",
@@ -1297,9 +1379,10 @@
         }
       },
       "delete": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Removes a hook from a group. This is an idempotent method and can be called multiple times. Either the hook is available or not.",
-        "operationId": "deleteGroupHook",
         "parameters": [
           {
             "name": "id",
@@ -1340,9 +1423,10 @@
     },
     "/groups/{id}/descendant_groups": {
       "get": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Get a list of visible descendant groups of this group. When accessed without authentication, only public groups are returned.",
-        "operationId": "getGroupDescendantGroups",
         "parameters": [
           {
             "name": "page",
@@ -1408,7 +1492,11 @@
             "schema": {
               "type": "string",
               "default": "name",
-              "enum": ["name", "path", "id"]
+              "enum": [
+                "name",
+                "path",
+                "id"
+              ]
             }
           },
           {
@@ -1418,7 +1506,10 @@
             "schema": {
               "type": "string",
               "default": "asc",
-              "enum": ["asc", "desc"]
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           },
           {
@@ -1451,7 +1542,14 @@
             "description": "Limit to groups where current user has at least thisaccess level",
             "schema": {
               "type": "integer",
-              "enum": [0, 10, 20, 30, 40, 50]
+              "enum": [
+                0,
+                10,
+                20,
+                30,
+                40,
+                50
+              ]
             }
           }
         ],
@@ -1484,9 +1582,10 @@
     },
     "/groups/{id}/projects": {
       "get": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Get a list of projects in this group. When accessed without authentication, only public projects are returned.",
-        "operationId": "getGroupProjects",
         "parameters": [
           {
             "name": "page",
@@ -1530,7 +1629,11 @@
             "description": "Limit by visibilitypublic,internal, orprivate",
             "schema": {
               "type": "string",
-              "enum": ["public", "internal", "private"]
+              "enum": [
+                "public",
+                "internal",
+                "private"
+              ]
             }
           },
           {
@@ -1558,7 +1661,10 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": ["asc", "desc"]
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           },
           {
@@ -1635,7 +1741,14 @@
             "description": "Limit to projects where current user has at least thisaccess level",
             "schema": {
               "type": "integer",
-              "enum": [0, 10, 20, 30, 40, 50]
+              "enum": [
+                0,
+                10,
+                20,
+                30,
+                40,
+                50
+              ]
             }
           },
           {
@@ -1676,9 +1789,10 @@
     },
     "/groups/{id}/projects/{project_id}": {
       "post": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Transfer a project to the Group namespace",
-        "operationId": "transferProjectToGroup",
         "parameters": [
           {
             "name": "id",
@@ -1725,9 +1839,10 @@
     },
     "/groups/{id}/projects/shared": {
       "get": {
-        "tags": ["Group"],
+        "tags": [
+          "Group"
+        ],
         "description": "Get a list of projects shared to this group. When accessed without authentication, only public shared projects are returned.",
-        "operationId": "getGroupSharedProjects",
         "parameters": [
           {
             "name": "page",
@@ -1771,7 +1886,11 @@
             "description": "Limit by visibilitypublic,internal, orprivate",
             "schema": {
               "type": "string",
-              "enum": ["public", "internal", "private"]
+              "enum": [
+                "public",
+                "internal",
+                "private"
+              ]
             }
           },
           {
@@ -1798,7 +1917,10 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": ["asc", "desc"]
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           },
           {
@@ -1849,7 +1971,14 @@
             "description": "Limit to projects where current user has at least thisaccess level",
             "schema": {
               "type": "integer",
-              "enum": [0, 10, 20, 30, 40, 50]
+              "enum": [
+                0,
+                10,
+                20,
+                30,
+                40,
+                50
+              ]
             }
           },
           {
@@ -1955,24 +2084,35 @@
           "title": "Replace sanitize with escape once",
           "author_name": "Example User",
           "author_email": "user@example.com",
-          "authored_date": "2012-09-20T08:50:22.000Z",
+          "authored_date": "2012-09-20T08:50:22Z",
           "committer_name": "Administrator",
           "committer_email": "admin@example.com",
-          "committed_date": "2012-09-20T08:50:22.000Z",
-          "created_at": "2012-09-20T08:50:22.000Z",
+          "committed_date": "2012-09-20T08:50:22Z",
+          "created_at": "2012-09-20T08:50:22Z",
           "message": "Replace sanitize with escape once",
-          "parent_ids": ["6104942438c14ec7bd21c6cd5bd995272b3faff6"],
+          "parent_ids": [
+            "6104942438c14ec7bd21c6cd5bd995272b3faff6"
+          ],
           "web_url": "https://gitlab.example.com/thedude/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"
         }
       },
       "Action": {
-        "required": ["action", "file_path"],
+        "required": [
+          "action",
+          "file_path"
+        ],
         "type": "object",
         "properties": {
           "action": {
             "type": "string",
             "description": "The action to perform",
-            "enum": ["create", "delete", "move", "update", "chmod"]
+            "enum": [
+              "create",
+              "delete",
+              "move",
+              "update",
+              "chmod"
+            ]
           },
           "file_path": {
             "type": "string",
@@ -1990,7 +2130,10 @@
             "type": "string",
             "description": "The file encoding",
             "default": "text",
-            "enum": ["base64", "text"]
+            "enum": [
+              "base64",
+              "text"
+            ]
           },
           "last_commit_id": {
             "type": "string",
@@ -2079,11 +2222,13 @@
           "author_email": "user@example.com",
           "committer_name": "Example User",
           "committer_email": "user@example.com",
-          "created_at": "2016-09-20T16:26:24.000Z",
+          "created_at": "2016-09-20T16:26:24Z",
           "message": "some commit message",
-          "parent_ids": ["ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"],
-          "committed_date": "2016-09-20T16:26:24.000Z",
-          "authored_date": "2016-09-20T16:26:24.000Z",
+          "parent_ids": [
+            "ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"
+          ],
+          "committed_date": "2016-09-20T16:26:24Z",
+          "authored_date": "2016-09-20T16:26:24Z",
           "last_pipeline": {
             "id": 8,
             "ref": "master",
@@ -2135,7 +2280,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["branch", "tag", "all"]
+            "enum": [
+              "branch",
+              "tag",
+              "all"
+            ]
           },
           "name": {
             "type": "string"
@@ -2587,7 +2736,7 @@
               "subject": "CN=gitlab@example.org,OU=Example,O=World",
               "subject_key_identifier": "BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC",
               "email": "gitlab@example.org",
-              "serial_number": 2.7896956101890133e38,
+              "serial_number": 2.7896956101890133e+38,
               "certificate_status": "good",
               "x509_issuer": {
                 "id": 1,
@@ -2867,11 +3016,14 @@
             "http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",
             "web_url": "http://example.com/diaspora/diaspora-client",
             "readme_url": "http://example.com/diaspora/diaspora-client/blob/master/README.md",
-            "tag_list": ["example", "disapora client"],
+            "tag_list": [
+              "example",
+              "disapora client"
+            ],
             "owner": {
               "id": 3,
               "name": "Diaspora",
-              "created_at": "2013-09-30T13:46:02.000Z"
+              "created_at": "2013-09-30T13:46:02Z"
             },
             "name": "Diaspora Client",
             "name_with_namespace": "Diaspora / Diaspora Client",
@@ -2886,8 +3038,8 @@
             "can_create_merge_request_in": true,
             "resolve_outdated_diff_discussions": false,
             "container_registry_enabled": false,
-            "created_at": "2013-09-30T13:46:02.000Z",
-            "last_activity_at": "2013-09-30T13:46:02.000Z",
+            "created_at": "2013-09-30T13:46:02Z",
+            "last_activity_at": "2013-09-30T13:46:02Z",
             "creator_id": 3,
             "namespace": {
               "id": 3,
@@ -2914,8 +3066,8 @@
             "request_access_enabled": false,
             "merge_method": "merge",
             "autoclose_referenced_issues": true,
-            "marked_for_deletion_at": "2020-04-03T00:00:00.000Z",
-            "marked_for_deletion_on": "2020-04-03T00:00:00.000Z",
+            "marked_for_deletion_at": "2020-04-03T00:00:00Z",
+            "marked_for_deletion_on": "2020-04-03T00:00:00Z",
             "statistics": {
               "commit_count": 37,
               "storage_size": 1038090,
@@ -2944,11 +3096,14 @@
             "http_url_to_repo": "http://example.com/brightbox/puppet.git",
             "web_url": "http://example.com/brightbox/puppet",
             "readme_url": "http://example.com/brightbox/puppet/blob/master/README.md",
-            "tag_list": ["example", "puppet"],
+            "tag_list": [
+              "example",
+              "puppet"
+            ],
             "owner": {
               "id": 4,
               "name": "Brightbox",
-              "created_at": "2013-09-30T13:46:02.000Z"
+              "created_at": "2013-09-30T13:46:02Z"
             },
             "name": "Puppet",
             "name_with_namespace": "Brightbox / Puppet",
@@ -2963,8 +3118,8 @@
             "can_create_merge_request_in": true,
             "resolve_outdated_diff_discussions": false,
             "container_registry_enabled": false,
-            "created_at": "2013-09-30T13:46:02.000Z",
-            "last_activity_at": "2013-09-30T13:46:02.000Z",
+            "created_at": "2013-09-30T13:46:02Z",
+            "last_activity_at": "2013-09-30T13:46:02Z",
             "creator_id": 3,
             "namespace": {
               "id": 4,
@@ -3206,11 +3361,14 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": ["example", "disapora project"],
+          "tag_list": [
+            "example",
+            "disapora project"
+          ],
           "owner": {
             "id": 3,
             "name": "Diaspora",
-            "created_at": "2013-09-30T13:46:02.000Z"
+            "created_at": "2013-09-30T13:46:02Z"
           },
           "name": "Diaspora Project Site",
           "name_with_namespace": "Diaspora / Diaspora Project Site",
@@ -3225,8 +3383,8 @@
           "can_create_merge_request_in": true,
           "resolve_outdated_diff_discussions": false,
           "container_registry_enabled": false,
-          "created_at": "2013-09-30T13:46:02.000Z",
-          "last_activity_at": "2013-09-30T13:46:02.000Z",
+          "created_at": "2013-09-30T13:46:02Z",
+          "last_activity_at": "2013-09-30T13:46:02Z",
           "creator_id": 3,
           "namespace": {
             "id": 3,
@@ -3432,7 +3590,10 @@
             "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
             "web_url": "http://example.com/diaspora/diaspora-project-site",
             "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-            "tag_list": ["example", "disapora project"],
+            "tag_list": [
+              "example",
+              "disapora project"
+            ],
             "name": "Diaspora Project Site",
             "name_with_namespace": "Diaspora / Diaspora Project Site",
             "path": "diaspora-project-site",
@@ -3446,8 +3607,8 @@
             "can_create_merge_request_in": true,
             "resolve_outdated_diff_discussions": false,
             "container_registry_enabled": false,
-            "created_at": "2013-09-30T13:46:02.000Z",
-            "last_activity_at": "2013-09-30T13:46:02.000Z",
+            "created_at": "2013-09-30T13:46:02Z",
+            "last_activity_at": "2013-09-30T13:46:02Z",
             "creator_id": 3,
             "namespace": {
               "id": 3,
@@ -3638,7 +3799,10 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": ["example", "disapora project"],
+          "tag_list": [
+            "example",
+            "disapora project"
+          ],
           "name": "Diaspora Project Site",
           "name_with_namespace": "Diaspora / Diaspora Project Site",
           "path": "diaspora-project-site",
@@ -3652,8 +3816,8 @@
           "can_create_merge_request_in": true,
           "resolve_outdated_diff_discussions": false,
           "container_registry_enabled": false,
-          "created_at": "2013-09-30T13:46:02.000Z",
-          "last_activity_at": "2013-09-30T13:46:02.000Z",
+          "created_at": "2013-09-30T13:46:02Z",
+          "last_activity_at": "2013-09-30T13:46:02Z",
           "creator_id": 3,
           "namespace": {
             "id": 3,
@@ -3935,7 +4099,7 @@
             "name_with_namespace": "GitLab.org / GitLab Community Edition",
             "path": "gitlab-foss",
             "path_with_namespace": "gitlab-org/gitlab-foss",
-            "created_at": "2013-09-26T06:02:36.000Z",
+            "created_at": "2013-09-26T06:02:36Z",
             "default_branch": "master",
             "tag_list": [],
             "ssh_url_to_repo": "git@gitlab.com:gitlab-org/gitlab-foss.git",
@@ -3966,11 +4130,14 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": ["example", "disapora project"],
+          "tag_list": [
+            "example",
+            "disapora project"
+          ],
           "owner": {
             "id": 3,
             "name": "Diaspora",
-            "created_at": "2013-09-30T13:46:02.000Z"
+            "created_at": "2013-09-30T13:46:02Z"
           },
           "name": "Diaspora Project Site",
           "name_with_namespace": "Diaspora / Diaspora Project Site",
@@ -3990,8 +4157,8 @@
             "enabled": false,
             "next_run_at": "2020-01-07T21:42:58.658Z"
           },
-          "created_at": "2013-09-30T13:46:02.000Z",
-          "last_activity_at": "2013-09-30T13:46:02.000Z",
+          "created_at": "2013-09-30T13:46:02Z",
+          "last_activity_at": "2013-09-30T13:46:02Z",
           "creator_id": 3,
           "namespace": {
             "id": 3,
@@ -4063,9 +4230,11 @@
           "packages_enabled": true,
           "service_desk_enabled": false,
           "autoclose_referenced_issues": true,
-          "marked_for_deletion_at": "2020-04-03T00:00:00.000Z",
-          "marked_for_deletion_on": "2020-04-03T00:00:00.000Z",
-          "compliance_frameworks": ["sox"],
+          "marked_for_deletion_at": "2020-04-03T00:00:00Z",
+          "marked_for_deletion_on": "2020-04-03T00:00:00Z",
+          "compliance_frameworks": [
+            "sox"
+          ],
           "statistics": {
             "commit_count": 37,
             "storage_size": 1038090,
@@ -4817,7 +4986,7 @@
             "name_with_namespace": "H5bp / Html5 Boilerplate",
             "path": "html5-boilerplate",
             "path_with_namespace": "h5bp/html5-boilerplate",
-            "created_at": "2020-04-27T06:13:22.642Z",
+            "created_at": "2020-04-27T06:13:22Z",
             "default_branch": "master",
             "tag_list": [],
             "ssh_url_to_repo": "ssh://git@gitlab.com/h5bp/html5-boilerplate.git",
@@ -4826,7 +4995,7 @@
             "readme_url": "http://gitlab.com/h5bp/html5-boilerplate/-/blob/master/README.md",
             "star_count": 0,
             "forks_count": 4,
-            "last_activity_at": "2020-04-27T06:13:22.642Z",
+            "last_activity_at": "2020-04-27T06:13:22Z",
             "namespace": {
               "id": 28,
               "name": "H5bp",
@@ -5107,7 +5276,7 @@
                   "group_name": "Gitlab Org",
                   "group_full_path": "gitlab-org",
                   "group_access_level": 10,
-                  "expires_at": "2018-08-14T00:00:00.000Z"
+                  "expires_at": "2018-08-14T00:00:00Z"
                 }
               ]
             }
@@ -5186,7 +5355,7 @@
           "deployment_events": true,
           "releases_events": true,
           "enable_ssl_verification": true,
-          "created_at": "2012-10-12T17:04:47.000Z"
+          "created_at": "2012-10-12T17:04:47Z"
         }
       },
       "NotIssue": {
@@ -5241,7 +5410,11 @@
           },
           "search": {
             "type": "string",
-            "enum": ["title", "description", "title,description"]
+            "enum": [
+              "title",
+              "description",
+              "title,description"
+            ]
           },
           "in": {
             "type": "string"
@@ -5396,15 +5569,18 @@
               "id": 9,
               "name": "Dr. Luella Kovacek"
             },
-            "labels": ["foo", "bar"],
+            "labels": [
+              "foo",
+              "bar"
+            ],
             "upvotes": 4,
             "downvotes": 0,
             "merge_requests_count": 0,
             "id": 41,
             "title": "Ut commodi ullam eos dolores perferendis nihil sunt.",
-            "updated_at": "2016-01-04T15:31:46.176Z",
-            "created_at": "2016-01-04T15:31:46.176Z",
-            "closed_at": "2016-01-05T15:31:46.176Z",
+            "updated_at": "2016-01-04T15:31:46Z",
+            "created_at": "2016-01-04T15:31:46Z",
+            "closed_at": "2016-01-05T15:31:46Z",
             "closed_by": {
               "state": "active",
               "web_url": "https://gitlab.example.com/root",
@@ -5413,7 +5589,7 @@
               "name": "Administrator"
             },
             "user_notes_count": 1,
-            "due_date": "2016-07-22T00:00:00.000Z",
+            "due_date": "2016-07-22",
             "web_url": "http://gitlab.example.com/my-group/my-project/issues/1",
             "references": {
               "short": "#1",
@@ -5707,7 +5883,7 @@
           }
         },
         "example": {
-          "human_time_estimate": "3h 30m",
+          "human_time_estimate": "3h30m",
           "human_total_time_spent": "1h",
           "time_estimate": 12600,
           "total_time_spent": 0
