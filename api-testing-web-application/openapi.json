@@ -1,0 +1,3642 @@
+{
+  "components": {
+    "schemas": {
+      "ArtifactAvailabilityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "dynamic_constraints": {
+            "default": false,
+            "title": "Dynamic Constraints",
+            "type": "boolean"
+          },
+          "graph": {
+            "default": false,
+            "title": "Graph",
+            "type": "boolean"
+          },
+          "history": {
+            "default": false,
+            "title": "History",
+            "type": "boolean"
+          },
+          "invariants": {
+            "default": false,
+            "title": "Invariants",
+            "type": "boolean"
+          },
+          "reports": {
+            "default": false,
+            "title": "Reports",
+            "type": "boolean"
+          },
+          "specification": {
+            "default": false,
+            "title": "Specification",
+            "type": "boolean"
+          },
+          "static_constraints": {
+            "default": false,
+            "title": "Static Constraints",
+            "type": "boolean"
+          },
+          "test_cases": {
+            "default": false,
+            "title": "Test Cases",
+            "type": "boolean"
+          }
+        },
+        "title": "ArtifactAvailabilityResponse",
+        "type": "object"
+      },
+      "ArtifactCatalogResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "artifacts": {
+            "items": {
+              "$ref": "#/components/schemas/ArtifactMetadataResponse"
+            },
+            "title": "Artifacts",
+            "type": "array"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "artifacts"
+        ],
+        "title": "ArtifactCatalogResponse",
+        "type": "object"
+      },
+      "ArtifactContentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "content": {
+            "discriminator": {
+              "mapping": {
+                "raw_csv": "#/components/schemas/RawCsvContentResponse",
+                "raw_json": "#/components/schemas/RawJsonContentResponse",
+                "raw_text": "#/components/schemas/RawTextContentResponse",
+                "sanitized_har_session": "#/components/schemas/SanitizedHarSessionContentResponse",
+                "sanitized_test_cases": "#/components/schemas/SanitizedTestCasesContentResponse",
+                "summary": "#/components/schemas/ArtifactSummaryContentResponse"
+              },
+              "propertyName": "content_kind"
+            },
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/ArtifactSummaryContentResponse"
+              },
+              {
+                "$ref": "#/components/schemas/RawJsonContentResponse"
+              },
+              {
+                "$ref": "#/components/schemas/RawTextContentResponse"
+              },
+              {
+                "$ref": "#/components/schemas/RawCsvContentResponse"
+              },
+              {
+                "$ref": "#/components/schemas/SanitizedTestCasesContentResponse"
+              },
+              {
+                "$ref": "#/components/schemas/SanitizedHarSessionContentResponse"
+              }
+            ],
+            "title": "Content"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ArtifactMetadataResponse"
+          },
+          "raw": {
+            "title": "Raw",
+            "type": "boolean"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "artifact_id",
+          "raw",
+          "metadata",
+          "content"
+        ],
+        "title": "ArtifactContentResponse",
+        "type": "object"
+      },
+      "ArtifactKind": {
+        "enum": [
+          "specification",
+          "configuration",
+          "memory",
+          "graph",
+          "reports",
+          "static_constraints",
+          "dynamic_constraints",
+          "test_cases",
+          "invariants",
+          "usage",
+          "har_session"
+        ],
+        "title": "ArtifactKind",
+        "type": "string"
+      },
+      "ArtifactMetadataResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_id": {
+            "title": "Artifact Id",
+            "type": "string"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ArtifactKind"
+          },
+          "media_type": {
+            "$ref": "#/components/schemas/MediaType"
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At"
+          },
+          "raw_policy": {
+            "$ref": "#/components/schemas/RawPolicy"
+          },
+          "raw_supported": {
+            "title": "Raw Supported",
+            "type": "boolean"
+          },
+          "relative_path": {
+            "title": "Relative Path",
+            "type": "string"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "summary_supported": {
+            "title": "Summary Supported",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "artifact_id",
+          "run_name",
+          "kind",
+          "relative_path",
+          "media_type",
+          "size_bytes",
+          "raw_supported",
+          "summary_supported",
+          "raw_policy"
+        ],
+        "title": "ArtifactMetadataResponse",
+        "type": "object"
+      },
+      "ArtifactSummaryContentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "columns": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Columns",
+            "type": "array"
+          },
+          "content_kind": {
+            "const": "summary",
+            "default": "summary",
+            "title": "Content Kind",
+            "type": "string"
+          },
+          "entry_count": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Entry Count"
+          },
+          "item_count": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Item Count"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/ArtifactKind"
+          },
+          "object_count": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Object Count"
+          },
+          "row_count": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Row Count"
+          },
+          "session_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Session Id"
+          },
+          "top_level_keys": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Top Level Keys",
+            "type": "array"
+          },
+          "value_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value Type"
+          }
+        },
+        "required": [
+          "kind"
+        ],
+        "title": "ArtifactSummaryContentResponse",
+        "type": "object"
+      },
+      "ConstraintEntryDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "expression": {
+            "title": "Expression",
+            "type": "string"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "property_path": {
+            "title": "Property Path",
+            "type": "string"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          }
+        },
+        "required": [
+          "operation_id",
+          "property_path",
+          "expression"
+        ],
+        "title": "ConstraintEntryDetailResponse",
+        "type": "object"
+      },
+      "ConstraintEntryPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintEntryDetailResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups"
+        ],
+        "title": "ConstraintEntryPageResponse",
+        "type": "object"
+      },
+      "ConstraintEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "expression": {
+            "title": "Expression",
+            "type": "string"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "property_path": {
+            "title": "Property Path",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "property_path",
+          "expression"
+        ],
+        "title": "ConstraintEntryResponse",
+        "type": "object"
+      },
+      "ConstraintSectionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "constraints": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintEntryResponse"
+            },
+            "title": "Constraints",
+            "type": "array"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "name",
+          "constraints"
+        ],
+        "title": "ConstraintSectionResponse",
+        "type": "object"
+      },
+      "DependencyGraphResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "edges": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdgeResponse"
+            },
+            "title": "Edges",
+            "type": "array"
+          },
+          "nodes": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Nodes",
+            "type": "array"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "nodes",
+          "edges"
+        ],
+        "title": "DependencyGraphResponse",
+        "type": "object"
+      },
+      "DynamicConstraintsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "constraint_count": {
+            "minimum": 0.0,
+            "title": "Constraint Count",
+            "type": "integer"
+          },
+          "constraints": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintEntryResponse"
+            },
+            "title": "Constraints",
+            "type": "array"
+          },
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/InvariantGroupResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "invariant_count": {
+            "minimum": 0.0,
+            "title": "Invariant Count",
+            "type": "integer"
+          },
+          "invariants": {
+            "items": {
+              "$ref": "#/components/schemas/InvariantRecordResponse"
+            },
+            "title": "Invariants",
+            "type": "array"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "constraints",
+          "groups",
+          "invariants",
+          "constraint_count",
+          "invariant_count"
+        ],
+        "title": "DynamicConstraintsResponse",
+        "type": "object"
+      },
+      "GraphEdgePageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEdgeResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups"
+        ],
+        "title": "GraphEdgePageResponse",
+        "type": "object"
+      },
+      "GraphEdgeResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "from_node": {
+            "title": "From Node",
+            "type": "string"
+          },
+          "similar_parameters": {
+            "items": {
+              "$ref": "#/components/schemas/GraphSimilarityResponse"
+            },
+            "title": "Similar Parameters",
+            "type": "array"
+          },
+          "to_node": {
+            "title": "To Node",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_node",
+          "to_node",
+          "similar_parameters"
+        ],
+        "title": "GraphEdgeResponse",
+        "type": "object"
+      },
+      "GraphSimilarityResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "in_value": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "In Value"
+          },
+          "value1": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value1"
+          },
+          "value2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value2"
+          }
+        },
+        "title": "GraphSimilarityResponse",
+        "type": "object"
+      },
+      "GroupCountResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "key": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Key"
+          }
+        },
+        "required": [
+          "count"
+        ],
+        "title": "GroupCountResponse",
+        "type": "object"
+      },
+      "HTTPValidationError": {
+        "properties": {
+          "detail": {
+            "items": {
+              "$ref": "#/components/schemas/ValidationError"
+            },
+            "title": "Detail",
+            "type": "array"
+          }
+        },
+        "title": "HTTPValidationError",
+        "type": "object"
+      },
+      "HarEntryPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/HarEntryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "session_id",
+          "items",
+          "pagination"
+        ],
+        "title": "HarEntryPageResponse",
+        "type": "object"
+      },
+      "HarEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "entry_id": {
+            "title": "Entry Id",
+            "type": "string"
+          },
+          "query_params": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Query Params",
+            "type": "object"
+          },
+          "request_body": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "request_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Request Headers",
+            "type": "object"
+          },
+          "request_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Method"
+          },
+          "request_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Url"
+          },
+          "response_body": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Response Headers",
+            "type": "object"
+          },
+          "response_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Status"
+          },
+          "response_status_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Status Text"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "required": [
+          "entry_id",
+          "request_headers",
+          "query_params",
+          "response_headers"
+        ],
+        "title": "HarEntryResponse",
+        "type": "object"
+      },
+      "HarSessionListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "sessions": {
+            "items": {
+              "$ref": "#/components/schemas/HarSessionSummaryResponse"
+            },
+            "title": "Sessions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_name",
+          "sessions"
+        ],
+        "title": "HarSessionListResponse",
+        "type": "object"
+      },
+      "HarSessionSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "entry_count": {
+            "minimum": 0.0,
+            "title": "Entry Count",
+            "type": "integer"
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "session_id",
+          "entry_count",
+          "size_bytes"
+        ],
+        "title": "HarSessionSummaryResponse",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "InvariantDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "invariant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invariant"
+          },
+          "invariant_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invariant Type"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "postman_assertion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postman Assertion"
+          },
+          "pptname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pptname"
+          },
+          "variables": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variables"
+          }
+        },
+        "title": "InvariantDetailResponse",
+        "type": "object"
+      },
+      "InvariantGroupResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "invariants": {
+            "items": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Invariants",
+            "type": "array"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "invariants"
+        ],
+        "title": "InvariantGroupResponse",
+        "type": "object"
+      },
+      "InvariantPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InvariantDetailResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups"
+        ],
+        "title": "InvariantPageResponse",
+        "type": "object"
+      },
+      "InvariantRecordResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "invariant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invariant"
+          },
+          "invariant_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invariant Type"
+          },
+          "postman_assertion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postman Assertion"
+          },
+          "pptname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pptname"
+          },
+          "variables": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variables"
+          }
+        },
+        "title": "InvariantRecordResponse",
+        "type": "object"
+      },
+      "JsonValue": {},
+      "MediaType": {
+        "enum": [
+          "application/json",
+          "text/csv",
+          "text/plain"
+        ],
+        "title": "MediaType",
+        "type": "string"
+      },
+      "OperationDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "display_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Operation Id"
+          },
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "parameter_count": {
+            "minimum": 0.0,
+            "title": "Parameter Count",
+            "type": "integer"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Parameters",
+            "type": "object"
+          },
+          "path_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path Template"
+          },
+          "request_body": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response_statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Response Statuses",
+            "type": "array"
+          },
+          "responses": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Responses",
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation_id",
+          "parameter_count",
+          "response_statuses",
+          "parameters",
+          "responses"
+        ],
+        "title": "OperationDetailResponse",
+        "type": "object"
+      },
+      "OperationListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/OperationSummaryResponse"
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "operations"
+        ],
+        "title": "OperationListResponse",
+        "type": "object"
+      },
+      "OperationSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "display_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Operation Id"
+          },
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "parameter_count": {
+            "minimum": 0.0,
+            "title": "Parameter Count",
+            "type": "integer"
+          },
+          "path_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path Template"
+          },
+          "response_statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Response Statuses",
+            "type": "array"
+          }
+        },
+        "required": [
+          "operation_id",
+          "parameter_count",
+          "response_statuses"
+        ],
+        "title": "OperationSummaryResponse",
+        "type": "object"
+      },
+      "PaginationMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "limit": {
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "offset": {
+            "minimum": 0.0,
+            "title": "Offset",
+            "type": "integer"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "limit",
+          "offset",
+          "total"
+        ],
+        "title": "PaginationMetadata",
+        "type": "object"
+      },
+      "RawCsvContentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content_kind": {
+            "const": "raw_csv",
+            "default": "raw_csv",
+            "title": "Content Kind",
+            "type": "string"
+          },
+          "rows": {
+            "items": {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "type": "object"
+            },
+            "title": "Rows",
+            "type": "array"
+          }
+        },
+        "required": [
+          "rows"
+        ],
+        "title": "RawCsvContentResponse",
+        "type": "object"
+      },
+      "RawJsonContentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content_kind": {
+            "const": "raw_json",
+            "default": "raw_json",
+            "title": "Content Kind",
+            "type": "string"
+          },
+          "value": {
+            "$ref": "#/components/schemas/JsonValue"
+          }
+        },
+        "required": [
+          "value"
+        ],
+        "title": "RawJsonContentResponse",
+        "type": "object"
+      },
+      "RawPolicy": {
+        "enum": [
+          "raw_json",
+          "raw_text",
+          "raw_csv",
+          "sanitized_test_cases",
+          "sanitized_har_session"
+        ],
+        "title": "RawPolicy",
+        "type": "string"
+      },
+      "RawTextContentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content_kind": {
+            "const": "raw_text",
+            "default": "raw_text",
+            "title": "Content Kind",
+            "type": "string"
+          },
+          "text": {
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "text"
+        ],
+        "title": "RawTextContentResponse",
+        "type": "object"
+      },
+      "ReportEntryPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/StatusReportEntryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups"
+        ],
+        "title": "ReportEntryPageResponse",
+        "type": "object"
+      },
+      "ReportsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/StatusReportEntryResponse"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Status Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "run_name",
+          "entries",
+          "status_counts"
+        ],
+        "title": "ReportsResponse",
+        "type": "object"
+      },
+      "RunCatalogResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "runs": {
+            "items": {
+              "$ref": "#/components/schemas/RunMetadataResponse"
+            },
+            "title": "Runs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "runs"
+        ],
+        "title": "RunCatalogResponse",
+        "type": "object"
+      },
+      "RunMetadataResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_count": {
+            "minimum": 0.0,
+            "title": "Artifact Count",
+            "type": "integer"
+          },
+          "has_history": {
+            "title": "Has History",
+            "type": "boolean"
+          },
+          "modified_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Modified At"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "size_bytes": {
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_name",
+          "artifact_count",
+          "has_history",
+          "size_bytes"
+        ],
+        "title": "RunMetadataResponse",
+        "type": "object"
+      },
+      "RunSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "artifact_count": {
+            "minimum": 0.0,
+            "title": "Artifact Count",
+            "type": "integer"
+          },
+          "available_artifacts": {
+            "$ref": "#/components/schemas/ArtifactAvailabilityResponse"
+          },
+          "dynamic_constraint_count": {
+            "minimum": 0.0,
+            "title": "Dynamic Constraint Count",
+            "type": "integer"
+          },
+          "har_session_count": {
+            "minimum": 0.0,
+            "title": "Har Session Count",
+            "type": "integer"
+          },
+          "operation_count": {
+            "minimum": 0.0,
+            "title": "Operation Count",
+            "type": "integer"
+          },
+          "report_status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Report Status Counts",
+            "type": "object"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "static_constraint_count": {
+            "minimum": 0.0,
+            "title": "Static Constraint Count",
+            "type": "integer"
+          },
+          "test_case_count": {
+            "minimum": 0.0,
+            "title": "Test Case Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "run_name",
+          "artifact_count",
+          "operation_count",
+          "test_case_count",
+          "har_session_count",
+          "static_constraint_count",
+          "dynamic_constraint_count",
+          "report_status_counts",
+          "available_artifacts"
+        ],
+        "title": "RunSummaryResponse",
+        "type": "object"
+      },
+      "SanitizedBodyResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "included": {
+            "title": "Included",
+            "type": "boolean"
+          },
+          "preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Preview"
+          },
+          "redaction_count": {
+            "minimum": 0.0,
+            "title": "Redaction Count",
+            "type": "integer"
+          },
+          "size_bytes": {
+            "minimum": 0.0,
+            "title": "Size Bytes",
+            "type": "integer"
+          },
+          "truncated": {
+            "title": "Truncated",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "included",
+          "truncated",
+          "size_bytes",
+          "redaction_count"
+        ],
+        "title": "SanitizedBodyResponse",
+        "type": "object"
+      },
+      "SanitizedHarEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "duration_ms": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Duration Ms"
+          },
+          "entry_id": {
+            "title": "Entry Id",
+            "type": "string"
+          },
+          "query_params": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Query Params",
+            "type": "object"
+          },
+          "request_body": {
+            "$ref": "#/components/schemas/SanitizedBodyResponse"
+          },
+          "request_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Request Headers",
+            "type": "object"
+          },
+          "request_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Method"
+          },
+          "request_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Url"
+          },
+          "response_body": {
+            "$ref": "#/components/schemas/SanitizedBodyResponse"
+          },
+          "response_headers": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "title": "Response Headers",
+            "type": "object"
+          },
+          "response_status": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Status"
+          },
+          "response_status_text": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Response Status Text"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          }
+        },
+        "required": [
+          "entry_id",
+          "request_headers",
+          "query_params",
+          "request_body",
+          "response_headers",
+          "response_body"
+        ],
+        "title": "SanitizedHarEntryResponse",
+        "type": "object"
+      },
+      "SanitizedHarSessionContentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content_kind": {
+            "const": "sanitized_har_session",
+            "default": "sanitized_har_session",
+            "title": "Content Kind",
+            "type": "string"
+          },
+          "entries": {
+            "items": {
+              "$ref": "#/components/schemas/SanitizedHarEntryResponse"
+            },
+            "title": "Entries",
+            "type": "array"
+          },
+          "session_id": {
+            "title": "Session Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "session_id",
+          "entries"
+        ],
+        "title": "SanitizedHarSessionContentResponse",
+        "type": "object"
+      },
+      "SanitizedTestCaseResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "request_body": {
+            "$ref": "#/components/schemas/SanitizedBodyResponse"
+          },
+          "response_body": {
+            "$ref": "#/components/schemas/SanitizedBodyResponse"
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code"
+          },
+          "test_case_id": {
+            "title": "Test Case Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "test_case_id",
+          "operation_id",
+          "request_body",
+          "response_body"
+        ],
+        "title": "SanitizedTestCaseResponse",
+        "type": "object"
+      },
+      "SanitizedTestCasesContentResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content_kind": {
+            "const": "sanitized_test_cases",
+            "default": "sanitized_test_cases",
+            "title": "Content Kind",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/SanitizedTestCaseResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          }
+        },
+        "required": [
+          "items"
+        ],
+        "title": "SanitizedTestCasesContentResponse",
+        "type": "object"
+      },
+      "SortOrder": {
+        "enum": [
+          "asc",
+          "desc"
+        ],
+        "title": "SortOrder",
+        "type": "string"
+      },
+      "StaticConstraintsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "constraint_count": {
+            "minimum": 0.0,
+            "title": "Constraint Count",
+            "type": "integer"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "sections": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintSectionResponse"
+            },
+            "title": "Sections",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_name",
+          "sections",
+          "constraint_count"
+        ],
+        "title": "StaticConstraintsResponse",
+        "type": "object"
+      },
+      "StatusReportEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "status_code": {
+            "title": "Status Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "operation_id",
+          "status_code",
+          "count"
+        ],
+        "title": "StatusReportEntryResponse",
+        "type": "object"
+      },
+      "TestCasePageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/TestCaseResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination"
+        ],
+        "title": "TestCasePageResponse",
+        "type": "object"
+      },
+      "TestCaseResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "parameters": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path"
+          },
+          "request_body": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response_body": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status_code": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status Code"
+          },
+          "test_case_id": {
+            "title": "Test Case Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "test_case_id",
+          "operation_id"
+        ],
+        "title": "TestCaseResponse",
+        "type": "object"
+      },
+      "ValidationError": {
+        "properties": {
+          "ctx": {
+            "title": "Context",
+            "type": "object"
+          },
+          "input": {
+            "title": "Input"
+          },
+          "loc": {
+            "items": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "integer"
+                }
+              ]
+            },
+            "title": "Location",
+            "type": "array"
+          },
+          "msg": {
+            "title": "Message",
+            "type": "string"
+          },
+          "type": {
+            "title": "Error Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "loc",
+          "msg",
+          "type"
+        ],
+        "title": "ValidationError",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Read-only HTTP API for APIPilot local cache artifacts.",
+    "title": "APIPilot Artifact Backend",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/runs": {
+      "get": {
+        "operationId": "list_runs_api_v1_runs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunCatalogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Runs",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}": {
+      "get": {
+        "operationId": "get_run_api_v1_runs__run_name__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunMetadataResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Run",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/artifacts": {
+      "get": {
+        "operationId": "list_artifacts_api_v1_runs__run_name__artifacts_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactCatalogResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Artifacts",
+        "tags": [
+          "artifacts"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/artifacts/{artifact_id}/content": {
+      "get": {
+        "operationId": "get_artifact_content_api_v1_runs__run_name__artifacts__artifact_id__content_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "artifact_id",
+            "required": true,
+            "schema": {
+              "title": "Artifact Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "raw",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Raw",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ArtifactContentResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Artifact Content",
+        "tags": [
+          "artifacts"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/dynamic": {
+      "get": {
+        "operationId": "get_dynamic_constraints_api_v1_runs__run_name__constraints_dynamic_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DynamicConstraintsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Dynamic Constraints",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/dynamic/entries": {
+      "get": {
+        "operationId": "list_dynamic_constraint_entries_api_v1_runs__run_name__constraints_dynamic_entries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by section when the dynamic artifact provides one.",
+            "in": "query",
+            "name": "section",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by section when the dynamic artifact provides one.",
+              "title": "Section"
+            }
+          },
+          {
+            "description": "Search safe string fields: operation_id, property_path, expression, section.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe string fields: operation_id, property_path, expression, section.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, property_path, section.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, property_path, section.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "description": "Sort direction for sort_by.",
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc",
+              "description": "Sort direction for sort_by."
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, section.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, section.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstraintEntryPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Dynamic Constraint Entries",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/dynamic/invariants": {
+      "get": {
+        "operationId": "list_dynamic_invariants_api_v1_runs__run_name__constraints_dynamic_invariants_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by derived operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by derived operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by invariant_type.",
+            "in": "query",
+            "name": "invariant_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by invariant_type.",
+              "title": "Invariant Type"
+            }
+          },
+          {
+            "description": "Search safe string fields: operation_id, pptname, invariant, invariant_type, variables, postman_assertion.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe string fields: operation_id, pptname, invariant, invariant_type, variables, postman_assertion.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, invariant_type, pptname, invariant.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, invariant_type, pptname, invariant.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "description": "Sort direction for sort_by.",
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc",
+              "description": "Sort direction for sort_by."
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, invariant_type.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, invariant_type.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvariantPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Dynamic Invariants",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/static": {
+      "get": {
+        "operationId": "get_static_constraints_api_v1_runs__run_name__constraints_static_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/StaticConstraintsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Static Constraints",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/static/entries": {
+      "get": {
+        "operationId": "list_static_constraint_entries_api_v1_runs__run_name__constraints_static_entries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by section. Known static sections: common, request_response, response_properties.",
+            "in": "query",
+            "name": "section",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by section. Known static sections: common, request_response, response_properties.",
+              "title": "Section"
+            }
+          },
+          {
+            "description": "Search safe string fields: operation_id, property_path, expression, section.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe string fields: operation_id, property_path, expression, section.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, property_path, section.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, property_path, section.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "description": "Sort direction for sort_by.",
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc",
+              "description": "Sort direction for sort_by."
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, section.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, section.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstraintEntryPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Static Constraint Entries",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/graph": {
+      "get": {
+        "operationId": "get_dependency_graph_api_v1_runs__run_name__graph_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DependencyGraphResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Dependency Graph",
+        "tags": [
+          "graph"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/graph/edges": {
+      "get": {
+        "operationId": "list_graph_edges_api_v1_runs__run_name__graph_edges_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by from_node.",
+            "in": "query",
+            "name": "from_node",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by from_node.",
+              "title": "From Node"
+            }
+          },
+          {
+            "description": "Filter by to_node.",
+            "in": "query",
+            "name": "to_node",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by to_node.",
+              "title": "To Node"
+            }
+          },
+          {
+            "description": "Search safe string fields: from_node, to_node.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe string fields: from_node, to_node.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: from_node, to_node.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: from_node, to_node.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "description": "Sort direction for sort_by.",
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc",
+              "description": "Sort direction for sort_by."
+            }
+          },
+          {
+            "description": "Allowed values: from_node, to_node.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: from_node, to_node.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphEdgePageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Graph Edges",
+        "tags": [
+          "graph"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/history/sessions": {
+      "get": {
+        "operationId": "list_har_sessions_api_v1_runs__run_name__history_sessions_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarSessionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Har Sessions",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/history/sessions/{session_id}/entries": {
+      "get": {
+        "operationId": "list_har_entries_api_v1_runs__run_name__history_sessions__session_id__entries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "session_id",
+            "required": true,
+            "schema": {
+              "title": "Session Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_body",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Body",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HarEntryPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Har Entries",
+        "tags": [
+          "history"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/operation": {
+      "get": {
+        "operationId": "get_operation_api_v1_runs__run_name__operation_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "operation_id",
+            "required": true,
+            "schema": {
+              "minLength": 1,
+              "title": "Operation Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Operation",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/operations": {
+      "get": {
+        "operationId": "list_operations_api_v1_runs__run_name__operations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Operations",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/reports": {
+      "get": {
+        "operationId": "get_reports_api_v1_runs__run_name__reports_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Reports",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/reports/entries": {
+      "get": {
+        "operationId": "list_report_entries_api_v1_runs__run_name__reports_entries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by HTTP status code.",
+            "in": "query",
+            "name": "status_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HTTP status code.",
+              "title": "Status Code"
+            }
+          },
+          {
+            "description": "Search safe string fields: operation_id, status_code.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe string fields: operation_id, status_code.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, status_code, count.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, status_code, count.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "description": "Sort direction for sort_by.",
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc",
+              "description": "Sort direction for sort_by."
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, status_code.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, status_code.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ReportEntryPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Report Entries",
+        "tags": [
+          "reports"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/summary": {
+      "get": {
+        "operationId": "get_run_summary_api_v1_runs__run_name__summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Run Summary",
+        "tags": [
+          "runs"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/test-cases": {
+      "get": {
+        "operationId": "list_test_cases_api_v1_runs__run_name__test_cases_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Operation Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "status_code",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maximum": 599,
+                  "minimum": 100,
+                  "type": "integer"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Status Code"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "include_body",
+            "required": false,
+            "schema": {
+              "default": false,
+              "title": "Include Body",
+              "type": "boolean"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/TestCasePageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Test Cases",
+        "tags": [
+          "test-cases"
+        ]
+      }
+    },
+    "/health": {
+      "get": {
+        "operationId": "health_health_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "Health",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  },
+  "tags": [
+    {
+      "description": "Readiness signal for the artifact backend process.",
+      "name": "health"
+    },
+    {
+      "description": "Local APIPilot cache run catalog and run-level summaries.",
+      "name": "runs"
+    },
+    {
+      "description": "Typed artifact metadata, summaries, and sanitized raw content.",
+      "name": "artifacts"
+    },
+    {
+      "description": "Operation read models derived from normalized OpenAPI artifacts.",
+      "name": "operations"
+    },
+    {
+      "description": "Status-code report buckets generated by APIPilot runs.",
+      "name": "reports"
+    },
+    {
+      "description": "Operation dependency graph nodes, edges, and similarity evidence.",
+      "name": "graph"
+    },
+    {
+      "description": "Static and dynamic constraint read models for oracle inspection.",
+      "name": "constraints"
+    },
+    {
+      "description": "Pageable, body-safe test case records.",
+      "name": "test-cases"
+    },
+    {
+      "description": "HAR session summaries and sanitized execution history entries.",
+      "name": "history"
+    }
+  ]
+}
