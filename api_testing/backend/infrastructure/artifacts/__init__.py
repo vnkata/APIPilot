@@ -1,0 +1,2 @@
+"""Filesystem artifact persistence adapter."""
+
