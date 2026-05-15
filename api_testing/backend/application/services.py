@@ -5,12 +5,25 @@ from __future__ import annotations
 from api_testing.backend.application.ports import ArtifactRepositoryProtocol
 from api_testing.backend.application.querying import (
     ConstraintEntryQuery,
+    ConstraintExplorerQuery,
+    ConstraintFacetsQuery,
+    GraphEdgeExplorerQuery,
     GraphEdgeQuery,
+    GraphFacetsQuery,
+    GraphNodeQuery,
+    GraphSequenceQuery,
     HarEntryQuery,
+    InvariantExplorerQuery,
+    InvariantFacetsQuery,
     InvariantQuery,
     MAX_PAGE_LIMIT,
+    OperationExplorerQuery,
+    OperationFacetsQuery,
     ReportEntryQuery,
     TestCaseQuery,
+)
+from api_testing.backend.application.read_services.constraint_explorer import (
+    ConstraintExplorerService,
 )
 from api_testing.backend.application.read_services.artifacts import (
     ArtifactCatalogService,
@@ -20,10 +33,16 @@ from api_testing.backend.application.read_services.constraints import (
     DynamicConstraintQueryService,
     StaticConstraintQueryService,
 )
+from api_testing.backend.application.read_services.explorer_index import (
+    RunExplorerIndexService,
+)
 from api_testing.backend.application.read_services.graphs import (
     DependencyGraphQueryService,
 )
 from api_testing.backend.application.read_services.history import HistoryQueryService
+from api_testing.backend.application.read_services.invariant_explorer import (
+    InvariantExplorerService,
+)
 from api_testing.backend.application.read_services.operations import OperationQueryService
 from api_testing.backend.application.read_services.reports import ReportQueryService
 from api_testing.backend.application.read_services.runs import RunQueryService
@@ -34,11 +53,22 @@ from api_testing.backend.domain.models import (
     DependencyGraph,
     DynamicConstraints,
     GraphEdge,
+    GraphEdgeDetail,
+    GraphExplorerEdge,
+    GraphFacets,
+    GraphNode,
+    GraphSequence,
     GroupedPage,
     HarEntry,
     HarSession,
     InvariantDetail,
+    InvariantExplorerDetail,
+    InvariantExplorerFacets,
+    InvariantExplorerPage,
     OperationDetail,
+    OperationExplorerDetail,
+    OperationExplorerPage,
+    OperationFacets,
     OperationSummary,
     Page,
     Reports,
@@ -48,6 +78,9 @@ from api_testing.backend.domain.models import (
     StatusReportEntry,
     TestCase,
     ConstraintEntryDetail,
+    ConstraintExplorerDetail,
+    ConstraintExplorerPage,
+    ConstraintFacets,
 )
 
 
@@ -57,11 +90,24 @@ class ArtifactQueryService:
     def __init__(self, repository: ArtifactRepositoryProtocol) -> None:
         artifact_catalog_service = ArtifactCatalogService(repository)
         artifact_content_service = ArtifactContentService(repository)
-        operation_service = OperationQueryService(repository)
         report_service = ReportQueryService(repository)
-        graph_service = DependencyGraphQueryService(repository)
         static_constraint_service = StaticConstraintQueryService(repository)
         dynamic_constraint_service = DynamicConstraintQueryService(repository)
+        constraint_explorer_service = ConstraintExplorerService(repository)
+        explorer_index_service = RunExplorerIndexService(
+            repository,
+            constraint_explorer_service,
+        )
+        operation_service = OperationQueryService(repository, explorer_index_service)
+        invariant_explorer_service = InvariantExplorerService(
+            repository,
+            explorer_index_service,
+        )
+        graph_service = DependencyGraphQueryService(repository, explorer_index_service)
+        operation_service.configure_explorer_dependencies(
+            invariant_explorer=invariant_explorer_service,
+            graph_service=graph_service,
+        )
         test_case_service = TestCaseQueryService(repository)
         history_service = HistoryQueryService(repository)
         run_service = RunQueryService(
@@ -82,6 +128,8 @@ class ArtifactQueryService:
         self.graph = graph_service
         self.static_constraints = static_constraint_service
         self.dynamic_constraints = dynamic_constraint_service
+        self.constraint_explorer = constraint_explorer_service
+        self.invariant_explorer = invariant_explorer_service
         self.test_cases = test_case_service
         self.history = history_service
 
@@ -116,6 +164,27 @@ class ArtifactQueryService:
     def get_operation(self, run_name: str, operation_id: str) -> OperationDetail:
         return self.operations.get_operation(run_name, operation_id)
 
+    def list_operation_explorer_entries(
+        self,
+        run_name: str,
+        query: OperationExplorerQuery,
+    ) -> OperationExplorerPage:
+        return self.operations.list_explorer_entries(run_name, query)
+
+    def get_operation_explorer_entry(
+        self,
+        run_name: str,
+        operation_key: str,
+    ) -> OperationExplorerDetail:
+        return self.operations.get_explorer_entry(run_name, operation_key)
+
+    def get_operation_explorer_facets(
+        self,
+        run_name: str,
+        query: OperationFacetsQuery,
+    ) -> OperationFacets:
+        return self.operations.get_explorer_facets(run_name, query)
+
     def get_reports(self, run_name: str) -> Reports:
         return self.reports.get_reports(run_name)
 
@@ -132,9 +201,36 @@ class ArtifactQueryService:
     def list_graph_edges(
         self,
         run_name: str,
-        query: GraphEdgeQuery,
-    ) -> GroupedPage[GraphEdge]:
+        query: GraphEdgeQuery | GraphEdgeExplorerQuery,
+    ) -> GroupedPage[GraphExplorerEdge]:
         return self.graph.list_graph_edges(run_name, query)
+
+    def get_graph_edge(self, run_name: str, edge_id: str) -> GraphEdgeDetail:
+        return self.graph.get_graph_edge(run_name, edge_id)
+
+    def list_graph_nodes(
+        self,
+        run_name: str,
+        query: GraphNodeQuery,
+    ) -> GroupedPage[GraphNode]:
+        return self.graph.list_graph_nodes(run_name, query)
+
+    def list_graph_sequences(
+        self,
+        run_name: str,
+        query: GraphSequenceQuery,
+    ) -> GroupedPage[GraphSequence]:
+        return self.graph.list_graph_sequences(run_name, query)
+
+    def get_graph_sequence(self, run_name: str, sequence_id: str) -> GraphSequence:
+        return self.graph.get_graph_sequence(run_name, sequence_id)
+
+    def get_graph_facets(
+        self,
+        run_name: str,
+        query: GraphFacetsQuery,
+    ) -> GraphFacets:
+        return self.graph.get_graph_facets(run_name, query)
 
     def get_static_constraints(self, run_name: str) -> StaticConstraints:
         return self.static_constraints.get_static_constraints(run_name)
@@ -155,6 +251,48 @@ class ArtifactQueryService:
         query: ConstraintEntryQuery,
     ) -> GroupedPage[ConstraintEntryDetail]:
         return self.dynamic_constraints.list_dynamic_constraint_entries(run_name, query)
+
+    def list_constraint_explorer_entries(
+        self,
+        run_name: str,
+        query: ConstraintExplorerQuery,
+    ) -> ConstraintExplorerPage:
+        return self.constraint_explorer.list_entries(run_name, query)
+
+    def get_constraint_explorer_entry(
+        self,
+        run_name: str,
+        constraint_id: str,
+    ) -> ConstraintExplorerDetail:
+        return self.constraint_explorer.get_entry(run_name, constraint_id)
+
+    def get_constraint_explorer_facets(
+        self,
+        run_name: str,
+        query: ConstraintFacetsQuery,
+    ) -> ConstraintFacets:
+        return self.constraint_explorer.get_facets(run_name, query)
+
+    def list_invariant_explorer_entries(
+        self,
+        run_name: str,
+        query: InvariantExplorerQuery,
+    ) -> InvariantExplorerPage:
+        return self.invariant_explorer.list_entries(run_name, query)
+
+    def get_invariant_explorer_entry(
+        self,
+        run_name: str,
+        invariant_id: str,
+    ) -> InvariantExplorerDetail:
+        return self.invariant_explorer.get_entry(run_name, invariant_id)
+
+    def get_invariant_explorer_facets(
+        self,
+        run_name: str,
+        query: InvariantFacetsQuery,
+    ) -> InvariantExplorerFacets:
+        return self.invariant_explorer.get_facets(run_name, query)
 
     def list_invariants(
         self,

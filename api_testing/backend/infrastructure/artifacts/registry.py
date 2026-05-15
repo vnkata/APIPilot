@@ -83,6 +83,13 @@ KNOWN_ARTIFACTS: tuple[ArtifactDefinition, ...] = (
         RawPolicy.RAW_JSON,
     ),
     ArtifactDefinition(
+        "constraint_miner",
+        "constraint_miner.json",
+        ArtifactKind.COMBINED_CONSTRAINTS,
+        MediaType.APPLICATION_JSON,
+        RawPolicy.RAW_JSON,
+    ),
+    ArtifactDefinition(
         "static_constraint_miner",
         "static_constraint_miner.json",
         ArtifactKind.STATIC_CONSTRAINTS,
@@ -146,4 +153,3 @@ def har_artifact_definition(session_id: str) -> ArtifactDefinition:
         media_type=MediaType.APPLICATION_JSON,
         raw_policy=RawPolicy.SANITIZED_HAR_SESSION,
     )
-

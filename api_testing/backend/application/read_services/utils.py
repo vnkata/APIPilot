@@ -33,16 +33,30 @@ def constraint_entries(value: JsonValue) -> list[ConstraintEntry]:
         return []
     entries: list[ConstraintEntry] = []
     for operation_id, constraints in value.items():
-        if not isinstance(constraints, dict):
-            continue
-        for property_path, expression in constraints.items():
-            entries.append(
-                ConstraintEntry(
-                    operation_id=str(operation_id),
-                    property_path=str(property_path),
-                    expression=str(expression),
+        if isinstance(constraints, dict):
+            for property_path, expression in constraints.items():
+                entries.append(
+                    ConstraintEntry(
+                        operation_id=str(operation_id),
+                        property_path=str(property_path),
+                        expression=str(expression),
+                    )
                 )
-            )
+        elif isinstance(constraints, list):
+            for item in constraints:
+                if not isinstance(item, dict):
+                    continue
+                property_path = item.get("property")
+                expression = item.get("predicate")
+                if property_path is None or expression is None:
+                    continue
+                entries.append(
+                    ConstraintEntry(
+                        operation_id=str(operation_id),
+                        property_path=str(property_path),
+                        expression=str(expression),
+                    )
+                )
     return sorted(
         entries,
         key=lambda item: (item.operation_id, item.property_path, item.expression),
@@ -76,7 +90,9 @@ def invariant_record(row: dict[str, str]) -> InvariantRecord:
 def operation_id_from_pptname(pptname: str | None) -> str | None:
     if not pptname:
         return None
-    return pptname.split(":::", maxsplit=1)[0] or None
+    prefix = pptname.split(":::", maxsplit=1)[0]
+    operation_id = prefix.split("&", maxsplit=1)[0]
+    return operation_id or prefix or None
 
 
 def graph_similarities(value: JsonValue) -> list[GraphSimilarity]:

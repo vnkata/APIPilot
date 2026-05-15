@@ -87,6 +87,15 @@ class FileArtifactRepository:
                 return artifact
         raise ArtifactNotFound(f"Artifact not found: {artifact_id}")
 
+    def artifact_signature(
+        self, run_name: str, artifact_id: str
+    ) -> tuple[int, int] | None:
+        try:
+            path = self._path_for_artifact_id(run_name, artifact_id)
+        except ArtifactNotFound:
+            return None
+        return FileSignatureCache.signature(path)
+
     def read_json_artifact(self, run_name: str, artifact_id: str) -> JsonValue:
         path = self._path_for_artifact_id(run_name, artifact_id)
         if path.suffix.lower() not in {".json", ".har"}:

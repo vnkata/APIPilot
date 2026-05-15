@@ -17,6 +17,7 @@ class ArtifactKind(StrEnum):
     GRAPH = "graph"
     REPORTS = "reports"
     STATIC_CONSTRAINTS = "static_constraints"
+    COMBINED_CONSTRAINTS = "combined_constraints"
     DYNAMIC_CONSTRAINTS = "dynamic_constraints"
     TEST_CASES = "test_cases"
     INVARIANTS = "invariants"
@@ -193,6 +194,95 @@ class ConstraintEntryDetail:
     section: str | None
 
 
+class ConstraintSource(StrEnum):
+    STATIC = "static"
+    DYNAMIC = "dynamic"
+    COMBINED = "combined"
+
+
+class ConstraintKind(StrEnum):
+    REQUEST_RESPONSE_RELATION = "request_response_relation"
+    DATE_FORMAT = "date_format"
+    ENUM = "enum"
+    BOUNDS = "bounds"
+    REQUIRED = "required"
+    URL = "url"
+    FIXED_LENGTH = "fixed_length"
+    EQUALITY = "equality"
+    RELATION = "relation"
+    UNKNOWN = "unknown"
+
+
+class AgreementStatus(StrEnum):
+    STATIC_ONLY = "static_only"
+    DYNAMIC_ONLY = "dynamic_only"
+    BOTH_PRESENT = "both_present"
+    COMBINED_ONLY = "combined_only"
+
+
+class CombinedSource(StrEnum):
+    ARTIFACT = "artifact"
+    COMPUTED_FALLBACK = "computed_fallback"
+
+
+@dataclass(frozen=True, slots=True)
+class ConstraintQueryMetadata:
+    combined_source: CombinedSource
+    warnings: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class ConstraintExplorerEntry:
+    constraint_id: str
+    source: ConstraintSource
+    operation_id: str
+    property_path: str
+    expression: str
+    section: str | None
+    parameter: str | None
+    constraint_kind: ConstraintKind
+    source_type: str | None
+    static_expression: str | None
+    dynamic_expression: str | None
+    combined_expression: str | None
+    has_static: bool
+    has_dynamic: bool
+    agreement_status: AgreementStatus
+    assertion_available: bool
+    assertion_preview: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ConstraintExplorerDetail(ConstraintExplorerEntry):
+    assertion: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class ConstraintExplorerPage:
+    items: list[ConstraintExplorerEntry]
+    pagination: Pagination
+    groups: list[GroupCount]
+    metadata: ConstraintQueryMetadata
+
+
+@dataclass(frozen=True, slots=True)
+class ConstraintFacetBucket:
+    key: str
+    count: int
+
+
+@dataclass(frozen=True, slots=True)
+class ConstraintFacets:
+    source: list[ConstraintFacetBucket]
+    operation_id: list[ConstraintFacetBucket]
+    section: list[ConstraintFacetBucket]
+    constraint_kind: list[ConstraintFacetBucket]
+    source_type: list[ConstraintFacetBucket]
+    agreement_status: list[ConstraintFacetBucket]
+    assertion_available: list[ConstraintFacetBucket]
+    metadata: ConstraintQueryMetadata
+
+
 @dataclass(frozen=True, slots=True)
 class ConstraintSection:
     name: str
@@ -239,6 +329,231 @@ class DynamicConstraints:
     invariants: list[InvariantRecord]
     constraint_count: int
     invariant_count: int
+
+
+class InvariantKind(StrEnum):
+    NON_NULL = "non_null"
+    BOUNDS = "bounds"
+    ENUM = "enum"
+    EQUALITY = "equality"
+    SIZE = "size"
+    FORMAT = "format"
+    RELATION = "relation"
+    UNKNOWN = "unknown"
+
+
+class OracleReadiness(StrEnum):
+    DYNAMIC_CANDIDATE = "dynamic_candidate"
+    SCHEMA_SUPPORTED = "schema_supported"
+    VERIFIED_RUNTIME_ORACLE = "verified_runtime_oracle"
+    NEEDS_HUMAN_REVIEW = "needs_human_review"
+    UNKNOWN = "unknown"
+
+
+class CorrelationConfidence(StrEnum):
+    EXACT = "exact"
+    DERIVED = "derived"
+    OPERATION_ONLY = "operation_only"
+    NONE = "none"
+
+
+@dataclass(frozen=True, slots=True)
+class InvariantCorrelationEvidence:
+    evidence_type: str
+    message: str
+    property_path: str | None = None
+    constraint_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class InvariantExplorerEntry:
+    invariant_id: str
+    operation_id: str | None
+    pptname: str | None
+    invariant: str | None
+    invariant_type: str | None
+    variables: str | None
+    property_paths: list[str]
+    primary_property_path: str | None
+    invariant_kind: InvariantKind
+    oracle_readiness: OracleReadiness
+    assertion_available: bool
+    assertion_preview: str | None
+    related_constraint_ids: list[str]
+    correlation_confidence: CorrelationConfidence
+    correlation_evidence: list[InvariantCorrelationEvidence]
+
+
+@dataclass(frozen=True, slots=True)
+class InvariantExplorerDetail(InvariantExplorerEntry):
+    postman_assertion: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class InvariantExplorerPage:
+    items: list[InvariantExplorerEntry]
+    pagination: Pagination
+    groups: list[GroupCount]
+
+
+@dataclass(frozen=True, slots=True)
+class InvariantExplorerFacets:
+    operation_id: list[ConstraintFacetBucket]
+    invariant_kind: list[ConstraintFacetBucket]
+    invariant_type: list[ConstraintFacetBucket]
+    oracle_readiness: list[ConstraintFacetBucket]
+    assertion_available: list[ConstraintFacetBucket]
+    correlation_confidence: list[ConstraintFacetBucket]
+    primary_property_path: list[ConstraintFacetBucket]
+
+
+class GraphNodeKind(StrEnum):
+    OPERATION = "operation"
+    PROPERTY = "property"
+    PARAMETER = "parameter"
+
+
+class GraphEdgeStatus(StrEnum):
+    FINAL = "final"
+    CANDIDATE = "candidate"
+
+
+class GraphEvidenceSource(StrEnum):
+    FINAL_GRAPH = "final_graph"
+    HEURISTIC_EDGES = "heuristic_edges"
+    GPT_EDGES = "gpt_edges"
+
+
+@dataclass(frozen=True, slots=True)
+class GraphNode:
+    node_id: str
+    node_kind: GraphNodeKind
+    operation_id: str
+    label: str
+    property_path: str | None
+    parameter_name: str | None
+    http_method: HttpMethod | None
+    path_template: str | None
+    in_degree: int
+    out_degree: int
+
+
+@dataclass(frozen=True, slots=True)
+class GraphEvidence:
+    evidence_id: str
+    source: GraphEvidenceSource
+    source_artifact_id: str
+    value1: str | None
+    value2: str | None
+    relation_hint: str | None
+    from_evidence_node_id: str | None
+    to_evidence_node_id: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class GraphExplorerEdge(GraphEdge):
+    edge_id: str
+    edge_status: GraphEdgeStatus
+    from_operation_id: str
+    to_operation_id: str
+    from_node_id: str
+    to_node_id: str
+    evidence_count: int
+    evidence_sources: list[str]
+    evidence_preview: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class GraphEdgeDetail(GraphExplorerEdge):
+    evidence: list[GraphEvidence]
+
+
+@dataclass(frozen=True, slots=True)
+class GraphSequenceParameterSource:
+    parameter_name: str
+    source_operation_id: str | None
+    source_property_path: str | None
+
+
+@dataclass(frozen=True, slots=True)
+class GraphSequence:
+    sequence_id: str
+    target_operation_id: str | None
+    sequence_type: str
+    operations: list[str]
+    length: int
+    score: float | None
+    parameter_sources: list[GraphSequenceParameterSource]
+
+
+@dataclass(frozen=True, slots=True)
+class GraphFacets:
+    edge_status: list[ConstraintFacetBucket]
+    evidence_source: list[ConstraintFacetBucket]
+    from_operation_id: list[ConstraintFacetBucket]
+    to_operation_id: list[ConstraintFacetBucket]
+    node_kind: list[ConstraintFacetBucket]
+    sequence_type: list[ConstraintFacetBucket]
+
+
+@dataclass(frozen=True, slots=True)
+class OperationExplorerEntry(OperationSummary):
+    operation_key: str
+    response_status_count: int
+    constraint_count: int
+    invariant_count: int
+    graph_in_degree: int
+    graph_out_degree: int
+    test_case_count: int
+    has_failures: bool
+
+
+@dataclass(frozen=True, slots=True)
+class OperationCountSummary:
+    total: int
+    by_kind: dict[str, int]
+
+
+@dataclass(frozen=True, slots=True)
+class OperationGraphSummary:
+    in_degree: int
+    out_degree: int
+    incoming_edge_count: int
+    outgoing_edge_count: int
+
+
+@dataclass(frozen=True, slots=True)
+class OperationExplorerDetail(OperationExplorerEntry):
+    parameters: dict[str, JsonValue]
+    request_body: JsonValue | None
+    responses: dict[str, JsonValue]
+    constraint_summary: OperationCountSummary
+    invariant_summary: OperationCountSummary
+    graph_summary: OperationGraphSummary
+    report_status_counts: dict[str, int]
+    test_case_status_counts: dict[str, int]
+    related_constraint_ids: list[str]
+    related_invariant_ids: list[str]
+    incoming_edge_ids: list[str]
+    outgoing_edge_ids: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class OperationExplorerPage:
+    items: list[OperationExplorerEntry]
+    pagination: Pagination
+    groups: list[GroupCount]
+
+
+@dataclass(frozen=True, slots=True)
+class OperationFacets:
+    http_method: list[ConstraintFacetBucket]
+    response_status: list[ConstraintFacetBucket]
+    has_request_body: list[ConstraintFacetBucket]
+    has_constraints: list[ConstraintFacetBucket]
+    has_invariants: list[ConstraintFacetBucket]
+    has_graph_edges: list[ConstraintFacetBucket]
+    has_failures: list[ConstraintFacetBucket]
 
 
 @dataclass(frozen=True, slots=True)

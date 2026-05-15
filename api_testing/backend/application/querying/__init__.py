@@ -51,10 +51,64 @@ class ConstraintEntryQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class ConstraintExplorerQuery:
+    options: QueryOptions
+    source: str | None = None
+    operation_id: str | None = None
+    section: str | None = None
+    property_path: str | None = None
+    property_prefix: str | None = None
+    constraint_kind: str | None = None
+    source_type: str | None = None
+    agreement_status: str | None = None
+    assertion_available: bool | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class ConstraintFacetsQuery:
+    source: str | None = None
+    operation_id: str | None = None
+    section: str | None = None
+    property_path: str | None = None
+    property_prefix: str | None = None
+    constraint_kind: str | None = None
+    source_type: str | None = None
+    agreement_status: str | None = None
+    assertion_available: bool | None = None
+    q: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class InvariantQuery:
     options: QueryOptions
     operation_id: str | None = None
     invariant_type: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class InvariantExplorerQuery:
+    options: QueryOptions
+    operation_id: str | None = None
+    invariant_kind: str | None = None
+    invariant_type: str | None = None
+    oracle_readiness: str | None = None
+    assertion_available: bool | None = None
+    correlation_confidence: str | None = None
+    property_path: str | None = None
+    property_prefix: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class InvariantFacetsQuery:
+    operation_id: str | None = None
+    invariant_kind: str | None = None
+    invariant_type: str | None = None
+    oracle_readiness: str | None = None
+    assertion_available: bool | None = None
+    correlation_confidence: str | None = None
+    property_path: str | None = None
+    property_prefix: str | None = None
+    q: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -65,10 +119,72 @@ class GraphEdgeQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class GraphNodeQuery:
+    options: QueryOptions
+    node_kind: str | None = None
+    operation_id: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GraphEdgeExplorerQuery:
+    options: QueryOptions
+    from_operation_id: str | None = None
+    to_operation_id: str | None = None
+    edge_status: str | None = None
+    evidence_source: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GraphSequenceQuery:
+    options: QueryOptions
+    target_operation_id: str | None = None
+    operation_id: str | None = None
+    sequence_type: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class GraphFacetsQuery:
+    edge_status: str | None = None
+    evidence_source: str | None = None
+    from_operation_id: str | None = None
+    to_operation_id: str | None = None
+    node_kind: str | None = None
+    sequence_type: str | None = None
+    q: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class ReportEntryQuery:
     options: QueryOptions
     operation_id: str | None = None
     status_code: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class OperationExplorerQuery:
+    options: QueryOptions
+    operation_id: str | None = None
+    operation_key: str | None = None
+    http_method: str | None = None
+    response_status: str | None = None
+    has_request_body: bool | None = None
+    has_constraints: bool | None = None
+    has_invariants: bool | None = None
+    has_graph_edges: bool | None = None
+    has_failures: bool | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class OperationFacetsQuery:
+    operation_id: str | None = None
+    http_method: str | None = None
+    response_status: str | None = None
+    has_request_body: bool | None = None
+    has_constraints: bool | None = None
+    has_invariants: bool | None = None
+    has_graph_edges: bool | None = None
+    has_failures: bool | None = None
+    q: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
