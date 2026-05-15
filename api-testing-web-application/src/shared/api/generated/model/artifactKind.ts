@@ -16,6 +16,7 @@ export const ArtifactKind = {
   graph: 'graph',
   reports: 'reports',
   static_constraints: 'static_constraints',
+  combined_constraints: 'combined_constraints',
   dynamic_constraints: 'dynamic_constraints',
   test_cases: 'test_cases',
   invariants: 'invariants',

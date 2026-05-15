@@ -22,9 +22,17 @@ import type {
 
 import type {
   DependencyGraphResponse,
+  GetGraphFacetsApiV1RunsRunNameGraphFacetsGetParams,
+  GraphEdgeDetailResponse,
   GraphEdgePageResponse,
+  GraphFacetsResponse,
+  GraphNodePageResponse,
+  GraphSequencePageResponse,
+  GraphSequenceResponse,
   HTTPValidationError,
-  ListGraphEdgesApiV1RunsRunNameGraphEdgesGetParams
+  ListGraphEdgesApiV1RunsRunNameGraphEdgesGetParams,
+  ListGraphNodesApiV1RunsRunNameGraphNodesGetParams,
+  ListGraphSequencesApiV1RunsRunNameGraphSequencesGetParams
 } from '../model';
 
 import { customInstance } from '../../httpClient';
@@ -216,6 +224,504 @@ export function useListGraphEdgesApiV1RunsRunNameGraphEdgesGet<TData = Awaited<R
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListGraphEdgesApiV1RunsRunNameGraphEdgesGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Graph Edge
+ */
+export const getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet = (
+    runName: string,
+    edgeId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GraphEdgeDetailResponse>(
+      {url: `/api/v1/runs/${runName}/graph/edges/${edgeId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGetQueryKey = (runName: string,
+    edgeId: string,) => {
+    return [
+    `/api/v1/runs/${runName}/graph/edges/${edgeId}`
+    ] as const;
+    }
+
+
+export const getGetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    edgeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGetQueryKey(runName,edgeId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>> = ({ signal }) => getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet(runName,edgeId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined && edgeId !== null && edgeId !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>>
+export type GetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet<TData = Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    edgeId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet<TData = Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    edgeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet<TData = Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    edgeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Graph Edge
+ */
+
+export function useGetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet<TData = Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    edgeId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetGraphEdgeApiV1RunsRunNameGraphEdgesEdgeIdGetQueryOptions(runName,edgeId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Graph Facets
+ */
+export const getGraphFacetsApiV1RunsRunNameGraphFacetsGet = (
+    runName: string,
+    params?: GetGraphFacetsApiV1RunsRunNameGraphFacetsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GraphFacetsResponse>(
+      {url: `/api/v1/runs/${runName}/graph/facets`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetGraphFacetsApiV1RunsRunNameGraphFacetsGetQueryKey = (runName: string,
+    params?: GetGraphFacetsApiV1RunsRunNameGraphFacetsGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/graph/facets`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetGraphFacetsApiV1RunsRunNameGraphFacetsGetQueryOptions = <TData = Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: GetGraphFacetsApiV1RunsRunNameGraphFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGraphFacetsApiV1RunsRunNameGraphFacetsGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>> = ({ signal }) => getGraphFacetsApiV1RunsRunNameGraphFacetsGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetGraphFacetsApiV1RunsRunNameGraphFacetsGetQueryResult = NonNullable<Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>>
+export type GetGraphFacetsApiV1RunsRunNameGraphFacetsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetGraphFacetsApiV1RunsRunNameGraphFacetsGet<TData = Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  GetGraphFacetsApiV1RunsRunNameGraphFacetsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGraphFacetsApiV1RunsRunNameGraphFacetsGet<TData = Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetGraphFacetsApiV1RunsRunNameGraphFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGraphFacetsApiV1RunsRunNameGraphFacetsGet<TData = Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetGraphFacetsApiV1RunsRunNameGraphFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Graph Facets
+ */
+
+export function useGetGraphFacetsApiV1RunsRunNameGraphFacetsGet<TData = Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetGraphFacetsApiV1RunsRunNameGraphFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphFacetsApiV1RunsRunNameGraphFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetGraphFacetsApiV1RunsRunNameGraphFacetsGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Graph Nodes
+ */
+export const listGraphNodesApiV1RunsRunNameGraphNodesGet = (
+    runName: string,
+    params?: ListGraphNodesApiV1RunsRunNameGraphNodesGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GraphNodePageResponse>(
+      {url: `/api/v1/runs/${runName}/graph/nodes`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListGraphNodesApiV1RunsRunNameGraphNodesGetQueryKey = (runName: string,
+    params?: ListGraphNodesApiV1RunsRunNameGraphNodesGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/graph/nodes`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListGraphNodesApiV1RunsRunNameGraphNodesGetQueryOptions = <TData = Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListGraphNodesApiV1RunsRunNameGraphNodesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListGraphNodesApiV1RunsRunNameGraphNodesGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>> = ({ signal }) => listGraphNodesApiV1RunsRunNameGraphNodesGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListGraphNodesApiV1RunsRunNameGraphNodesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>>
+export type ListGraphNodesApiV1RunsRunNameGraphNodesGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListGraphNodesApiV1RunsRunNameGraphNodesGet<TData = Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListGraphNodesApiV1RunsRunNameGraphNodesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListGraphNodesApiV1RunsRunNameGraphNodesGet<TData = Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListGraphNodesApiV1RunsRunNameGraphNodesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListGraphNodesApiV1RunsRunNameGraphNodesGet<TData = Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListGraphNodesApiV1RunsRunNameGraphNodesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Graph Nodes
+ */
+
+export function useListGraphNodesApiV1RunsRunNameGraphNodesGet<TData = Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListGraphNodesApiV1RunsRunNameGraphNodesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphNodesApiV1RunsRunNameGraphNodesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListGraphNodesApiV1RunsRunNameGraphNodesGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Graph Sequences
+ */
+export const listGraphSequencesApiV1RunsRunNameGraphSequencesGet = (
+    runName: string,
+    params?: ListGraphSequencesApiV1RunsRunNameGraphSequencesGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GraphSequencePageResponse>(
+      {url: `/api/v1/runs/${runName}/graph/sequences`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListGraphSequencesApiV1RunsRunNameGraphSequencesGetQueryKey = (runName: string,
+    params?: ListGraphSequencesApiV1RunsRunNameGraphSequencesGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/graph/sequences`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListGraphSequencesApiV1RunsRunNameGraphSequencesGetQueryOptions = <TData = Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListGraphSequencesApiV1RunsRunNameGraphSequencesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListGraphSequencesApiV1RunsRunNameGraphSequencesGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>> = ({ signal }) => listGraphSequencesApiV1RunsRunNameGraphSequencesGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListGraphSequencesApiV1RunsRunNameGraphSequencesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>>
+export type ListGraphSequencesApiV1RunsRunNameGraphSequencesGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListGraphSequencesApiV1RunsRunNameGraphSequencesGet<TData = Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListGraphSequencesApiV1RunsRunNameGraphSequencesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListGraphSequencesApiV1RunsRunNameGraphSequencesGet<TData = Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListGraphSequencesApiV1RunsRunNameGraphSequencesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListGraphSequencesApiV1RunsRunNameGraphSequencesGet<TData = Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListGraphSequencesApiV1RunsRunNameGraphSequencesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Graph Sequences
+ */
+
+export function useListGraphSequencesApiV1RunsRunNameGraphSequencesGet<TData = Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListGraphSequencesApiV1RunsRunNameGraphSequencesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listGraphSequencesApiV1RunsRunNameGraphSequencesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListGraphSequencesApiV1RunsRunNameGraphSequencesGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Graph Sequence
+ */
+export const getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet = (
+    runName: string,
+    sequenceId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<GraphSequenceResponse>(
+      {url: `/api/v1/runs/${runName}/graph/sequences/${sequenceId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGetQueryKey = (runName: string,
+    sequenceId: string,) => {
+    return [
+    `/api/v1/runs/${runName}/graph/sequences/${sequenceId}`
+    ] as const;
+    }
+
+
+export const getGetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    sequenceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGetQueryKey(runName,sequenceId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>> = ({ signal }) => getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet(runName,sequenceId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined && sequenceId !== null && sequenceId !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>>
+export type GetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet<TData = Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    sequenceId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet<TData = Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    sequenceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet<TData = Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    sequenceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Graph Sequence
+ */
+
+export function useGetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet<TData = Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    sequenceId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetGraphSequenceApiV1RunsRunNameGraphSequencesSequenceIdGetQueryOptions(runName,sequenceId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

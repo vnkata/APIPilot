@@ -17,11 +17,27 @@ from_node?: string | null;
  */
 to_node?: string | null;
 /**
- * Search safe string fields: from_node, to_node.
+ * Filter by producer operation_id.
+ */
+from_operation_id?: string | null;
+/**
+ * Filter by consumer operation_id.
+ */
+to_operation_id?: string | null;
+/**
+ * Filter by edge status. Allowed values: final, candidate, all. Default is final.
+ */
+edge_status?: string | null;
+/**
+ * Filter by evidence source: final_graph, heuristic_edges, gpt_edges.
+ */
+evidence_source?: string | null;
+/**
+ * Search safe string fields across nodes, operations, status, and evidence preview.
  */
 q?: string | null;
 /**
- * Allowed values: from_node, to_node.
+ * Allowed values: from_node, to_node, from_operation_id, to_operation_id, edge_status, evidence_count.
  */
 sort_by?: string | null;
 /**
@@ -29,7 +45,7 @@ sort_by?: string | null;
  */
 sort_order?: SortOrder;
 /**
- * Allowed values: from_node, to_node.
+ * Allowed values: from_node, to_node, from_operation_id, to_operation_id, edge_status.
  */
 group_by?: string | null;
 /**

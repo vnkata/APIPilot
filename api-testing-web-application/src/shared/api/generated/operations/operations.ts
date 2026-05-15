@@ -22,8 +22,13 @@ import type {
 
 import type {
   GetOperationApiV1RunsRunNameOperationGetParams,
+  GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetParams,
   HTTPValidationError,
+  ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetParams,
   OperationDetailResponse,
+  OperationExplorerDetailResponse,
+  OperationExplorerPageResponse,
+  OperationFacetsResponse,
   OperationListResponse
 } from '../model';
 
@@ -216,6 +221,305 @@ export function useListOperationsApiV1RunsRunNameOperationsGet<TData = Awaited<R
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListOperationsApiV1RunsRunNameOperationsGetQueryOptions(runName,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Operation Explorer Entries
+ */
+export const listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet = (
+    runName: string,
+    params?: ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<OperationExplorerPageResponse>(
+      {url: `/api/v1/runs/${runName}/operations/entries`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetQueryKey = (runName: string,
+    params?: ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/operations/entries`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetQueryOptions = <TData = Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>> = ({ signal }) => listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>>
+export type ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet<TData = Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet<TData = Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet<TData = Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Operation Explorer Entries
+ */
+
+export function useListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet<TData = Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListOperationExplorerEntriesApiV1RunsRunNameOperationsEntriesGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Operation Explorer Entry
+ */
+export const getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet = (
+    runName: string,
+    operationKey: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<OperationExplorerDetailResponse>(
+      {url: `/api/v1/runs/${runName}/operations/entries/${operationKey}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGetQueryKey = (runName: string,
+    operationKey: string,) => {
+    return [
+    `/api/v1/runs/${runName}/operations/entries/${operationKey}`
+    ] as const;
+    }
+
+
+export const getGetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGetQueryOptions = <TData = Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    operationKey: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGetQueryKey(runName,operationKey);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>> = ({ signal }) => getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet(runName,operationKey, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined && operationKey !== null && operationKey !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGetQueryResult = NonNullable<Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>>
+export type GetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet<TData = Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    operationKey: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>,
+          TError,
+          Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet<TData = Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    operationKey: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>,
+          TError,
+          Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet<TData = Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    operationKey: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Operation Explorer Entry
+ */
+
+export function useGetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet<TData = Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    operationKey: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOperationExplorerEntryApiV1RunsRunNameOperationsEntriesOperationKeyGetQueryOptions(runName,operationKey,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Operation Explorer Facets
+ */
+export const getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet = (
+    runName: string,
+    params?: GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<OperationFacetsResponse>(
+      {url: `/api/v1/runs/${runName}/operations/facets`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetQueryKey = (runName: string,
+    params?: GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/operations/facets`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetQueryOptions = <TData = Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>> = ({ signal }) => getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetQueryResult = NonNullable<Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>>
+export type GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet<TData = Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet<TData = Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet<TData = Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Operation Explorer Facets
+ */
+
+export function useGetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet<TData = Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetOperationExplorerFacetsApiV1RunsRunNameOperationsFacetsGetQueryOptions(runName,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

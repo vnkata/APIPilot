@@ -12,6 +12,7 @@ import {
   constraintsSearchSchema,
   graphSearchSchema,
   historySearchSchema,
+  operationsSearchSchema,
   reportsSearchSchema,
   testCasesSearchSchema,
 } from './searchParams'
@@ -21,6 +22,9 @@ import { RunsPage } from '../features/runs/RunsPage'
 
 const LazyGraphPage = lazy(() =>
   import('../features/graph/GraphPage').then((module) => ({ default: module.GraphPage })),
+)
+const LazyOperationsPage = lazy(() =>
+  import('../features/operations/OperationsPage').then((module) => ({ default: module.OperationsPage })),
 )
 const LazyConstraintsPage = lazy(() =>
   import('../features/constraints/ConstraintsPage').then((module) => ({ default: module.ConstraintsPage })),
@@ -77,6 +81,21 @@ const graphRoute = createRoute({
     return (
       <RouteFallback>
         <LazyGraphPage runName={runName} search={search} />
+      </RouteFallback>
+    )
+  },
+})
+
+const operationsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/runs/$runName/operations',
+  validateSearch: (search) => operationsSearchSchema.parse(search),
+  component: function OperationsRoute() {
+    const { runName } = operationsRoute.useParams()
+    const search = operationsRoute.useSearch()
+    return (
+      <RouteFallback>
+        <LazyOperationsPage runName={runName} search={search} />
       </RouteFallback>
     )
   },
@@ -161,6 +180,7 @@ const routeTree = rootRoute.addChildren([
   indexRoute,
   runsRoute,
   runOverviewRoute,
+  operationsRoute,
   graphRoute,
   constraintsRoute,
   artifactsRoute,

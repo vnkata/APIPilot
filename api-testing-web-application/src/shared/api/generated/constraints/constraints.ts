@@ -22,11 +22,21 @@ import type {
 
 import type {
   ConstraintEntryPageResponse,
+  ConstraintExplorerDetailResponse,
+  ConstraintExplorerPageResponse,
+  ConstraintFacetsResponse,
   DynamicConstraintsResponse,
+  GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams,
+  GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams,
   HTTPValidationError,
+  InvariantExplorerDetailResponse,
+  InvariantExplorerFacetsResponse,
+  InvariantExplorerPageResponse,
   InvariantPageResponse,
+  ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams,
   ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams,
   ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams,
+  ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams,
   ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams,
   StaticConstraintsResponse
 } from '../model';
@@ -320,6 +330,604 @@ export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvari
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Constraint Explorer Entries
+ */
+export const listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet = (
+    runName: string,
+    params?: ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConstraintExplorerPageResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/entries`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetQueryKey = (runName: string,
+    params?: ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/entries`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetQueryOptions = <TData = Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>> = ({ signal }) => listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>>
+export type ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet<TData = Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet<TData = Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet<TData = Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Constraint Explorer Entries
+ */
+
+export function useListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet<TData = Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Constraint Explorer Entry
+ */
+export const getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet = (
+    runName: string,
+    constraintId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConstraintExplorerDetailResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/entries/${constraintId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGetQueryKey = (runName: string,
+    constraintId: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/entries/${constraintId}`
+    ] as const;
+    }
+
+
+export const getGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    constraintId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGetQueryKey(runName,constraintId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>> = ({ signal }) => getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet(runName,constraintId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined && constraintId !== null && constraintId !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>>
+export type GetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet<TData = Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    constraintId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet<TData = Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    constraintId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet<TData = Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    constraintId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Constraint Explorer Entry
+ */
+
+export function useGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet<TData = Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    constraintId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGetQueryOptions(runName,constraintId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Constraint Explorer Facets
+ */
+export const getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet = (
+    runName: string,
+    params?: GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConstraintFacetsResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/facets`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetQueryKey = (runName: string,
+    params?: GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/facets`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetQueryOptions = <TData = Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>> = ({ signal }) => getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetQueryResult = NonNullable<Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>>
+export type GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet<TData = Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet<TData = Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet<TData = Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Constraint Explorer Facets
+ */
+
+export function useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet<TData = Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Invariant Explorer Entries
+ */
+export const listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet = (
+    runName: string,
+    params?: ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InvariantExplorerPageResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/invariants`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetQueryKey = (runName: string,
+    params?: ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/invariants`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetQueryOptions = <TData = Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>> = ({ signal }) => listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>>
+export type ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet<TData = Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet<TData = Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet<TData = Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Invariant Explorer Entries
+ */
+
+export function useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet<TData = Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Invariant Explorer Facets
+ */
+export const getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet = (
+    runName: string,
+    params?: GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InvariantExplorerFacetsResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/invariants/facets`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetQueryKey = (runName: string,
+    params?: GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/invariants/facets`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetQueryOptions = <TData = Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>> = ({ signal }) => getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetQueryResult = NonNullable<Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>>
+export type GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet<TData = Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet<TData = Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>,
+          TError,
+          Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet<TData = Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Invariant Explorer Facets
+ */
+
+export function useGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet<TData = Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Invariant Explorer Entry
+ */
+export const getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet = (
+    runName: string,
+    invariantId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InvariantExplorerDetailResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/invariants/${invariantId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGetQueryKey = (runName: string,
+    invariantId: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/invariants/${invariantId}`
+    ] as const;
+    }
+
+
+export const getGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    invariantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGetQueryKey(runName,invariantId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>> = ({ signal }) => getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet(runName,invariantId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined && invariantId !== null && invariantId !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>>
+export type GetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet<TData = Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    invariantId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet<TData = Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    invariantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet<TData = Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    invariantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Invariant Explorer Entry
+ */
+
+export function useGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet<TData = Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    invariantId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGetQueryOptions(runName,invariantId,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

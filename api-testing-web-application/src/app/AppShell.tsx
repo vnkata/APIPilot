@@ -8,6 +8,7 @@ import HistoryIcon from '@mui/icons-material/History'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import ListAltIcon from '@mui/icons-material/ListAlt'
 import MenuIcon from '@mui/icons-material/Menu'
+import ManageSearchIcon from '@mui/icons-material/ManageSearch'
 import RuleIcon from '@mui/icons-material/Rule'
 import ViewCompactIcon from '@mui/icons-material/ViewCompact'
 import {
@@ -64,6 +65,7 @@ function navItems(runName: string | undefined): NavItem[] {
   return [
     ...items,
     { href: `/runs/${encodedRunName}`, icon: <ViewCompactIcon fontSize="small" />, label: 'Overview' },
+    { href: `/runs/${encodedRunName}/operations`, icon: <ManageSearchIcon fontSize="small" />, label: 'Operations' },
     { href: `/runs/${encodedRunName}/graph`, icon: <AccountTreeIcon fontSize="small" />, label: 'Graph' },
     { href: `/runs/${encodedRunName}/constraints`, icon: <RuleIcon fontSize="small" />, label: 'Constraints' },
     { href: `/runs/${encodedRunName}/artifacts`, icon: <FolderZipIcon fontSize="small" />, label: 'Artifacts' },

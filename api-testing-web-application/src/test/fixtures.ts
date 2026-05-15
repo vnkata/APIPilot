@@ -1,13 +1,27 @@
 import type {
   ArtifactCatalogResponse,
   ArtifactContentResponse,
+  ConstraintExplorerDetailResponse,
+  ConstraintExplorerPageResponse,
+  ConstraintFacetsResponse,
   ConstraintEntryPageResponse,
   DependencyGraphResponse,
+  GraphEdgeDetailResponse,
   GraphEdgePageResponse,
+  GraphFacetsResponse,
+  GraphNodePageResponse,
+  GraphSequencePageResponse,
+  GraphSequenceResponse,
   HarEntryPageResponse,
   HarSessionListResponse,
+  InvariantExplorerDetailResponse,
+  InvariantExplorerFacetsResponse,
+  InvariantExplorerPageResponse,
   InvariantPageResponse,
   OperationDetailResponse,
+  OperationExplorerDetailResponse,
+  OperationExplorerPageResponse,
+  OperationFacetsResponse,
   OperationListResponse,
   ReportEntryPageResponse,
   ReportsResponse,
@@ -117,9 +131,200 @@ export const graph: DependencyGraphResponse = {
 
 export const graphEdges: GraphEdgePageResponse = {
   run_name: 'Run A',
-  items: graph.edges,
+  items: [
+    {
+      edge_id: 'edge-create-list',
+      edge_status: 'final',
+      evidence_count: 1,
+      evidence_preview: ['item.id -> itemId'],
+      evidence_sources: ['final_graph'],
+      from_node: 'post-/items',
+      from_node_id: 'operation:post-/items',
+      from_operation_id: 'post-/items',
+      similar_parameters: [
+        {
+          value1: 'item.id',
+          value2: 'itemId',
+          in_value: 'response to parameter via test',
+        },
+      ],
+      to_node: 'get-/items',
+      to_node_id: 'operation:get-/items',
+      to_operation_id: 'get-/items',
+    },
+  ],
   groups: [{ key: 'post-/items', count: 1 }],
   pagination: { limit: 25, offset: 0, total: 1 },
+}
+
+export const graphEdgeDetail: GraphEdgeDetailResponse = {
+  ...graphEdges.items[0],
+  evidence: [
+    {
+      evidence_id: 'evidence-create-list',
+      from_evidence_node_id: 'response.item.id',
+      relation_hint: 'response to parameter via test',
+      source: 'final_graph',
+      source_artifact_id: 'dependency_graph',
+      to_evidence_node_id: 'query.itemId',
+      value1: 'item.id',
+      value2: 'itemId',
+    },
+  ],
+}
+
+export const graphFacets: GraphFacetsResponse = {
+  edge_status: [{ key: 'final', count: 1 }],
+  evidence_source: [{ key: 'final_graph', count: 1 }],
+  from_operation_id: [{ key: 'post-/items', count: 1 }],
+  node_kind: [{ key: 'operation', count: 2 }],
+  sequence_type: [{ key: 'dependency_chain', count: 1 }],
+  to_operation_id: [{ key: 'get-/items', count: 1 }],
+}
+
+export const graphNodes: GraphNodePageResponse = {
+  run_name: 'Run A',
+  items: [
+    {
+      http_method: 'get',
+      in_degree: 1,
+      label: 'ListItems',
+      node_id: 'operation:get-/items',
+      node_kind: 'operation',
+      operation_id: 'get-/items',
+      out_degree: 0,
+      path_template: '/items',
+    },
+    {
+      http_method: 'post',
+      in_degree: 0,
+      label: 'CreateItem',
+      node_id: 'operation:post-/items',
+      node_kind: 'operation',
+      operation_id: 'post-/items',
+      out_degree: 1,
+      path_template: '/items',
+    },
+  ],
+  groups: [{ key: 'operation', count: 2 }],
+  pagination: { limit: 25, offset: 0, total: 2 },
+}
+
+export const graphSequenceDetail: GraphSequenceResponse = {
+  length: 2,
+  operations: ['post-/items', 'get-/items'],
+  parameter_sources: [
+    {
+      parameter_name: 'itemId',
+      source_operation_id: 'post-/items',
+      source_property_path: 'item.id',
+    },
+  ],
+  score: 0.92,
+  sequence_id: 'seq-create-list',
+  sequence_type: 'dependency_chain',
+  target_operation_id: 'get-/items',
+}
+
+export const graphSequences: GraphSequencePageResponse = {
+  run_name: 'Run A',
+  items: [graphSequenceDetail],
+  groups: [{ key: 'dependency_chain', count: 1 }],
+  pagination: { limit: 25, offset: 0, total: 1 },
+}
+
+export const operationExplorerEntries: OperationExplorerPageResponse = {
+  run_name: 'Run A',
+  items: [
+    {
+      constraint_count: 2,
+      display_operation_id: 'ListItems',
+      graph_in_degree: 1,
+      graph_out_degree: 0,
+      has_failures: true,
+      http_method: 'get',
+      invariant_count: 1,
+      operation_id: 'get-/items',
+      operation_key: 'op-get-items',
+      parameter_count: 1,
+      path_template: '/items',
+      response_status_count: 2,
+      response_statuses: ['200', '404'],
+      test_case_count: 1,
+    },
+    {
+      constraint_count: 1,
+      display_operation_id: 'CreateItem',
+      graph_in_degree: 0,
+      graph_out_degree: 1,
+      has_failures: false,
+      http_method: 'post',
+      invariant_count: 0,
+      operation_id: 'post-/items',
+      operation_key: 'op-post-items',
+      parameter_count: 0,
+      path_template: '/items',
+      response_status_count: 1,
+      response_statuses: ['201'],
+      test_case_count: 1,
+    },
+  ],
+  groups: [{ key: 'get', count: 1 }],
+  pagination: { limit: 25, offset: 0, total: 2 },
+}
+
+export const operationExplorerDetail: OperationExplorerDetailResponse = {
+  constraint_count: 2,
+  constraint_summary: { by_kind: { bounds: 1, required: 1 }, total: 2 },
+  display_operation_id: 'ListItems',
+  graph_in_degree: 1,
+  graph_out_degree: 0,
+  graph_summary: { in_degree: 1, incoming_edge_count: 1, out_degree: 0, outgoing_edge_count: 0 },
+  has_failures: true,
+  http_method: 'get',
+  incoming_edge_ids: ['edge-create-list'],
+  invariant_count: 1,
+  invariant_summary: { by_kind: { bounds: 1 }, total: 1 },
+  operation_id: 'get-/items',
+  operation_key: 'op-get-items',
+  outgoing_edge_ids: [],
+  parameter_count: 1,
+  parameters: operationDetail.parameters,
+  path_template: '/items',
+  related_constraint_ids: ['constraint-limit'],
+  related_invariant_ids: ['inv-limit'],
+  report_status_counts: { '200': 1, '404': 1 },
+  request_body: { should_not_export_by_default: true },
+  response_status_count: 2,
+  response_statuses: ['200', '404'],
+  responses: operationDetail.responses,
+  test_case_count: 1,
+  test_case_status_counts: { passed: 1 },
+}
+
+export const operationFacets: OperationFacetsResponse = {
+  has_constraints: [{ key: 'true', count: 2 }],
+  has_failures: [
+    { key: 'true', count: 1 },
+    { key: 'false', count: 1 },
+  ],
+  has_graph_edges: [{ key: 'true', count: 2 }],
+  has_invariants: [
+    { key: 'true', count: 1 },
+    { key: 'false', count: 1 },
+  ],
+  has_request_body: [
+    { key: 'true', count: 1 },
+    { key: 'false', count: 1 },
+  ],
+  http_method: [
+    { key: 'get', count: 1 },
+    { key: 'post', count: 1 },
+  ],
+  response_status: [
+    { key: '200', count: 1 },
+    { key: '404', count: 1 },
+  ],
 }
 
 export const staticConstraints: ConstraintEntryPageResponse = {
@@ -164,6 +369,95 @@ export const invariants: InvariantPageResponse = {
   ],
   groups: [{ key: 'get-/items', count: 1 }],
   pagination: { limit: 25, offset: 0, total: 1 },
+}
+
+export const constraintExplorerEntries: ConstraintExplorerPageResponse = {
+  run_name: 'Run A',
+  items: [
+    {
+      agreement_status: 'both_present',
+      assertion_available: true,
+      assertion_preview: 'pm.expect(input.limit).to.be.at.least(1)',
+      combined_expression: 'input.limit >= 1',
+      constraint_id: 'constraint-limit',
+      constraint_kind: 'bounds',
+      dynamic_expression: 'return.items.id >= 1',
+      expression: 'input.limit >= 1',
+      has_dynamic: true,
+      has_static: true,
+      operation_id: 'get-/items',
+      parameter: 'limit',
+      property_path: 'input.limit',
+      section: 'request_response',
+      source: 'combined',
+      source_type: 'constraints',
+      static_expression: 'input.limit >= 1',
+    },
+  ],
+  groups: [{ key: 'combined', count: 1 }],
+  metadata: { combined_source: 'artifact', warnings: [] },
+  pagination: { limit: 25, offset: 0, total: 1 },
+}
+
+export const constraintExplorerDetail: ConstraintExplorerDetailResponse = {
+  ...constraintExplorerEntries.items[0],
+  assertion: 'pm.expect(input.limit).to.be.at.least(1)',
+}
+
+export const constraintFacets: ConstraintFacetsResponse = {
+  agreement_status: [{ key: 'both_present', count: 1 }],
+  assertion_available: [{ key: 'true', count: 1 }],
+  constraint_kind: [{ key: 'bounds', count: 1 }],
+  metadata: { combined_source: 'artifact', warnings: [] },
+  operation_id: [{ key: 'get-/items', count: 1 }],
+  section: [{ key: 'request_response', count: 1 }],
+  source: [{ key: 'combined', count: 1 }],
+  source_type: [{ key: 'constraints', count: 1 }],
+}
+
+export const invariantExplorerEntries: InvariantExplorerPageResponse = {
+  run_name: 'Run A',
+  items: [
+    {
+      assertion_available: true,
+      assertion_preview: 'pm.expect(return_items_id).to.be.at.least(1)',
+      correlation_confidence: 'exact',
+      correlation_evidence: [
+        {
+          constraint_id: 'constraint-limit',
+          evidence_type: 'property_match',
+          message: 'property path matched input.limit',
+          property_path: 'input.limit',
+        },
+      ],
+      invariant: 'return.items.id >= 1',
+      invariant_id: 'inv-limit',
+      invariant_kind: 'bounds',
+      invariant_type: 'daikon.inv.unary.scalar.LowerBound',
+      operation_id: 'get-/items',
+      oracle_readiness: 'verified_runtime_oracle',
+      postman_assertion: 'pm.expect(return_items_id).to.be.at.least(1)',
+      pptname: 'get-/items:::EXIT',
+      primary_property_path: 'return.items.id',
+      property_paths: ['return.items.id'],
+      related_constraint_ids: ['constraint-limit'],
+      variables: '(return.items.id)',
+    },
+  ],
+  groups: [{ key: 'verified_runtime_oracle', count: 1 }],
+  pagination: { limit: 25, offset: 0, total: 1 },
+}
+
+export const invariantExplorerDetail: InvariantExplorerDetailResponse = invariantExplorerEntries.items[0]
+
+export const invariantExplorerFacets: InvariantExplorerFacetsResponse = {
+  assertion_available: [{ key: 'true', count: 1 }],
+  correlation_confidence: [{ key: 'exact', count: 1 }],
+  invariant_kind: [{ key: 'bounds', count: 1 }],
+  invariant_type: [{ key: 'daikon.inv.unary.scalar.LowerBound', count: 1 }],
+  operation_id: [{ key: 'get-/items', count: 1 }],
+  oracle_readiness: [{ key: 'verified_runtime_oracle', count: 1 }],
+  primary_property_path: [{ key: 'return.items.id', count: 1 }],
 }
 
 export const artifactCatalog: ArtifactCatalogResponse = {

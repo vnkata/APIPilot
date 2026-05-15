@@ -5,13 +5,13 @@
  * Read-only HTTP API for APIPilot local cache artifacts.
  * OpenAPI spec version: 0.1.0
  */
-import type { GraphEdgeResponse } from './graphEdgeResponse';
+import type { GraphExplorerEdgeResponse } from './graphExplorerEdgeResponse';
 import type { GroupCountResponse } from './groupCountResponse';
 import type { PaginationMetadata } from './paginationMetadata';
 
 export interface GraphEdgePageResponse {
   groups: GroupCountResponse[];
-  items: GraphEdgeResponse[];
+  items: GraphExplorerEdgeResponse[];
   pagination: PaginationMetadata;
   run_name: string;
 }
