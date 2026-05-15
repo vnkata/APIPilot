@@ -2,11 +2,65 @@ import logging
 import os
 import json
 from openai import AzureOpenAI, AsyncAzureOpenAI
-from typing import List, Optional, Tuple, Union, Dict
+from typing import Iterable, List, Optional, Tuple, Union, Dict
 
 from pydantic import BaseModel
 
 from api_testing.models.base_model import APITestingBaseLLMModel
+
+
+def _strip_json_fence(text: str) -> str:
+    """Remove a full-response markdown JSON code fence when present."""
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return stripped
+
+    lines = stripped.splitlines()
+    if lines and lines[0].strip().startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+def _json_candidates(text: str) -> Iterable[str]:
+    """Yield possible JSON documents from an LLM response."""
+    seen: set[str] = set()
+    direct_candidates = [text.strip(), _strip_json_fence(text)]
+
+    for candidate in direct_candidates:
+        if candidate and candidate not in seen:
+            seen.add(candidate)
+            yield candidate
+
+    source = _strip_json_fence(text)
+    decoder = json.JSONDecoder()
+    for index, char in enumerate(source):
+        if char not in "{[":
+            continue
+        try:
+            _, end_index = decoder.raw_decode(source[index:])
+        except json.JSONDecodeError:
+            continue
+
+        candidate = source[index:index + end_index].strip()
+        if candidate and candidate not in seen:
+            seen.add(candidate)
+            yield candidate
+
+
+def _validate_schema_json(text: str, schema: BaseModel):
+    """Validate structured output, tolerating prose around the JSON block."""
+    last_error: Exception | None = None
+    for candidate in _json_candidates(text):
+        try:
+            return schema.model_validate_json(candidate)
+        except Exception as exc:
+            last_error = exc
+
+    if last_error:
+        raise last_error
+    raise ValueError("No JSON object or array found in model response")
 
 
 class AzureOpenAIModel(APITestingBaseLLMModel):
@@ -77,15 +131,10 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
         
         if schema:
             try:
-                parsed = schema.model_validate_json(text)
+                parsed = _validate_schema_json(text, schema)
                 return parsed, 0
-            except Exception:
-                try:
-                    cleaned = text.strip("```json").strip("```").strip()
-                    parsed = schema.model_validate_json(cleaned)
-                    return parsed, 0
-                except Exception as e:
-                    raise Exception(f"JSON parse failed: {e}")
+            except Exception as e:
+                raise Exception(f"JSON parse failed: {e}")
 
         return text, 0
 
@@ -117,16 +166,11 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
 
         if schema:
             try:
-                parsed = schema.model_validate_json(text)
+                parsed = _validate_schema_json(text, schema)
                 return parsed, 0
-            except Exception:
-                try:
-                    cleaned = text.strip("```json").strip("```").strip()
-                    parsed = schema.model_validate_json(cleaned)
-                    return parsed, 0
-                except Exception as e:
-                    logging.error(f"Async JSON parse failed: {e}\nResponse: {text[:500]}")
-                    return text, 0
+            except Exception as e:
+                logging.error(f"Async JSON parse failed: {e}\nResponse: {text[:500]}")
+                return text, 0
 
         return text, 0
 
