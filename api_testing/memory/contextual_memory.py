@@ -1,9 +1,12 @@
 from collections import defaultdict
 import copy
+from datetime import datetime
 import json
 import os
 import random
 import threading
+
+import duckdb
 
 def build_entity_prefix_map(xref_map):
     entity_prefix = {}
@@ -133,22 +136,125 @@ class ContextualMemory:
         }
     """
     
-    def __init__(self, cache_dir):
+    def __init__(self, cache_dir, persist=True, initial_contexts=None):
         self.contexts = {}  # { entity_name: [ {prop: value, ...}, ... ] }
         self.cache = {}
         self.current_uuid = None
         self.priority_resources = []
         self._lock = threading.Lock()
-        self.cache_file = os.path.join(
-            cache_dir, "contextual_memory.json")
-        self.load_or_initialize_cache()
+        self.cache_dir = cache_dir
+        self.persist = persist
+        self.cache_file = os.path.join(cache_dir, "contextual_memory.json")
+        self.db_file = os.path.join(cache_dir, "contextual_memory.db")
+        self._conn = None
+        if initial_contexts is not None:
+            self.contexts = initial_contexts
+        else:
+            self.load_or_initialize_cache()
+
+    def _connection(self):
+        if not self.persist:
+            return None
+        if self._conn is None:
+            os.makedirs(self.cache_dir, exist_ok=True)
+            self._conn = duckdb.connect(self.db_file)
+            self._conn.execute(
+                """
+                CREATE TABLE IF NOT EXISTS contextual_memory (
+                    context_key VARCHAR PRIMARY KEY,
+                    payload JSON NOT NULL,
+                    updated_at TIMESTAMP DEFAULT current_timestamp
+                )
+                """
+            )
+        return self._conn
+
+    @staticmethod
+    def _encode_payload(payload):
+        return json.dumps(payload, ensure_ascii=False, separators=(",", ":"))
+
+    @staticmethod
+    def _decode_payload(payload):
+        if isinstance(payload, (dict, list)):
+            return payload
+        return json.loads(payload)
+
+    def _db_is_empty(self):
+        conn = self._connection()
+        if conn is None:
+            return True
+        count = conn.execute("SELECT COUNT(*) FROM contextual_memory").fetchone()[0]
+        return count == 0
+
+    def _upsert_context_key(self, context_key):
+        if not self.persist or context_key not in self.contexts:
+            return
+        conn = self._connection()
+        if conn is None:
+            return
+        conn.execute(
+            """
+            INSERT OR REPLACE INTO contextual_memory (context_key, payload, updated_at)
+            VALUES (?, CAST(? AS JSON), ?)
+            """,
+            [
+                str(context_key),
+                self._encode_payload(self.contexts[context_key]),
+                datetime.now(),
+            ],
+        )
+
+    def _flush_all_contexts(self):
+        if not self.persist:
+            return
+        conn = self._connection()
+        if conn is None:
+            return
+        conn.execute("BEGIN TRANSACTION")
+        try:
+            for context_key, payload in self.contexts.items():
+                conn.execute(
+                    """
+                    INSERT OR REPLACE INTO contextual_memory (context_key, payload, updated_at)
+                    VALUES (?, CAST(? AS JSON), ?)
+                    """,
+                    [str(context_key), self._encode_payload(payload), datetime.now()],
+                )
+            conn.execute("COMMIT")
+        except Exception:
+            conn.execute("ROLLBACK")
+            raise
+
+    def _load_contexts_from_db(self):
+        conn = self._connection()
+        if conn is None:
+            return {}
+        rows = conn.execute(
+            "SELECT context_key, CAST(payload AS VARCHAR) FROM contextual_memory"
+        ).fetchall()
+        return {
+            context_key: self._decode_payload(payload)
+            for context_key, payload in rows
+        }
+
+    def _import_json_cache_if_needed(self):
+        if not self.persist or not self._db_is_empty():
+            return
+        if not os.path.exists(self.cache_file):
+            return
+        with open(self.cache_file, "r", encoding="utf-8") as file:
+            data = json.load(file)
+        if not isinstance(data, dict):
+            return
+        self.contexts = data
+        self._flush_all_contexts()
         
     def load_or_initialize_cache(self):
-        # Check if the cache file exists
-        if  os.path.exists(self.cache_file):
-            with open(self.cache_file, "r") as file:
-                data = json.load(file)
-                self.contexts = data
+        if not self.persist:
+            return
+        self._connection()
+        self._import_json_cache_if_needed()
+        self.contexts = self._load_contexts_from_db()
 
     def set_current(self, current_uuid):
         self.current_uuid =  current_uuid
@@ -218,7 +324,7 @@ class ContextualMemory:
             if str(item) not in existing:
                 self.contexts[entity_name].append(item)
                 existing.add(str(item))
-        self.export_to_file()
+        self._upsert_context_key(entity_name)
         
     # def consume(self, entity_name, **filters):
     #     """
@@ -435,12 +541,13 @@ class ContextualMemory:
         existing = {json.dumps(x, sort_keys=True) for x in blacklist}
         if key not in existing:
             blacklist.append(resources)
+            self._upsert_context_key(self.current_uuid)
     
     def is_blacklisted(self, resources):
-        endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        endpoint_ctx = self.contexts.get(self.current_uuid, {})
         if not isinstance(endpoint_ctx, dict):
             return False
-        blacklist = endpoint_ctx.setdefault("blacklist", [])
+        blacklist = endpoint_ctx.get("blacklist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in blacklist}
         if key not in existing:
@@ -448,10 +555,10 @@ class ContextualMemory:
         return True
     
     def in_whitelist(self, resources):
-        endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
+        endpoint_ctx = self.contexts.get(self.current_uuid, {})
         if not isinstance(endpoint_ctx, dict):
             return False
-        whitelist = endpoint_ctx.setdefault("whitelist", [])
+        whitelist = endpoint_ctx.get("whitelist", [])
         key = json.dumps(resources, sort_keys=True)
         existing = {json.dumps(x, sort_keys=True) for x in whitelist}
         if key not in existing:
@@ -468,6 +575,7 @@ class ContextualMemory:
         existing = {json.dumps(x, sort_keys=True) for x in whitelist}
         if key not in existing:
             whitelist.append(resources)
+            self._upsert_context_key(self.current_uuid)
 
     def values(self, entity_name, key):
         
@@ -475,8 +583,11 @@ class ContextualMemory:
 
     def copy(self):
 
-        new_memory = ContextualMemory(cache_dir=os.path.dirname(self.cache_file) or ".")
-        new_memory.contexts = copy.deepcopy(self.contexts)
+        new_memory = ContextualMemory(
+            cache_dir=self.cache_dir,
+            persist=False,
+            initial_contexts=copy.deepcopy(self.contexts),
+        )
         return new_memory
 
     def merge(self, other: 'ContextualMemory'):
@@ -486,22 +597,46 @@ class ContextualMemory:
         Skips per-node whitelists (current_uuid keys).
         """
         with self._lock:
+            changed_entities = set()
             for entity, items in other.contexts.items():
                 if entity == other.current_uuid:
                     continue
-                if entity not in self.contexts or not isinstance(self.contexts[entity], list):
-                    self.contexts[entity] = []
-                existing = {str(x) for x in self.contexts[entity]}
-                for item in items:
-                    if str(item) not in existing:
-                        self.contexts[entity].append(item)
-                        existing.add(str(item))
-            self.export_to_file()
+                if isinstance(items, list):
+                    if entity not in self.contexts or not isinstance(self.contexts[entity], list):
+                        self.contexts[entity] = []
+                    existing = {str(x) for x in self.contexts[entity]}
+                    for item in items:
+                        if str(item) not in existing:
+                            self.contexts[entity].append(item)
+                            existing.add(str(item))
+                            changed_entities.add(entity)
+                elif isinstance(items, dict):
+                    if entity not in self.contexts or not isinstance(self.contexts[entity], dict):
+                        self.contexts[entity] = {}
+                    endpoint_ctx = self.contexts[entity]
+                    for bucket, values in items.items():
+                        if not isinstance(values, list):
+                            endpoint_ctx[bucket] = values
+                            changed_entities.add(entity)
+                            continue
+                        target_values = endpoint_ctx.setdefault(bucket, [])
+                        existing = {json.dumps(x, sort_keys=True) for x in target_values}
+                        for value in values:
+                            key = json.dumps(value, sort_keys=True)
+                            if key not in existing:
+                                target_values.append(value)
+                                existing.add(key)
+                                changed_entities.add(entity)
+            for entity in changed_entities:
+                self._upsert_context_key(entity)
 
     def __repr__(self):
         return f"ContextualMemory({list(self.contexts.keys())})"
     
     def export_to_file(self):
-        with open(self.cache_file, "w") as file:
-            json.dump(self.contexts, file, indent=2, ensure_ascii=False)
-            file.flush()
+        self._flush_all_contexts()
+
+    def close(self):
+        if self._conn is not None:
+            self._conn.close()
+            self._conn = None

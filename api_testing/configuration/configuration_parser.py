@@ -354,7 +354,6 @@ class ConfigurationParser:
                 config.genParameters = {"values": enum_values}
             elif field_format in ("date", "date-time"):
                 config.type = "RandomDateGenerator"
-                config.genParameters = {"format": "%Y-%m-%d %H:%M:%S"}
             elif field_format == "file":
                 config.type = "RandomFileGenerator"
             else:

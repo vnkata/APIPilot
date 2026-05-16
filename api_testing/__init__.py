@@ -9,7 +9,7 @@ import time
 import asyncio
 from dotenv import load_dotenv
 from api_testing.configuration.configuration_parser import ConfigurationParser
-# from api_testing.constraint.static_constraint_miner import StaticConstraintMiner
+from api_testing.constraint import ConstraintMiner
 from api_testing.feedback import FeedbackAnalyzer
 from api_testing.generators.executor import Executor, Strategy
 from api_testing.generators.requestor import Requestor
@@ -275,6 +275,7 @@ class APITesting:
                                            APITestingVectorDB]] = None,
                  test_single_endpoint: Optional[str] = None,  # New parameter
                  # async_mode=False,
+                 constraint_mining=True,
 
                  ):
         self.base_url = base_url
@@ -288,6 +289,8 @@ class APITesting:
         self.test_single_endpoint = test_single_endpoint
         self.operation_graph = None
         self.tracer = None
+        self.mining_constraints = constraint_mining
+        self.miner = None
         self.logger = logging.getLogger(__name__)
         self._load_()
         
@@ -347,24 +350,7 @@ class APITesting:
         parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
         parser.parse()
 
-    # def process(self):
-        
-    #     self.build_odg()
-    #     self.build_config()
-    #     with open(os.path.join(self.project_dir,"semantic_property_dependency_graph.json"), "r", encoding="utf-8") as f:
-    #         graph_data = json.load(f)
-    #     endpoint_groups = build_endpoint_groups(graph_data)
-    #     with open(os.path.join(self.project_dir,"producer_pool.json"), "w", encoding="utf-8") as f:
-    #         f.write(json.dumps(endpoint_groups, indent=4, ensure_ascii=False))
-
-    #     for endpoint in self.parser.configurations:
-    #         for param in endpoint.params.keys():
-    #             for k,v in endpoint_groups.items():
-    #                 if f'{endpoint.method}-{endpoint.endpoint}_params_{param}' in v:
-    #                     endpoint.params[param] = FieldConfiguration(name=param, type="ProducerGenerator",genParameters={"pool": k} )
-    #     self.parser.json_output()
-
-        # process
+    
     
     def _preprocess_(self):
         # extract contrains
@@ -408,7 +394,7 @@ class APITesting:
             cache_dir=self.project_dir
         )
         self.operation_graph.plot_graph()
-    
+
     def run_tests(self, num_generations=1, num_test_cases=20, mutation_ratio=0.0, header_mutation_ratio=0.5,
                   async_mode: bool = False, max_request_workers: Optional[int] = None,
                   async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT,
@@ -440,6 +426,15 @@ class APITesting:
         else:
             self.operation_graph = build_graph_for_run()
             parser = load_config_for_run()
+
+        if self.mining_constraints:
+            self.miner = ConstraintMiner(
+                spec_parser=self.spec_parser,
+                model=self.model,
+                embedding_model=self.embedder,
+                cache_dir=self.project_dir,
+            )
+            self.miner.static_mining()
 
         configurations = { f"{conf.method}-{conf.endpoint}": conf for conf in parser.configurations}
         nodes = self.operation_graph.nodes
@@ -494,7 +489,7 @@ class APITesting:
       
         def traverse_dfs(node, depth=0, context_pool: ContextualMemory = None, parent=None, seq_path = []):
             nonlocal total_testcase, total_success, forest
-            context_pool = context_pool or ContextualMemory()
+            context_pool = context_pool or ContextualMemory(cache_dir=self.project_dir)
             # 
             self.logger.debug("%s• %s", "  " * depth, node.name)
 
@@ -605,7 +600,7 @@ class APITesting:
                 successFull.update({node.name: 1})
                 for child in sort_children_by_method(node.children.values()):
                     traverse_dfs(child, depth + 1, context_pool, node, seq_path=seq_path + [child.name])
-            
+                
             # save pool
            
 
@@ -794,6 +789,9 @@ class APITesting:
                 ))
             else:
                 traverse_forest_dfs(forest, context)
+            if self.mining_constraints and self.miner is not None:
+                self.miner.dynamic_mining()
+                self.miner.constraint_arbitration()
         if total_testcase == 0:
             self.logger.warning("No test cases executed")
         self.logger.debug(
@@ -804,6 +802,13 @@ class APITesting:
         self.logger.debug("Successful endpoint count: %s", len(successFull.keys()))
         emitter.emit(EventType.PHASE_COMPLETE, Phase.TEST_EXECUTION, message="Test execution complete")
         emitter.emit(EventType.EXECUTION_COMPLETE, Phase.FINAL_REPORT, message="All generations complete")
+        print("Success rate", total_success/total_testcase)
+        print(successFull)
+        print("Success rate", len(successFull.keys()))
         return total_testcase, successFull
+        # merge constraints
+
+        
+
 
     

@@ -30,6 +30,23 @@ def to_placeholder(obj):
     return str(obj)
 
 
+def _get_header(headers: Dict[str, Any], name: str, default: str = "") -> str:
+    """Return a header value using case-insensitive lookup."""
+    if not headers:
+        return default
+
+    value = headers.get(name)
+    if value is not None:
+        return value
+
+    wanted = name.lower()
+    for key, value in headers.items():
+        if str(key).lower() == wanted:
+            return value
+
+    return default
+
+
 def unflatten_dict(flat_dict: Dict[str, Any], sep: str = ".") -> Dict[str, Any]:
     nested: Dict[str, Any] = {}
     if isinstance(flat_dict, list):
@@ -76,15 +93,16 @@ class AsyncResponseData:
                 encoding=None,
             )
 
-        mime_type = response.headers.get("Content-Type", "").split(";")[0].strip().lower()
-        body = response.content if response.content is not None else response.text
+        content_type = response.headers.get("Content-Type", "")
+        mime_type = content_type.split(";")[0].strip().lower()
+        body = response.text if response.text is not None else response.content
 
         parsed = None
         if "application/json" in mime_type:
             try:
                 parsed = response.json()
             except ValueError:
-                parsed = None
+                parsed = body
         elif mime_type.startswith("text/") or mime_type in ("application/xml", "text/xml"):
             parsed = response.text
 
@@ -92,9 +110,13 @@ class AsyncResponseData:
         for name, value in response.cookies.items():
             cookies_dict[name] = value
 
+        headers = dict(response.headers)
+        if content_type and not _get_header(headers, "Content-Type"):
+            headers["Content-Type"] = content_type
+
         return ResponseData(
             status_code=response.status_code,
-            headers=dict(response.headers),
+            headers=headers,
             cookies=cookies_dict,
             mime_type=mime_type,
             body=body,
@@ -340,9 +362,10 @@ class AsyncRequestor:
             {"name": str(k), "value": str(v)} for k, v in (params or {}).items()
         ]
 
-        mime_type = response.headers.get("Content-Type", "")
+        mime_type = _get_header(response.headers, "Content-Type")
+        normalized_mime_type = mime_type.lower()
 
-        if "json" in mime_type or "text" in mime_type or mime_type == "":
+        if "json" in normalized_mime_type or "text" in normalized_mime_type or mime_type == "":
             if not response.encoding:
                 response.encoding = 'utf-8'
             response_body = response.body
@@ -374,7 +397,7 @@ class AsyncRequestor:
                     {"name": k, "value": v} for k, v in response.headers.items()
                 ],
                 "content": {
-                    "mimeType": response.headers.get("Content-Type", ""),
+                    "mimeType": mime_type,
                     "size": len(response.body) if response.body else 0,
                     "text": response_body,
                 },

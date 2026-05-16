@@ -87,7 +87,7 @@ class ResponseData:
     headers: Dict[str, str]
     cookies: Dict[str, str]
     mime_type: str
-    body: Union[str, bytes, None]
+    body: Union[str, bytes, Any]
     parsed: Optional[Any] = None
     encoding: Optional[str] = None
 
@@ -106,17 +106,16 @@ class ResponseData:
             )
 
         mime_type = response.headers.get("Content-Type", "").split(";")[0].strip().lower()
-        body = response.content if response.content is not None else response.text
+        body = response.text if response.text is not None else response.content
 
         parsed = None
         if "application/json" in mime_type:
             try:
                 parsed = response.json()
             except ValueError:
-                parsed = None
+                parsed = body
         elif mime_type.startswith("text/") or mime_type in ("application/xml", "text/xml"):
             parsed = response.text
-
         return cls(
             status_code=response.status_code,
             headers=dict(response.headers),
@@ -132,26 +131,26 @@ class ResponseData:
         """True if status code is in 2xx range."""
         return 200 <= self.status_code < 300
 
-    def json(self) -> Optional[Dict[str, Any]]:
-        """Parse and return JSON body if possible."""
-        if isinstance(self.parsed, dict):
-            return self.parsed
+    # def json(self) -> Optional[Dict[str, Any]]:
+    #     """Parse and return JSON body if possible."""
+    #     if isinstance(self.parsed, dict):
+    #         return self.parsed
 
-        if isinstance(self.body, (bytes, bytearray)):
-            text = self.body.decode(self.encoding or "utf-8", errors="ignore")
-        else:
-            text = str(self.body) if self.body is not None else ""
+    #     if isinstance(self.body, (bytes, bytearray)):
+    #         text = self.body.decode(self.encoding or "utf-8", errors="ignore")
+    #     else:
+    #         text = str(self.body) if self.body is not None else ""
 
-        try:
-            return json.loads(text)
-        except (ValueError, TypeError):
-            return None
+    #     try:
+    #         return json.loads(text)
+    #     except (ValueError, TypeError):
+    #         return None
 
-    def text(self) -> str:
-        """Return body as string, decoding bytes if needed."""
-        if isinstance(self.body, (bytes, bytearray)):
-            return self.body.decode(self.encoding or "utf-8", errors="ignore")
-        return str(self.body or "")
+    # def text(self) -> str:
+    #     """Return body as string, decoding bytes if needed."""
+    #     if isinstance(self.body, (bytes, bytearray)):
+    #         return self.body.decode(self.encoding or "utf-8", errors="ignore")
+    #     return str(self.body or "")
 
     def to_dict(self) -> Dict[str, Any]:
         """Serialize response data to dict."""

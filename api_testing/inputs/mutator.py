@@ -60,7 +60,7 @@ class Mutator:
 
     def mutate_number(self, value: Union[int, float]) -> Any:
         """Destroys a numeric value."""
-        strategy = self.rand.choice(["zero", "overflow", "sign_flip", "type_change", "nan"])
+        strategy = self.rand.choice(["zero", "overflow", "sign_flip", "type_change", "nan","injection"])
         
         if strategy == "zero":
             return 0
@@ -72,6 +72,8 @@ class Mutator:
             return str(value) # Change 123 to "123"
         if strategy == "nan" and isinstance(value, float):
             return float('nan')
+        if strategy == "injection":
+            return self.rand.choice(self.injection_strings)
         return value
 
     def mutate_boolean(self, value: bool) -> Any:

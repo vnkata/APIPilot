@@ -1,6 +1,7 @@
 import logging
 import json
 from typing import Optional, List, Union
+from dotenv.main import os
 from pydantic import BaseModel
 from openai import OpenAI, AsyncOpenAI
 
@@ -14,6 +15,9 @@ from tenacity import (
 
 from api_testing.models.base_model import APITestingBaseLLMModel
 from api_testing.utils.llm_tracker import add_usage
+from dotenv import load_dotenv
+
+load_dotenv()
 
 
 def log_retry_error(retry_state: RetryCallState):
@@ -23,7 +27,7 @@ def log_retry_error(retry_state: RetryCallState):
     )
 
 
-default_model = "gpt-4o-mini"
+default_model = "gpt-4.1-mini"
 
 
 class OpenAIModel(APITestingBaseLLMModel):
@@ -50,6 +54,7 @@ class OpenAIModel(APITestingBaseLLMModel):
     # Load model / client
     # ========================
     def load_model(self, *args, **kwargs):
+        self.api_key = os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError(
                 "OpenAI API key is required. Set OPENAI_API_KEY or pass api_key."
@@ -102,7 +107,6 @@ class OpenAIModel(APITestingBaseLLMModel):
         usage = getattr(response, "usage", None)
         prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
         completion_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
-
 
         text = response.choices[0].message.content.strip()
 

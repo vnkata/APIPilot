@@ -1,5 +1,6 @@
 import logging
 import os
+from xml.sax import handler
 
 logger = None
 _log_dir = "./logs"
@@ -28,8 +29,8 @@ def configure_logging(class_name: str = __name__, log_dir=None, level=None, llm_
         for handler in logger.handlers[:]:
             if isinstance(handler, logging.FileHandler):
                 handler.close()
-            logger.remove_handler(handler)
-
+                logger.removeHandler(handler)
+    
     log = logging.getLogger(class_name)
     log.setLevel(level)
     log.handlers.clear()

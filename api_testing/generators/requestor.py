@@ -1,20 +1,64 @@
 import base64
 from datetime import datetime
+from enum import Enum
 import json
-import os
+import logging
+from pathlib import Path
 import re
 import threading
 import time
-from typing import Any, Dict
+from typing import Any, Dict, Optional, Union
 import uuid
-from pydantic import BaseModel
+
 import requests
 
 from api_testing.generators.status_code_peport import StatusCodeReport
 from api_testing.models.http_data import ResponseData
 from api_testing.utils.log import getLogger
 
-def to_placeholder(obj):
+
+# ==================== Constants & Enums ====================
+
+class MimeType(str, Enum):
+    """Supported MIME types for HTTP requests."""
+    JSON = "application/json"
+    JSON_LD = "application/ld+json"
+    FORM_DATA = "multipart/form-data"
+    FORM_URLENCODED = "application/x-www-form-urlencoded"
+    OCTET_STREAM = "application/octet-stream"
+    TEXT_PLAIN = "text/plain"
+    XML = "application/xml"
+    TEXT_XML = "text/xml"
+    GRAPHQL = "application/graphql"
+    PDF = "application/pdf"
+    PROTOBUF = "application/x-protobuf"
+    IMAGE_JPEG = "image/jpeg"
+    IMAGE_PNG = "image/png"
+    IMAGE_SVG = "image/svg+xml"
+    VIDEO_MP4 = "video/mp4"
+    AUDIO_MPEG = "audio/mpeg"
+
+
+class RequestConfig:
+    """Configuration constants for request execution."""
+    
+    DEFAULT_TIMEOUT_CONNECT: float = 5.0
+    DEFAULT_TIMEOUT_READ: float = 300.0
+    TIMEOUT: tuple[float, float] = (DEFAULT_TIMEOUT_CONNECT, DEFAULT_TIMEOUT_READ)
+    
+    PATH_PARAM_PATTERN: str = r"{([^}]+)}"
+    DEFAULT_SEPARATOR: str = "."
+    ARRAY_SUFFIX: str = "[]"
+    
+    CACHE_SUBDIR: str = "history"
+    HISTORY_EXTENSION: str = ".har"
+    REPORTS_FILE: str = "reports.json"
+
+
+# ==================== Helper Functions ====================
+
+def to_placeholder(obj: Any) -> Union[str, Dict[str, Any]]:
+    """Convert objects to placeholder representations for serialization."""
     if isinstance(obj, tuple) and len(obj) == 3:
         filename, content, content_type = obj
         return {
@@ -22,20 +66,27 @@ def to_placeholder(obj):
             "content": "<BINARY>",
             "content_type": content_type
         }
-    # bytes
+    
     if isinstance(obj, (bytes, bytearray)):
         return "<BINARY>"
-
-    # custom object (BytesValue)
+    
     if obj.__class__.__name__ == "BytesValue":
         return "<BINARY>"
-
-    # fallback
+    
     return str(obj)
 
 
-def unflatten_dict(flat_dict: Dict[str, Any], sep: str = ".") -> Dict[str, Any]:
-    nested: Dict[str, Any] = {}
+def unflatten_dict(
+    flat_dict: Union[Dict[str, Any], list],
+    sep: str = RequestConfig.DEFAULT_SEPARATOR
+) -> Union[Dict[str, Any], list]:
+    """
+    Convert flat dot-notation dictionary to nested dictionary.
+    
+    Example:
+        >>> unflatten_dict({"user.name": "John", "user.age": 30})
+        {"user": {"name": "John", "age": 30}}
+    """
     if isinstance(flat_dict, list):
         return [unflatten_dict(item, sep) for item in flat_dict]
     
@@ -269,41 +320,72 @@ class Requestor:
                     return {"data": open(body, "rb")}
                 except Exception:
                     return {"data": body.encode()}
+        
+        return {"data": bytes(body) if not isinstance(body, bytes) else body}
 
-            # fallback
-            return {"data": bytes(body)}
+
+# ==================== URL Builder ====================
+
+class URLBuilder:
+    """Handles URL construction and path parameter resolution."""
+    
+    def __init__(self, api_url: str):
+        """Initialize with base API URL."""
+        self.api_url = api_url.rstrip("/")
+        self.logger = getLogger(__name__)
+    
+    def build(
+        self, endpoint_path: str, parameters: Optional[Dict[str, Any]] = None
+    ) -> tuple[str, Dict[str, Any], Dict[str, Any]]:
+        """
+        Build full URL, extract path parameters, and remaining query parameters.
+        
+        Returns:
+            Tuple of (full_url, path_parameters, remaining_parameters)
+        """
+        parameters = (parameters or {}).copy()
+        path_param_names = re.findall(RequestConfig.PATH_PARAM_PATTERN, endpoint_path)
+        path_parameters = {}
+        
+        resolved_path = endpoint_path
+        for param_name in path_param_names:
+            if param_name in parameters:
+                value = parameters.pop(param_name)
+                path_parameters[param_name] = value
+                resolved_path = resolved_path.replace(f"{{{param_name}}}", str(value))
+            else:
+                path_parameters[param_name] = None
+                self.logger.warning(
+                    f"⚠️ Missing path parameter '{param_name}'; keeping as placeholder"
+                )
+        
+        full_url = f"{self.api_url}/{resolved_path.lstrip('/')}"
+        return full_url, path_parameters, parameters
 
 
-        elif "text/plain" in mime_type:
-            return {"data": body if isinstance(body, (str, bytes)) else str(body)}
+# ==================== HAR Entry Builder ====================
 
-        elif "application/xml" in mime_type or "text/xml" in mime_type:
-            return {"data": body if isinstance(body, str) else str(body)}
-
-        # fallback: raw data
-        return {"data": body}
-    # ----------------------------------------------------------------------
-    # HAR Recording
-    # ----------------------------------------------------------------------
-    def _record_har_entry(
-        self,
+class HAREntryBuilder:
+    """Constructs HAR (HTTP Archive) format entries."""
+    
+    @staticmethod
+    def build(
+        ruuid: str,
         method: str,
         url: str,
-        headers: Dict[str, Any],
-        path_parameters:  Dict[str, Any],
-        params: Dict[str, Any],
-        body: Any,
+        base_path: str,
+        path_parameters: Dict[str, Any],
+        request_kwargs: Dict[str, Any],
         response: ResponseData,
         duration_ms: float,
         expected_code: str,
-        base_path: str,
-        ruuid: str
-    ):
-        """Record a single request/response pair with a unique UUID."""
-        entry_id = str(uuid.uuid4())
-        # --- Build query parameter list ---
+    ) -> Dict[str, Any]:
+        """Build a HAR entry from request/response data."""
+        prepared_headers = request_kwargs.get("headers", {}) or {}
+        params = request_kwargs.get("params", {}) or {}
+        
         query_string = [
-            {"name": str(k), "value": str(v)} for k, v in (params or {}).items()
+            {"name": str(k), "value": v} for k, v in params.items()
         ]
         mime_type = response.headers.get("Content-Type", "")
 
@@ -323,20 +405,21 @@ class Requestor:
             "expected_code": expected_code,
             "is_expected_status": str(response.status_code)[0] == expected_code[0],
             "request": {
+                "_uuid": ruuid,
                 "path_template": base_path,
                 "method": method,
                 "url": url,
-                "headers": [{"name": k, "value": v} for k, v in headers.items()],
-                "bodySize": len(json.dumps(body, default=str)) if body else 0,
-                "postData": {
-                    "text": json.dumps(body,  default=to_placeholder ) if body else "",
-                },
+                "headers": [
+                    {"name": k, "value": v} for k, v in prepared_headers.items()
+                ],
+                "bodySize": len(post_data_text),
+                "postData": {"text": post_data_text},
                 "path_params": path_parameters,
                 "queryString": query_string,
-            }, 
+            },
             "response": {
                 "status": response.status_code,
-                "statusText": body,
+                "statusText": getattr(response, "reason", ""),
                 "headers": [
                     {"name": k, "value": v} for k, v in response.headers.items()
                 ],
@@ -373,10 +456,13 @@ class Requestor:
         """Write all recorded HAR entries to disk (append mode)."""
         data = {
             "log": {
-                "version": "1.2",
-                "creator": {"name": "Executor", "version": "1.0"},
-                "sessionId": self.session_id,
-                "entries": self.entries,
+                "version": self.VERSION,
+                "creator": {
+                    "name": self.CREATOR_NAME,
+                    "version": self.CREATOR_VERSION
+                },
+                "sessionId": session_id,
+                "entries": entries,
             }
         }
         with open(self.cache_file, "w", encoding="utf-8") as file:

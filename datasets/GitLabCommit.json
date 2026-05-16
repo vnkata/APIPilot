@@ -13,9 +13,10 @@
   "paths": {
     "/projects": {
       "get": {
-        "tags": ["Project"],
+        "tags": [
+          "Project"
+        ],
         "description": "Get a list of all visible projects across GitLab for the authenticated user. When accessed without authentication, only public projects with simple fields are returned.",
-        "operationId": "getProjects",
         "parameters": [
           {
             "name": "archived",
@@ -73,7 +74,14 @@
             "description": "Limit by current user minimal access level.",
             "schema": {
               "type": "integer",
-              "enum": [0, 10, 20, 30, 40, 50]
+              "enum": [
+                0,
+                10,
+                20,
+                30,
+                40,
+                50
+              ]
             }
           },
           {
@@ -145,7 +153,10 @@
             "schema": {
               "type": "string",
               "default": "desc",
-              "enum": ["asc", "desc"]
+              "enum": [
+                "asc",
+                "desc"
+              ]
             }
           },
           {
@@ -170,7 +181,11 @@
             "description": "Limit by visibility",
             "schema": {
               "type": "string",
-              "enum": ["public", "internal", "private"]
+              "enum": [
+                "public",
+                "internal",
+                "private"
+              ]
             }
           },
           {
@@ -233,9 +248,10 @@
         }
       },
       "post": {
-        "tags": ["Project"],
+        "tags": [
+          "Project"
+        ],
         "description": "Creates a new project owned by the authenticated user.",
-        "operationId": "createProject",
         "parameters": [
           {
             "name": "allow_merge_on_skipped_pipeline",
@@ -248,10 +264,13 @@
           {
             "name": "auto_cancel_pending_pipelines",
             "in": "query",
-            "description": "Auto-cancel pending pipelines. This isn’t a boolean, but enabled/disabled.",
+            "description": "Auto-cancel pending pipelines. This isn\u2019t a boolean, but enabled/disabled.",
             "schema": {
               "type": "string",
-              "enum": ["enabled", "disabled"]
+              "enum": [
+                "enabled",
+                "disabled"
+              ]
             }
           },
           {
@@ -260,7 +279,11 @@
             "description": "Auto Deploy strategy",
             "schema": {
               "type": "string",
-              "enum": ["continuous", "manual", "timed_incremental"]
+              "enum": [
+                "continuous",
+                "manual",
+                "timed_incremental"
+              ]
             }
           },
           {
@@ -319,7 +342,11 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled"
+              ]
             }
           },
           {
@@ -369,7 +396,11 @@
             "description": "One of disabled,private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled"
+              ]
             }
           },
           {
@@ -395,7 +426,11 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled"
+              ]
             }
           },
           {
@@ -428,7 +463,11 @@
             "description": "Set the merge method used.",
             "schema": {
               "type": "string",
-              "enum": ["merge", "rebase_merge", "ff"]
+              "enum": [
+                "merge",
+                "rebase_merge",
+                "ff"
+              ]
             }
           },
           {
@@ -437,7 +476,11 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled"
+              ]
             }
           },
           {
@@ -494,7 +537,12 @@
             "description": "One of disabled, private,enabled, or public.",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled", "public"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled",
+                "public"
+              ]
             }
           },
           {
@@ -503,7 +551,12 @@
             "description": "One of disabled,private,enabled or public",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled", "public"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled",
+                "public"
+              ]
             }
           },
           {
@@ -544,7 +597,11 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled"
+              ]
             }
           },
           {
@@ -593,7 +650,11 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled"
+              ]
             }
           },
           {
@@ -631,7 +692,11 @@
             "description": "See project visibility level.",
             "schema": {
               "type": "string",
-              "enum": ["private", "internal", "public"]
+              "enum": [
+                "private",
+                "internal",
+                "public"
+              ]
             }
           },
           {
@@ -640,7 +705,11 @@
             "description": "One of disabled, private, or enabled.",
             "schema": {
               "type": "string",
-              "enum": ["disabled", "private", "enabled"]
+              "enum": [
+                "disabled",
+                "private",
+                "enabled"
+              ]
             }
           },
           {
@@ -690,9 +759,10 @@
     },
     "/projects/{id}/repository/commits": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Get a list of repository commits in a project",
-        "operationId": "listRepositoryCommits",
         "parameters": [
           {
             "name": "id",
@@ -768,7 +838,10 @@
             "schema": {
               "type": "string",
               "default": "default",
-              "enum": ["default", "topo"]
+              "enum": [
+                "default",
+                "topo"
+              ]
             }
           }
         ],
@@ -799,9 +872,10 @@
         }
       },
       "post": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Create a commit by posting a JSON payload",
-        "operationId": "createRepositoryCommit",
         "parameters": [
           {
             "name": "id",
@@ -926,9 +1000,10 @@
     },
     "/projects/{id}/repository/commits/{sha}": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Get a specific commit identified by the commit hash or name of a branch or tag.",
-        "operationId": "getCommitBySha",
         "parameters": [
           {
             "name": "id",
@@ -984,9 +1059,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/refs": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Get all references (from branches or tags) a commit is pushed to. The pagination parameters page and per_page can be used to restrict the list of references.",
-        "operationId": "getCommitRefs",
         "parameters": [
           {
             "name": "id",
@@ -1013,7 +1089,11 @@
             "schema": {
               "type": "string",
               "default": "all",
-              "enum": ["branch", "tag", "all"]
+              "enum": [
+                "branch",
+                "tag",
+                "all"
+              ]
             }
           }
         ],
@@ -1046,9 +1126,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/cherry_pick": {
       "post": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Cherry picks a commit to a given branch.",
-        "operationId": "cherryPickCommit",
         "parameters": [
           {
             "name": "id",
@@ -1082,7 +1163,9 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "required": ["branch"],
+                "required": [
+                  "branch"
+                ],
                 "properties": {
                   "branch": {
                     "type": "string",
@@ -1120,9 +1203,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/revert": {
       "post": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Reverts a commit in a given branch.",
-        "operationId": "revertCommit",
         "parameters": [
           {
             "name": "id",
@@ -1156,7 +1240,9 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "required": ["branch"],
+                "required": [
+                  "branch"
+                ],
                 "properties": {
                   "branch": {
                     "type": "string",
@@ -1194,9 +1280,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/diff": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Get the diff of a commit in a project.",
-        "operationId": "getCommitDiff",
         "parameters": [
           {
             "name": "id",
@@ -1246,9 +1333,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/comments": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Get the comments of a commit in a project.",
-        "operationId": "getCommitComments",
         "parameters": [
           {
             "name": "id",
@@ -1273,7 +1361,9 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "required": ["note"],
+                "required": [
+                  "note"
+                ],
                 "properties": {
                   "note": {
                     "type": "string",
@@ -1291,7 +1381,10 @@
                   "line_type": {
                     "type": "string",
                     "description": "The line type.",
-                    "enum": ["new", "old"]
+                    "enum": [
+                      "new",
+                      "old"
+                    ]
                   }
                 }
               }
@@ -1325,9 +1418,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/discussions": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Get the discussions of a commit in a project.",
-        "operationId": "getCommitDiscussions",
         "parameters": [
           {
             "name": "id",
@@ -1377,9 +1471,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/statuses": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "List the statuses of a commit in a project. The pagination parameters page and per_page can be used to restrict the list of references.",
-        "operationId": "getCommitStatuses",
         "parameters": [
           {
             "name": "id",
@@ -1414,7 +1509,11 @@
             "schema": {
               "type": "string",
               "default": "test",
-              "enum": ["build", "test", "deploy"]
+              "enum": [
+                "build",
+                "test",
+                "deploy"
+              ]
             }
           },
           {
@@ -1481,9 +1580,10 @@
     },
     "/projects/{id}/statuses/{sha}": {
       "post": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Adds or updates a build status of a commit.",
-        "operationId": "postCommitStatus",
         "parameters": [
           {
             "name": "id",
@@ -1508,7 +1608,9 @@
           "content": {
             "application/x-www-form-urlencoded": {
               "schema": {
-                "required": ["state"],
+                "required": [
+                  "state"
+                ],
                 "properties": {
                   "state": {
                     "type": "string",
@@ -1584,9 +1686,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/merge_requests": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Get a list of Merge Requests related to the specified commit.",
-        "operationId": "getCommitMergeRequests",
         "parameters": [
           {
             "name": "id",
@@ -1636,9 +1739,10 @@
     },
     "/projects/{id}/repository/commits/{sha}/signature": {
       "get": {
-        "tags": ["Commit"],
+        "tags": [
+          "Commit"
+        ],
         "description": "Get the GPG signature from a commit, if it is signed. For unsigned commits, it results in a 404 response.",
-        "operationId": "getCommitSignature",
         "parameters": [
           {
             "name": "id",
@@ -1750,24 +1854,35 @@
           "title": "Replace sanitize with escape once",
           "author_name": "Example User",
           "author_email": "user@example.com",
-          "authored_date": "2012-09-20T08:50:22.000Z",
+          "authored_date": "2012-09-20T08:50:22Z",
           "committer_name": "Administrator",
           "committer_email": "admin@example.com",
-          "committed_date": "2012-09-20T08:50:22.000Z",
-          "created_at": "2012-09-20T08:50:22.000Z",
+          "committed_date": "2012-09-20T08:50:22Z",
+          "created_at": "2012-09-20T08:50:22Z",
           "message": "Replace sanitize with escape once",
-          "parent_ids": ["6104942438c14ec7bd21c6cd5bd995272b3faff6"],
+          "parent_ids": [
+            "6104942438c14ec7bd21c6cd5bd995272b3faff6"
+          ],
           "web_url": "https://gitlab.example.com/thedude/gitlab-foss/-/commit/ed899a2f4b50b4370feeea94676502b42383c746"
         }
       },
       "Action": {
-        "required": ["action", "file_path"],
+        "required": [
+          "action",
+          "file_path"
+        ],
         "type": "object",
         "properties": {
           "action": {
             "type": "string",
             "description": "The action to perform",
-            "enum": ["create", "delete", "move", "update", "chmod"]
+            "enum": [
+              "create",
+              "delete",
+              "move",
+              "update",
+              "chmod"
+            ]
           },
           "file_path": {
             "type": "string",
@@ -1785,7 +1900,10 @@
             "type": "string",
             "description": "The file encoding",
             "default": "text",
-            "enum": ["base64", "text"]
+            "enum": [
+              "base64",
+              "text"
+            ]
           },
           "last_commit_id": {
             "type": "string",
@@ -1874,11 +1992,13 @@
           "author_email": "user@example.com",
           "committer_name": "Example User",
           "committer_email": "user@example.com",
-          "created_at": "2016-09-20T16:26:24.000Z",
+          "created_at": "2016-09-20T16:26:24Z",
           "message": "some commit message",
-          "parent_ids": ["ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"],
-          "committed_date": "2016-09-20T16:26:24.000Z",
-          "authored_date": "2016-09-20T16:26:24.000Z",
+          "parent_ids": [
+            "ae1d9fb46aa2b07ee9836d49862ec4e2c46fbbba"
+          ],
+          "committed_date": "2016-09-20T16:26:24Z",
+          "authored_date": "2016-09-20T16:26:24Z",
           "last_pipeline": {
             "id": 8,
             "ref": "master",
@@ -1930,7 +2050,11 @@
         "properties": {
           "type": {
             "type": "string",
-            "enum": ["branch", "tag", "all"]
+            "enum": [
+              "branch",
+              "tag",
+              "all"
+            ]
           },
           "name": {
             "type": "string"
@@ -2382,7 +2506,7 @@
               "subject": "CN=gitlab@example.org,OU=Example,O=World",
               "subject_key_identifier": "BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC:BC",
               "email": "gitlab@example.org",
-              "serial_number": 2.7896956101890133e38,
+              "serial_number": 2.7896956101890133e+38,
               "certificate_status": "good",
               "x509_issuer": {
                 "id": 1,
@@ -2662,11 +2786,14 @@
             "http_url_to_repo": "http://example.com/diaspora/diaspora-client.git",
             "web_url": "http://example.com/diaspora/diaspora-client",
             "readme_url": "http://example.com/diaspora/diaspora-client/blob/master/README.md",
-            "tag_list": ["example", "disapora client"],
+            "tag_list": [
+              "example",
+              "disapora client"
+            ],
             "owner": {
               "id": 3,
               "name": "Diaspora",
-              "created_at": "2013-09-30T13:46:02.000Z"
+              "created_at": "2013-09-30T13:46:02Z"
             },
             "name": "Diaspora Client",
             "name_with_namespace": "Diaspora / Diaspora Client",
@@ -2681,8 +2808,8 @@
             "can_create_merge_request_in": true,
             "resolve_outdated_diff_discussions": false,
             "container_registry_enabled": false,
-            "created_at": "2013-09-30T13:46:02.000Z",
-            "last_activity_at": "2013-09-30T13:46:02.000Z",
+            "created_at": "2013-09-30T13:46:02Z",
+            "last_activity_at": "2013-09-30T13:46:02Z",
             "creator_id": 3,
             "namespace": {
               "id": 3,
@@ -2709,8 +2836,8 @@
             "request_access_enabled": false,
             "merge_method": "merge",
             "autoclose_referenced_issues": true,
-            "marked_for_deletion_at": "2020-04-03T00:00:00.000Z",
-            "marked_for_deletion_on": "2020-04-03T00:00:00.000Z",
+            "marked_for_deletion_at": "2020-04-03T00:00:00Z",
+            "marked_for_deletion_on": "2020-04-03T00:00:00Z",
             "statistics": {
               "commit_count": 37,
               "storage_size": 1038090,
@@ -2739,11 +2866,14 @@
             "http_url_to_repo": "http://example.com/brightbox/puppet.git",
             "web_url": "http://example.com/brightbox/puppet",
             "readme_url": "http://example.com/brightbox/puppet/blob/master/README.md",
-            "tag_list": ["example", "puppet"],
+            "tag_list": [
+              "example",
+              "puppet"
+            ],
             "owner": {
               "id": 4,
               "name": "Brightbox",
-              "created_at": "2013-09-30T13:46:02.000Z"
+              "created_at": "2013-09-30T13:46:02Z"
             },
             "name": "Puppet",
             "name_with_namespace": "Brightbox / Puppet",
@@ -2758,8 +2888,8 @@
             "can_create_merge_request_in": true,
             "resolve_outdated_diff_discussions": false,
             "container_registry_enabled": false,
-            "created_at": "2013-09-30T13:46:02.000Z",
-            "last_activity_at": "2013-09-30T13:46:02.000Z",
+            "created_at": "2013-09-30T13:46:02Z",
+            "last_activity_at": "2013-09-30T13:46:02Z",
             "creator_id": 3,
             "namespace": {
               "id": 4,
@@ -3001,11 +3131,14 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": ["example", "disapora project"],
+          "tag_list": [
+            "example",
+            "disapora project"
+          ],
           "owner": {
             "id": 3,
             "name": "Diaspora",
-            "created_at": "2013-09-30T13:46:02.000Z"
+            "created_at": "2013-09-30T13:46:02Z"
           },
           "name": "Diaspora Project Site",
           "name_with_namespace": "Diaspora / Diaspora Project Site",
@@ -3020,8 +3153,8 @@
           "can_create_merge_request_in": true,
           "resolve_outdated_diff_discussions": false,
           "container_registry_enabled": false,
-          "created_at": "2013-09-30T13:46:02.000Z",
-          "last_activity_at": "2013-09-30T13:46:02.000Z",
+          "created_at": "2013-09-30T13:46:02Z",
+          "last_activity_at": "2013-09-30T13:46:02Z",
           "creator_id": 3,
           "namespace": {
             "id": 3,
@@ -3227,7 +3360,10 @@
             "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
             "web_url": "http://example.com/diaspora/diaspora-project-site",
             "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-            "tag_list": ["example", "disapora project"],
+            "tag_list": [
+              "example",
+              "disapora project"
+            ],
             "name": "Diaspora Project Site",
             "name_with_namespace": "Diaspora / Diaspora Project Site",
             "path": "diaspora-project-site",
@@ -3241,8 +3377,8 @@
             "can_create_merge_request_in": true,
             "resolve_outdated_diff_discussions": false,
             "container_registry_enabled": false,
-            "created_at": "2013-09-30T13:46:02.000Z",
-            "last_activity_at": "2013-09-30T13:46:02.000Z",
+            "created_at": "2013-09-30T13:46:02Z",
+            "last_activity_at": "2013-09-30T13:46:02Z",
             "creator_id": 3,
             "namespace": {
               "id": 3,
@@ -3433,7 +3569,10 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": ["example", "disapora project"],
+          "tag_list": [
+            "example",
+            "disapora project"
+          ],
           "name": "Diaspora Project Site",
           "name_with_namespace": "Diaspora / Diaspora Project Site",
           "path": "diaspora-project-site",
@@ -3447,8 +3586,8 @@
           "can_create_merge_request_in": true,
           "resolve_outdated_diff_discussions": false,
           "container_registry_enabled": false,
-          "created_at": "2013-09-30T13:46:02.000Z",
-          "last_activity_at": "2013-09-30T13:46:02.000Z",
+          "created_at": "2013-09-30T13:46:02Z",
+          "last_activity_at": "2013-09-30T13:46:02Z",
           "creator_id": 3,
           "namespace": {
             "id": 3,
@@ -3730,7 +3869,7 @@
             "name_with_namespace": "GitLab.org / GitLab Community Edition",
             "path": "gitlab-foss",
             "path_with_namespace": "gitlab-org/gitlab-foss",
-            "created_at": "2013-09-26T06:02:36.000Z",
+            "created_at": "2013-09-26T06:02:36Z",
             "default_branch": "master",
             "tag_list": [],
             "ssh_url_to_repo": "git@gitlab.com:gitlab-org/gitlab-foss.git",
@@ -3761,11 +3900,14 @@
           "http_url_to_repo": "http://example.com/diaspora/diaspora-project-site.git",
           "web_url": "http://example.com/diaspora/diaspora-project-site",
           "readme_url": "http://example.com/diaspora/diaspora-project-site/blob/master/README.md",
-          "tag_list": ["example", "disapora project"],
+          "tag_list": [
+            "example",
+            "disapora project"
+          ],
           "owner": {
             "id": 3,
             "name": "Diaspora",
-            "created_at": "2013-09-30T13:46:02.000Z"
+            "created_at": "2013-09-30T13:46:02Z"
           },
           "name": "Diaspora Project Site",
           "name_with_namespace": "Diaspora / Diaspora Project Site",
@@ -3785,8 +3927,8 @@
             "enabled": false,
             "next_run_at": "2020-01-07T21:42:58.658Z"
           },
-          "created_at": "2013-09-30T13:46:02.000Z",
-          "last_activity_at": "2013-09-30T13:46:02.000Z",
+          "created_at": "2013-09-30T13:46:02Z",
+          "last_activity_at": "2013-09-30T13:46:02Z",
           "creator_id": 3,
           "namespace": {
             "id": 3,
@@ -3858,9 +4000,11 @@
           "packages_enabled": true,
           "service_desk_enabled": false,
           "autoclose_referenced_issues": true,
-          "marked_for_deletion_at": "2020-04-03T00:00:00.000Z",
-          "marked_for_deletion_on": "2020-04-03T00:00:00.000Z",
-          "compliance_frameworks": ["sox"],
+          "marked_for_deletion_at": "2020-04-03T00:00:00Z",
+          "marked_for_deletion_on": "2020-04-03T00:00:00Z",
+          "compliance_frameworks": [
+            "sox"
+          ],
           "statistics": {
             "commit_count": 37,
             "storage_size": 1038090,
@@ -4612,7 +4756,7 @@
             "name_with_namespace": "H5bp / Html5 Boilerplate",
             "path": "html5-boilerplate",
             "path_with_namespace": "h5bp/html5-boilerplate",
-            "created_at": "2020-04-27T06:13:22.642Z",
+            "created_at": "2020-04-27T06:13:22Z",
             "default_branch": "master",
             "tag_list": [],
             "ssh_url_to_repo": "ssh://git@gitlab.com/h5bp/html5-boilerplate.git",
@@ -4621,7 +4765,7 @@
             "readme_url": "http://gitlab.com/h5bp/html5-boilerplate/-/blob/master/README.md",
             "star_count": 0,
             "forks_count": 4,
-            "last_activity_at": "2020-04-27T06:13:22.642Z",
+            "last_activity_at": "2020-04-27T06:13:22Z",
             "namespace": {
               "id": 28,
               "name": "H5bp",
@@ -4902,7 +5046,7 @@
                   "group_name": "Gitlab Org",
                   "group_full_path": "gitlab-org",
                   "group_access_level": 10,
-                  "expires_at": "2018-08-14T00:00:00.000Z"
+                  "expires_at": "2018-08-14T00:00:00Z"
                 }
               ]
             }
@@ -4981,7 +5125,7 @@
           "deployment_events": true,
           "releases_events": true,
           "enable_ssl_verification": true,
-          "created_at": "2012-10-12T17:04:47.000Z"
+          "created_at": "2012-10-12T17:04:47Z"
         }
       },
       "NotIssue": {
@@ -5036,7 +5180,11 @@
           },
           "search": {
             "type": "string",
-            "enum": ["title", "description", "title,description"]
+            "enum": [
+              "title",
+              "description",
+              "title,description"
+            ]
           },
           "in": {
             "type": "string"
@@ -5191,15 +5339,18 @@
               "id": 9,
               "name": "Dr. Luella Kovacek"
             },
-            "labels": ["foo", "bar"],
+            "labels": [
+              "foo",
+              "bar"
+            ],
             "upvotes": 4,
             "downvotes": 0,
             "merge_requests_count": 0,
             "id": 41,
             "title": "Ut commodi ullam eos dolores perferendis nihil sunt.",
-            "updated_at": "2016-01-04T15:31:46.176Z",
-            "created_at": "2016-01-04T15:31:46.176Z",
-            "closed_at": "2016-01-05T15:31:46.176Z",
+            "updated_at": "2016-01-04T15:31:46Z",
+            "created_at": "2016-01-04T15:31:46Z",
+            "closed_at": "2016-01-05T15:31:46Z",
             "closed_by": {
               "state": "active",
               "web_url": "https://gitlab.example.com/root",
@@ -5208,7 +5359,7 @@
               "name": "Administrator"
             },
             "user_notes_count": 1,
-            "due_date": "2016-07-22T00:00:00.000Z",
+            "due_date": "2016-07-22",
             "web_url": "http://gitlab.example.com/my-group/my-project/issues/1",
             "references": {
               "short": "#1",
@@ -5502,7 +5653,7 @@
           }
         },
         "example": {
-          "human_time_estimate": "3h 30m",
+          "human_time_estimate": "3h30m",
           "human_total_time_spent": "1h",
           "time_estimate": 12600,
           "total_time_spent": 0

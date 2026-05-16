@@ -795,6 +795,3 @@ class NaiveValueGenerator:
 
         merged_results = normal_datas + judge_results
         return merged_results
-
-        
-       

@@ -1,4 +1,5 @@
 import logging
+import os
 import random
 import re
 from api_testing.models.base_model import APITestingBaseLLMModel
@@ -72,10 +73,10 @@ class GeminiModel(APITestingBaseLLMModel):
             or default_gemini_model
         )
 
-        # Get API key from key handler if not provided
-        self.api_key = api_key
-        self.project = project
-        self.location = location
+        # Get API key and Vertex AI settings from the environment if not provided.
+        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        self.project = project or os.getenv("GOOGLE_CLOUD_PROJECT")
+        self.location = location or os.getenv("GOOGLE_CLOUD_LOCATION")
         self.use_vertexai = False
         if temperature < 0:
             raise ValueError("Temperature must be >= 0.")
@@ -186,6 +187,7 @@ class GeminiModel(APITestingBaseLLMModel):
             )
             cleaned = re.sub(r"^```json\s*|\s*```$", "", response.text.strip(), flags=re.MULTILINE)
             usage = getattr(response, "usage_metadata", None)
+            print("GeminiModel raw response:", response.text)
             if usage:
                 prompt_tokens = getattr(usage, "prompt_token_count", 0)
                 completion_tokens = getattr(usage, "candidates_token_count", 0)
@@ -202,7 +204,7 @@ class GeminiModel(APITestingBaseLLMModel):
                 prompt_tokens = getattr(usage, "prompt_token_count", 0)
                 completion_tokens = getattr(usage, "candidates_token_count", 0)
                 add_usage(prompt_tokens, completion_tokens)
-            return schema.model_validate_json(cleaned), 0
+            return response.text, 0
 
     async def a_generate(
         self, prompt: str, schema: Optional[BaseModel] = None
