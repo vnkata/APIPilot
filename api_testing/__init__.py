@@ -489,7 +489,7 @@ class APITesting:
       
         def traverse_dfs(node, depth=0, context_pool: ContextualMemory = None, parent=None, seq_path = []):
             nonlocal total_testcase, total_success, forest
-            context_pool = context_pool or ContextualMemory()
+            context_pool = context_pool or ContextualMemory(cache_dir=self.project_dir)
             # 
             self.logger.debug("%s• %s", "  " * depth, node.name)
 
