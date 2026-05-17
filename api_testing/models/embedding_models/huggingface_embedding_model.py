@@ -7,7 +7,7 @@ import sys
 logging.getLogger("sentence_transformers").setLevel(logging.WARNING)
 logging.getLogger("transformers").setLevel(logging.ERROR)
 for _h in logging.root.handlers[:]:
-    if _h.stream == sys.stderr or hasattr(_h, 'terminator'):
+    if getattr(_h, "stream", None) == sys.stderr or hasattr(_h, 'terminator'):
         pass
 
 logger = logging.getLogger(__name__)

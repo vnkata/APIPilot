@@ -2,6 +2,9 @@ import textwrap
 import pytest
 
 from api_testing.config.config_loader import load_config
+from api_testing.prompts.factory import PromptFactory
+from api_testing.prompts.smart_value_generate import SmartValueGenerate
+from api_testing.prompts.semantic_oracle_judge import SemanticOracleJudge
 
 
 def _write_config(path, content: str) -> None:
@@ -269,3 +272,92 @@ def test_run_debug_allows_override_true(tmp_path, monkeypatch):
     config = load_config(str(path))
 
     assert config["run"]["debug"] is True
+
+
+def test_prompt_llm_override_inherits_common_provider(tmp_path):
+    content = """
+    [project]
+    spec_path = "datasets/Test.json"
+    base_url = "http://localhost:9999"
+
+    [llm]
+    provider = "openai"
+    model = "gpt-4o-mini"
+    temperature = 0.0
+
+    [llm.openai]
+    api_key = "literal-key"
+    base_url = "https://api.openai.com/v1"
+
+    [llm.prompts.SmartValueGenerate]
+    temperature = 0.7
+
+    [embedding]
+    provider = "huggingface"
+    model = "google/embeddinggemma-300m"
+    use_half = false
+
+    [run]
+    num_generations = 1
+    num_test_cases = 2
+    mutation_ratio = 0.0
+    header_mutation_ratio = 0.5
+    async_mode = false
+    max_request_workers = 1
+    async_max_concurrent = 1
+    """
+    path = tmp_path / "configurations.toml"
+    _write_config(path, content)
+
+    config = load_config(str(path))
+    factory = PromptFactory.from_config(config)
+
+    assert factory.common_llm.temperature == 0.0
+    assert factory.get_llm(SmartValueGenerate).temperature == 0.7
+    assert factory.get_llm(SemanticOracleJudge) is factory.common_llm
+
+
+def test_prompt_llm_override_can_swap_provider(tmp_path):
+    content = """
+    [project]
+    spec_path = "datasets/Test.json"
+    base_url = "http://localhost:9999"
+
+    [llm]
+    provider = "openai"
+    model = "gpt-4o-mini"
+    temperature = 0.0
+
+    [llm.openai]
+    api_key = "literal-key"
+    base_url = "https://api.openai.com/v1"
+
+    [llm.prompts.SemanticOracleJudge]
+    provider = "litellm"
+    model = "claude-3-5-sonnet-latest"
+    temperature = 0.2
+
+    [embedding]
+    provider = "huggingface"
+    model = "google/embeddinggemma-300m"
+    use_half = false
+
+    [run]
+    num_generations = 1
+    num_test_cases = 2
+    mutation_ratio = 0.0
+    header_mutation_ratio = 0.5
+    async_mode = false
+    max_request_workers = 1
+    async_max_concurrent = 1
+    """
+    path = tmp_path / "configurations.toml"
+    _write_config(path, content)
+
+    config = load_config(str(path))
+    factory = PromptFactory.from_config(config)
+
+    judge_llm = factory.get_llm(SemanticOracleJudge)
+    assert judge_llm.model_name == "claude-3-5-sonnet-latest"
+    assert judge_llm.temperature == 0.2
+    assert factory.get_llm(SmartValueGenerate) is factory.common_llm

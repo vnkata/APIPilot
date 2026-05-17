@@ -131,12 +131,14 @@ class Executor:
       default_headers: Optional[Dict[str, str]] = None,
       generation: int = 1,
       total_generations: int = 1,
+      prompt_factory = None,
   ):
     self.api_url = api_url
     self.strategy = strategy
     self.operation = operation
     self.cache_dir = cache_dir or "."
     self.model = model
+    self.prompt_factory = prompt_factory
     self.configuration = configuration
     self.use_async = use_async
     self.async_max_concurrent = async_max_concurrent
@@ -299,11 +301,11 @@ class Executor:
     :param requirements: RequestRequirements object that contains any parameters or request body requirements
     :return: a tuple of the generated parameters and request body
     """
-    value_generator = SmartValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, mutation_ratio = self.mutation_ratio)
+    value_generator = SmartValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, mutation_ratio = self.mutation_ratio, prompt_factory=self.prompt_factory)
     return value_generator.exec()
   
   def generate_naive_values(self,operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
-    value_generator = NaiveValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, cache_dir=self.cache_dir,  mutation_ratio = self.mutation_ratio)
+    value_generator = NaiveValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, cache_dir=self.cache_dir,  mutation_ratio = self.mutation_ratio, prompt_factory=self.prompt_factory)
     return value_generator.exec()
 
   async def generate_naive_values_async(self, operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
@@ -315,12 +317,13 @@ class Executor:
         num_test_cases=self.num_test_cases,
         context_pool=self.context_pool,
         cache_dir=self.cache_dir,
-        mutation_ratio=self.mutation_ratio
+        mutation_ratio=self.mutation_ratio,
+        prompt_factory=self.prompt_factory,
     )
     return await value_generator.exec_async()
 
   async def generate_smart_values_async(self, operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
-    value_generator = SmartValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool=self.context_pool, mutation_ratio=self.mutation_ratio)
+    value_generator = SmartValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool=self.context_pool, mutation_ratio=self.mutation_ratio, prompt_factory=self.prompt_factory)
     return await value_generator.exec_async()
 
   async def generate_values_async(self):
@@ -438,32 +441,34 @@ class Executor:
     if not self.use_async:
       raise RuntimeError("exec_async() called but use_async=False. Set use_async=True in constructor.")
 
-    data = await self.generate_values_async()
+    try:
+      data = await self.generate_values_async()
 
-    if not data:
+      if not data:
+        return self.async_sender.entries
+
+      await self.async_batch.execute(data)
+
+      await self.async_sender.flush()
+
+      emitter = get_emitter()
+      for entry in self.async_sender.entries:
+        status_code = entry.get("response", {}).get("status", 0)
+        status = OperationStatus.SUCCESS if str(status_code)[0] == "2" else OperationStatus.FAIL
+        emitter.emit(
+          EventType.OPERATION_UPDATE,
+          phase=Phase.TEST_EXECUTION,
+          operation_name=self.operation.uuid,
+          operation_method=self.operation.http_method,
+          operation_path=self.operation.endpoint_path,
+          status=status,
+          status_code=status_code,
+          duration_ms=entry.get("time"),
+          response_size=entry.get("response", {}).get("content", {}).get("size"),
+          generation=self.generation,
+          total_generations=self.total_generations,
+        )
+
       return self.async_sender.entries
-
-    results = await self.async_batch.execute(data)
-
-    await self.async_sender.flush()
-
-    emitter = get_emitter()
-    for entry in self.async_sender.entries:
-      status_code = entry.get("response", {}).get("status", 0)
-      status = OperationStatus.SUCCESS if str(status_code)[0] == "2" else OperationStatus.FAIL
-      emitter.emit(
-        EventType.OPERATION_UPDATE,
-        phase=Phase.TEST_EXECUTION,
-        operation_name=self.operation.uuid,
-        operation_method=self.operation.http_method,
-        operation_path=self.operation.endpoint_path,
-        status=status,
-        status_code=status_code,
-        duration_ms=entry.get("time"),
-        response_size=entry.get("response", {}).get("content", {}).get("size"),
-        generation=self.generation,
-        total_generations=self.total_generations,
-      )
-
-    return self.async_sender.entries
-
+    finally:
+      await self.async_sender.close()

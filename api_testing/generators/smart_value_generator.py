@@ -6,13 +6,18 @@ from api_testing.models.specification_model import ItemProperties, OperationProp
 from api_testing.prompts.smart_value_generate import SmartValueGenerate
 
 class SmartValueGenerator:
-  def __init__(self,operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Optional[ItemProperties] = None, model=None, num_test_cases=10, context_pool=None):
+  def __init__(self,operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Optional[ItemProperties] = None, model=None, num_test_cases=10, context_pool=None, prompt_factory=None, **kwargs):
     self.operation = operation
     self.parameters = parameters
     self.request_body = request_body
     self.model = model
     self.num_test_cases = num_test_cases
-    self._generator = SmartValueGenerate(llm=model)
+    self.prompt_factory = prompt_factory
+    self._generator = (
+      prompt_factory.create(SmartValueGenerate)
+      if prompt_factory
+      else SmartValueGenerate(llm=model)
+    )
     self.context_pool = context_pool
   
   def exec(self):
