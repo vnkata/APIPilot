@@ -14,6 +14,7 @@ import {
   historySearchSchema,
   operationsSearchSchema,
   reportsSearchSchema,
+  runOverviewSearchSchema,
   testCasesSearchSchema,
 } from './searchParams'
 import { PageSkeleton } from '../shared/ui/PageSkeleton'
@@ -65,9 +66,11 @@ const runsRoute = createRoute({
 const runOverviewRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/runs/$runName',
+  validateSearch: (search) => runOverviewSearchSchema.parse(search),
   component: function RunOverviewRoute() {
     const { runName } = runOverviewRoute.useParams()
-    return <RunOverviewPage runName={runName} />
+    const search = runOverviewRoute.useSearch()
+    return <RunOverviewPage runName={runName} search={search} />
   },
 })
 

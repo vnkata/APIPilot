@@ -32,6 +32,13 @@ export class OverviewPage {
     await expect(this.page.getByRole('main').getByText('Operations', { exact: true })).toBeVisible()
     await expect(this.page.getByRole('main').getByText('Artifacts', { exact: true })).toBeVisible()
   }
+
+  async expectCommandMode() {
+    await this.page.getByRole('button', { name: 'Command' }).click()
+    await expect(this.page).toHaveURL(/overviewView=command/)
+    await expect(this.page.getByRole('heading', { name: 'QA Mission Control' })).toBeVisible()
+    await expect(this.page.getByRole('link', { name: 'Review risky operations' })).toBeVisible()
+  }
 }
 
 export class GraphPage {
@@ -44,10 +51,49 @@ export class GraphPage {
   async inspectNode() {
     await expect(this.page.getByRole('heading', { name: 'Graph and operations' })).toBeVisible()
     await this.page.getByRole('button', { exact: true, name: 'post-/items' }).first().click()
-    await expect(this.page.getByText('Selected node')).toBeVisible()
+    await expect(this.page.getByText('Navigator inspector')).toBeVisible()
     const dialog = this.page.getByRole('dialog', { name: 'Operation detail' })
     await expect(dialog).toBeVisible()
     await expect(dialog).toContainText('post-/items')
+  }
+
+  async expectJourneyMode(runName: string) {
+    await this.page.goto(`${runPath(runName)}/graph?graphView=journey&graphTab=sequences`)
+    await expect(this.page).toHaveURL(/graphView=journey/)
+    await expect(this.page.getByRole('heading', { name: 'Dependency journey' })).toBeVisible()
+    await expect(this.page.getByText(/Edges:/)).toBeVisible()
+    await expect(this.page.getByText(/post-\/items -> get-\/items/)).toBeVisible()
+  }
+
+  async expectSpatialMode(runName: string) {
+    await this.page.goto(`${runPath(runName)}/graph?graphView=spatial&selectedPath=seq-create-list`)
+    await expect(this.page).toHaveURL(/graphView=spatial/)
+    await expect(this.page.getByRole('heading', { name: 'Spatial dependency graph' })).toBeVisible()
+    await expect(this.page.getByRole('region', { name: 'Spatial graph viewport' })).toBeVisible()
+  }
+}
+
+export class OperationsPage {
+  constructor(private readonly page: Page) {}
+
+  async goto(runName: string) {
+    await this.page.goto(`${runPath(runName)}/operations`)
+  }
+
+  async expectTriageFlow() {
+    await expect(this.page.getByRole('heading', { name: 'Operations Explorer' })).toBeVisible()
+    await expect(this.page.getByRole('grid', { name: 'operation explorer entries' })).toBeVisible()
+    await this.page.getByRole('button', { name: 'get-/items' }).first().click()
+    await expect(this.page.getByRole('dialog', { name: 'Operation explorer detail' })).toBeVisible()
+    await expect(this.page.getByRole('link', { name: 'Graph' })).toBeVisible()
+    await expect(this.page.getByRole('link', { name: 'Constraints' })).toBeVisible()
+  }
+
+  async expectCanvasMode(runName: string) {
+    await this.page.goto(`${runPath(runName)}/operations?operationsView=canvas`)
+    await expect(this.page).toHaveURL(/operationsView=canvas/)
+    await expect(this.page.getByRole('heading', { name: 'Operation Mission Board' })).toBeVisible()
+    await expect(this.page.getByRole('button', { name: 'ListItems' })).toBeVisible()
   }
 }
 
@@ -59,8 +105,35 @@ export class ConstraintsPage {
   }
 
   async expectFilteredConstraint() {
-    await expect(this.page.getByRole('heading', { name: 'Constraints' })).toBeVisible()
-    await expect(this.page.getByRole('gridcell', { name: 'input.limit >= 1' })).toBeVisible()
+    await expect(this.page.getByRole('heading', { name: /Constraints and invariants/ })).toBeVisible()
+    await expect(this.page.getByRole('heading', { name: 'Constraint Workbench' })).toBeVisible()
+    await expect(this.page.getByRole('button', { name: 'Workbench' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(this.page.getByRole('button', { name: /input\.limit/ }).first()).toBeVisible()
+
+    await this.page.getByRole('button', { exact: true, name: 'Explorer' }).click()
+    await expect(this.page).toHaveURL(/constraintsView=table/)
+    await expect(this.page).toHaveURL(/constraintTab=explorer/)
+    await expect(this.page.getByRole('grid', { name: 'constraint explorer entries' })).toBeVisible()
+    await expect(this.page.getByText(/input\.limit/).first()).toBeVisible()
+
+    await this.page.getByRole('button', { exact: true, name: 'Static' }).click()
+    await expect(this.page).toHaveURL(/constraintTab=static/)
+    await expect(this.page.getByRole('grid', { name: 'static constraint entries' })).toBeVisible()
+
+    await this.page.getByRole('button', { exact: true, name: 'Dynamic' }).click()
+    await expect(this.page).toHaveURL(/constraintTab=dynamic/)
+    await expect(this.page.getByRole('button', { exact: true, name: 'Dynamic' })).toHaveAttribute('aria-pressed', 'true')
+
+    await this.page.getByRole('button', { exact: true, name: 'Invariants' }).click()
+    await expect(this.page).toHaveURL(/constraintTab=invariants/)
+    await expect(this.page.getByRole('button', { exact: true, name: 'Invariants' })).toHaveAttribute('aria-pressed', 'true')
+  }
+
+  async expectMatrixMode(runName: string) {
+    await this.page.goto(`${runPath(runName)}/constraints?constraintsView=matrix`)
+    await expect(this.page).toHaveURL(/constraintsView=matrix/)
+    await expect(this.page.getByRole('heading', { name: 'Readiness matrix' })).toBeVisible()
+    await expect(this.page.getByText(/both_present/).first()).toBeVisible()
   }
 }
 
@@ -75,6 +148,13 @@ export class ArtifactsPage {
     await expect(this.page.getByRole('heading', { name: 'Artifacts' })).toBeVisible()
     await expect(this.page.getByRole('heading', { name: 'specification' })).toBeVisible()
     await expect(this.page.getByLabel('artifact raw content')).toBeVisible()
+  }
+
+  async expectWorkbenchMode(runName: string) {
+    await this.page.goto(`${runPath(runName)}/artifacts?artifactsView=workbench&artifactId=specification`)
+    await expect(this.page).toHaveURL(/artifactsView=workbench/)
+    await expect(this.page.getByRole('heading', { name: 'Artifact Workbench' })).toBeVisible()
+    await expect(this.page.getByText(/Raw policy/).first()).toBeVisible()
   }
 }
 

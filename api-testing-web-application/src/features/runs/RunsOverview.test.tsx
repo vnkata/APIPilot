@@ -28,6 +28,18 @@ describe('runs vertical slice', () => {
     expect(screen.getByText(/static_constraints/i)).toBeInTheDocument()
   })
 
+  it('renders command center mode for QA triage drilldown', async () => {
+    renderWithProviders(<RunOverviewPage runName="Run A" search={{ overviewView: 'command' }} />)
+
+    expect(await screen.findByRole('heading', { name: /qa mission control/i })).toBeInTheDocument()
+    expect(screen.getByText(/next best inspection/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /review risky operations/i })).toHaveAttribute(
+      'href',
+      expect.stringContaining('/operations'),
+    )
+    expect(screen.getAllByText(/failure signal/i).length).toBeGreaterThan(0)
+  })
+
   it('shows recoverable API errors without crashing the workspace', async () => {
     server.use(
       http.get('*/api/v1/runs/:runName/summary', () =>

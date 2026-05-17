@@ -41,4 +41,17 @@ describe('ArtifactsPage', () => {
     expect(screen.getByRole('columnheader', { name: 'pptname' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'return.items.id >= 1' })).toBeInTheDocument()
   })
+
+  it('renders workbench mode with catalog metadata and inspector actions', async () => {
+    renderWithProviders(
+      <ArtifactsPage
+        runName="Run A"
+        search={{ artifactId: 'specification', artifactsView: 'workbench', compare: false, raw: false }}
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { name: /artifact workbench/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/raw policy/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole('button', { name: /compare/i })).toBeInTheDocument()
+  })
 })

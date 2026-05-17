@@ -17,7 +17,17 @@ export function FilterToolbar({ children }: FilterToolbarProps) {
       }}
       variant="outlined"
     >
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.5}>
+      <Stack
+        direction={{ xs: 'column', md: 'row' }}
+        spacing={0}
+        sx={{
+          flexWrap: 'wrap',
+          gap: 1.5,
+          '& > *': {
+            maxWidth: '100%',
+          },
+        }}
+      >
         {children}
       </Stack>
     </Paper>

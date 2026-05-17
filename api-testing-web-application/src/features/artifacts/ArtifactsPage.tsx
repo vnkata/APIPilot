@@ -27,11 +27,14 @@ import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
 import { JsonBlock } from '../../shared/ui/JsonBlock'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
+import { ResponsiveWorkbenchLayout } from '../../shared/ui/ResponsiveWorkbenchLayout'
+import { ViewModeToggle } from '../../shared/ui/ViewModeToggle'
 import { useArtifactContent, useArtifacts } from './api'
 import { CodeViewerLazy, DiffViewerLazy } from './CodeViewerLazy'
 
 export type ArtifactsPageSearch = {
   artifactId?: string
+  artifactsView?: 'classic' | 'workbench'
   compare?: boolean
   raw?: boolean
 }
@@ -134,6 +137,7 @@ function ArtifactContentPanel({ content }: { content: ArtifactContentResponse })
 export function ArtifactsPage({ runName, search }: ArtifactsPageProps) {
   const [exportOpen, setExportOpen] = useState(false)
   const artifactsQuery = useArtifacts(runName)
+  const artifactsView = search.artifactsView ?? 'classic'
   const defaultArtifactId = artifactsQuery.data?.artifacts[0]?.artifact_id
   const [selectedArtifactId, setSelectedArtifactId] = useState(search.artifactId)
   const [raw, setRaw] = useState(Boolean(search.raw))
@@ -163,16 +167,174 @@ export function ArtifactsPage({ runName, search }: ArtifactsPageProps) {
     [artifactId, artifactsQuery.data?.artifacts],
   )
 
+  const catalogPanel = (
+    <Card variant="outlined">
+      <CardContent>
+        <Typography component="h2" sx={{ mb: 1 }} variant="h3">
+          Catalog
+        </Typography>
+        <List dense>
+          {(artifactsQuery.data?.artifacts ?? []).map((artifact) => (
+            <ListItemButton
+              key={artifact.artifact_id}
+              onClick={() => {
+                setSelectedArtifactId(artifact.artifact_id)
+                replaceSearchParams({ artifactId: artifact.artifact_id, raw })
+              }}
+              selected={artifact.artifact_id === artifactId}
+            >
+              <ListItemText
+                primary={artifact.artifact_id}
+                secondary={
+                  artifactsView === 'workbench'
+                    ? `${artifact.kind} · ${formatBytes(artifact.size_bytes)} · Raw policy: ${artifact.raw_policy}`
+                    : `${artifact.kind} · ${formatBytes(artifact.size_bytes)}`
+                }
+              />
+            </ListItemButton>
+          ))}
+        </List>
+      </CardContent>
+    </Card>
+  )
+
+  const detailPanel = (
+    <Card variant="outlined">
+      <CardContent>
+        <Stack spacing={2}>
+          <Stack
+            direction={{ xs: 'column', md: 'row' }}
+            spacing={1}
+            sx={{
+              alignItems: { xs: 'flex-start', md: 'center' },
+              justifyContent: 'space-between',
+            }}
+          >
+            <Stack spacing={0.5}>
+              <Typography component="h2" variant="h3">
+                {artifactId ?? 'No artifact selected'}
+              </Typography>
+              {selectedArtifact ? (
+                <Typography color="text.secondary" variant="caption">
+                  {selectedArtifact.relative_path} · {selectedArtifact.media_type} · modified {formatDateTime(selectedArtifact.modified_at)}
+                </Typography>
+              ) : null}
+            </Stack>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+              <Typography variant="body2">Summary</Typography>
+              <Switch
+                checked={raw}
+                disabled={!selectedArtifact?.raw_supported}
+                onChange={(event) => {
+                  setRaw(event.target.checked)
+                  replaceSearchParams({ artifactId, compare: false, raw: event.target.checked })
+                }}
+                slotProps={{ input: { 'aria-label': 'Raw mode' } }}
+              />
+              <Typography variant="body2">Raw</Typography>
+              <Button
+                onClick={() => {
+                  setRaw(false)
+                  replaceSearchParams({ artifactId, compare: false, raw: false })
+                }}
+                size="small"
+                variant={!raw && !compare ? 'contained' : 'outlined'}
+              >
+                Summary
+              </Button>
+              <Button
+                onClick={() => {
+                  setRaw(true)
+                  replaceSearchParams({ artifactId, compare: false, raw: true })
+                }}
+                size="small"
+                variant={raw && !compare ? 'contained' : 'outlined'}
+              >
+                Raw
+              </Button>
+              <Button
+                disabled={!selectedArtifact?.raw_supported}
+                onClick={() => replaceSearchParams({ artifactId, compare: true, raw: false })}
+                size="small"
+                variant={compare ? 'contained' : 'outlined'}
+              >
+                Compare
+              </Button>
+            </Stack>
+          </Stack>
+
+          {artifactsView === 'workbench' && selectedArtifact ? (
+            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+              <Chip label={`Raw policy: ${selectedArtifact.raw_policy}`} size="small" />
+              <Chip label={selectedArtifact.summary_supported ? 'Summary supported' : 'Summary missing'} size="small" variant="outlined" />
+              <Chip label={selectedArtifact.raw_supported ? 'Raw supported' : 'Raw missing'} size="small" variant="outlined" />
+            </Stack>
+          ) : null}
+
+          {compare ? (
+            <QueryState
+              empty={!summaryContentQuery.data || !rawContentQuery.data}
+              error={summaryContentQuery.error ?? rawContentQuery.error}
+              isError={summaryContentQuery.isError || rawContentQuery.isError}
+              isLoading={summaryContentQuery.isLoading || rawContentQuery.isLoading}
+              onRetry={() => {
+                void summaryContentQuery.refetch()
+                void rawContentQuery.refetch()
+              }}
+            >
+              {summaryContentQuery.data && rawContentQuery.data ? (
+                <Stack spacing={2}>
+                  <Typography component="h3" variant="h3">
+                    Compare summary and raw
+                  </Typography>
+                  <DiffViewerLazy
+                    language={viewerLanguage(
+                      contentKind(rawContentQuery.data.content),
+                      rawContentQuery.data.metadata.media_type,
+                    )}
+                    modified={contentValue(rawContentQuery.data.content)}
+                    original={stringifySafe(summaryContentQuery.data.content)}
+                  />
+                </Stack>
+              ) : null}
+            </QueryState>
+          ) : (
+            <QueryState
+              empty={!contentQuery.data}
+              error={contentQuery.error}
+              isError={contentQuery.isError}
+              isLoading={contentQuery.isLoading}
+              onRetry={() => void contentQuery.refetch()}
+            >
+              {contentQuery.data ? <ArtifactContentPanel content={contentQuery.data} /> : null}
+            </QueryState>
+          )}
+        </Stack>
+      </CardContent>
+    </Card>
+  )
+
   return (
     <Stack spacing={2}>
       <PageHeader
         actions={
-          <Button onClick={() => setExportOpen(true)} variant="outlined">
-            Export snapshot
-          </Button>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+            <ViewModeToggle
+              ariaLabel="Artifacts view mode"
+              onChange={(value) => replaceSearchParams({ artifactsView: value })}
+              options={[
+                { description: 'Current catalog and inspector.', label: 'Classic', value: 'classic' },
+                { description: 'Metadata-rich artifact inspection workbench.', label: 'Workbench', value: 'workbench' },
+              ]}
+              value={artifactsView}
+            />
+            <Button onClick={() => setExportOpen(true)} variant="outlined">
+              Export snapshot
+            </Button>
+          </Stack>
         }
         eyebrow="Artifact viewer"
-        title="Artifacts"
+        title={artifactsView === 'workbench' ? 'Artifact Workbench' : 'Artifacts'}
         subtitle="Inspect summary, raw JSON/text/CSV, sanitized test cases, and sanitized HAR artifacts."
       />
 
@@ -183,142 +345,14 @@ export function ArtifactsPage({ runName, search }: ArtifactsPageProps) {
         isLoading={artifactsQuery.isLoading}
         onRetry={() => void artifactsQuery.refetch()}
       >
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 4, xl: 3 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Typography component="h2" sx={{ mb: 1 }} variant="h3">
-                  Catalog
-                </Typography>
-                <List dense>
-                  {(artifactsQuery.data?.artifacts ?? []).map((artifact) => (
-                    <ListItemButton
-                      key={artifact.artifact_id}
-                      onClick={() => {
-                        setSelectedArtifactId(artifact.artifact_id)
-                        replaceSearchParams({ artifactId: artifact.artifact_id, raw })
-                      }}
-                      selected={artifact.artifact_id === artifactId}
-                    >
-                      <ListItemText
-                        primary={artifact.artifact_id}
-                        secondary={`${artifact.kind} · ${formatBytes(artifact.size_bytes)}`}
-                      />
-                    </ListItemButton>
-                  ))}
-                </List>
-              </CardContent>
-            </Card>
+        {artifactsView === 'workbench' ? (
+          <ResponsiveWorkbenchLayout detail={detailPanel} sidebar={catalogPanel} />
+        ) : (
+          <Grid container spacing={2}>
+            <Grid size={{ xs: 12, md: 4, xl: 3 }}>{catalogPanel}</Grid>
+            <Grid size={{ xs: 12, md: 8, xl: 9 }}>{detailPanel}</Grid>
           </Grid>
-
-          <Grid size={{ xs: 12, md: 8, xl: 9 }}>
-            <Card variant="outlined">
-              <CardContent>
-                <Stack spacing={2}>
-                  <Stack
-                    direction={{ xs: 'column', md: 'row' }}
-                    spacing={1}
-                    sx={{
-                      alignItems: { xs: 'flex-start', md: 'center' },
-                      justifyContent: 'space-between',
-                    }}
-                  >
-                    <Stack spacing={0.5}>
-                      <Typography component="h2" variant="h3">
-                        {artifactId ?? 'No artifact selected'}
-                      </Typography>
-                      {selectedArtifact ? (
-                        <Typography color="text.secondary" variant="caption">
-                          {selectedArtifact.relative_path} · {selectedArtifact.media_type} · modified {formatDateTime(selectedArtifact.modified_at)}
-                        </Typography>
-                      ) : null}
-                    </Stack>
-                    <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
-                      <Typography variant="body2">Summary</Typography>
-                      <Switch
-                        checked={raw}
-                        disabled={!selectedArtifact?.raw_supported}
-                        onChange={(event) => {
-                          setRaw(event.target.checked)
-                          replaceSearchParams({ artifactId, compare: false, raw: event.target.checked })
-                        }}
-                        slotProps={{ input: { 'aria-label': 'Raw mode' } }}
-                      />
-                      <Typography variant="body2">Raw</Typography>
-                      <Button
-                        onClick={() => {
-                          setRaw(false)
-                          replaceSearchParams({ artifactId, compare: false, raw: false })
-                        }}
-                        size="small"
-                        variant={!raw && !compare ? 'contained' : 'outlined'}
-                      >
-                        Summary
-                      </Button>
-                      <Button
-                        onClick={() => {
-                          setRaw(true)
-                          replaceSearchParams({ artifactId, compare: false, raw: true })
-                        }}
-                        size="small"
-                        variant={raw && !compare ? 'contained' : 'outlined'}
-                      >
-                        Raw
-                      </Button>
-                      <Button
-                        disabled={!selectedArtifact?.raw_supported}
-                        onClick={() => replaceSearchParams({ artifactId, compare: true, raw: false })}
-                        size="small"
-                        variant={compare ? 'contained' : 'outlined'}
-                      >
-                        Compare
-                      </Button>
-                    </Stack>
-                  </Stack>
-
-                  {compare ? (
-                    <QueryState
-                      empty={!summaryContentQuery.data || !rawContentQuery.data}
-                      error={summaryContentQuery.error ?? rawContentQuery.error}
-                      isError={summaryContentQuery.isError || rawContentQuery.isError}
-                      isLoading={summaryContentQuery.isLoading || rawContentQuery.isLoading}
-                      onRetry={() => {
-                        void summaryContentQuery.refetch()
-                        void rawContentQuery.refetch()
-                      }}
-                    >
-                      {summaryContentQuery.data && rawContentQuery.data ? (
-                        <Stack spacing={2}>
-                          <Typography component="h3" variant="h3">
-                            Compare summary and raw
-                          </Typography>
-                          <DiffViewerLazy
-                            language={viewerLanguage(
-                              contentKind(rawContentQuery.data.content),
-                              rawContentQuery.data.metadata.media_type,
-                            )}
-                            modified={contentValue(rawContentQuery.data.content)}
-                            original={stringifySafe(summaryContentQuery.data.content)}
-                          />
-                        </Stack>
-                      ) : null}
-                    </QueryState>
-                  ) : (
-                    <QueryState
-                      empty={!contentQuery.data}
-                      error={contentQuery.error}
-                      isError={contentQuery.isError}
-                      isLoading={contentQuery.isLoading}
-                      onRetry={() => void contentQuery.refetch()}
-                    >
-                      {contentQuery.data ? <ArtifactContentPanel content={contentQuery.data} /> : null}
-                    </QueryState>
-                  )}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        </Grid>
+        )}
       </QueryState>
       <ExportSnapshotDialog
         data={{

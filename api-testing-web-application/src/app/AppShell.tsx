@@ -224,7 +224,7 @@ export function AppShell() {
           minWidth: 0,
           ml: drawerVisible ? `${drawerWidth}px` : 0,
           p: { xs: 2, md: 3 },
-          pt: 8,
+          pt: { xs: '64px', md: '72px' },
         }}
       >
         <Outlet />

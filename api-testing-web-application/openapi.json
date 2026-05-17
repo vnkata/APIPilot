@@ -1,6 +1,16 @@
 {
   "components": {
     "schemas": {
+      "AgreementStatus": {
+        "enum": [
+          "static_only",
+          "dynamic_only",
+          "both_present",
+          "combined_only"
+        ],
+        "title": "AgreementStatus",
+        "type": "string"
+      },
       "ArtifactAvailabilityResponse": {
         "additionalProperties": false,
         "properties": {
@@ -141,6 +151,7 @@
           "graph",
           "reports",
           "static_constraints",
+          "combined_constraints",
           "dynamic_constraints",
           "test_cases",
           "invariants",
@@ -319,6 +330,14 @@
         "title": "ArtifactSummaryContentResponse",
         "type": "object"
       },
+      "CombinedSource": {
+        "enum": [
+          "artifact",
+          "computed_fallback"
+        ],
+        "title": "CombinedSource",
+        "type": "string"
+      },
       "ConstraintEntryDetailResponse": {
         "additionalProperties": false,
         "properties": {
@@ -412,6 +431,447 @@
         "title": "ConstraintEntryResponse",
         "type": "object"
       },
+      "ConstraintExplorerDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "agreement_status": {
+            "$ref": "#/components/schemas/AgreementStatus"
+          },
+          "assertion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assertion"
+          },
+          "assertion_available": {
+            "title": "Assertion Available",
+            "type": "boolean"
+          },
+          "assertion_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assertion Preview"
+          },
+          "combined_expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combined Expression"
+          },
+          "constraint_id": {
+            "title": "Constraint Id",
+            "type": "string"
+          },
+          "constraint_kind": {
+            "$ref": "#/components/schemas/ConstraintKind"
+          },
+          "dynamic_expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dynamic Expression"
+          },
+          "expression": {
+            "title": "Expression",
+            "type": "string"
+          },
+          "has_dynamic": {
+            "title": "Has Dynamic",
+            "type": "boolean"
+          },
+          "has_static": {
+            "title": "Has Static",
+            "type": "boolean"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "parameter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameter"
+          },
+          "property_path": {
+            "title": "Property Path",
+            "type": "string"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ConstraintSource"
+          },
+          "source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Type"
+          },
+          "static_expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Static Expression"
+          }
+        },
+        "required": [
+          "constraint_id",
+          "source",
+          "operation_id",
+          "property_path",
+          "expression",
+          "constraint_kind",
+          "has_static",
+          "has_dynamic",
+          "agreement_status",
+          "assertion_available"
+        ],
+        "title": "ConstraintExplorerDetailResponse",
+        "type": "object"
+      },
+      "ConstraintExplorerEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "agreement_status": {
+            "$ref": "#/components/schemas/AgreementStatus"
+          },
+          "assertion_available": {
+            "title": "Assertion Available",
+            "type": "boolean"
+          },
+          "assertion_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assertion Preview"
+          },
+          "combined_expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combined Expression"
+          },
+          "constraint_id": {
+            "title": "Constraint Id",
+            "type": "string"
+          },
+          "constraint_kind": {
+            "$ref": "#/components/schemas/ConstraintKind"
+          },
+          "dynamic_expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dynamic Expression"
+          },
+          "expression": {
+            "title": "Expression",
+            "type": "string"
+          },
+          "has_dynamic": {
+            "title": "Has Dynamic",
+            "type": "boolean"
+          },
+          "has_static": {
+            "title": "Has Static",
+            "type": "boolean"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "parameter": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameter"
+          },
+          "property_path": {
+            "title": "Property Path",
+            "type": "string"
+          },
+          "section": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Section"
+          },
+          "source": {
+            "$ref": "#/components/schemas/ConstraintSource"
+          },
+          "source_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Type"
+          },
+          "static_expression": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Static Expression"
+          }
+        },
+        "required": [
+          "constraint_id",
+          "source",
+          "operation_id",
+          "property_path",
+          "expression",
+          "constraint_kind",
+          "has_static",
+          "has_dynamic",
+          "agreement_status",
+          "assertion_available"
+        ],
+        "title": "ConstraintExplorerEntryResponse",
+        "type": "object"
+      },
+      "ConstraintExplorerPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintExplorerEntryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ConstraintQueryMetadataResponse"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups",
+          "metadata"
+        ],
+        "title": "ConstraintExplorerPageResponse",
+        "type": "object"
+      },
+      "ConstraintFacetBucketResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "count"
+        ],
+        "title": "ConstraintFacetBucketResponse",
+        "type": "object"
+      },
+      "ConstraintFacetsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "agreement_status": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Agreement Status",
+            "type": "array"
+          },
+          "assertion_available": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Assertion Available",
+            "type": "array"
+          },
+          "constraint_kind": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Constraint Kind",
+            "type": "array"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ConstraintQueryMetadataResponse"
+          },
+          "operation_id": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Operation Id",
+            "type": "array"
+          },
+          "section": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Section",
+            "type": "array"
+          },
+          "source": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Source",
+            "type": "array"
+          },
+          "source_type": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Source Type",
+            "type": "array"
+          }
+        },
+        "required": [
+          "source",
+          "operation_id",
+          "section",
+          "constraint_kind",
+          "source_type",
+          "agreement_status",
+          "assertion_available",
+          "metadata"
+        ],
+        "title": "ConstraintFacetsResponse",
+        "type": "object"
+      },
+      "ConstraintKind": {
+        "enum": [
+          "request_response_relation",
+          "date_format",
+          "enum",
+          "bounds",
+          "required",
+          "url",
+          "fixed_length",
+          "equality",
+          "relation",
+          "unknown"
+        ],
+        "title": "ConstraintKind",
+        "type": "string"
+      },
+      "ConstraintQueryMetadataResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "combined_source": {
+            "$ref": "#/components/schemas/CombinedSource"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "combined_source",
+          "warnings"
+        ],
+        "title": "ConstraintQueryMetadataResponse",
+        "type": "object"
+      },
       "ConstraintSectionResponse": {
         "additionalProperties": false,
         "properties": {
@@ -433,6 +893,25 @@
         ],
         "title": "ConstraintSectionResponse",
         "type": "object"
+      },
+      "ConstraintSource": {
+        "enum": [
+          "static",
+          "dynamic",
+          "combined"
+        ],
+        "title": "ConstraintSource",
+        "type": "string"
+      },
+      "CorrelationConfidence": {
+        "enum": [
+          "exact",
+          "derived",
+          "operation_only",
+          "none"
+        ],
+        "title": "CorrelationConfidence",
+        "type": "string"
       },
       "DependencyGraphResponse": {
         "additionalProperties": false,
@@ -514,6 +993,92 @@
         "title": "DynamicConstraintsResponse",
         "type": "object"
       },
+      "GraphEdgeDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "edge_status": {
+            "title": "Edge Status",
+            "type": "string"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/GraphEvidenceResponse"
+            },
+            "title": "Evidence",
+            "type": "array"
+          },
+          "evidence_count": {
+            "title": "Evidence Count",
+            "type": "integer"
+          },
+          "evidence_preview": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Preview",
+            "type": "array"
+          },
+          "evidence_sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Sources",
+            "type": "array"
+          },
+          "from_node": {
+            "title": "From Node",
+            "type": "string"
+          },
+          "from_node_id": {
+            "title": "From Node Id",
+            "type": "string"
+          },
+          "from_operation_id": {
+            "title": "From Operation Id",
+            "type": "string"
+          },
+          "similar_parameters": {
+            "items": {
+              "$ref": "#/components/schemas/GraphSimilarityResponse"
+            },
+            "title": "Similar Parameters",
+            "type": "array"
+          },
+          "to_node": {
+            "title": "To Node",
+            "type": "string"
+          },
+          "to_node_id": {
+            "title": "To Node Id",
+            "type": "string"
+          },
+          "to_operation_id": {
+            "title": "To Operation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_node",
+          "to_node",
+          "similar_parameters",
+          "edge_id",
+          "edge_status",
+          "from_operation_id",
+          "to_operation_id",
+          "from_node_id",
+          "to_node_id",
+          "evidence_count",
+          "evidence_sources",
+          "evidence_preview",
+          "evidence"
+        ],
+        "title": "GraphEdgeDetailResponse",
+        "type": "object"
+      },
       "GraphEdgePageResponse": {
         "additionalProperties": false,
         "properties": {
@@ -526,7 +1091,7 @@
           },
           "items": {
             "items": {
-              "$ref": "#/components/schemas/GraphEdgeResponse"
+              "$ref": "#/components/schemas/GraphExplorerEdgeResponse"
             },
             "title": "Items",
             "type": "array"
@@ -573,6 +1138,488 @@
           "similar_parameters"
         ],
         "title": "GraphEdgeResponse",
+        "type": "object"
+      },
+      "GraphEvidenceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "evidence_id": {
+            "title": "Evidence Id",
+            "type": "string"
+          },
+          "from_evidence_node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "From Evidence Node Id"
+          },
+          "relation_hint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relation Hint"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "source_artifact_id": {
+            "title": "Source Artifact Id",
+            "type": "string"
+          },
+          "to_evidence_node_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "To Evidence Node Id"
+          },
+          "value1": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value1"
+          },
+          "value2": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Value2"
+          }
+        },
+        "required": [
+          "evidence_id",
+          "source",
+          "source_artifact_id"
+        ],
+        "title": "GraphEvidenceResponse",
+        "type": "object"
+      },
+      "GraphExplorerEdgeResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "edge_id": {
+            "title": "Edge Id",
+            "type": "string"
+          },
+          "edge_status": {
+            "title": "Edge Status",
+            "type": "string"
+          },
+          "evidence_count": {
+            "title": "Evidence Count",
+            "type": "integer"
+          },
+          "evidence_preview": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Preview",
+            "type": "array"
+          },
+          "evidence_sources": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Evidence Sources",
+            "type": "array"
+          },
+          "from_node": {
+            "title": "From Node",
+            "type": "string"
+          },
+          "from_node_id": {
+            "title": "From Node Id",
+            "type": "string"
+          },
+          "from_operation_id": {
+            "title": "From Operation Id",
+            "type": "string"
+          },
+          "similar_parameters": {
+            "items": {
+              "$ref": "#/components/schemas/GraphSimilarityResponse"
+            },
+            "title": "Similar Parameters",
+            "type": "array"
+          },
+          "to_node": {
+            "title": "To Node",
+            "type": "string"
+          },
+          "to_node_id": {
+            "title": "To Node Id",
+            "type": "string"
+          },
+          "to_operation_id": {
+            "title": "To Operation Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "from_node",
+          "to_node",
+          "similar_parameters",
+          "edge_id",
+          "edge_status",
+          "from_operation_id",
+          "to_operation_id",
+          "from_node_id",
+          "to_node_id",
+          "evidence_count",
+          "evidence_sources",
+          "evidence_preview"
+        ],
+        "title": "GraphExplorerEdgeResponse",
+        "type": "object"
+      },
+      "GraphFacetBucketResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "title": "Count",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "count"
+        ],
+        "title": "GraphFacetBucketResponse",
+        "type": "object"
+      },
+      "GraphFacetsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "edge_status": {
+            "items": {
+              "$ref": "#/components/schemas/GraphFacetBucketResponse"
+            },
+            "title": "Edge Status",
+            "type": "array"
+          },
+          "evidence_source": {
+            "items": {
+              "$ref": "#/components/schemas/GraphFacetBucketResponse"
+            },
+            "title": "Evidence Source",
+            "type": "array"
+          },
+          "from_operation_id": {
+            "items": {
+              "$ref": "#/components/schemas/GraphFacetBucketResponse"
+            },
+            "title": "From Operation Id",
+            "type": "array"
+          },
+          "node_kind": {
+            "items": {
+              "$ref": "#/components/schemas/GraphFacetBucketResponse"
+            },
+            "title": "Node Kind",
+            "type": "array"
+          },
+          "sequence_type": {
+            "items": {
+              "$ref": "#/components/schemas/GraphFacetBucketResponse"
+            },
+            "title": "Sequence Type",
+            "type": "array"
+          },
+          "to_operation_id": {
+            "items": {
+              "$ref": "#/components/schemas/GraphFacetBucketResponse"
+            },
+            "title": "To Operation Id",
+            "type": "array"
+          }
+        },
+        "required": [
+          "edge_status",
+          "evidence_source",
+          "from_operation_id",
+          "to_operation_id",
+          "node_kind",
+          "sequence_type"
+        ],
+        "title": "GraphFacetsResponse",
+        "type": "object"
+      },
+      "GraphNodePageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GraphNodeResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups"
+        ],
+        "title": "GraphNodePageResponse",
+        "type": "object"
+      },
+      "GraphNodeResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "in_degree": {
+            "title": "In Degree",
+            "type": "integer"
+          },
+          "label": {
+            "title": "Label",
+            "type": "string"
+          },
+          "node_id": {
+            "title": "Node Id",
+            "type": "string"
+          },
+          "node_kind": {
+            "title": "Node Kind",
+            "type": "string"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "out_degree": {
+            "title": "Out Degree",
+            "type": "integer"
+          },
+          "parameter_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Parameter Name"
+          },
+          "path_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path Template"
+          },
+          "property_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Path"
+          }
+        },
+        "required": [
+          "node_id",
+          "node_kind",
+          "operation_id",
+          "label",
+          "in_degree",
+          "out_degree"
+        ],
+        "title": "GraphNodeResponse",
+        "type": "object"
+      },
+      "GraphSequencePageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/GraphSequenceResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups"
+        ],
+        "title": "GraphSequencePageResponse",
+        "type": "object"
+      },
+      "GraphSequenceParameterSourceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "parameter_name": {
+            "title": "Parameter Name",
+            "type": "string"
+          },
+          "source_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Operation Id"
+          },
+          "source_property_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Property Path"
+          }
+        },
+        "required": [
+          "parameter_name"
+        ],
+        "title": "GraphSequenceParameterSourceResponse",
+        "type": "object"
+      },
+      "GraphSequenceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "length": {
+            "title": "Length",
+            "type": "integer"
+          },
+          "operations": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "parameter_sources": {
+            "items": {
+              "$ref": "#/components/schemas/GraphSequenceParameterSourceResponse"
+            },
+            "title": "Parameter Sources",
+            "type": "array"
+          },
+          "score": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Score"
+          },
+          "sequence_id": {
+            "title": "Sequence Id",
+            "type": "string"
+          },
+          "sequence_type": {
+            "title": "Sequence Type",
+            "type": "string"
+          },
+          "target_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Target Operation Id"
+          }
+        },
+        "required": [
+          "sequence_id",
+          "sequence_type",
+          "operations",
+          "length",
+          "parameter_sources"
+        ],
+        "title": "GraphSequenceResponse",
         "type": "object"
       },
       "GraphSimilarityResponse": {
@@ -881,6 +1928,47 @@
         "title": "HealthResponse",
         "type": "object"
       },
+      "InvariantCorrelationEvidenceResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "constraint_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Constraint Id"
+          },
+          "evidence_type": {
+            "title": "Evidence Type",
+            "type": "string"
+          },
+          "message": {
+            "title": "Message",
+            "type": "string"
+          },
+          "property_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Property Path"
+          }
+        },
+        "required": [
+          "evidence_type",
+          "message"
+        ],
+        "title": "InvariantCorrelationEvidenceResponse",
+        "type": "object"
+      },
       "InvariantDetailResponse": {
         "additionalProperties": false,
         "properties": {
@@ -954,6 +2042,391 @@
         "title": "InvariantDetailResponse",
         "type": "object"
       },
+      "InvariantExplorerDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "assertion_available": {
+            "title": "Assertion Available",
+            "type": "boolean"
+          },
+          "assertion_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assertion Preview"
+          },
+          "correlation_confidence": {
+            "$ref": "#/components/schemas/CorrelationConfidence"
+          },
+          "correlation_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/InvariantCorrelationEvidenceResponse"
+            },
+            "title": "Correlation Evidence",
+            "type": "array"
+          },
+          "invariant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invariant"
+          },
+          "invariant_id": {
+            "title": "Invariant Id",
+            "type": "string"
+          },
+          "invariant_kind": {
+            "$ref": "#/components/schemas/InvariantKind"
+          },
+          "invariant_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invariant Type"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "oracle_readiness": {
+            "$ref": "#/components/schemas/OracleReadiness"
+          },
+          "postman_assertion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postman Assertion"
+          },
+          "pptname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pptname"
+          },
+          "primary_property_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Property Path"
+          },
+          "property_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Property Paths",
+            "type": "array"
+          },
+          "related_constraint_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Related Constraint Ids",
+            "type": "array"
+          },
+          "variables": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variables"
+          }
+        },
+        "required": [
+          "invariant_id",
+          "property_paths",
+          "invariant_kind",
+          "oracle_readiness",
+          "assertion_available",
+          "related_constraint_ids",
+          "correlation_confidence",
+          "correlation_evidence"
+        ],
+        "title": "InvariantExplorerDetailResponse",
+        "type": "object"
+      },
+      "InvariantExplorerEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "assertion_available": {
+            "title": "Assertion Available",
+            "type": "boolean"
+          },
+          "assertion_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Assertion Preview"
+          },
+          "correlation_confidence": {
+            "$ref": "#/components/schemas/CorrelationConfidence"
+          },
+          "correlation_evidence": {
+            "items": {
+              "$ref": "#/components/schemas/InvariantCorrelationEvidenceResponse"
+            },
+            "title": "Correlation Evidence",
+            "type": "array"
+          },
+          "invariant": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invariant"
+          },
+          "invariant_id": {
+            "title": "Invariant Id",
+            "type": "string"
+          },
+          "invariant_kind": {
+            "$ref": "#/components/schemas/InvariantKind"
+          },
+          "invariant_type": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Invariant Type"
+          },
+          "operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Operation Id"
+          },
+          "oracle_readiness": {
+            "$ref": "#/components/schemas/OracleReadiness"
+          },
+          "postman_assertion": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Postman Assertion"
+          },
+          "pptname": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Pptname"
+          },
+          "primary_property_path": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Primary Property Path"
+          },
+          "property_paths": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Property Paths",
+            "type": "array"
+          },
+          "related_constraint_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Related Constraint Ids",
+            "type": "array"
+          },
+          "variables": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Variables"
+          }
+        },
+        "required": [
+          "invariant_id",
+          "property_paths",
+          "invariant_kind",
+          "oracle_readiness",
+          "assertion_available",
+          "related_constraint_ids",
+          "correlation_confidence",
+          "correlation_evidence"
+        ],
+        "title": "InvariantExplorerEntryResponse",
+        "type": "object"
+      },
+      "InvariantExplorerFacetsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "assertion_available": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Assertion Available",
+            "type": "array"
+          },
+          "correlation_confidence": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Correlation Confidence",
+            "type": "array"
+          },
+          "invariant_kind": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Invariant Kind",
+            "type": "array"
+          },
+          "invariant_type": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Invariant Type",
+            "type": "array"
+          },
+          "operation_id": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Operation Id",
+            "type": "array"
+          },
+          "oracle_readiness": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Oracle Readiness",
+            "type": "array"
+          },
+          "primary_property_path": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Primary Property Path",
+            "type": "array"
+          }
+        },
+        "required": [
+          "operation_id",
+          "invariant_kind",
+          "invariant_type",
+          "oracle_readiness",
+          "assertion_available",
+          "correlation_confidence",
+          "primary_property_path"
+        ],
+        "title": "InvariantExplorerFacetsResponse",
+        "type": "object"
+      },
+      "InvariantExplorerPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/InvariantExplorerEntryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups"
+        ],
+        "title": "InvariantExplorerPageResponse",
+        "type": "object"
+      },
       "InvariantGroupResponse": {
         "additionalProperties": false,
         "properties": {
@@ -975,6 +2448,20 @@
         ],
         "title": "InvariantGroupResponse",
         "type": "object"
+      },
+      "InvariantKind": {
+        "enum": [
+          "non_null",
+          "bounds",
+          "enum",
+          "equality",
+          "size",
+          "format",
+          "relation",
+          "unknown"
+        ],
+        "title": "InvariantKind",
+        "type": "string"
       },
       "InvariantPageResponse": {
         "additionalProperties": false,
@@ -1082,6 +2569,29 @@
         "title": "MediaType",
         "type": "string"
       },
+      "OperationCountSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "by_kind": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "By Kind",
+            "type": "object"
+          },
+          "total": {
+            "minimum": 0.0,
+            "title": "Total",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "total",
+          "by_kind"
+        ],
+        "title": "OperationCountSummaryResponse",
+        "type": "object"
+      },
       "OperationDetailResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1169,6 +2679,458 @@
         "title": "OperationDetailResponse",
         "type": "object"
       },
+      "OperationExplorerDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "constraint_count": {
+            "minimum": 0.0,
+            "title": "Constraint Count",
+            "type": "integer"
+          },
+          "constraint_summary": {
+            "$ref": "#/components/schemas/OperationCountSummaryResponse"
+          },
+          "display_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Operation Id"
+          },
+          "graph_in_degree": {
+            "minimum": 0.0,
+            "title": "Graph In Degree",
+            "type": "integer"
+          },
+          "graph_out_degree": {
+            "minimum": 0.0,
+            "title": "Graph Out Degree",
+            "type": "integer"
+          },
+          "graph_summary": {
+            "$ref": "#/components/schemas/OperationGraphSummaryResponse"
+          },
+          "has_failures": {
+            "title": "Has Failures",
+            "type": "boolean"
+          },
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "incoming_edge_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Incoming Edge Ids",
+            "type": "array"
+          },
+          "invariant_count": {
+            "minimum": 0.0,
+            "title": "Invariant Count",
+            "type": "integer"
+          },
+          "invariant_summary": {
+            "$ref": "#/components/schemas/OperationCountSummaryResponse"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "operation_key": {
+            "title": "Operation Key",
+            "type": "string"
+          },
+          "outgoing_edge_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Outgoing Edge Ids",
+            "type": "array"
+          },
+          "parameter_count": {
+            "minimum": 0.0,
+            "title": "Parameter Count",
+            "type": "integer"
+          },
+          "parameters": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Parameters",
+            "type": "object"
+          },
+          "path_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path Template"
+          },
+          "related_constraint_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Related Constraint Ids",
+            "type": "array"
+          },
+          "related_invariant_ids": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Related Invariant Ids",
+            "type": "array"
+          },
+          "report_status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Report Status Counts",
+            "type": "object"
+          },
+          "request_body": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "response_status_count": {
+            "minimum": 0.0,
+            "title": "Response Status Count",
+            "type": "integer"
+          },
+          "response_statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Response Statuses",
+            "type": "array"
+          },
+          "responses": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Responses",
+            "type": "object"
+          },
+          "test_case_count": {
+            "minimum": 0.0,
+            "title": "Test Case Count",
+            "type": "integer"
+          },
+          "test_case_status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Test Case Status Counts",
+            "type": "object"
+          }
+        },
+        "required": [
+          "operation_id",
+          "parameter_count",
+          "response_statuses",
+          "operation_key",
+          "response_status_count",
+          "constraint_count",
+          "invariant_count",
+          "graph_in_degree",
+          "graph_out_degree",
+          "test_case_count",
+          "has_failures",
+          "parameters",
+          "responses",
+          "constraint_summary",
+          "invariant_summary",
+          "graph_summary",
+          "report_status_counts",
+          "test_case_status_counts",
+          "related_constraint_ids",
+          "related_invariant_ids",
+          "incoming_edge_ids",
+          "outgoing_edge_ids"
+        ],
+        "title": "OperationExplorerDetailResponse",
+        "type": "object"
+      },
+      "OperationExplorerEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "constraint_count": {
+            "minimum": 0.0,
+            "title": "Constraint Count",
+            "type": "integer"
+          },
+          "display_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Operation Id"
+          },
+          "graph_in_degree": {
+            "minimum": 0.0,
+            "title": "Graph In Degree",
+            "type": "integer"
+          },
+          "graph_out_degree": {
+            "minimum": 0.0,
+            "title": "Graph Out Degree",
+            "type": "integer"
+          },
+          "has_failures": {
+            "title": "Has Failures",
+            "type": "boolean"
+          },
+          "http_method": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Http Method"
+          },
+          "invariant_count": {
+            "minimum": 0.0,
+            "title": "Invariant Count",
+            "type": "integer"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "operation_key": {
+            "title": "Operation Key",
+            "type": "string"
+          },
+          "parameter_count": {
+            "minimum": 0.0,
+            "title": "Parameter Count",
+            "type": "integer"
+          },
+          "path_template": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Path Template"
+          },
+          "response_status_count": {
+            "minimum": 0.0,
+            "title": "Response Status Count",
+            "type": "integer"
+          },
+          "response_statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Response Statuses",
+            "type": "array"
+          },
+          "test_case_count": {
+            "minimum": 0.0,
+            "title": "Test Case Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "operation_id",
+          "parameter_count",
+          "response_statuses",
+          "operation_key",
+          "response_status_count",
+          "constraint_count",
+          "invariant_count",
+          "graph_in_degree",
+          "graph_out_degree",
+          "test_case_count",
+          "has_failures"
+        ],
+        "title": "OperationExplorerEntryResponse",
+        "type": "object"
+      },
+      "OperationExplorerPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/OperationExplorerEntryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups"
+        ],
+        "title": "OperationExplorerPageResponse",
+        "type": "object"
+      },
+      "OperationFacetBucketResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "key": {
+            "title": "Key",
+            "type": "string"
+          }
+        },
+        "required": [
+          "key",
+          "count"
+        ],
+        "title": "OperationFacetBucketResponse",
+        "type": "object"
+      },
+      "OperationFacetsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "has_constraints": {
+            "items": {
+              "$ref": "#/components/schemas/OperationFacetBucketResponse"
+            },
+            "title": "Has Constraints",
+            "type": "array"
+          },
+          "has_failures": {
+            "items": {
+              "$ref": "#/components/schemas/OperationFacetBucketResponse"
+            },
+            "title": "Has Failures",
+            "type": "array"
+          },
+          "has_graph_edges": {
+            "items": {
+              "$ref": "#/components/schemas/OperationFacetBucketResponse"
+            },
+            "title": "Has Graph Edges",
+            "type": "array"
+          },
+          "has_invariants": {
+            "items": {
+              "$ref": "#/components/schemas/OperationFacetBucketResponse"
+            },
+            "title": "Has Invariants",
+            "type": "array"
+          },
+          "has_request_body": {
+            "items": {
+              "$ref": "#/components/schemas/OperationFacetBucketResponse"
+            },
+            "title": "Has Request Body",
+            "type": "array"
+          },
+          "http_method": {
+            "items": {
+              "$ref": "#/components/schemas/OperationFacetBucketResponse"
+            },
+            "title": "Http Method",
+            "type": "array"
+          },
+          "response_status": {
+            "items": {
+              "$ref": "#/components/schemas/OperationFacetBucketResponse"
+            },
+            "title": "Response Status",
+            "type": "array"
+          }
+        },
+        "required": [
+          "http_method",
+          "response_status",
+          "has_request_body",
+          "has_constraints",
+          "has_invariants",
+          "has_graph_edges",
+          "has_failures"
+        ],
+        "title": "OperationFacetsResponse",
+        "type": "object"
+      },
+      "OperationGraphSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "in_degree": {
+            "minimum": 0.0,
+            "title": "In Degree",
+            "type": "integer"
+          },
+          "incoming_edge_count": {
+            "minimum": 0.0,
+            "title": "Incoming Edge Count",
+            "type": "integer"
+          },
+          "out_degree": {
+            "minimum": 0.0,
+            "title": "Out Degree",
+            "type": "integer"
+          },
+          "outgoing_edge_count": {
+            "minimum": 0.0,
+            "title": "Outgoing Edge Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "in_degree",
+          "out_degree",
+          "incoming_edge_count",
+          "outgoing_edge_count"
+        ],
+        "title": "OperationGraphSummaryResponse",
+        "type": "object"
+      },
       "OperationListResponse": {
         "additionalProperties": false,
         "properties": {
@@ -1251,6 +3213,17 @@
         ],
         "title": "OperationSummaryResponse",
         "type": "object"
+      },
+      "OracleReadiness": {
+        "enum": [
+          "dynamic_candidate",
+          "schema_supported",
+          "verified_runtime_oracle",
+          "needs_human_review",
+          "unknown"
+        ],
+        "title": "OracleReadiness",
+        "type": "string"
       },
       "PaginationMetadata": {
         "additionalProperties": false,
@@ -2584,6 +4557,1098 @@
         ]
       }
     },
+    "/api/v1/runs/{run_name}/constraints/entries": {
+      "get": {
+        "operationId": "list_constraint_explorer_entries_api_v1_runs__run_name__constraints_entries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by source. Allowed values: static, dynamic, combined.",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by source. Allowed values: static, dynamic, combined.",
+              "title": "Source"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by source section, such as request_response or response_properties.",
+            "in": "query",
+            "name": "section",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by source section, such as request_response or response_properties.",
+              "title": "Section"
+            }
+          },
+          {
+            "description": "Filter by exact property_path.",
+            "in": "query",
+            "name": "property_path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exact property_path.",
+              "title": "Property Path"
+            }
+          },
+          {
+            "description": "Filter by property_path prefix.",
+            "in": "query",
+            "name": "property_prefix",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by property_path prefix.",
+              "title": "Property Prefix"
+            }
+          },
+          {
+            "description": "Filter by deterministic kind. Allowed values: request_response_relation, date_format, enum, bounds, required, url, fixed_length, equality, relation, unknown.",
+            "in": "query",
+            "name": "constraint_kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by deterministic kind. Allowed values: request_response_relation, date_format, enum, bounds, required, url, fixed_length, equality, relation, unknown.",
+              "title": "Constraint Kind"
+            }
+          },
+          {
+            "description": "Filter by raw provenance type, such as constraints or request_response.",
+            "in": "query",
+            "name": "source_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by raw provenance type, such as constraints or request_response.",
+              "title": "Source Type"
+            }
+          },
+          {
+            "description": "Filter by correlation status. Allowed values: static_only, dynamic_only, both_present, combined_only.",
+            "in": "query",
+            "name": "agreement_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by correlation status. Allowed values: static_only, dynamic_only, both_present, combined_only.",
+              "title": "Agreement Status"
+            }
+          },
+          {
+            "description": "Filter by whether a full assertion is available in the detail endpoint.",
+            "in": "query",
+            "name": "assertion_available",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by whether a full assertion is available in the detail endpoint.",
+              "title": "Assertion Available"
+            }
+          },
+          {
+            "description": "Search safe string fields across IDs, paths, expressions, provenance, and assertion preview.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe string fields across IDs, paths, expressions, provenance, and assertion preview.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "description": "Sort direction for sort_by.",
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc",
+              "description": "Sort direction for sort_by."
+            }
+          },
+          {
+            "description": "Allowed values: source, operation_id, section, constraint_kind, source_type, agreement_status, assertion_available.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: source, operation_id, section, constraint_kind, source_type, agreement_status, assertion_available.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstraintExplorerPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Constraint Explorer Entries",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/entries/{constraint_id}": {
+      "get": {
+        "operationId": "get_constraint_explorer_entry_api_v1_runs__run_name__constraints_entries__constraint_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "constraint_id",
+            "required": true,
+            "schema": {
+              "title": "Constraint Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstraintExplorerDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Constraint Explorer Entry",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/facets": {
+      "get": {
+        "operationId": "get_constraint_explorer_facets_api_v1_runs__run_name__constraints_facets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by source. Allowed values: static, dynamic, combined.",
+            "in": "query",
+            "name": "source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by source. Allowed values: static, dynamic, combined.",
+              "title": "Source"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by source section, such as request_response or response_properties.",
+            "in": "query",
+            "name": "section",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by source section, such as request_response or response_properties.",
+              "title": "Section"
+            }
+          },
+          {
+            "description": "Filter by exact property_path.",
+            "in": "query",
+            "name": "property_path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exact property_path.",
+              "title": "Property Path"
+            }
+          },
+          {
+            "description": "Filter by property_path prefix.",
+            "in": "query",
+            "name": "property_prefix",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by property_path prefix.",
+              "title": "Property Prefix"
+            }
+          },
+          {
+            "description": "Filter by deterministic kind.",
+            "in": "query",
+            "name": "constraint_kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by deterministic kind.",
+              "title": "Constraint Kind"
+            }
+          },
+          {
+            "description": "Filter by raw provenance type.",
+            "in": "query",
+            "name": "source_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by raw provenance type.",
+              "title": "Source Type"
+            }
+          },
+          {
+            "description": "Filter by correlation status.",
+            "in": "query",
+            "name": "agreement_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by correlation status.",
+              "title": "Agreement Status"
+            }
+          },
+          {
+            "description": "Filter by whether a full assertion is available.",
+            "in": "query",
+            "name": "assertion_available",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by whether a full assertion is available.",
+              "title": "Assertion Available"
+            }
+          },
+          {
+            "description": "Search safe string fields before calculating facets.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe string fields before calculating facets.",
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ConstraintFacetsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Constraint Explorer Facets",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/invariants": {
+      "get": {
+        "operationId": "list_invariant_explorer_entries_api_v1_runs__run_name__constraints_invariants_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by invariant kind. Allowed values: non_null, bounds, enum, equality, size, format, relation, unknown.",
+            "in": "query",
+            "name": "invariant_kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by invariant kind. Allowed values: non_null, bounds, enum, equality, size, format, relation, unknown.",
+              "title": "Invariant Kind"
+            }
+          },
+          {
+            "description": "Filter by raw invariant type.",
+            "in": "query",
+            "name": "invariant_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by raw invariant type.",
+              "title": "Invariant Type"
+            }
+          },
+          {
+            "description": "Filter by oracle readiness.",
+            "in": "query",
+            "name": "oracle_readiness",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by oracle readiness.",
+              "title": "Oracle Readiness"
+            }
+          },
+          {
+            "description": "Filter by whether a full postman assertion is available.",
+            "in": "query",
+            "name": "assertion_available",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by whether a full postman assertion is available.",
+              "title": "Assertion Available"
+            }
+          },
+          {
+            "description": "Filter by correlation confidence.",
+            "in": "query",
+            "name": "correlation_confidence",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by correlation confidence.",
+              "title": "Correlation Confidence"
+            }
+          },
+          {
+            "description": "Filter by exact property path.",
+            "in": "query",
+            "name": "property_path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exact property path.",
+              "title": "Property Path"
+            }
+          },
+          {
+            "description": "Filter by property path prefix.",
+            "in": "query",
+            "name": "property_prefix",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by property path prefix.",
+              "title": "Property Prefix"
+            }
+          },
+          {
+            "description": "Search safe invariant fields.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe invariant fields.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, primary_property_path, invariant_kind, invariant_type, oracle_readiness, correlation_confidence.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, primary_property_path, invariant_kind, invariant_type, oracle_readiness, correlation_confidence.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, invariant_kind, invariant_type, oracle_readiness, assertion_available, correlation_confidence, primary_property_path.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, invariant_kind, invariant_type, oracle_readiness, assertion_available, correlation_confidence, primary_property_path.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvariantExplorerPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Invariant Explorer Entries",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/invariants/facets": {
+      "get": {
+        "operationId": "get_invariant_explorer_facets_api_v1_runs__run_name__constraints_invariants_facets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by invariant kind.",
+            "in": "query",
+            "name": "invariant_kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by invariant kind.",
+              "title": "Invariant Kind"
+            }
+          },
+          {
+            "description": "Filter by raw invariant type.",
+            "in": "query",
+            "name": "invariant_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by raw invariant type.",
+              "title": "Invariant Type"
+            }
+          },
+          {
+            "description": "Filter by oracle readiness.",
+            "in": "query",
+            "name": "oracle_readiness",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by oracle readiness.",
+              "title": "Oracle Readiness"
+            }
+          },
+          {
+            "description": "Filter by assertion availability.",
+            "in": "query",
+            "name": "assertion_available",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by assertion availability.",
+              "title": "Assertion Available"
+            }
+          },
+          {
+            "description": "Filter by correlation confidence.",
+            "in": "query",
+            "name": "correlation_confidence",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by correlation confidence.",
+              "title": "Correlation Confidence"
+            }
+          },
+          {
+            "description": "Filter by exact property path.",
+            "in": "query",
+            "name": "property_path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exact property path.",
+              "title": "Property Path"
+            }
+          },
+          {
+            "description": "Filter by property path prefix.",
+            "in": "query",
+            "name": "property_prefix",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by property path prefix.",
+              "title": "Property Prefix"
+            }
+          },
+          {
+            "description": "Search safe invariant fields before calculating facets.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe invariant fields before calculating facets.",
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvariantExplorerFacetsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Invariant Explorer Facets",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/invariants/{invariant_id}": {
+      "get": {
+        "operationId": "get_invariant_explorer_entry_api_v1_runs__run_name__constraints_invariants__invariant_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invariant_id",
+            "required": true,
+            "schema": {
+              "title": "Invariant Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/InvariantExplorerDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Invariant Explorer Entry",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
     "/api/v1/runs/{run_name}/constraints/static": {
       "get": {
         "operationId": "get_static_constraints_api_v1_runs__run_name__constraints_static_get",
@@ -2884,7 +5949,79 @@
             }
           },
           {
-            "description": "Search safe string fields: from_node, to_node.",
+            "description": "Filter by producer operation_id.",
+            "in": "query",
+            "name": "from_operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by producer operation_id.",
+              "title": "From Operation Id"
+            }
+          },
+          {
+            "description": "Filter by consumer operation_id.",
+            "in": "query",
+            "name": "to_operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by consumer operation_id.",
+              "title": "To Operation Id"
+            }
+          },
+          {
+            "description": "Filter by edge status. Allowed values: final, candidate, all. Default is final.",
+            "in": "query",
+            "name": "edge_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by edge status. Allowed values: final, candidate, all. Default is final.",
+              "title": "Edge Status"
+            }
+          },
+          {
+            "description": "Filter by evidence source: final_graph, heuristic_edges, gpt_edges.",
+            "in": "query",
+            "name": "evidence_source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by evidence source: final_graph, heuristic_edges, gpt_edges.",
+              "title": "Evidence Source"
+            }
+          },
+          {
+            "description": "Search safe string fields across nodes, operations, status, and evidence preview.",
             "in": "query",
             "name": "q",
             "required": false,
@@ -2897,12 +6034,12 @@
                   "type": "null"
                 }
               ],
-              "description": "Search safe string fields: from_node, to_node.",
+              "description": "Search safe string fields across nodes, operations, status, and evidence preview.",
               "title": "Q"
             }
           },
           {
-            "description": "Allowed values: from_node, to_node.",
+            "description": "Allowed values: from_node, to_node, from_operation_id, to_operation_id, edge_status, evidence_count.",
             "in": "query",
             "name": "sort_by",
             "required": false,
@@ -2915,7 +6052,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Allowed values: from_node, to_node.",
+              "description": "Allowed values: from_node, to_node, from_operation_id, to_operation_id, edge_status, evidence_count.",
               "title": "Sort By"
             }
           },
@@ -2931,7 +6068,7 @@
             }
           },
           {
-            "description": "Allowed values: from_node, to_node.",
+            "description": "Allowed values: from_node, to_node, from_operation_id, to_operation_id, edge_status.",
             "in": "query",
             "name": "group_by",
             "required": false,
@@ -2944,7 +6081,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Allowed values: from_node, to_node.",
+              "description": "Allowed values: from_node, to_node, from_operation_id, to_operation_id, edge_status.",
               "title": "Group By"
             }
           },
@@ -2995,6 +6132,622 @@
           }
         },
         "summary": "List Graph Edges",
+        "tags": [
+          "graph"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/graph/edges/{edge_id}": {
+      "get": {
+        "operationId": "get_graph_edge_api_v1_runs__run_name__graph_edges__edge_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "edge_id",
+            "required": true,
+            "schema": {
+              "title": "Edge Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphEdgeDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Graph Edge",
+        "tags": [
+          "graph"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/graph/facets": {
+      "get": {
+        "operationId": "get_graph_facets_api_v1_runs__run_name__graph_facets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by edge status: final, candidate, all.",
+            "in": "query",
+            "name": "edge_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by edge status: final, candidate, all.",
+              "title": "Edge Status"
+            }
+          },
+          {
+            "description": "Filter by evidence source.",
+            "in": "query",
+            "name": "evidence_source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by evidence source.",
+              "title": "Evidence Source"
+            }
+          },
+          {
+            "description": "Filter by producer operation_id.",
+            "in": "query",
+            "name": "from_operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by producer operation_id.",
+              "title": "From Operation Id"
+            }
+          },
+          {
+            "description": "Filter by consumer operation_id.",
+            "in": "query",
+            "name": "to_operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by consumer operation_id.",
+              "title": "To Operation Id"
+            }
+          },
+          {
+            "description": "Filter by node kind.",
+            "in": "query",
+            "name": "node_kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by node kind.",
+              "title": "Node Kind"
+            }
+          },
+          {
+            "description": "Filter by sequence type.",
+            "in": "query",
+            "name": "sequence_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by sequence type.",
+              "title": "Sequence Type"
+            }
+          },
+          {
+            "description": "Search safe graph explorer fields.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe graph explorer fields.",
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphFacetsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Graph Facets",
+        "tags": [
+          "graph"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/graph/nodes": {
+      "get": {
+        "operationId": "list_graph_nodes_api_v1_runs__run_name__graph_nodes_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by node kind: operation, property, parameter.",
+            "in": "query",
+            "name": "node_kind",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by node kind: operation, property, parameter.",
+              "title": "Node Kind"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Search safe graph node fields.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe graph node fields.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: node_id, node_kind, operation_id, label, in_degree, out_degree.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: node_id, node_kind, operation_id, label, in_degree, out_degree.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc"
+            }
+          },
+          {
+            "description": "Allowed values: node_kind, operation_id.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: node_kind, operation_id.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphNodePageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Graph Nodes",
+        "tags": [
+          "graph"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/graph/sequences": {
+      "get": {
+        "operationId": "list_graph_sequences_api_v1_runs__run_name__graph_sequences_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by target operation_id.",
+            "in": "query",
+            "name": "target_operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by target operation_id.",
+              "title": "Target Operation Id"
+            }
+          },
+          {
+            "description": "Filter to sequences containing this operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter to sequences containing this operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by sequence type.",
+            "in": "query",
+            "name": "sequence_type",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by sequence type.",
+              "title": "Sequence Type"
+            }
+          },
+          {
+            "description": "Search safe sequence fields.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe sequence fields.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: sequence_id, target_operation_id, sequence_type, length, score.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: sequence_id, target_operation_id, sequence_type, length, score.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc"
+            }
+          },
+          {
+            "description": "Allowed values: target_operation_id, sequence_type.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: target_operation_id, sequence_type.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphSequencePageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Graph Sequences",
+        "tags": [
+          "graph"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/graph/sequences/{sequence_id}": {
+      "get": {
+        "operationId": "get_graph_sequence_api_v1_runs__run_name__graph_sequences__sequence_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "sequence_id",
+            "required": true,
+            "schema": {
+              "title": "Sequence Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/GraphSequenceResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Graph Sequence",
         "tags": [
           "graph"
         ]
@@ -3215,6 +6968,551 @@
           }
         },
         "summary": "List Operations",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/operations/entries": {
+      "get": {
+        "operationId": "list_operation_explorer_entries_api_v1_runs__run_name__operations_entries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by deterministic operation_key.",
+            "in": "query",
+            "name": "operation_key",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by deterministic operation_key.",
+              "title": "Operation Key"
+            }
+          },
+          {
+            "description": "Filter by HTTP method.",
+            "in": "query",
+            "name": "http_method",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HTTP method.",
+              "title": "Http Method"
+            }
+          },
+          {
+            "description": "Filter by response status.",
+            "in": "query",
+            "name": "response_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by response status.",
+              "title": "Response Status"
+            }
+          },
+          {
+            "description": "Filter by request body availability.",
+            "in": "query",
+            "name": "has_request_body",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by request body availability.",
+              "title": "Has Request Body"
+            }
+          },
+          {
+            "description": "Filter by constraint availability.",
+            "in": "query",
+            "name": "has_constraints",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by constraint availability.",
+              "title": "Has Constraints"
+            }
+          },
+          {
+            "description": "Filter by invariant availability.",
+            "in": "query",
+            "name": "has_invariants",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by invariant availability.",
+              "title": "Has Invariants"
+            }
+          },
+          {
+            "description": "Filter by graph edge availability.",
+            "in": "query",
+            "name": "has_graph_edges",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by graph edge availability.",
+              "title": "Has Graph Edges"
+            }
+          },
+          {
+            "description": "Filter by failure status availability.",
+            "in": "query",
+            "name": "has_failures",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by failure status availability.",
+              "title": "Has Failures"
+            }
+          },
+          {
+            "description": "Search safe operation fields.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe operation fields.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: operation_key, operation_id, http_method, path_template, constraint_count, invariant_count, graph_in_degree, graph_out_degree, test_case_count.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_key, operation_id, http_method, path_template, constraint_count, invariant_count, graph_in_degree, graph_out_degree, test_case_count.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc"
+            }
+          },
+          {
+            "description": "Allowed values: http_method, has_request_body, has_constraints, has_invariants, has_graph_edges, has_failures.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: http_method, has_request_body, has_constraints, has_invariants, has_graph_edges, has_failures.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationExplorerPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Operation Explorer Entries",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/operations/entries/{operation_key}": {
+      "get": {
+        "operationId": "get_operation_explorer_entry_api_v1_runs__run_name__operations_entries__operation_key__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "operation_key",
+            "required": true,
+            "schema": {
+              "title": "Operation Key",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationExplorerDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Operation Explorer Entry",
+        "tags": [
+          "operations"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/operations/facets": {
+      "get": {
+        "operationId": "get_operation_explorer_facets_api_v1_runs__run_name__operations_facets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by HTTP method.",
+            "in": "query",
+            "name": "http_method",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HTTP method.",
+              "title": "Http Method"
+            }
+          },
+          {
+            "description": "Filter by response status.",
+            "in": "query",
+            "name": "response_status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by response status.",
+              "title": "Response Status"
+            }
+          },
+          {
+            "description": "Filter by request body availability.",
+            "in": "query",
+            "name": "has_request_body",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by request body availability.",
+              "title": "Has Request Body"
+            }
+          },
+          {
+            "description": "Filter by constraint availability.",
+            "in": "query",
+            "name": "has_constraints",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by constraint availability.",
+              "title": "Has Constraints"
+            }
+          },
+          {
+            "description": "Filter by invariant availability.",
+            "in": "query",
+            "name": "has_invariants",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by invariant availability.",
+              "title": "Has Invariants"
+            }
+          },
+          {
+            "description": "Filter by graph edge availability.",
+            "in": "query",
+            "name": "has_graph_edges",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by graph edge availability.",
+              "title": "Has Graph Edges"
+            }
+          },
+          {
+            "description": "Filter by failure status availability.",
+            "in": "query",
+            "name": "has_failures",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by failure status availability.",
+              "title": "Has Failures"
+            }
+          },
+          {
+            "description": "Search safe operation fields.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search safe operation fields.",
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/OperationFacetsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Operation Explorer Facets",
         "tags": [
           "operations"
         ]

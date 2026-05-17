@@ -5,6 +5,7 @@ import {
   ConstraintsPage,
   GraphPage,
   HistoryPage,
+  OperationsPage,
   OverviewPage,
   ReportsPage,
   RunsPage,
@@ -17,19 +18,30 @@ test('QA can inspect a sanitized APIPilot run across key artifact views', async 
   await runs.expectLoaded()
   await runs.openRun('Run A')
 
-  await new OverviewPage(page).expectLoaded()
+  const overview = new OverviewPage(page)
+  await overview.expectLoaded()
+  await overview.expectCommandMode()
+
+  const operations = new OperationsPage(page)
+  await operations.goto('Run A')
+  await operations.expectTriageFlow()
+  await operations.expectCanvasMode('Run A')
 
   const graph = new GraphPage(page)
   await graph.goto('Run A')
   await graph.inspectNode()
+  await graph.expectJourneyMode('Run A')
+  await graph.expectSpatialMode('Run A')
 
   const constraints = new ConstraintsPage(page)
   await constraints.goto('Run A')
   await constraints.expectFilteredConstraint()
+  await constraints.expectMatrixMode('Run A')
 
   const artifacts = new ArtifactsPage(page)
   await artifacts.goto('Run A')
   await artifacts.expectRawViewer()
+  await artifacts.expectWorkbenchMode('Run A')
 
   const reports = new ReportsPage(page)
   await reports.goto('Run A')

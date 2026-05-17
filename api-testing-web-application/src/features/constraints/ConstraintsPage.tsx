@@ -6,10 +6,7 @@ import {
   Chip,
   MenuItem,
   Stack,
-  Tab,
-  Tabs,
   TextField,
-  Typography,
 } from '@mui/material'
 import type { GridColDef } from '@mui/x-data-grid'
 import { useMemo, useState } from 'react'
@@ -23,12 +20,10 @@ import type {
 import { encodeRoutePart } from '../../shared/lib/format'
 import { replaceSearchParams } from '../../shared/lib/navigation'
 import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
-import { EvidenceLinkSet } from '../../shared/ui/EvidenceLinkSet'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
 import { FacetFilterBar, type FacetFilter } from '../../shared/ui/FacetFilterBar'
 import { FilterToolbar } from '../../shared/ui/FilterToolbar'
 import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
-import { JsonBlock } from '../../shared/ui/JsonBlock'
 import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
@@ -50,21 +45,31 @@ import {
   useStaticConstraintEntries,
   useStaticConstraintsSummary,
 } from './api'
+import { ConstraintDetailComposer } from './components/ConstraintDetailComposer'
+import { ConstraintModeSegments } from './components/ConstraintModeSegments'
+import { ConstraintWorkbench } from './components/ConstraintWorkbench'
+import { CurrentPageConstraintMatrix } from './components/CurrentPageConstraintMatrix'
+import { InvariantDetailComposer } from './components/InvariantDetailComposer'
+import { LegacyConstraintDetailComposer } from './components/LegacyConstraintDetailComposer'
+import type { MatrixBy } from './constraintViewModels'
 
 export type ConstraintTab = 'dynamic' | 'explorer' | 'invariants' | 'static'
 
 export type ConstraintsPageSearch = {
   agreementStatus?: string
   assertionAvailable?: boolean
+  constraintDetailView?: 'raw' | 'readable'
   constraintId?: string
   constraintKind?: string
   constraintTab: ConstraintTab
+  constraintsView?: 'matrix' | 'table' | 'workbench'
   correlationConfidence?: string
   groupBy?: string
   invariantId?: string
   invariantKind?: string
   invariantType?: string
   limit: number
+  matrixBy?: MatrixBy
   offset: number
   operationId?: string
   oracleReadiness?: string
@@ -112,6 +117,13 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const encodedRunName = encodeRoutePart(runName)
   const gridState = useUrlBackedGridState(search)
   const tab = search.constraintTab ?? 'explorer'
+  const constraintsView = search.constraintsView ?? 'workbench'
+  const constraintDetailView = search.constraintDetailView ?? 'readable'
+  const matrixBy = search.matrixBy ?? 'source'
+  const needsExplorer = constraintsView === 'workbench' || constraintsView === 'matrix' || (constraintsView === 'table' && tab === 'explorer')
+  const needsInvariants = constraintsView === 'workbench' || constraintsView === 'matrix' || (constraintsView === 'table' && tab === 'invariants')
+  const needsStatic = constraintsView === 'table' && tab === 'static'
+  const needsDynamic = constraintsView === 'table' && tab === 'dynamic'
   const staticSummaryQuery = useStaticConstraintsSummary(runName)
   const dynamicSummaryQuery = useDynamicConstraintsSummary(runName)
   const explorerParams = toConstraintExplorerParams(search)
@@ -119,16 +131,16 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const invariantParams = toInvariantExplorerParams(search)
   const invariantFacetParams = toInvariantFacetParams(search)
 
-  const explorerQuery = useConstraintExplorerEntries(runName, explorerParams, { query: { enabled: tab === 'explorer' } })
-  const explorerFacetsQuery = useConstraintExplorerFacets(runName, explorerFacetParams, { query: { enabled: tab === 'explorer' } })
+  const explorerQuery = useConstraintExplorerEntries(runName, explorerParams, { query: { enabled: needsExplorer } })
+  const explorerFacetsQuery = useConstraintExplorerFacets(runName, explorerFacetParams, { query: { enabled: needsExplorer } })
   const constraintDetailOpen = Boolean(search.constraintId)
   const constraintDetailQuery = useConstraintExplorerDetail(
     runName,
     search.constraintId ?? '',
     { query: { enabled: constraintDetailOpen } },
   )
-  const invariantExplorerQuery = useInvariantExplorerEntries(runName, invariantParams, { query: { enabled: tab === 'invariants' } })
-  const invariantFacetsQuery = useInvariantExplorerFacets(runName, invariantFacetParams, { query: { enabled: tab === 'invariants' } })
+  const invariantExplorerQuery = useInvariantExplorerEntries(runName, invariantParams, { query: { enabled: needsInvariants } })
+  const invariantFacetsQuery = useInvariantExplorerFacets(runName, invariantFacetParams, { query: { enabled: needsInvariants } })
   const invariantDetailOpen = Boolean(search.invariantId)
   const invariantDetailQuery = useInvariantExplorerDetail(
     runName,
@@ -144,7 +156,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     section: search.section,
     sort_by: search.sortBy,
     sort_order: search.sortOrder,
-  }, { query: { enabled: tab === 'static' } })
+  }, { query: { enabled: needsStatic } })
   const dynamicEntriesQuery = useDynamicConstraintEntries(runName, {
     group_by: search.groupBy,
     limit: search.limit,
@@ -154,7 +166,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     section: search.section,
     sort_by: search.sortBy,
     sort_order: search.sortOrder,
-  }, { query: { enabled: tab === 'dynamic' } })
+  }, { query: { enabled: needsDynamic } })
 
   const legacyConstraintRows = useMemo(
     () => constraintRows((tab === 'dynamic' ? dynamicEntriesQuery.data?.items : staticEntriesQuery.data?.items) ?? []),
@@ -269,15 +281,6 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     [],
   )
 
-  function switchTab(value: ConstraintTab) {
-    replaceSearchParams({
-      constraintId: undefined,
-      constraintTab: value,
-      invariantId: undefined,
-      offset: 0,
-    })
-  }
-
   function applyGroupFilter(key: string | null | undefined) {
     if (!key) return
     if (search.groupBy === 'operation_id') replaceSearchParams({ offset: 0, operationId: key })
@@ -288,6 +291,15 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     if (search.groupBy === 'invariant_kind') replaceSearchParams({ invariantKind: key, offset: 0 })
     if (search.groupBy === 'invariant_type') replaceSearchParams({ invariantType: key, offset: 0 })
     if (search.groupBy === 'oracle_readiness') replaceSearchParams({ offset: 0, oracleReadiness: key })
+  }
+
+  function applyMatrixFilter(filter: Record<string, string | undefined>) {
+    replaceSearchParams({
+      ...filter,
+      constraintTab: filter.oracleReadiness ? 'invariants' : 'explorer',
+      constraintsView: 'table',
+      offset: 0,
+    })
   }
 
   const constraintFacets = explorerFacetsQuery.data
@@ -355,9 +367,12 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     <Stack spacing={2}>
       <PageHeader
         actions={
-          <Button onClick={() => setExportOpen(true)} startIcon={<DownloadIcon />} variant="outlined">
-            Export snapshot
-          </Button>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+            <ConstraintModeSegments constraintTab={tab} constraintsView={constraintsView} />
+            <Button onClick={() => setExportOpen(true)} startIcon={<DownloadIcon />} variant="outlined">
+              Export snapshot
+            </Button>
+          </Stack>
         }
         eyebrow="Constraint oracle workspace"
         subtitle="Explore static, dynamic, combined constraints, and invariant candidates without copying server cache into Redux."
@@ -381,13 +396,6 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
                 <Chip label={`Invariants ${dynamicSummaryQuery.data?.invariant_count ?? invariantExplorerQuery.data?.pagination.total ?? 0}`} size="small" />
               </Stack>
             </Stack>
-
-            <Tabs onChange={(_, value: ConstraintTab) => switchTab(value)} value={tab}>
-              <Tab label="Explorer" value="explorer" />
-              <Tab label="Static" value="static" />
-              <Tab label="Dynamic" value="dynamic" />
-              <Tab label="Invariants" value="invariants" />
-            </Tabs>
 
             <FilterToolbar>
               <TextField
@@ -512,7 +520,46 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
               </Stack>
             ) : null}
 
-            {tab === 'explorer' ? (
+            {constraintsView === 'workbench' ? (
+              <QueryState
+                empty={explorerRows.length === 0 && invariantRowsNew.length === 0}
+                error={explorerQuery.error ?? invariantExplorerQuery.error}
+                isError={explorerQuery.isError || invariantExplorerQuery.isError}
+                isLoading={explorerQuery.isLoading || invariantExplorerQuery.isLoading}
+                onRetry={() => {
+                  void explorerQuery.refetch()
+                  void invariantExplorerQuery.refetch()
+                }}
+              >
+                <ConstraintWorkbench
+                  constraints={explorerRows}
+                  invariants={invariantRowsNew}
+                  matrixBy={matrixBy}
+                  onApplyFilter={applyMatrixFilter}
+                  onMatrixByChange={(value) => replaceSearchParams({ matrixBy: value })}
+                  onSelectConstraint={(constraintId) => replaceSearchParams({ constraintId })}
+                  onSelectInvariant={(invariantId) => replaceSearchParams({ invariantId })}
+                />
+              </QueryState>
+            ) : constraintsView === 'matrix' ? (
+              <QueryState
+                empty={explorerRows.length === 0 && invariantRowsNew.length === 0}
+                error={explorerQuery.error ?? invariantExplorerQuery.error}
+                isError={explorerQuery.isError || invariantExplorerQuery.isError}
+                isLoading={explorerQuery.isLoading || invariantExplorerQuery.isLoading}
+                onRetry={() => {
+                  void explorerQuery.refetch()
+                  void invariantExplorerQuery.refetch()
+                }}
+              >
+                <CurrentPageConstraintMatrix
+                  constraints={explorerRows}
+                  invariants={invariantRowsNew}
+                  matrixBy={matrixBy}
+                  onApplyFilter={applyMatrixFilter}
+                />
+              </QueryState>
+            ) : tab === 'explorer' ? (
               <QueryState
                 empty={explorerRows.length === 0}
                 error={explorerQuery.error}
@@ -594,28 +641,12 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         title="Constraint detail"
       >
         {constraintDetailQuery.data ? (
-          <Stack spacing={2}>
-            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-              <Chip label={constraintDetailQuery.data.source} size="small" />
-              <Chip label={constraintDetailQuery.data.constraint_kind} size="small" variant="outlined" />
-              <Chip label={constraintDetailQuery.data.agreement_status} size="small" variant="outlined" />
-              <Chip label={constraintDetailQuery.data.assertion_available ? 'Assertion available' : 'No assertion'} size="small" />
-            </Stack>
-            <EvidenceLinkSet links={evidenceLinks} />
-            <Typography component="h3" variant="subtitle2">
-              Expression comparison
-            </Typography>
-            <JsonBlock maxHeight={240} value={{
-              combined_expression: constraintDetailQuery.data.combined_expression,
-              dynamic_expression: constraintDetailQuery.data.dynamic_expression,
-              expression: constraintDetailQuery.data.expression,
-              static_expression: constraintDetailQuery.data.static_expression,
-            }} />
-            <Typography component="h3" variant="subtitle2">
-              Assertion
-            </Typography>
-            <JsonBlock maxHeight={160} value={constraintDetailQuery.data.assertion ?? constraintDetailQuery.data.assertion_preview} />
-          </Stack>
+          <ConstraintDetailComposer
+            detail={constraintDetailQuery.data}
+            detailView={constraintDetailView}
+            evidenceLinks={evidenceLinks}
+            onDetailViewChange={(value) => replaceSearchParams({ constraintDetailView: value })}
+          />
         ) : null}
       </InvestigationDrawer>
 
@@ -631,16 +662,12 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         title="Invariant detail"
       >
         {invariantDetailQuery.data ? (
-          <Stack spacing={2}>
-            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-              <Chip label={invariantDetailQuery.data.invariant_kind} size="small" />
-              <Chip label={invariantDetailQuery.data.oracle_readiness} size="small" variant="outlined" />
-              <Chip label={invariantDetailQuery.data.correlation_confidence} size="small" variant="outlined" />
-              <Chip label={invariantDetailQuery.data.assertion_available ? 'Assertion available' : 'No assertion'} size="small" />
-            </Stack>
-            <EvidenceLinkSet links={evidenceLinks} />
-            <JsonBlock maxHeight={360} value={invariantDetailQuery.data} />
-          </Stack>
+          <InvariantDetailComposer
+            detail={invariantDetailQuery.data}
+            detailView={constraintDetailView}
+            evidenceLinks={evidenceLinks}
+            onDetailViewChange={(value) => replaceSearchParams({ constraintDetailView: value })}
+          />
         ) : null}
       </InvestigationDrawer>
 
@@ -651,7 +678,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         subtitle="Legacy static/dynamic entry"
         title="Constraint detail"
       >
-        <JsonBlock value={legacyDetail} />
+        {legacyDetail ? <LegacyConstraintDetailComposer detail={legacyDetail} /> : null}
       </InvestigationDrawer>
 
       <OperationDetailDrawer operationId={search.operationId} runName={runName} />

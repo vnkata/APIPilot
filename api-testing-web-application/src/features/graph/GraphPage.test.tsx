@@ -1,11 +1,20 @@
 import { screen, waitFor } from '@testing-library/react'
 import { axe } from 'jest-axe'
 import { http, HttpResponse } from 'msw'
+import { vi } from 'vitest'
 
 import { renderWithProviders } from '../../test/renderWithProviders'
 import { graphEdges } from '../../test/fixtures'
 import { server } from '../../test/msw/server'
 import { GraphPage } from './GraphPage'
+
+vi.mock('react-force-graph-3d', () => ({
+  default: ({ graphData }: { graphData: { links: unknown[]; nodes: unknown[] } }) => (
+    <div aria-label="Experimental 3D dependency graph" role="img">
+      {graphData.nodes.length} spatial nodes / {graphData.links.length} spatial links
+    </div>
+  ),
+}))
 
 describe('GraphPage', () => {
   it('renders the dependency graph with search and edge table controls', async () => {
@@ -22,7 +31,7 @@ describe('GraphPage', () => {
       <GraphPage runName="Run A" search={{ operationId: 'post-/items', q: '', limit: 25, offset: 0 }} />,
     )
 
-    expect(await screen.findByText(/selected node/i)).toBeInTheDocument()
+    expect(await screen.findByText(/navigator inspector/i)).toBeInTheDocument()
     expect(screen.getByText(/outgoing/i)).toBeInTheDocument()
   })
 
@@ -111,5 +120,60 @@ describe('GraphPage', () => {
     expect(await screen.findByRole('grid', { name: /graph sequences/i })).toBeInTheDocument()
     expect(await screen.findByRole('dialog', { name: /sequence detail/i })).toBeInTheDocument()
     expect(screen.getAllByText('dependency_chain').length).toBeGreaterThan(0)
+  })
+
+  it('renders journey mode as an accessible sequence-first graph alternative', async () => {
+    renderWithProviders(
+      <GraphPage
+        runName="Run A"
+        search={{
+          graphTab: 'sequences',
+          graphView: 'journey',
+          limit: 25,
+          offset: 0,
+        }}
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { name: /dependency journey/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/post-\/items/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/get-\/items/i).length).toBeGreaterThan(0)
+  })
+
+  it('renders spatial mode through the desktop lazy 3D boundary', async () => {
+    const originalMatchMedia = window.matchMedia
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: vi.fn().mockImplementation((query: string) => ({
+        addEventListener: vi.fn(),
+        addListener: vi.fn(),
+        dispatchEvent: vi.fn(),
+        matches: query.includes('min-width'),
+        media: query,
+        onchange: null,
+        removeEventListener: vi.fn(),
+        removeListener: vi.fn(),
+      })),
+    })
+
+    renderWithProviders(
+      <GraphPage
+        runName="Run A"
+        search={{
+          graphView: 'spatial',
+          limit: 25,
+          offset: 0,
+          selectedPath: 'seq-create-list',
+        }}
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { name: /spatial dependency graph/i })).toBeInTheDocument()
+    expect(await screen.findByRole('img', { name: /experimental 3d dependency graph/i })).toHaveTextContent('2 spatial nodes / 1 spatial links')
+
+    Object.defineProperty(window, 'matchMedia', {
+      configurable: true,
+      value: originalMatchMedia,
+    })
   })
 })

@@ -1,11 +1,11 @@
 import DownloadIcon from '@mui/icons-material/Download'
 import {
+  Alert,
   Box,
   Button,
   Card,
   CardContent,
   Chip,
-  Divider,
   Grid,
   MenuItem,
   Stack,
@@ -15,22 +15,20 @@ import {
   ToggleButton,
   ToggleButtonGroup,
   Typography,
+  useMediaQuery,
 } from '@mui/material'
 import type { GridColDef } from '@mui/x-data-grid'
-import { useMemo, useState } from 'react'
+import { lazy, Suspense, useMemo, useState } from 'react'
 import ReactFlow, {
   Background,
   Controls,
   MiniMap,
-  type Edge,
   type EdgeTypes,
-  type Node,
   type NodeTypes,
 } from 'reactflow'
 
 import { useAppDispatch, useAppSelector } from '../../app/hooks'
 import type {
-  GraphEdgeResponse,
   GraphExplorerEdgeResponse,
   GraphNodeResponse,
   GraphSequenceResponse,
@@ -40,20 +38,24 @@ import { encodeRoutePart } from '../../shared/lib/format'
 import { replaceSearchParams } from '../../shared/lib/navigation'
 import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
 import { EmptyState } from '../../shared/ui/EmptyState'
+import { EvidenceSummaryCard } from '../../shared/ui/EvidenceSummaryCard'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
 import { FacetFilterBar, type FacetFilter } from '../../shared/ui/FacetFilterBar'
 import { FilterToolbar } from '../../shared/ui/FilterToolbar'
 import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
-import { JsonBlock } from '../../shared/ui/JsonBlock'
 import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
+import { RawFieldsAccordion } from '../../shared/ui/RawFieldsAccordion'
 import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
+import { StatusSignalStrip } from '../../shared/ui/StatusSignalStrip'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
+import { ViewModeToggle } from '../../shared/ui/ViewModeToggle'
 import {
   selectWorkspacePreferences,
   setGraphLayoutMode,
 } from '../workspace-preferences/workspacePreferencesSlice'
+import { useOperationExplorerEntries } from '../operations/api'
 import {
   toGraphEdgeParams,
   toGraphFacetParams,
@@ -66,10 +68,22 @@ import {
   useGraphNodes,
   useGraphSequenceDetail,
   useGraphSequences,
-  useOperations,
 } from './api'
-import { getGraphEdgeId } from './edgeIds'
-import { layoutGraph, type LayoutMode } from './layoutGraph'
+import { EvidenceGraphEdge, OperationGraphNode } from './GraphNavigatorComponents'
+import {
+  buildGraphNavigatorModel,
+  buildSpatialGraphData,
+  findSelectedPathSequence,
+  shouldAnimateGraph,
+  summarizeGraphEdgeDetail,
+  type FocusMode,
+  type MotionMode,
+} from './graphViewModels'
+import type { LayoutMode } from './layoutGraph'
+
+const SpatialGraph3D = lazy(() =>
+  import('./SpatialGraph3D').then((module) => ({ default: module.SpatialGraph3D })),
+)
 
 export type GraphTab = 'edges' | 'nodes' | 'sequences' | 'visual'
 
@@ -77,15 +91,19 @@ export type GraphPageSearch = {
   edgeId?: string
   edgeStatus?: string
   evidenceSource?: string
+  focusMode?: FocusMode
   fromNode?: string
   fromOperationId?: string
   graphTab?: GraphTab
+  graphView?: 'explorer' | 'journey' | 'spatial'
   groupBy?: string
   limit: number
+  motionMode?: MotionMode
   nodeKind?: string
   offset: number
   operationId?: string
   q?: string
+  selectedPath?: string
   sequenceId?: string
   sequenceType?: string
   sortBy?: string
@@ -100,63 +118,192 @@ type GraphPageProps = {
   search: GraphPageSearch
 }
 
-const nodeTypes: NodeTypes = {}
-const edgeTypes: EdgeTypes = {}
+const nodeTypes: NodeTypes = { operationNode: OperationGraphNode }
+const edgeTypes: EdgeTypes = { evidenceEdge: EvidenceGraphEdge }
 
-function buildFlow(nodes: string[], edges: GraphEdgeResponse[], q: string | undefined, mode: LayoutMode) {
-  const normalizedQuery = q?.trim().toLowerCase()
-  const filteredNodes = normalizedQuery
-    ? nodes.filter((node) => node.toLowerCase().includes(normalizedQuery))
-    : nodes
-  const nodeSet = new Set(filteredNodes)
-  const filteredEdges = edges.filter((edge) => {
-    if (!normalizedQuery) return true
-    return (
-      edge.from_node.toLowerCase().includes(normalizedQuery) ||
-      edge.to_node.toLowerCase().includes(normalizedQuery)
-    )
-  })
+function DependencyJourneyView({
+  edgeRows,
+  sequenceRows,
+}: {
+  edgeRows: GraphExplorerEdgeResponse[]
+  sequenceRows: GraphSequenceResponse[]
+}) {
+  return (
+    <Card variant="outlined">
+      <CardContent>
+        <Stack spacing={2}>
+          <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'center' } }}>
+            <Stack spacing={0.5} sx={{ flex: 1 }}>
+              <Typography component="h2" variant="h2">
+                Dependency journey
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                Sequence-first alternative to the graph canvas for keyboard and screen-reader friendly dependency review.
+              </Typography>
+            </Stack>
+            <StatusSignalStrip
+              ariaLabel="Dependency journey signals"
+              signals={[
+                { label: 'Sequences', tone: sequenceRows.length > 0 ? 'success' : 'neutral', value: sequenceRows.length },
+                { label: 'Edges', value: edgeRows.length },
+              ]}
+            />
+          </Stack>
 
-  filteredEdges.forEach((edge) => {
-    nodeSet.add(edge.from_node)
-    nodeSet.add(edge.to_node)
-  })
+          {sequenceRows.length > 0 ? (
+            <Grid container spacing={2}>
+              {sequenceRows.map((sequence) => (
+                <Grid key={sequence.sequence_id} size={{ xs: 12, lg: 6 }}>
+                  <EvidenceSummaryCard
+                    actionLabel="Open sequence"
+                    badges={
+                      <>
+                        <Chip label={sequence.sequence_type} size="small" />
+                        <Chip label={`${sequence.length} steps`} size="small" variant="outlined" />
+                        {sequence.score !== null && sequence.score !== undefined ? (
+                          <Chip label={`score ${sequence.score}`} size="small" variant="outlined" />
+                        ) : null}
+                      </>
+                    }
+                    description={sequence.operations.join(' -> ')}
+                    onAction={() => replaceSearchParams({
+                      graphTab: 'sequences',
+                      selectedPath: sequence.sequence_id,
+                      sequenceId: sequence.sequence_id,
+                    })}
+                    title={sequence.target_operation_id}
+                    tone="success"
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          ) : (
+            <Grid container spacing={2}>
+              {edgeRows.map((edge) => (
+                <Grid key={edge.edge_id} size={{ xs: 12, lg: 6 }}>
+                  <EvidenceSummaryCard
+                    badges={
+                      <>
+                        <Chip label={edge.edge_status} size="small" />
+                        <Chip label={`${edge.evidence_count} evidence`} size="small" variant="outlined" />
+                      </>
+                    }
+                    description={`${edge.from_operation_id} -> ${edge.to_operation_id}`}
+                    title={edge.edge_id}
+                    tone={edge.edge_status === 'final' ? 'success' : 'warning'}
+                  />
+                </Grid>
+              ))}
+            </Grid>
+          )}
+        </Stack>
+      </CardContent>
+    </Card>
+  )
+}
 
-  const flowNodes: Node[] = Array.from(nodeSet).map((node) => ({
-    id: node,
-    data: { label: node },
-    position: { x: 0, y: 0 },
-    style: {
-      border: '1px solid #1f6feb',
-      borderRadius: 8,
-      fontSize: 12,
-      padding: 8,
-      width: 180,
-    },
-  }))
+function VisualGraphList({ edgeRows }: { edgeRows: GraphExplorerEdgeResponse[] }) {
+  return (
+    <Grid aria-label="Navigator edge cards" container spacing={2}>
+      {edgeRows.map((edge) => (
+        <Grid key={edge.edge_id} size={{ xs: 12, md: 6 }}>
+          <EvidenceSummaryCard
+            actionLabel="Open edge"
+            badges={
+              <>
+                <Chip label={edge.edge_status} size="small" />
+                <Chip label={`${edge.evidence_count} evidence`} size="small" variant="outlined" />
+              </>
+            }
+            description={`${edge.from_operation_id} -> ${edge.to_operation_id}`}
+            onAction={() => replaceSearchParams({ edgeId: edge.edge_id })}
+            title={edge.edge_id}
+            tone={edge.edge_status === 'final' ? 'success' : 'warning'}
+          />
+        </Grid>
+      ))}
+    </Grid>
+  )
+}
 
-  const flowEdges: Edge[] = filteredEdges.map((edge) => ({
-    id: getGraphEdgeId(edge),
-    source: edge.from_node,
-    target: edge.to_node,
-    animated: true,
-    label: edge.similar_parameters.length,
-  }))
+function GraphInspectorPanel({
+  encodedRunName,
+  pathLabel,
+  selectedIncoming,
+  selectedNodeId,
+  selectedOutgoing,
+}: {
+  encodedRunName: string
+  pathLabel?: string
+  selectedIncoming: number
+  selectedNodeId: string | null
+  selectedOutgoing: number
+}) {
+  const encodedOperationId = encodeURIComponent(selectedNodeId ?? '')
 
-  return {
-    edges: flowEdges,
-    nodes: layoutGraph(flowNodes, flowEdges, mode),
-  }
+  return (
+    <Card variant="outlined" sx={{ height: '100%' }}>
+      <CardContent>
+        <Stack spacing={1.5}>
+          <Typography component="h2" variant="h3">
+            Navigator inspector
+          </Typography>
+          {pathLabel ? (
+            <Alert severity="info" variant="outlined">
+              Selected path: {pathLabel}
+            </Alert>
+          ) : null}
+          {selectedNodeId ? (
+            <>
+              <Typography sx={{ wordBreak: 'break-word' }}>{selectedNodeId}</Typography>
+              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                <Chip label={`${selectedIncoming} incoming`} size="small" />
+                <Chip label={`${selectedOutgoing} outgoing`} size="small" />
+              </Stack>
+              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                <Button href={`/runs/${encodedRunName}/operations?operationId=${encodedOperationId}`} size="small">
+                  Operations
+                </Button>
+                <Button href={`/runs/${encodedRunName}/constraints?operationId=${encodedOperationId}`} size="small">
+                  Constraints
+                </Button>
+                <Button href={`/runs/${encodedRunName}/reports?operationId=${encodedOperationId}`} size="small">
+                  Reports
+                </Button>
+                <Button href={`/runs/${encodedRunName}/test-cases?operationId=${encodedOperationId}`} size="small">
+                  Test cases
+                </Button>
+              </Stack>
+              <Button onClick={() => replaceSearchParams({ operationId: selectedNodeId })} size="small" variant="outlined">
+                Open operation detail
+              </Button>
+            </>
+          ) : (
+            <Typography color="text.secondary" variant="body2">
+              Select a node to inspect its dependency context and related evidence links.
+            </Typography>
+          )}
+        </Stack>
+      </CardContent>
+    </Card>
+  )
 }
 
 export function GraphPage({ runName, search }: GraphPageProps) {
   const [exportOpen, setExportOpen] = useState(false)
+  const prefersReducedMotion = useMediaQuery('(prefers-reduced-motion: reduce)')
+  const isDesktop = useMediaQuery('(min-width:900px)')
   const preferences = useAppSelector(selectWorkspacePreferences)
   const dispatch = useAppDispatch()
   const gridState = useUrlBackedGridState(search)
+  const encodedRunName = encodeRoutePart(runName)
   const layoutMode = preferences.graphLayoutMode
   const selectedNodeId = search.operationId ?? null
   const tab = search.graphTab ?? 'edges'
+  const graphView = search.graphView ?? 'explorer'
+  const focusMode = search.focusMode ?? 'all'
+  const motionMode = search.motionMode ?? 'auto'
+  const motionEnabled = shouldAnimateGraph(motionMode, prefersReducedMotion)
   const graphQuery = useDependencyGraph(runName)
   const edgeParams = toGraphEdgeParams(search)
   const facetParams = toGraphFacetParams(search)
@@ -165,7 +312,11 @@ export function GraphPage({ runName, search }: GraphPageProps) {
   const edgesQuery = useGraphEdges(runName, edgeParams)
   const facetsQuery = useGraphFacets(runName, facetParams)
   const nodesQuery = useGraphNodes(runName, nodeParams, { query: { enabled: tab === 'nodes' } })
-  const sequencesQuery = useGraphSequences(runName, sequenceParams, { query: { enabled: tab === 'sequences' } })
+  const sequencesQuery = useGraphSequences(runName, sequenceParams, {
+    query: {
+      enabled: graphView === 'journey' || graphView === 'spatial' || tab === 'sequences' || Boolean(search.selectedPath),
+    },
+  })
   const edgeDetailOpen = Boolean(search.edgeId)
   const edgeDetailQuery = useGraphEdgeDetail(
     runName,
@@ -178,18 +329,53 @@ export function GraphPage({ runName, search }: GraphPageProps) {
     search.sequenceId ?? '',
     { query: { enabled: sequenceDetailOpen } },
   )
-  const operationsQuery = useOperations(runName)
-
-  const flow = useMemo(
-    () => buildFlow(graphQuery.data?.nodes ?? [], graphQuery.data?.edges ?? [], search.q, layoutMode),
-    [graphQuery.data?.edges, graphQuery.data?.nodes, layoutMode, search.q],
+  const operationEntriesQuery = useOperationExplorerEntries(
+    runName,
+    { limit: Math.min(search.limit, 50), offset: 0, q: search.q },
+    { query: { enabled: graphView === 'spatial' || tab === 'visual' || focusMode !== 'all' } },
   )
-  const selectedOutgoing = graphQuery.data?.edges.filter((edge) => edge.from_node === selectedNodeId) ?? []
-  const selectedIncoming = graphQuery.data?.edges.filter((edge) => edge.to_node === selectedNodeId) ?? []
-
-  const edgeRows = edgesQuery.data?.items ?? []
+  const operationRows = useMemo(
+    () => operationEntriesQuery.data?.items ?? [],
+    [operationEntriesQuery.data?.items],
+  )
+  const edgeRows = useMemo(
+    () => edgesQuery.data?.items ?? [],
+    [edgesQuery.data?.items],
+  )
   const nodeRows = nodesQuery.data?.items ?? []
   const sequenceRows = sequencesQuery.data?.items ?? []
+  const selectedPathSequence = findSelectedPathSequence(sequenceRows, search.selectedPath, search.sequenceId)
+
+  const flow = useMemo(
+    () =>
+      buildGraphNavigatorModel({
+        edgeRows,
+        edges: graphQuery.data?.edges ?? [],
+        focusMode,
+        layoutMode,
+        motionEnabled,
+        nodes: graphQuery.data?.nodes ?? [],
+        operationRows,
+        q: search.q,
+        selectedNodeId,
+        selectedPathSequence,
+      }),
+    [
+      edgeRows,
+      focusMode,
+      graphQuery.data?.edges,
+      graphQuery.data?.nodes,
+      layoutMode,
+      motionEnabled,
+      operationRows,
+      search.q,
+      selectedNodeId,
+      selectedPathSequence,
+    ],
+  )
+  const spatialGraph = useMemo(() => buildSpatialGraphData(flow), [flow])
+  const selectedOutgoing = flow.edges.filter((edge) => edge.source === selectedNodeId)
+  const selectedIncoming = flow.edges.filter((edge) => edge.target === selectedNodeId)
   const activeRows =
     tab === 'nodes' ? nodeRows : tab === 'sequences' ? sequenceRows : edgeRows
 
@@ -304,9 +490,21 @@ export function GraphPage({ runName, search }: GraphPageProps) {
     <Stack spacing={2}>
       <PageHeader
         actions={
-          <Button onClick={() => setExportOpen(true)} startIcon={<DownloadIcon />} variant="outlined">
-            Export snapshot
-          </Button>
+          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
+            <ViewModeToggle
+              ariaLabel="Graph view mode"
+              onChange={(value) => replaceSearchParams({ graphView: value })}
+              options={[
+                { description: 'Navigator graph and explorer tables.', label: 'Explorer', value: 'explorer' },
+                { description: 'Sequence-first dependency journey.', label: 'Journey', value: 'journey' },
+                { description: 'Experimental desktop 3D dependency graph.', label: 'Spatial', value: 'spatial' },
+              ]}
+              value={graphView}
+            />
+            <Button onClick={() => setExportOpen(true)} startIcon={<DownloadIcon />} variant="outlined">
+              Export snapshot
+            </Button>
+          </Stack>
         }
         eyebrow="Dependency graph"
         subtitle="Visualize operation dependencies, edge evidence, nodes, and generated operation sequences."
@@ -336,6 +534,33 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                     value={search.q ?? ''}
                   />
                   <ToggleButtonGroup
+                    aria-label="Graph focus mode"
+                    exclusive
+                    onChange={(_, value: FocusMode | null) => {
+                      if (value) replaceSearchParams({ focusMode: value, offset: 0 })
+                    }}
+                    size="small"
+                    value={focusMode}
+                  >
+                    <ToggleButton value="all">All</ToggleButton>
+                    <ToggleButton value="neighborhood">Neighborhood</ToggleButton>
+                    <ToggleButton value="path">Path</ToggleButton>
+                  </ToggleButtonGroup>
+                  <ToggleButtonGroup
+                    aria-label="Graph motion mode"
+                    exclusive
+                    onChange={(_, value: MotionMode | null) => {
+                      if (value) replaceSearchParams({ motionMode: value })
+                    }}
+                    size="small"
+                    value={motionMode}
+                  >
+                    <ToggleButton value="auto">Motion auto</ToggleButton>
+                    <ToggleButton value="reduced">Reduced</ToggleButton>
+                    <ToggleButton value="off">Off</ToggleButton>
+                  </ToggleButtonGroup>
+                  <ToggleButtonGroup
+                    aria-label="Graph layout mode"
                     exclusive
                     onChange={(_, value: LayoutMode | null) => {
                       if (value) dispatch(setGraphLayoutMode(value))
@@ -348,77 +573,79 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                   </ToggleButtonGroup>
                 </Stack>
 
-                <Box sx={{ border: '1px solid', borderColor: 'divider', height: 460 }}>
-                  {flow.nodes.length === 0 ? (
-                    <EmptyState title="No matching graph nodes" />
+                {graphView === 'spatial' ? (
+                  isDesktop ? (
+                    <Suspense fallback={<EmptyState title="Loading spatial graph" />}>
+                      <SpatialGraph3D
+                        data={spatialGraph}
+                        motionEnabled={motionEnabled}
+                        onNodeSelect={(operationId) => replaceSearchParams({ operationId })}
+                      />
+                    </Suspense>
                   ) : (
-                    <ReactFlow
-                      edgeTypes={edgeTypes}
-                      edges={flow.edges}
-                      fitView
-                      nodeTypes={nodeTypes}
-                      nodes={flow.nodes}
-                      onNodeClick={(_, node) => {
-                        replaceSearchParams({ operationId: node.id })
-                      }}
-                    >
-                      <MiniMap pannable zoomable />
-                      <Controls />
-                      <Background />
-                    </ReactFlow>
-                  )}
-                </Box>
+                    <Alert severity="info" variant="outlined">
+                      Spatial 3D is optimized for desktop. Mobile keeps the Navigator and Journey views for focused triage.
+                    </Alert>
+                  )
+                ) : null}
 
-                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, mt: 2 }}>
-                  {(graphQuery.data?.nodes ?? []).map((node) => (
-                    <Button
-                      key={node}
-                      onClick={() => {
-                        replaceSearchParams({ operationId: node })
-                      }}
-                      size="small"
-                      variant={selectedNodeId === node ? 'contained' : 'outlined'}
-                    >
-                      {node}
-                    </Button>
-                  ))}
-                </Stack>
+                {graphView !== 'spatial' || !isDesktop ? (
+                  <>
+                    <Box sx={{ border: '1px solid', borderColor: 'divider', height: 500 }}>
+                      {flow.nodes.length === 0 ? (
+                        <EmptyState title="No matching graph nodes" />
+                      ) : (
+                        <ReactFlow
+                          edgeTypes={edgeTypes}
+                          edges={flow.edges}
+                          fitView
+                          nodeTypes={nodeTypes}
+                          nodes={flow.nodes}
+                          onNodeClick={(_, node) => {
+                            replaceSearchParams({ operationId: node.id })
+                          }}
+                        >
+                          <MiniMap pannable zoomable />
+                          <Controls />
+                          <Background />
+                        </ReactFlow>
+                      )}
+                    </Box>
+
+                    <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, mt: 2 }}>
+                      {flow.nodes.slice(0, 12).map((node) => (
+                        <Button
+                          key={node.id}
+                          onClick={() => {
+                            replaceSearchParams({ operationId: node.id })
+                          }}
+                          size="small"
+                          variant={selectedNodeId === node.id ? 'contained' : 'outlined'}
+                        >
+                          {node.id}
+                        </Button>
+                      ))}
+                    </Stack>
+                  </>
+                ) : null}
               </CardContent>
             </Card>
           </Grid>
 
           <Grid size={{ xs: 12, lg: 4 }}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Stack spacing={1.5}>
-                  <Typography component="h2" variant="h3">
-                    Selected node
-                  </Typography>
-                  {selectedNodeId ? (
-                    <>
-                      <Typography sx={{ wordBreak: 'break-word' }}>{selectedNodeId}</Typography>
-                      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-                        <Chip label={`${selectedIncoming.length} incoming`} size="small" />
-                        <Chip label={`${selectedOutgoing.length} outgoing`} size="small" />
-                      </Stack>
-                      <Button onClick={() => replaceSearchParams({ operationId: selectedNodeId })} size="small">
-                        Open operation detail
-                      </Button>
-                    </>
-                  ) : (
-                    <Typography color="text.secondary" variant="body2">
-                      Select a graph node to inspect operation detail.
-                    </Typography>
-                  )}
-                  <Divider />
-                  <Typography color="text.secondary" variant="body2">
-                    Operations loaded: {operationsQuery.data?.operations.length ?? 0}
-                  </Typography>
-                </Stack>
-              </CardContent>
-            </Card>
+            <GraphInspectorPanel
+              encodedRunName={encodedRunName}
+              pathLabel={flow.pathLabel}
+              selectedIncoming={selectedIncoming.length}
+              selectedNodeId={selectedNodeId}
+              selectedOutgoing={selectedOutgoing.length}
+            />
           </Grid>
         </Grid>
+
+        {graphView === 'journey' ? (
+          <DependencyJourneyView edgeRows={edgeRows} sequenceRows={sequenceRows} />
+        ) : null}
 
         <Card variant="outlined">
           <CardContent>
@@ -433,7 +660,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                   }}
                   value={tab}
                 >
-                  <Tab label="Visual" value="visual" />
+                  <Tab label="Navigator" value="visual" />
                   <Tab label="Edges" value="edges" />
                   <Tab label="Nodes" value="nodes" />
                   <Tab label="Sequences" value="sequences" />
@@ -485,6 +712,8 @@ export function GraphPage({ runName, search }: GraphPageProps) {
               <ActiveFilterChips
                 filters={[
                   { key: 'q', label: 'Search', value: search.q },
+                  { key: 'focusMode', label: 'Focus', value: search.focusMode },
+                  { key: 'motionMode', label: 'Motion', value: search.motionMode },
                   { key: 'fromNode', label: 'From node', value: search.fromNode },
                   { key: 'toNode', label: 'To node', value: search.toNode },
                   { key: 'fromOperationId', label: 'From operation', value: search.fromOperationId },
@@ -496,11 +725,22 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                   { key: 'targetOperationId', label: 'Target operation', value: search.targetOperationId },
                   { key: 'groupBy', label: 'Group', value: search.groupBy },
                   { key: 'edgeId', label: 'Edge', value: search.edgeId },
+                  { key: 'selectedPath', label: 'Selected path', value: search.selectedPath },
                   { key: 'sequenceId', label: 'Sequence', value: search.sequenceId },
                 ]}
               />
 
-              {tab === 'nodes' ? (
+              {tab === 'visual' ? (
+                <QueryState
+                  empty={edgeRows.length === 0}
+                  error={edgesQuery.error}
+                  isError={edgesQuery.isError}
+                  isLoading={edgesQuery.isLoading}
+                  onRetry={() => void edgesQuery.refetch()}
+                >
+                  <VisualGraphList edgeRows={edgeRows} />
+                </QueryState>
+              ) : tab === 'nodes' ? (
                 <QueryState
                   empty={nodeRows.length === 0}
                   error={nodesQuery.error}
@@ -535,7 +775,10 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                     getRowId={(row) => row.sequence_id}
                     loading={sequencesQuery.isFetching}
                     onPaginationModelChange={gridState.handlePaginationModelChange}
-                    onRowClick={(params) => replaceSearchParams({ sequenceId: params.row.sequence_id })}
+                    onRowClick={(params) => replaceSearchParams({
+                      selectedPath: params.row.sequence_id,
+                      sequenceId: params.row.sequence_id,
+                    })}
                     onSortModelChange={gridState.handleSortModelChange}
                     paginationModel={gridState.paginationModel}
                     rowCount={sequencesQuery.data?.pagination.total ?? 0}
@@ -583,24 +826,52 @@ export function GraphPage({ runName, search }: GraphPageProps) {
         title="Edge detail"
       >
         {edgeDetailQuery.data ? (
-          <Stack spacing={2}>
-            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-              <Chip label={edgeDetailQuery.data.edge_status} size="small" />
-              <Chip label={`${edgeDetailQuery.data.evidence_count} evidence items`} size="small" variant="outlined" />
-              {edgeDetailQuery.data.evidence_sources.map((source) => (
-                <Chip key={source} label={source} size="small" variant="outlined" />
-              ))}
-            </Stack>
-            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-              <Button onClick={() => replaceSearchParams({ operationId: edgeDetailQuery.data?.from_operation_id })} size="small">
-                Open source operation
-              </Button>
-              <Button onClick={() => replaceSearchParams({ operationId: edgeDetailQuery.data?.to_operation_id })} size="small">
-                Open target operation
-              </Button>
-            </Stack>
-            <JsonBlock maxHeight={360} value={edgeDetailQuery.data.evidence} />
-          </Stack>
+          (() => {
+            const summary = summarizeGraphEdgeDetail(edgeDetailQuery.data)
+            return (
+              <Stack spacing={2}>
+                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  <Chip label={edgeDetailQuery.data.edge_status} size="small" />
+                  <Chip label={`${edgeDetailQuery.data.evidence_count} evidence items`} size="small" variant="outlined" />
+                  {edgeDetailQuery.data.evidence_sources.map((source) => (
+                    <Chip key={source} label={source} size="small" variant="outlined" />
+                  ))}
+                </Stack>
+                <Typography component="h3" variant="h3">
+                  {summary.routeLabel}
+                </Typography>
+                <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                  <Button onClick={() => replaceSearchParams({ operationId: edgeDetailQuery.data?.from_operation_id })} size="small">
+                    Open source operation
+                  </Button>
+                  <Button onClick={() => replaceSearchParams({ operationId: edgeDetailQuery.data?.to_operation_id })} size="small">
+                    Open target operation
+                  </Button>
+                </Stack>
+                <Stack spacing={1}>
+                  <Typography component="h4" variant="subtitle2">
+                    Evidence summary
+                  </Typography>
+                  {summary.evidenceItems.map((item) => (
+                    <Card key={`${item.source}-${item.label}`} variant="outlined">
+                      <CardContent>
+                        <Stack spacing={0.75}>
+                          <Typography sx={{ overflowWrap: 'anywhere' }} variant="body2">
+                            {item.label}
+                          </Typography>
+                          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                            <Chip label={item.relation} size="small" variant="outlined" />
+                            <Chip label={item.source} size="small" variant="outlined" />
+                          </Stack>
+                        </Stack>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </Stack>
+                <RawFieldsAccordion value={edgeDetailQuery.data.evidence} />
+              </Stack>
+            )
+          })()
         ) : null}
       </InvestigationDrawer>
 
@@ -624,7 +895,41 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                 <Chip label={`score ${sequenceDetailQuery.data.score}`} size="small" variant="outlined" />
               ) : null}
             </Stack>
-            <JsonBlock maxHeight={360} value={sequenceDetailQuery.data} />
+            <Typography component="h3" variant="h3">
+              {sequenceDetailQuery.data.operations.join(' -> ')}
+            </Typography>
+            <Stack spacing={1}>
+              <Typography component="h4" variant="subtitle2">
+                Operation path
+              </Typography>
+              {sequenceDetailQuery.data.operations.map((operation, index) => (
+                <Stack key={`${operation}-${index}`} direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+                  <Chip label={index + 1} size="small" />
+                  <Button onClick={() => replaceSearchParams({ operationId: operation })} size="small">
+                    {operation}
+                  </Button>
+                </Stack>
+              ))}
+            </Stack>
+            {sequenceDetailQuery.data.parameter_sources.length > 0 ? (
+              <Stack spacing={1}>
+                <Typography component="h4" variant="subtitle2">
+                  Parameter sources
+                </Typography>
+                {sequenceDetailQuery.data.parameter_sources.map((source) => (
+                    <Card key={`${source.source_operation_id ?? 'source'}-${source.parameter_name}`} variant="outlined">
+                      <CardContent>
+                        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                          <Chip label={source.parameter_name} size="small" />
+                        <Chip label={source.source_operation_id ?? 'unknown source'} size="small" variant="outlined" />
+                        <Chip label={source.source_property_path ?? 'unknown path'} size="small" variant="outlined" />
+                      </Stack>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Stack>
+            ) : null}
+            <RawFieldsAccordion value={sequenceDetailQuery.data} />
           </Stack>
         ) : null}
       </InvestigationDrawer>

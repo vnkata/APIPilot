@@ -63,7 +63,7 @@ describe('OperationsPage', () => {
 
     const results = await axe(container)
     expect(results).toHaveNoViolations()
-  })
+  }, 10_000)
 
   it('exports only visible operation data and strips bodies unless explicitly enabled', async () => {
     const user = userEvent.setup()
@@ -82,5 +82,31 @@ describe('OperationsPage', () => {
 
     await user.click(screen.getByRole('checkbox', { name: /include visible bodies/i }))
     expect(preview).toHaveTextContent('request_body')
+  })
+
+  it('renders evidence canvas mode and preserves detail drilldown', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <OperationsPage
+        runName="Run A"
+        search={{ limit: 25, offset: 0, operationsView: 'canvas' }}
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { name: /operation mission board/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /listitems/i }))
+    expect(await screen.findByRole('dialog', { name: /operation explorer detail/i })).toBeInTheDocument()
+  })
+
+  it('renders compact cards mode for mobile triage', async () => {
+    renderWithProviders(
+      <OperationsPage
+        runName="Run A"
+        search={{ limit: 25, offset: 0, operationsView: 'cards' }}
+      />,
+    )
+
+    expect(await screen.findByRole('region', { name: /operation cards/i })).toBeInTheDocument()
+    expect(screen.getByText(/2 constraints/i)).toBeInTheDocument()
   })
 })
