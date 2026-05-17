@@ -165,6 +165,19 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
     return parser.parse_args()
 
 
+def _format_duration(seconds: float) -> str:
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    parts = []
+
+    if hours >= 1:
+        parts.append(f"{int(hours)} hour{'s' if int(hours) != 1 else ''}")
+    if minutes >= 1:
+        parts.append(f"{int(minutes)} minute{'s' if int(minutes) != 1 else ''}")
+    parts.append(f"{seconds:.3f} second{'s' if seconds != 1 else ''}")
+    return " ".join(parts)
+
+
 def main():
     load_dotenv()
     args = parse_args()
@@ -209,6 +222,11 @@ def main():
         suppress_console_logging()
 
     start_time = time.perf_counter()
+    start_timestamp = time.time()
+    tester.logger.debug(
+        "Run started at %s",
+        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_timestamp)),
+    )
     total_testcase = 0
     successFull = {}
     try:
@@ -228,6 +246,12 @@ def main():
         raise e
     finally:
         elapsed = time.perf_counter() - start_time
+        finish_timestamp = time.time()
+        tester.logger.debug(
+            "Run finished at %s",
+            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(finish_timestamp)),
+        )
+        tester.logger.debug("Run duration: %s", _format_duration(elapsed))
         if not debug_mode and tui_app is not None:
             restore_console_logging()
             tui_app.stop()
