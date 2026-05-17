@@ -40,7 +40,7 @@ FIELD_DESCRIPTIONS: Dict[str, tuple[str, str]] = {
     ),
     "llm.provider": (
         "LLM provider",
-        "Which LLM backend to use: azure_openai | openai | gemini | ollama | litellm",
+        "Which LLM backend to use: azure_openai | openai | gemini | ollama",
     ),
     "llm.model": (
         "LLM model / deployment",
@@ -85,18 +85,6 @@ FIELD_DESCRIPTIONS: Dict[str, tuple[str, str]] = {
     "llm.ollama.base_url": (
         "Ollama base URL",
         "Base URL of your Ollama server. Default: http://localhost:11434",
-    ),
-    "llm.litellm.api_key": (
-        "LiteLLM API key",
-        "API key used by LiteLLM for providers such as Anthropic, OpenAI-compatible routers, or proxies.",
-    ),
-    "llm.litellm.base_url": (
-        "LiteLLM base URL",
-        "Optional API base URL for OpenAI-compatible routers or proxies.",
-    ),
-    "llm.litellm.max_tokens": (
-        "LiteLLM max tokens",
-        "Optional maximum output tokens. Leave blank to use provider defaults.",
     ),
     "embedding.provider": (
         "Embedding provider",
@@ -360,30 +348,6 @@ def run_wizard(path: str, quick_mode: bool = False) -> Dict[str, Any]:
                 default=ollama["base_url"],
                 console=console,
             )
-        elif provider == "litellm":
-            litellm = config["llm"]["litellm"]
-            _, ak_help = FIELD_DESCRIPTIONS["llm.litellm.api_key"]
-            litellm["api_key"] = _prompt_field(
-                "LiteLLM API key",
-                ak_help,
-                default=litellm["api_key"],
-                console=console,
-            )
-            _, bu_help = FIELD_DESCRIPTIONS["llm.litellm.base_url"]
-            litellm["base_url"] = _prompt_field(
-                "LiteLLM base URL",
-                bu_help,
-                default=litellm["base_url"],
-                console=console,
-            )
-            _, mt_help = FIELD_DESCRIPTIONS["llm.litellm.max_tokens"]
-            max_tokens = _prompt_field(
-                "LiteLLM max tokens",
-                mt_help,
-                default=str(litellm.get("max_tokens") or ""),
-                console=console,
-            )
-            litellm["max_tokens"] = int(max_tokens) if str(max_tokens).strip() else ""
         console.print()
 
         # ── EMBEDDING ───────────────────────────────────────────
@@ -622,13 +586,6 @@ def _render_toml(config: Dict[str, Any]) -> str:
     lines.append(f"base_url = {_toml_value(ollama.get('base_url', ''))}")
     lines.append("")
 
-    litellm = llm.get("litellm", {})
-    lines.append("[llm.litellm]")
-    lines.append(f"api_key = {_toml_value(litellm.get('api_key', ''))}")
-    lines.append(f"base_url = {_toml_value(litellm.get('base_url', ''))}")
-    lines.append(f"max_tokens = {_toml_value(litellm.get('max_tokens', ''))}")
-    lines.append("")
-
     embedding = config["embedding"]
     lines.append("[embedding]")
     lines.append(f"provider = {_toml_value(embedding.get('provider', ''))}")
@@ -696,13 +653,6 @@ def _render_toml_with_comments(config: Dict[str, Any]) -> str:
     ollama = llm.get("ollama", {})
     lines.append("[llm.ollama]")
     lines.append(f"base_url = {_toml_value(ollama.get('base_url', ''))}{_comment('llm.ollama.base_url')}")
-    lines.append("")
-
-    litellm = llm.get("litellm", {})
-    lines.append("[llm.litellm]")
-    lines.append(f"api_key = {_toml_value(litellm.get('api_key', ''))}{_comment('llm.litellm.api_key')}")
-    lines.append(f"base_url = {_toml_value(litellm.get('base_url', ''))}{_comment('llm.litellm.base_url')}")
-    lines.append(f"max_tokens = {_toml_value(litellm.get('max_tokens', ''))}{_comment('llm.litellm.max_tokens')}")
     lines.append("")
 
     embedding = config["embedding"]

@@ -5,7 +5,6 @@ from .base_model import (
 
 from api_testing.models.llms import (
     GeminiModel,
-    LiteLLMModel,
     OllamaModel
 )
 

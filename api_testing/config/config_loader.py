@@ -18,13 +18,12 @@ from api_testing.models.embedding_models.ollama_embedding_model import (
 )
 from api_testing.models.llms.azure_open_model import AzureOpenAIModel
 from api_testing.models.llms.gemini_model import GeminiModel
-from api_testing.models.llms.litellm_model import LiteLLMModel
 from api_testing.models.llms.ollama_model import OllamaModel
 from api_testing.models.llms.openai_model import OpenAIModel
 
 ENV_PATTERN = re.compile(r"\$\{([A-Z0-9_]+)\}")
 
-LLM_PROVIDERS = {"azure_openai", "openai", "gemini", "ollama", "litellm"}
+LLM_PROVIDERS = {"azure_openai", "openai", "gemini", "ollama"}
 EMBEDDING_PROVIDERS = {"huggingface", "ollama"}
 
 DEFAULT_CONFIG: Dict[str, Any] = {
@@ -53,11 +52,6 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         },
         "ollama": {
             "base_url": "http://localhost:11434",
-        },
-        "litellm": {
-            "api_key": "",
-            "base_url": "",
-            "max_tokens": "",
         },
         "prompts": {},
     },
@@ -260,16 +254,6 @@ def build_llm_from_config(llm: Dict[str, Any]):
             base_url=ollama.get("base_url"),
             temperature=temperature,
         )
-    if provider == "litellm":
-        litellm = llm.get("litellm", {})
-        return LiteLLMModel(
-            model=model,
-            api_key=litellm.get("api_key") or None,
-            base_url=litellm.get("base_url") or None,
-            max_tokens=litellm.get("max_tokens") or None,
-            temperature=temperature,
-        )
-
     raise ValueError(f"Unsupported llm.provider: {provider}")
 
 

@@ -332,9 +332,14 @@ def test_prompt_llm_override_can_swap_provider(tmp_path):
     api_key = "literal-key"
     base_url = "https://api.openai.com/v1"
 
+    [llm.gemini]
+    api_key = "gemini-key"
+    project = ""
+    location = ""
+
     [llm.prompts.SemanticOracleJudge]
-    provider = "litellm"
-    model = "claude-3-5-sonnet-latest"
+    provider = "gemini"
+    model = "gemini-2.5-flash"
     temperature = 0.2
 
     [embedding]
@@ -358,6 +363,6 @@ def test_prompt_llm_override_can_swap_provider(tmp_path):
     factory = PromptFactory.from_config(config)
 
     judge_llm = factory.get_llm(SemanticOracleJudge)
-    assert judge_llm.model_name == "claude-3-5-sonnet-latest"
+    assert judge_llm.model_name == "gemini-2.5-flash"
     assert judge_llm.temperature == 0.2
     assert factory.get_llm(SmartValueGenerate) is factory.common_llm
