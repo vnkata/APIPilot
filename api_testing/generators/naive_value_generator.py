@@ -97,6 +97,7 @@ class NaiveValueGenerator:
         cache_dir: str = ".",
         context_pool=None,
         mutation_ratio=0.0,
+        prompt_factory=None,
     ):
         self.operation = operation
         self.parameters = parameters
@@ -107,7 +108,12 @@ class NaiveValueGenerator:
         self.context_pool = context_pool
         self.mutation_ratio = mutation_ratio
         self.combination_cache = None
-        self.semantic_oracle_judge = SemanticOracleJudge(llm=model)
+        self.prompt_factory = prompt_factory
+        self.semantic_oracle_judge = (
+            prompt_factory.create(SemanticOracleJudge)
+            if prompt_factory
+            else SemanticOracleJudge(llm=model)
+        )
 
     def load_cache(self):
         if self.combination_cache is not None:

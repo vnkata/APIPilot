@@ -42,7 +42,7 @@ class ConfigurationParser:
     It supports both heuristic-based and GPT-assisted parsing strategies.
     """
 
-    def __init__(self, spec_parser=None, model=None, cache_dir=None):
+    def __init__(self, spec_parser=None, model=None, cache_dir=None, prompt_factory=None):
         """
         Initialize the ConfigurationParser.
 
@@ -53,11 +53,16 @@ class ConfigurationParser:
         """
         self.spec_parser = spec_parser
         self.model = model
+        self.prompt_factory = prompt_factory
         self.configurations: List[OperationConfiguration] = []
         self.cache_file = os.path.join(cache_dir, CACHE_FILE_NAME) if cache_dir else None
         if cache_dir and not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
-        self.parameter_random_mapper = ParameterRandomMapper(llm=model)
+        self.parameter_random_mapper = (
+            prompt_factory.create(ParameterRandomMapper)
+            if prompt_factory
+            else ParameterRandomMapper(llm=model)
+        )
         self.logger = getLogger(__name__)
         self.load_or_initialize()
 

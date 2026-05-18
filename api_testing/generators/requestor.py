@@ -3,6 +3,7 @@ from datetime import datetime
 from enum import Enum
 import json
 import logging
+import os
 from pathlib import Path
 import re
 import threading
@@ -468,4 +469,3 @@ class HAREntryBuilder:
         with open(self.cache_file, "w", encoding="utf-8") as file:
             # Compact JSON reduces write volume and serialization overhead on large runs.
             json.dump(data, file, ensure_ascii=False, default=to_placeholder, separators=(",", ":"))
-

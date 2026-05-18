@@ -1,4 +1,5 @@
 from types import SimpleNamespace
+import asyncio
 
 from api_testing.generators.executor import Executor, Strategy
 from api_testing.models.http_data import RequestData
@@ -144,3 +145,23 @@ def test_mutator_calls_header_generator_when_header_ratio_one(monkeypatch):
     assert len(result) == 1
     assert called["value"] is True
     assert result[0].headers.get("X-Fuzzed") == "1"
+
+
+def test_exec_async_closes_sender_when_no_data():
+    executor = _build_executor()
+    executor.use_async = True
+    closed = {"value": False}
+
+    async def fake_generate_values_async():
+        return []
+
+    async def fake_close():
+        closed["value"] = True
+
+    executor.generate_values_async = fake_generate_values_async
+    executor.async_sender = SimpleNamespace(entries=[], close=fake_close)
+
+    result = asyncio.run(executor.exec_async())
+
+    assert result == []
+    assert closed["value"] is True

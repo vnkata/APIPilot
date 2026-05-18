@@ -131,6 +131,21 @@ Alternatively, you can use the provided demo script which also loads `configurat
 python demo.py
 ```
 
+#### Exporting Contextual Memory JSON
+
+Contextual memory is stored in `contextual_memory.db`. To regenerate the legacy
+`contextual_memory.json` file from a cache directory, run:
+
+```bash
+python scripts/export_contextual_memory_json.py .cache/Bills-Static-Constraint-2
+```
+
+You can also pass the database path directly:
+
+```bash
+python scripts/export_contextual_memory_json.py .cache/Bills-Static-Constraint-2/contextual_memory.db
+```
+
 ---
 
 ## Alternative Execution Methods
@@ -213,4 +228,3 @@ executor = Executor(
 
 results = executor.exec()
 ```
-

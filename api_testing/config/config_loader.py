@@ -53,6 +53,7 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "ollama": {
             "base_url": "http://localhost:11434",
         },
+        "prompts": {},
     },
     "embedding": {
         "provider": "huggingface",
@@ -131,35 +132,18 @@ def _require(value: Any, key_path: str) -> None:
 
 
 def validate_config(config: Dict[str, Any]) -> None:
-
     llm = config.get("llm", {})
-    provider = llm.get("provider")
-    _require(provider, "llm.provider")
-    if provider not in LLM_PROVIDERS:
-        raise ValueError(f"Invalid llm.provider: {provider}")
-    _require(llm.get("model"), "llm.model")
+    _validate_llm_config(llm, "llm")
 
-    if provider == "azure_openai":
-        azure = llm.get("azure_openai", {})
-        _require(azure.get("api_key"), "llm.azure_openai.api_key")
-        _require(azure.get("endpoint"), "llm.azure_openai.endpoint")
-    elif provider == "openai":
-        openai_cfg = llm.get("openai", {})
-        _require(openai_cfg.get("api_key"), "llm.openai.api_key")
-    elif provider == "gemini":
-        gemini = llm.get("gemini", {})
-        api_key = gemini.get("api_key")
-        project = gemini.get("project")
-        location = gemini.get("location")
-        has_vertex = not _is_missing(project) and not _is_missing(location)
-        if _is_missing(api_key) and not has_vertex:
-            raise ValueError("Missing required config: llm.gemini.api_key")
-        if not _is_missing(project) or not _is_missing(location):
-            _require(project, "llm.gemini.project")
-            _require(location, "llm.gemini.location")
-    elif provider == "ollama":
-        ollama = llm.get("ollama", {})
-        _require(ollama.get("base_url"), "llm.ollama.base_url")
+    prompts = llm.get("prompts", {})
+    if prompts is not None and not isinstance(prompts, dict):
+        raise ValueError("llm.prompts must be a table of prompt class overrides")
+    for prompt_name, prompt_override in (prompts or {}).items():
+        if not isinstance(prompt_override, dict):
+            raise ValueError(f"llm.prompts.{prompt_name} must be a table")
+        merged_llm = deep_merge(llm, prompt_override)
+        merged_llm.pop("prompts", None)
+        _validate_llm_config(merged_llm, f"llm.prompts.{prompt_name}")
 
     embedding = config.get("embedding", {})
     emb_provider = embedding.get("provider")
@@ -182,6 +166,36 @@ def validate_config(config: Dict[str, Any]) -> None:
                 raise ValueError(f"Missing required config: headers.{name}")
 
 
+def _validate_llm_config(llm: Dict[str, Any], key_prefix: str) -> None:
+    provider = llm.get("provider")
+    _require(provider, f"{key_prefix}.provider")
+    if provider not in LLM_PROVIDERS:
+        raise ValueError(f"Invalid {key_prefix}.provider: {provider}")
+    _require(llm.get("model"), f"{key_prefix}.model")
+
+    if provider == "azure_openai":
+        azure = llm.get("azure_openai", {})
+        _require(azure.get("api_key"), f"{key_prefix}.azure_openai.api_key")
+        _require(azure.get("endpoint"), f"{key_prefix}.azure_openai.endpoint")
+    elif provider == "openai":
+        openai_cfg = llm.get("openai", {})
+        _require(openai_cfg.get("api_key"), f"{key_prefix}.openai.api_key")
+    elif provider == "gemini":
+        gemini = llm.get("gemini", {})
+        api_key = gemini.get("api_key")
+        project = gemini.get("project")
+        location = gemini.get("location")
+        has_vertex = not _is_missing(project) and not _is_missing(location)
+        if _is_missing(api_key) and not has_vertex:
+            raise ValueError(f"Missing required config: {key_prefix}.gemini.api_key")
+        if not _is_missing(project) or not _is_missing(location):
+            _require(project, f"{key_prefix}.gemini.project")
+            _require(location, f"{key_prefix}.gemini.location")
+    elif provider == "ollama":
+        ollama = llm.get("ollama", {})
+        _require(ollama.get("base_url"), f"{key_prefix}.ollama.base_url")
+
+
 def load_config(path: str) -> Dict[str, Any]:
     if not os.path.exists(path):
         raise FileNotFoundError(
@@ -199,6 +213,10 @@ def load_config(path: str) -> Dict[str, Any]:
 
 def build_llm(config: Dict[str, Any]):
     llm = config["llm"]
+    return build_llm_from_config(llm)
+
+
+def build_llm_from_config(llm: Dict[str, Any]):
     provider = llm["provider"]
     temperature = float(llm.get("temperature", 0.0))
     model = llm["model"]
@@ -236,7 +254,6 @@ def build_llm(config: Dict[str, Any]):
             base_url=ollama.get("base_url"),
             temperature=temperature,
         )
-
     raise ValueError(f"Unsupported llm.provider: {provider}")
 
 

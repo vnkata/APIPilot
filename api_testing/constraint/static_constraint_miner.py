@@ -43,7 +43,8 @@ class StaticConstraintMiner:
         spec_parser: Any,
         model: Optional[Any] = None,
         embedding_model: Optional[Any] = None,
-        cache_dir: Optional[str] = None
+        cache_dir: Optional[str] = None,
+        prompt_factory: Optional[Any] = None,
     ) -> None:
         """
         Initialize the constraint miner.
@@ -62,13 +63,22 @@ class StaticConstraintMiner:
             
         self.spec_parser = spec_parser
         self.model = model
+        self.prompt_factory = prompt_factory
         self.embedding_model = embedding_model
         self.cache_dir = Path(cache_dir)
         self.logger = getLogger()
         self.operations = spec_parser.operations
         self.constraints: Dict[str, Any] = {}
-        self.response_constraint = ResponseConstraints(llm=model)
-        self.request_response_constraint = RequestResponseConstraint(llm=model)
+        self.response_constraint = (
+            prompt_factory.create(ResponseConstraints)
+            if prompt_factory
+            else ResponseConstraints(llm=model)
+        )
+        self.request_response_constraint = (
+            prompt_factory.create(RequestResponseConstraint)
+            if prompt_factory
+            else RequestResponseConstraint(llm=model)
+        )
 
     def mining(self) -> Dict[str, Dict[str, str]]:
         """

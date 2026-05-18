@@ -18,6 +18,7 @@ from api_testing.graph.graph_analyzer import GraphAnalyzer
 from api_testing.memory.contextual_memory import ContextualMemory
 from api_testing.models.configuration_model import FieldConfiguration
 from api_testing.prompts.request_response_constraint import RequestResponseConstraint
+from api_testing.prompts.factory import PromptFactory
 # from api_testing.tracing.tracing import TraceManager
 from api_testing.utils import flatten_json_schema, to_dict_helper
 from api_testing.utils.common import remove_nulls
@@ -51,7 +52,6 @@ from api_testing.models import APITestingBaseEmbeddingModel, APITestingBaseLLMMo
 from api_testing.config.config_loader import (
     apply_cli_overrides,
     build_embedder,
-    build_llm,
     load_config,
 )
 from api_testing.config.config_wizard import run_wizard
@@ -165,6 +165,19 @@ For more information, visit: https://github.com/thanhtuit96/API-Testing
     return parser.parse_args()
 
 
+def _format_duration(seconds: float) -> str:
+    hours, remainder = divmod(seconds, 3600)
+    minutes, seconds = divmod(remainder, 60)
+    parts = []
+
+    if hours >= 1:
+        parts.append(f"{int(hours)} hour{'s' if int(hours) != 1 else ''}")
+    if minutes >= 1:
+        parts.append(f"{int(minutes)} minute{'s' if int(minutes) != 1 else ''}")
+    parts.append(f"{seconds:.3f} second{'s' if seconds != 1 else ''}")
+    return " ".join(parts)
+
+
 def main():
     load_dotenv()
     args = parse_args()
@@ -184,7 +197,8 @@ def main():
         config = load_config(config_path)
         config = apply_cli_overrides(config, args)
 
-    llm = build_llm(config)
+    prompt_factory = PromptFactory.from_config(config)
+    llm = prompt_factory.common_llm
     embedder = build_embedder(config)
     embedder.load_model()
     headers = config.get("headers", {})
@@ -197,6 +211,7 @@ def main():
         spec_path=config["project"]["spec_path"],
         model=llm,
         embedder=embedder,
+        prompt_factory=prompt_factory,
     )
 
     tui_app = None
@@ -209,6 +224,11 @@ def main():
         suppress_console_logging()
 
     start_time = time.perf_counter()
+    start_timestamp = time.time()
+    tester.logger.debug(
+        "Run started at %s",
+        time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(start_timestamp)),
+    )
     total_testcase = 0
     successFull = {}
     try:
@@ -228,6 +248,12 @@ def main():
         raise e
     finally:
         elapsed = time.perf_counter() - start_time
+        finish_timestamp = time.time()
+        tester.logger.debug(
+            "Run finished at %s",
+            time.strftime("%Y-%m-%d %H:%M:%S", time.localtime(finish_timestamp)),
+        )
+        tester.logger.debug("Run duration: %s", _format_duration(elapsed))
         if not debug_mode and tui_app is not None:
             restore_console_logging()
             tui_app.stop()
@@ -276,6 +302,7 @@ class APITesting:
                  test_single_endpoint: Optional[str] = None,  # New parameter
                  # async_mode=False,
                  constraint_mining=True,
+                 prompt_factory=None,
 
                  ):
         self.base_url = base_url
@@ -284,6 +311,7 @@ class APITesting:
         self.embedder = embedder
         self.model = model
         self.critic_model = critic_model or model # judge model
+        self.prompt_factory = prompt_factory
         self.vector_db = vector_db
         self.project_dir = None
         self.test_single_endpoint = test_single_endpoint
@@ -341,13 +369,19 @@ class APITesting:
             spec_parser=self.spec_parser,
             model=self.model,
             embedding_model=self.embedder,
-            cache_dir=self.project_dir
+            cache_dir=self.project_dir,
+            prompt_factory=self.prompt_factory,
         )
         self.operation_graph.create_graph()
         self.operation_graph.save_graph_to_cache()
 
     def build_config(self):
-        parser = ConfigurationParser(spec_parser=self.spec_parser, model=self.model,cache_dir=self.project_dir)
+        parser = ConfigurationParser(
+            spec_parser=self.spec_parser,
+            model=self.model,
+            cache_dir=self.project_dir,
+            prompt_factory=self.prompt_factory,
+        )
         parser.parse()
 
     
@@ -372,7 +406,12 @@ class APITesting:
             extras = "\n=========\n".join([res.content for res in results])
             #  read RAGS
             miner = RequestResponseConstraint(
-                llm=self.model, endpoint=f"{details.http_method} {details.endpoint_path}", parameters=parameters, response=response, extras=extras)
+                llm=self.prompt_factory.get_llm(RequestResponseConstraint) if self.prompt_factory else self.model,
+                endpoint=f"{details.http_method} {details.endpoint_path}",
+                parameters=parameters,
+                response=response,
+                extras=extras,
+            )
             constraint = miner.validate()
             constraints[operation] = to_dict_helper(constraint)["constraint"]
             # Contraints
@@ -391,7 +430,8 @@ class APITesting:
             spec_parser=self.spec_parser,
             model=self.model,
             embedding_model=self.embedder,
-            cache_dir=self.project_dir
+            cache_dir=self.project_dir,
+            prompt_factory=self.prompt_factory,
         )
         self.operation_graph.plot_graph()
 
@@ -405,6 +445,7 @@ class APITesting:
                 model=self.model,
                 embedding_model=self.embedder,
                 cache_dir=self.project_dir,
+                prompt_factory=self.prompt_factory,
             )
 
         def load_config_for_run():
@@ -412,6 +453,7 @@ class APITesting:
                 spec_parser=self.spec_parser,
                 model=self.model,
                 cache_dir=self.project_dir,
+                prompt_factory=self.prompt_factory,
             )
 
         self.logger.debug("Building operation graph and configuration")
@@ -433,6 +475,7 @@ class APITesting:
                 model=self.model,
                 embedding_model=self.embedder,
                 cache_dir=self.project_dir,
+                prompt_factory=self.prompt_factory,
             )
             self.miner.static_mining()
 
@@ -478,7 +521,12 @@ class APITesting:
 
         # pick
         graph_analyst = GraphAnalyzer(graph=self.operation_graph, cache_dir=self.project_dir)
-        feedback_analyzer = FeedbackAnalyzer(model=self.model, embed=self.embedder, cache_dir=self.project_dir)
+        feedback_analyzer = FeedbackAnalyzer(
+            model=self.model,
+            embed=self.embedder,
+            cache_dir=self.project_dir,
+            prompt_factory=self.prompt_factory,
+        )
 
         emitter.emit(EventType.PHASE_START, Phase.GRAPH_ANALYZE, message="Analyzing dependency graph...")
 
@@ -560,6 +608,7 @@ class APITesting:
                 operation=nodes.get(node.name),
                 cache_dir=self.project_dir,
                 model=self.model,
+                prompt_factory=self.prompt_factory,
                 num_test_cases=num_test_cases,
                 configuration=configurations.get(node.name),
                 mutation_ratio=mutation_ratio,
@@ -695,6 +744,7 @@ class APITesting:
                 operation=nodes.get(node.name),
                 cache_dir=self.project_dir,
                 model=self.model,
+                prompt_factory=self.prompt_factory,
                 num_test_cases=num_test_cases,
                 configuration=configurations.get(node.name),
                 mutation_ratio=mutation_ratio,

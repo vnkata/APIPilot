@@ -57,10 +57,11 @@ def parse_path_to_resources(path: str):
 
 @dataclass
 class OperationGraph:
-    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.5, cache_dir=None):
+    def __init__(self, spec_parser=None, model=None, embedding_model=None, threshold=0.5, cache_dir=None, prompt_factory=None):
         self.spec_parser = spec_parser
         self.embedding_model = embedding_model
         self.model = model  # llm model
+        self.prompt_factory = prompt_factory
 
         self.nodes: dict[str, OperationNode] = {}
         self.edges: List[OperationEdge] = []
@@ -70,7 +71,11 @@ class OperationGraph:
             cache_dir, "semantic_property_dependency_graph.json")
         self.logger = getLogger()
         # prompt for operation-schema dependencies
-        self.op_schema_deps = OpSchemaDeps(self.model)
+        self.op_schema_deps = (
+            self.prompt_factory.create(OpSchemaDeps)
+            if self.prompt_factory
+            else OpSchemaDeps(self.model)
+        )
         self.load_or_initialize_graph()
 
     def add_node(self, operation):
