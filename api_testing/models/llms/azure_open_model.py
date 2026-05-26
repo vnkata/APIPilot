@@ -73,6 +73,8 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
         endpoint: Optional[str] = None,
         api_version: Optional[str] = None,
         temperature: float = 0.7,
+        request_timeout: float = 30.0,
+        max_retries: int = 0,
         **kwargs,
     ):
         self.api_key = api_key or os.getenv("AZURE_OPENAI_KEY")
@@ -91,6 +93,8 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
         if temperature < 0:
             raise ValueError("Temperature must be >= 0.")
         self.temperature = temperature
+        self.request_timeout = request_timeout
+        self.max_retries = max_retries
         
         super().__init__(model)
 
@@ -107,25 +111,29 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
         client = self.load_model()
 
         messages = []
-        
-        if system_prompt:
-            schema_instruction = (
-                "Think step by step and strictly follow all requirements in the user prompt. "
-                "Return only valid JSON that exactly matches the specified structure, "
-                "without any extra text or fields, and ensure it is fully syntactically correct. "
+        system_parts = [system_prompt] if system_prompt else []
+        if schema:
+            schema_definition = json.dumps(schema.model_json_schema(), ensure_ascii=False)
+            system_parts.append(
+                "Return only one valid JSON object matching this JSON Schema exactly. "
+                f"JSON Schema: {schema_definition}"
             )
-            messages.append({"role": "system", "content": schema_instruction})
+        if system_parts:
+            messages.append({"role": "system", "content": "\n\n".join(system_parts)})
         
         if isinstance(prompt, str):
-            messages.append({"role": "user", "content": system_prompt + "\n" + prompt})
+            messages.append({"role": "user", "content": prompt})
         else:
             messages.extend(prompt)
-        
-        response = client.chat.completions.create(
+
+        request_kwargs = dict(
             model=self.model_name,
             messages=messages,
             temperature=self.temperature,
         )
+        if schema:
+            request_kwargs["response_format"] = {"type": "json_object"}
+        response = client.chat.completions.create(**request_kwargs)
 
         text = response.choices[0].message.content.strip()
         
@@ -184,11 +192,15 @@ class AzureOpenAIModel(APITestingBaseLLMModel):
                 api_key=self.api_key,
                 api_version=self.api_version,
                 azure_endpoint=self.endpoint,
+                timeout=self.request_timeout,
+                max_retries=self.max_retries,
             )
         return AzureOpenAI(
             api_key=self.api_key,
             api_version=self.api_version,
             azure_endpoint=self.endpoint,
+            timeout=self.request_timeout,
+            max_retries=self.max_retries,
         )
 
     def get_model_name(self):

@@ -1,7 +1,7 @@
 [project]
-spec_path = "datasets/Bills-api.json"  # Path to your OpenAPI specification file (.json or .yaml). Must be OpenAPI 3.0. Relative to project root.
-base_url = "https://bills-api.parliament.uk/"  # Base URL of the API under test (e.g. http://localhost:30000/api/v4). If blank, extracted from spec servers field.
-base_title = "Bills-Static-Constraint-3"  # Display name for this project, used in cache folder names and logs. Leave blank to auto-detect from spec.
+spec_path = "datasets/ohsome_20_endpoint.json"  # Path to your OpenAPI specification file (.json or .yaml). Must be OpenAPI 3.0. Relative to project root.
+base_url = "https://api.ohsome.org/v1"  # Base URL of the API under test (e.g. http://localhost:30000/api/v4). If blank, extracted from spec servers field.
+base_title = "ohsome"  # Display name for this project, used in cache folder names and logs. Leave blank to auto-detect from spec.
 
 [llm]
 provider = "azure_openai"  # Which LLM backend to use: azure_openai | openai | gemini | ollama

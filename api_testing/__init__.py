@@ -841,7 +841,7 @@ class APITesting:
                 traverse_forest_dfs(forest, context)
             if self.mining_constraints and self.miner is not None:
                 self.miner.dynamic_mining()
-                self.miner.constraint_arbitration()
+                self.miner.combine()
         if total_testcase == 0:
             self.logger.warning("No test cases executed")
         self.logger.debug(
