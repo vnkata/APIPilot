@@ -3,6 +3,8 @@ from pathlib import Path
 from typing import Any, Dict, Optional
 
 from api_testing.constraint.dynamic_constraint_miner import DynamicConstraintMiner
+from api_testing.constraint.constraint_combiner import ConstraintCombiner
+from api_testing.constraint.conflict_resolver import ConstraintConflictResolver
 from api_testing.models.specification_model import ItemProperties
 from api_testing.prompts.constraint_arbitration import ConstraintArbitration
 from api_testing.utils import flatten_json_schema
@@ -20,6 +22,7 @@ __all__ = [
 
 class ConstraintMiner:
     MAIN_CACHE = "constraint_miner.json"
+    COMBINE_CACHE = "combine_constraint_miners.json"
     def __init__(
         self,
         spec_parser: Any,
@@ -60,6 +63,47 @@ class ConstraintMiner:
     def dynamic_mining(self):
         self.dynamic_constraints = self.dynamic_miner.mining()
         return self.dynamic_constraints
+
+    def combine(
+        self,
+        static_constraints: Optional[Dict[str, Dict[str, str]]] = None,
+        dynamic_constraints: Optional[Dict[str, Dict[str, str]]] = None,
+    ):
+        """Create a property-level static/dynamic combination artifact."""
+        if static_constraints is None:
+            static_constraints = getattr(self, "static_constraints", None)
+        if dynamic_constraints is None:
+            dynamic_constraints = getattr(self, "dynamic_constraints", None)
+        if static_constraints is None:
+            static_constraints = self.static_mining()
+        if dynamic_constraints is None:
+            dynamic_constraints = self.dynamic_mining()
+
+        combiner = ConstraintCombiner(
+            cache_dir=self.project_dir,
+            model=self.model,
+            prompt_factory=self.prompt_factory,
+        )
+        self.combined_constraints = combiner.combine(
+            static_constraints=static_constraints,
+            dynamic_constraints=dynamic_constraints,
+        )
+        return self.combined_constraints
+
+    def combine_constraints(self):
+        """Backward-readable alias for the property-level combine operation."""
+        return self.combine()
+
+    def resolve_conflicts(self, base_url: Optional[str] = None, requestor: Optional[Any] = None):
+        """Run staged counter-examples and persist evidence-backed conflict verdicts."""
+        combined = getattr(self, "combined_constraints", None) or self.combine()
+        resolver = ConstraintConflictResolver(
+            cache_dir=self.project_dir,
+            base_url=base_url,
+            requestor=requestor,
+        )
+        self.combined_constraints = resolver.resolve(combined)
+        return self.combined_constraints
     
     @staticmethod
     def _load_json_file(filepath: Path) -> Dict[str, Any]:

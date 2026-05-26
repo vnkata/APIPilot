@@ -26,6 +26,12 @@ class DSLTransformer(Transformer):
     # =========================================================
     def variable(self, name):
         key = str(name)
+        if key == "true":
+            return True
+        if key == "false":
+            return False
+        if key == "null":
+            return None
 
         try:
             # support DSLEvaluationContext hoặc dict
@@ -72,8 +78,18 @@ class DSLTransformer(Transformer):
             raise AttributeError(f"Undefined DSL function: {raw_name}")
 
         try:
-            
-            if any(arg is None for arg in args):
+            null_aware = {
+                "and",
+                "or",
+                "not",
+                "implies",
+                "eq",
+                "neq",
+                "default",
+                "exists",
+                "isNull",
+            }
+            if any(arg is None for arg in args) and raw_name not in null_aware:
                 return None
 
             result = func_ptr(*args)
