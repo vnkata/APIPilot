@@ -137,7 +137,7 @@ class Requestor:
       - Report updates still use lock (rare operation)
       - Entries use thread-local storage with merge at flush
     """
-    def __init__(self, api_url: str, cache_dir: str = "."):
+    def __init__(self, api_url: str, cache_dir: str = ".", timeout_seconds: float = 300.0):
         self.api_url = api_url.rstrip("/")
         self.session_id = str(uuid.uuid4())
         self.entries: list[Dict[str, Any]] = []
@@ -153,6 +153,7 @@ class Requestor:
             cache_dir, "reports.json"))
         self.cache_file = os.path.join(
             _cache_dir, self.session_id + ".har")
+        self.timeout_seconds = float(timeout_seconds)
         self.logger = getLogger(__name__)
 
     def _get_local_entries(self) -> list:
@@ -209,7 +210,12 @@ class Requestor:
         })
         start_time = time.perf_counter()
         try:
-            response = requests.request(method=method, url=url, **request_kwargs, timeout=(5, 300))
+            response = requests.request(
+                method=method,
+                url=url,
+                **request_kwargs,
+                timeout=(5, self.timeout_seconds),
+            )
             duration_ms = (time.perf_counter() - start_time) * 1000
             response_data = ResponseData.from_requests(response)
             # Record to HAR
@@ -229,7 +235,7 @@ class Requestor:
                 ruuid=request_data.uuid, method=method, url=url, headers=headers, path_parameters=path_parameters, 
                 params=parameters, body=body, response=response_data, duration_ms=duration_ms, expected_code=request_data.expected_code, base_path=base_path
             )
-            self.logger.error("Lỗi: Request đã quá thời gian chờ 5 phút!")
+            self.logger.error("Request timed out after %s seconds", self.timeout_seconds)
             return response_data
         except requests.exceptions.RequestException as e:
             response_data = ResponseData.from_requests(None)

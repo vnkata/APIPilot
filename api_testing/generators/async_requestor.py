@@ -152,6 +152,7 @@ class AsyncRequestor:
         self._entries_lock = asyncio.Lock()
         self._dirty = False
         self._dirty_lock = asyncio.Lock()
+        self.timeout_seconds = float(timeout_seconds)
 
         _cache_dir = os.path.join(cache_dir, "history")
         if not os.path.exists(_cache_dir):
@@ -162,7 +163,7 @@ class AsyncRequestor:
         self.logger = getLogger(__name__)
 
         self._client = httpx.AsyncClient(
-            timeout=httpx.Timeout(timeout_seconds, connect=5.0),
+            timeout=httpx.Timeout(self.timeout_seconds, connect=5.0),
             limits=httpx.Limits(
                 max_connections=max_connections,
                 max_keepalive_connections=max_keepalive_connections
@@ -319,7 +320,7 @@ class AsyncRequestor:
                 expected_code=request_data.expected_code,
                 base_path=request_data.endpoint_path,
             )
-            self.logger.error("Request timed out after 5 minutes")
+            self.logger.error("Request timed out after %s seconds", self.timeout_seconds)
             return response_data
 
         except httpx.RequestError as e:

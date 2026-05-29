@@ -212,6 +212,7 @@ def main():
         model=llm,
         embedder=embedder,
         prompt_factory=prompt_factory,
+        constraint_mining=bool(run.get("constraint_mining", True)),
     )
 
     tui_app = None
@@ -240,8 +241,13 @@ def main():
             async_mode=run["async_mode"],
             max_request_workers=run["max_request_workers"],
             async_max_concurrent=run["async_max_concurrent"],
+            request_timeout_seconds=run.get("request_timeout_seconds", 300.0),
             headers=headers,
         )
+        project_dir = getattr(tester, "project_dir", None)
+        runtime_report = os.path.join(project_dir, "reports.json") if project_dir else None
+        if runtime_report and os.path.exists(runtime_report):
+            shutil.copyfile(runtime_report, os.path.join(project_dir, "report.json"))
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -438,6 +444,7 @@ class APITesting:
     def run_tests(self, num_generations=1, num_test_cases=20, mutation_ratio=0.0, header_mutation_ratio=0.5,
                   async_mode: bool = False, max_request_workers: Optional[int] = None,
                   async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT,
+                  request_timeout_seconds: float = 300.0,
                   headers: Optional[Dict[str, str]] = None):
         def build_graph_for_run():
             return OperationGraph(
@@ -538,117 +545,125 @@ class APITesting:
         def traverse_dfs(node, depth=0, context_pool: ContextualMemory = None, parent=None, seq_path = []):
             nonlocal total_testcase, total_success, forest
             context_pool = context_pool or ContextualMemory(cache_dir=self.project_dir)
-            # 
-            self.logger.debug("%s• %s", "  " * depth, node.name)
-
-            configuration = copy.copy(configurations.get(node.name))
-            # test
-            producer = { param: conf for param, conf in configuration.params.items() if conf.type == "ProducerGenerator"}
-            producer_mapping = {}
-            context_pool.set_current(node.name)
-            # collect prefix -> keys
-            prefix_groups = defaultdict(set)
-            for k, params in node.matched_params.items():
-                for p in params:
-                    sp = p.get("source_param")
-                    if sp:
-                        prefix_groups[sp.rsplit(".", 1)[0]].add(k)
-
-            # best prefix shared by most params
-            best_prefix = max(prefix_groups, key=lambda x: len(prefix_groups[x]), default=None)
-            common_res = None
-            for k, producer_obj in producer.items():
-                candidates = node.matched_params.get(k)
-                if not candidates:
-                    continue
-                prioritized = [p for p in candidates if best_prefix and p.get("source_param","").startswith(best_prefix)]
-                param = random.choice(prioritized or candidates)
-                se = param.get("source_endpoint")
-                sp = param.get("source_param")
-                resource = producer_map.get(se, {}).get(sp)
-                resource = resource.split(",")[0] if resource else None
+            try:
                 # 
-                if parent is not None:
-                    if resource and resource not in self.operation_graph.nodes[parent.name].schemas.keys():
-                        key = sp.split(".")[-1]
-                        if key in self.operation_graph.nodes[parent.name].required_parameters:
-                            key = key + ":path"
-                        data = {"resource": resource, "key": key, "need_change": True, **param}
+                self.logger.debug("%s• %s", "  " * depth, node.name)
+
+                configuration = copy.copy(configurations.get(node.name))
+                # test
+                producer = { param: conf for param, conf in configuration.params.items() if conf.type == "ProducerGenerator"}
+                producer_mapping = {}
+                context_pool.set_current(node.name)
+                # collect prefix -> keys
+                prefix_groups = defaultdict(set)
+                for k, params in node.matched_params.items():
+                    for p in params:
+                        sp = p.get("source_param")
+                        if sp:
+                            prefix_groups[sp.rsplit(".", 1)[0]].add(k)
+
+                # best prefix shared by most params
+                best_prefix = max(prefix_groups, key=lambda x: len(prefix_groups[x]), default=None)
+                common_res = None
+                for k, producer_obj in producer.items():
+                    candidates = node.matched_params.get(k)
+                    if not candidates:
+                        continue
+                    prioritized = [p for p in candidates if best_prefix and p.get("source_param","").startswith(best_prefix)]
+                    param = random.choice(prioritized or candidates)
+                    se = param.get("source_endpoint")
+                    sp = param.get("source_param")
+                    resource = producer_map.get(se, {}).get(sp)
+                    resource = resource.split(",")[0] if resource else None
+                    # 
+                    if parent is not None:
+                        if resource and resource not in self.operation_graph.nodes[parent.name].schemas.keys():
+                            key = sp.split(".")[-1]
+                            if key in self.operation_graph.nodes[parent.name].required_parameters:
+                                key = key + ":path"
+                            data = {"resource": resource, "key": key, "need_change": True, **param}
+                        else:
+                            common_res = resource
+                            data = {"resource": resource, "key": sp.split(".")[-1], **param}
                     else:
-                        common_res = resource
                         data = {"resource": resource, "key": sp.split(".")[-1], **param}
+                        # producer_obj.genParameters = {"pool": [data]}
+                    producer_mapping[k] = data
+                for k, producer_obj in producer.items():
+                    if k in producer_mapping:
+                        data = producer_mapping[k]
+                        if data.get("need_change"):
+                            if common_res is not None:
+                                data["resource"] = common_res
+                            del data["need_change"]
+                            producer_mapping[k] = data
+                        producer_obj.genParameters = {"pool": [data]}
+
+                emitter.emit(
+                    EventType.OPERATION_UPDATE,
+                    phase=Phase.TEST_EXECUTION,
+                    operation_name=node.name,
+                    operation_method=node.name.split('-')[0] if '-' in node.name else '',
+                    operation_path=node.name,
+                    status=OperationStatus.RUNNING,
+                    generation=idx + 1,
+                    total_generations=num_generations,
+                )
+
+                executor = Executor(
+                    api_url = self.base_url,
+                    strategy= Strategy.NAIVE_VALUE,
+                    operation=nodes.get(node.name),
+                    cache_dir=self.project_dir,
+                    model=self.model,
+                    prompt_factory=self.prompt_factory,
+                    num_test_cases=num_test_cases,
+                    configuration=configurations.get(node.name),
+                    mutation_ratio=mutation_ratio,
+                    header_mutation_ratio=header_mutation_ratio,
+                    context_pool=context_pool,
+                    max_request_workers=max_request_workers,
+                    use_async=async_mode,
+                    async_max_concurrent=async_max_concurrent,
+                    request_timeout_seconds=request_timeout_seconds,
+                    default_headers=headers,
+                    generation=idx + 1,
+                    total_generations=num_generations,
+                )
+
+                if async_mode:
+                    import asyncio
+                    responses = asyncio.run(executor.exec_async())
                 else:
-                    data = {"resource": resource, "key": sp.split(".")[-1], **param}
-                    # producer_obj.genParameters = {"pool": [data]}
-                producer_mapping[k] = data
-            for k, producer_obj in producer.items():
-                if k in producer_mapping:
-                    data = producer_mapping[k]
-                    if data.get("need_change"):
-                        if common_res is not None:
-                            data["resource"] = common_res
-                        del data["need_change"]
-                        producer_mapping[k] = data
-                    producer_obj.genParameters = {"pool": [data]}
-
-            emitter.emit(
-                EventType.OPERATION_UPDATE,
-                phase=Phase.TEST_EXECUTION,
-                operation_name=node.name,
-                operation_method=node.name.split('-')[0] if '-' in node.name else '',
-                operation_path=node.name,
-                status=OperationStatus.RUNNING,
-                generation=idx + 1,
-                total_generations=num_generations,
-            )
-
-            executor = Executor(
-                api_url = self.base_url,
-                strategy= Strategy.NAIVE_VALUE,
-                operation=nodes.get(node.name),
-                cache_dir=self.project_dir,
-                model=self.model,
-                prompt_factory=self.prompt_factory,
-                num_test_cases=num_test_cases,
-                configuration=configurations.get(node.name),
-                mutation_ratio=mutation_ratio,
-                header_mutation_ratio=header_mutation_ratio,
-                context_pool=context_pool,
-                max_request_workers=max_request_workers,
-                use_async=async_mode,
-                async_max_concurrent=async_max_concurrent,
-                default_headers=headers,
-                generation=idx + 1,
-                total_generations=num_generations,
-            )
-
-            if async_mode:
-                import asyncio
-                responses = asyncio.run(executor.exec_async())
-            else:
-                responses = executor.exec()
-            feedback = feedback_analyzer.evaluate(seq_path, operation=nodes.get(node.name),  responses=responses, producer_mapping=producer_mapping,context_pool=context_pool)
-            adjug = feedback_analyzer.adjust(node.name, context_pool, producer_mapping,  self.operation_graph, graph_analyst= graph_analyst)
-            if adjug:
-                forest = graph_analyst.export_to_forest()
-            # successfull responses  
-            success_responses = [ 
-                entry
-                for entry in responses if isSuccessful(entry.get("response",{}).get("status",0)) 
-            ]
-            context_pool.update_with_responses(success_responses, properties.get(node.name))
-            self.logger.debug(
-                "Success %s with context_pool %s",
-                len(success_responses),
-                context_pool,
-            )
-            total_success +=  len(success_responses)
-            total_testcase +=  len(responses)
-            context_pool.clear_current()
-            if len(success_responses)   > 0:
-                successFull.update({node.name: 1})
-                for child in sort_children_by_method(node.children.values()):
-                    traverse_dfs(child, depth + 1, context_pool, node, seq_path=seq_path + [child.name])
+                    responses = executor.exec()
+                feedback = feedback_analyzer.evaluate(seq_path, operation=nodes.get(node.name),  responses=responses, producer_mapping=producer_mapping,context_pool=context_pool)
+                adjug = feedback_analyzer.adjust(node.name, context_pool, producer_mapping,  self.operation_graph, graph_analyst= graph_analyst)
+                if adjug:
+                    forest = graph_analyst.export_to_forest()
+                # successfull responses  
+                success_responses = [ 
+                    entry
+                    for entry in responses if isSuccessful(entry.get("response",{}).get("status",0)) 
+                ]
+                context_pool.update_with_responses(success_responses, properties.get(node.name))
+                self.logger.debug(
+                    "Success %s with context_pool %s",
+                    len(success_responses),
+                    context_pool,
+                )
+                total_success +=  len(success_responses)
+                total_testcase +=  len(responses)
+                context_pool.clear_current()
+                if len(success_responses)   > 0:
+                    successFull.update({node.name: 1})
+                    for child in sort_children_by_method(node.children.values()):
+                        traverse_dfs(child, depth + 1, context_pool, node, seq_path=seq_path + [child.name])
+            except Exception as e:
+                self.logger.error(f"Error executing test case for node {node.name}: {e}", exc_info=True)
+                try:
+                    context_pool.clear_current()
+                except Exception:
+                    pass
                 
             # save pool
            
@@ -678,113 +693,121 @@ class APITesting:
         async def _execute_node_async(node, depth, context_pool, parent, seq_path, forest_lock=None):
             """Execute a single node and return responses."""
             nonlocal total_testcase, total_success, forest
+            try:
+                self.logger.debug("%s• %s", "  " * depth, node.name)
 
-            self.logger.debug("%s• %s", "  " * depth, node.name)
+                configuration = copy.copy(configurations.get(node.name))
+                producer = { param: conf for param, conf in configuration.params.items() if conf.type == "ProducerGenerator"}
+                producer_mapping = {}
+                context_pool.set_current(node.name)
 
-            configuration = copy.copy(configurations.get(node.name))
-            producer = { param: conf for param, conf in configuration.params.items() if conf.type == "ProducerGenerator"}
-            producer_mapping = {}
-            context_pool.set_current(node.name)
+                prefix_groups = defaultdict(set)
+                for k, params in node.matched_params.items():
+                    for p in params:
+                        sp = p.get("source_param")
+                        if sp:
+                            prefix_groups[sp.rsplit(".", 1)[0]].add(k)
 
-            prefix_groups = defaultdict(set)
-            for k, params in node.matched_params.items():
-                for p in params:
-                    sp = p.get("source_param")
-                    if sp:
-                        prefix_groups[sp.rsplit(".", 1)[0]].add(k)
-
-            best_prefix = max(prefix_groups, key=lambda x: len(prefix_groups[x]), default=None)
-            common_res = None
-            for k, producer_obj in producer.items():
-                candidates = node.matched_params.get(k)
-                if not candidates:
-                    continue
-                prioritized = [p for p in candidates if best_prefix and p.get("source_param","").startswith(best_prefix)]
-                param = random.choice(prioritized or candidates)
-                se = param.get("source_endpoint")
-                sp = param.get("source_param")
-                resource = producer_map.get(se, {}).get(sp)
-                resource = resource.split(",")[0] if resource else None
-                if parent is not None:
-                    if resource and resource not in self.operation_graph.nodes[parent.name].schemas.keys():
-                        key = sp.split(".")[-1]
-                        if key in self.operation_graph.nodes[parent.name].required_parameters:
-                            key = key + ":path"
-                        data = {"resource": resource, "key": key, "need_change": True, **param}
+                best_prefix = max(prefix_groups, key=lambda x: len(prefix_groups[x]), default=None)
+                common_res = None
+                for k, producer_obj in producer.items():
+                    candidates = node.matched_params.get(k)
+                    if not candidates:
+                        continue
+                    prioritized = [p for p in candidates if best_prefix and p.get("source_param","").startswith(best_prefix)]
+                    param = random.choice(prioritized or candidates)
+                    se = param.get("source_endpoint")
+                    sp = param.get("source_param")
+                    resource = producer_map.get(se, {}).get(sp)
+                    resource = resource.split(",")[0] if resource else None
+                    if parent is not None:
+                        if resource and resource not in self.operation_graph.nodes[parent.name].schemas.keys():
+                            key = sp.split(".")[-1]
+                            if key in self.operation_graph.nodes[parent.name].required_parameters:
+                                key = key + ":path"
+                            data = {"resource": resource, "key": key, "need_change": True, **param}
+                        else:
+                            common_res = resource
+                            data = {"resource": resource, "key": sp.split(".")[-1], **param}
                     else:
-                        common_res = resource
                         data = {"resource": resource, "key": sp.split(".")[-1], **param}
-                else:
-                    data = {"resource": resource, "key": sp.split(".")[-1], **param}
-                producer_mapping[k] = data
-            for k, producer_obj in producer.items():
-                if k in producer_mapping:
-                    data = producer_mapping[k]
-                    if data.get("need_change"):
-                        if common_res is not None:
-                            data["resource"] = common_res
-                        del data["need_change"]
-                        producer_mapping[k] = data
-                    producer_obj.genParameters = {"pool": [data]}
+                    producer_mapping[k] = data
+                for k, producer_obj in producer.items():
+                    if k in producer_mapping:
+                        data = producer_mapping[k]
+                        if data.get("need_change"):
+                            if common_res is not None:
+                                data["resource"] = common_res
+                            del data["need_change"]
+                            producer_mapping[k] = data
+                        producer_obj.genParameters = {"pool": [data]}
 
-            emitter.emit(
-                EventType.OPERATION_UPDATE,
-                phase=Phase.TEST_EXECUTION,
-                operation_name=node.name,
-                operation_method=node.name.split('-')[0] if '-' in node.name else '',
-                operation_path=node.name,
-                status=OperationStatus.RUNNING,
-                generation=idx + 1,
-                total_generations=num_generations,
-            )
+                emitter.emit(
+                    EventType.OPERATION_UPDATE,
+                    phase=Phase.TEST_EXECUTION,
+                    operation_name=node.name,
+                    operation_method=node.name.split('-')[0] if '-' in node.name else '',
+                    operation_path=node.name,
+                    status=OperationStatus.RUNNING,
+                    generation=idx + 1,
+                    total_generations=num_generations,
+                )
 
-            executor = Executor(
-                api_url=self.base_url,
-                strategy=Strategy.NAIVE_VALUE,
-                operation=nodes.get(node.name),
-                cache_dir=self.project_dir,
-                model=self.model,
-                prompt_factory=self.prompt_factory,
-                num_test_cases=num_test_cases,
-                configuration=configurations.get(node.name),
-                mutation_ratio=mutation_ratio,
-                header_mutation_ratio=header_mutation_ratio,
-                context_pool=context_pool,
-                max_request_workers=max_request_workers,
-                use_async=True,
-                async_max_concurrent=async_max_concurrent,
-                default_headers=headers,
-                generation=idx + 1,
-                total_generations=num_generations,
-            )
+                executor = Executor(
+                    api_url=self.base_url,
+                    strategy=Strategy.NAIVE_VALUE,
+                    operation=nodes.get(node.name),
+                    cache_dir=self.project_dir,
+                    model=self.model,
+                    prompt_factory=self.prompt_factory,
+                    num_test_cases=num_test_cases,
+                    configuration=configurations.get(node.name),
+                    mutation_ratio=mutation_ratio,
+                    header_mutation_ratio=header_mutation_ratio,
+                    context_pool=context_pool,
+                    max_request_workers=max_request_workers,
+                    use_async=True,
+                    async_max_concurrent=async_max_concurrent,
+                    request_timeout_seconds=request_timeout_seconds,
+                    default_headers=headers,
+                    generation=idx + 1,
+                    total_generations=num_generations,
+                )
 
-            responses = await executor.exec_async()
-            feedback = feedback_analyzer.evaluate(seq_path, operation=nodes.get(node.name), responses=responses, producer_mapping=producer_mapping, context_pool=context_pool)
-            adjug = feedback_analyzer.adjust(node.name, context_pool, producer_mapping, self.operation_graph, graph_analyst=graph_analyst)
-            if adjug and forest_lock:
-                async with forest_lock:
-                    forest = graph_analyst.export_to_forest()
+                responses = await executor.exec_async()
+                feedback = feedback_analyzer.evaluate(seq_path, operation=nodes.get(node.name), responses=responses, producer_mapping=producer_mapping, context_pool=context_pool)
+                adjug = feedback_analyzer.adjust(node.name, context_pool, producer_mapping, self.operation_graph, graph_analyst=graph_analyst)
+                if adjug and forest_lock:
+                    async with forest_lock:
+                        forest = graph_analyst.export_to_forest()
 
-            success_responses = [
-                entry
-                for entry in responses if isSuccessful(entry.get("response",{}).get("status",0))
-            ]
-            context_pool.update_with_responses(success_responses, properties.get(node.name))
-            self.logger.debug(
-                "Success %s with context_pool %s",
-                len(success_responses),
-                context_pool,
-            )
-            total_success += len(success_responses)
-            total_testcase += len(responses)
-            context_pool.clear_current()
+                success_responses = [
+                    entry
+                    for entry in responses if isSuccessful(entry.get("response",{}).get("status",0))
+                ]
+                context_pool.update_with_responses(success_responses, properties.get(node.name))
+                self.logger.debug(
+                    "Success %s with context_pool %s",
+                    len(success_responses),
+                    context_pool,
+                )
+                total_success += len(success_responses)
+                total_testcase += len(responses)
+                context_pool.clear_current()
 
-            if len(success_responses) > 0:
-                successFull.update({node.name: 1})
-                for child in sort_children_by_method(node.children.values()):
-                    await _execute_node_async(child, depth + 1, context_pool, node, seq_path + [child.name], forest_lock=forest_lock)
+                if len(success_responses) > 0:
+                    successFull.update({node.name: 1})
+                    for child in sort_children_by_method(node.children.values()):
+                        await _execute_node_async(child, depth + 1, context_pool, node, seq_path + [child.name], forest_lock=forest_lock)
 
-            return responses
+                return responses
+            except Exception as e:
+                self.logger.error(f"Error executing test case for node {node.name} (async): {e}", exc_info=True)
+                try:
+                    context_pool.clear_current()
+                except Exception:
+                    pass
+                return []
 
         async def _execute_tree_parallel(root_node, tree_context, semaphore, forest_lock):
             """Execute an entire tree with bounded concurrency."""

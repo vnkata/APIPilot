@@ -128,6 +128,7 @@ class Executor:
       max_request_workers: int = DEFAULT_MAX_REQUEST_WORKERS,
       use_async: bool = False,
       async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT,
+      request_timeout_seconds: float = 300.0,
       default_headers: Optional[Dict[str, str]] = None,
       generation: int = 1,
       total_generations: int = 1,
@@ -147,11 +148,19 @@ class Executor:
     self.total_generations = total_generations
 
     if use_async:
-      self.async_sender = AsyncRequestor(api_url=self.api_url, cache_dir=self.cache_dir)
+      self.async_sender = AsyncRequestor(
+        api_url=self.api_url,
+        cache_dir=self.cache_dir,
+        timeout_seconds=request_timeout_seconds,
+      )
       self.async_batch = AsyncRequestBatch(self.async_sender, max_concurrent=async_max_concurrent)
       self.sender = None
     else:
-      self.sender = Requestor(api_url=self.api_url, cache_dir=self.cache_dir)
+      self.sender = Requestor(
+        api_url=self.api_url,
+        cache_dir=self.cache_dir,
+        timeout_seconds=request_timeout_seconds,
+      )
       self.async_sender = None
       self.async_batch = None
 

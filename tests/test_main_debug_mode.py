@@ -3,7 +3,7 @@ import types
 import api_testing as api_testing_module
 
 
-def _base_config(debug_mode: bool):
+def _base_config(debug_mode: bool, constraint_mining: bool = True):
     return {
         "project": {
             "spec_path": "datasets/Test.json",
@@ -19,6 +19,8 @@ def _base_config(debug_mode: bool):
             "max_request_workers": 1,
             "async_max_concurrent": 1,
             "debug": debug_mode,
+            "constraint_mining": constraint_mining,
+            "request_timeout_seconds": 15.0,
         },
         "headers": {},
     }
@@ -50,10 +52,13 @@ def _setup_common(monkeypatch, config, args):
     class DummyAPITesting:
         def __init__(self, base_title=None, **kwargs):
             state["tester_created"] = True
+            state["tester_kwargs"] = kwargs
             self.base_title = base_title or "Dummy API"
+            self.logger = types.SimpleNamespace(debug=lambda *args, **kwargs: None)
 
         def run_tests(self, **kwargs):
             state["run_tests_called"] = True
+            state["run_kwargs"] = kwargs
             return 3, {"op": 1}
 
     class DummyTUIApp:
@@ -80,8 +85,16 @@ def _setup_common(monkeypatch, config, args):
 
     monkeypatch.setattr(api_testing_module, "load_config", lambda path: config)
     monkeypatch.setattr(api_testing_module, "apply_cli_overrides", lambda cfg, args: cfg)
-    monkeypatch.setattr(api_testing_module, "build_llm", lambda cfg: object())
-    monkeypatch.setattr(api_testing_module, "build_embedder", lambda cfg: object())
+    monkeypatch.setattr(
+        api_testing_module.PromptFactory,
+        "from_config",
+        lambda cfg: types.SimpleNamespace(common_llm=object()),
+    )
+    monkeypatch.setattr(
+        api_testing_module,
+        "build_embedder",
+        lambda cfg: types.SimpleNamespace(load_model=lambda: None),
+    )
     monkeypatch.setattr(api_testing_module, "APITesting", DummyAPITesting)
     monkeypatch.setattr(api_testing_module, "TUIApp", DummyTUIApp)
     monkeypatch.setattr(api_testing_module, "set_console_level", _set_console_level)
@@ -107,6 +120,8 @@ def test_main_debug_mode_skips_tui(monkeypatch):
     assert state.get("suppressed") is None
     assert state.get("console_level") == api_testing_module.logging.DEBUG
     assert state.get("run_tests_called") is True
+    assert state["tester_kwargs"]["constraint_mining"] is True
+    assert state["run_kwargs"]["request_timeout_seconds"] == 15.0
 
 
 def test_main_non_debug_runs_tui(monkeypatch):
@@ -124,3 +139,13 @@ def test_main_non_debug_runs_tui(monkeypatch):
     assert state.get("suppressed") is True
     assert state.get("console_level") == api_testing_module.logging.INFO
     assert state.get("run_tests_called") is True
+
+
+def test_main_can_disable_constraint_mining(monkeypatch):
+    config = _base_config(True, constraint_mining=False)
+    args = _make_args()
+    state = _setup_common(monkeypatch, config, args)
+
+    api_testing_module.main()
+
+    assert state["tester_kwargs"]["constraint_mining"] is False

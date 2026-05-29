@@ -126,6 +126,10 @@ FIELD_DESCRIPTIONS: Dict[str, tuple[str, str]] = {
         "Debug mode",
         "When true, skip the TUI and print logs to the terminal.",
     ),
+    "run.constraint_mining": (
+        "Constraint mining",
+        "Generate static, dynamic, and combined constraint artifacts during the run. Disable for plain APIPilot output.",
+    ),
     "run.max_request_workers": (
         "Max request workers",
         "Maximum number of parallel threads used during test execution. Controls how many endpoint trees run at the same time.",
@@ -133,6 +137,10 @@ FIELD_DESCRIPTIONS: Dict[str, tuple[str, str]] = {
     "run.async_max_concurrent": (
         "Async max concurrent",
         "Maximum number of simultaneous async HTTP requests allowed at once per worker thread.",
+    ),
+    "run.request_timeout_seconds": (
+        "Request timeout seconds",
+        "Maximum time to wait for a live API response before recording a timeout.",
     ),
 }
 
@@ -171,8 +179,10 @@ def _build_summary_table(config: Dict[str, Any]) -> Table:
                 "run.header_mutation_ratio",
                 "run.async_mode",
                 "run.debug",
+                "run.constraint_mining",
                 "run.max_request_workers",
                 "run.async_max_concurrent",
+                "run.request_timeout_seconds",
             ],
         ),
     ]
@@ -447,6 +457,14 @@ def run_wizard(path: str, quick_mode: bool = False) -> Dict[str, Any]:
                 console=console,
             )
 
+            _, mining_help = FIELD_DESCRIPTIONS["run.constraint_mining"]
+            config["run"]["constraint_mining"] = _confirm_field(
+                "Constraint mining",
+                mining_help,
+                default=bool(config["run"]["constraint_mining"]),
+                console=console,
+            )
+
             _, mw_help = FIELD_DESCRIPTIONS["run.max_request_workers"]
             max_workers = _prompt_field(
                 "Max request workers",
@@ -464,6 +482,15 @@ def run_wizard(path: str, quick_mode: bool = False) -> Dict[str, Any]:
                 console=console,
             )
             config["run"]["async_max_concurrent"] = int(async_conc)
+
+            _, timeout_help = FIELD_DESCRIPTIONS["run.request_timeout_seconds"]
+            timeout_seconds = _prompt_field(
+                "Request timeout seconds",
+                timeout_help,
+                default=str(config["run"]["request_timeout_seconds"]),
+                console=console,
+            )
+            config["run"]["request_timeout_seconds"] = float(timeout_seconds)
             console.print()
 
         # ── HEADERS ─────────────────────────────────────────────
@@ -606,8 +633,10 @@ def _render_toml(config: Dict[str, Any]) -> str:
     lines.append(f"header_mutation_ratio = {_toml_value(run.get('header_mutation_ratio', 0.5))}")
     lines.append(f"async_mode = {_toml_value(run.get('async_mode', False))}")
     lines.append(f"debug = {_toml_value(run.get('debug', False))}")
+    lines.append(f"constraint_mining = {_toml_value(run.get('constraint_mining', True))}")
     lines.append(f"max_request_workers = {_toml_value(run.get('max_request_workers', 10))}")
     lines.append(f"async_max_concurrent = {_toml_value(run.get('async_max_concurrent', 20))}")
+    lines.append(f"request_timeout_seconds = {_toml_value(run.get('request_timeout_seconds', 300.0))}")
     lines.append("")
 
     return "\n".join(lines)
@@ -675,8 +704,10 @@ def _render_toml_with_comments(config: Dict[str, Any]) -> str:
     lines.append(f"header_mutation_ratio = {_toml_value(run.get('header_mutation_ratio', 0.5))}{_comment('run.header_mutation_ratio')}")
     lines.append(f"async_mode = {_toml_value(run.get('async_mode', False))}{_comment('run.async_mode')}")
     lines.append(f"debug = {_toml_value(run.get('debug', False))}{_comment('run.debug')}")
+    lines.append(f"constraint_mining = {_toml_value(run.get('constraint_mining', True))}{_comment('run.constraint_mining')}")
     lines.append(f"max_request_workers = {_toml_value(run.get('max_request_workers', 10))}{_comment('run.max_request_workers')}")
     lines.append(f"async_max_concurrent = {_toml_value(run.get('async_max_concurrent', 20))}{_comment('run.async_max_concurrent')}")
+    lines.append(f"request_timeout_seconds = {_toml_value(run.get('request_timeout_seconds', 300.0))}{_comment('run.request_timeout_seconds')}")
     lines.append("")
 
     return "\n".join(lines)

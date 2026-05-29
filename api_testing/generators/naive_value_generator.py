@@ -1,6 +1,7 @@
 import asyncio
 import hashlib
 import json
+import logging
 import os
 import random
 from typing import Dict, List, Optional, Set, Tuple
@@ -474,7 +475,28 @@ class NaiveValueGenerator:
             for chunk in chunks:
                 params = {**base_params, "test_datas": json.dumps(chunk, separators=(",", ":"), ensure_ascii=False, default=to_placeholder)}
                 chunk_results = self.semantic_oracle_judge.exec(**params)
-                all_judge_results.extend(chunk_results.dict().get("datas"))
+                if isinstance(chunk_results, str):
+                    try:
+                        cleaned = chunk_results.strip().strip("```json").strip("```").strip()
+                        parsed_dict = json.loads(cleaned)
+                        all_judge_results.extend(parsed_dict.get("datas", []))
+                    except Exception as e:
+                        try:
+                            import ast
+                            parsed_dict = ast.literal_eval(cleaned)
+                            if isinstance(parsed_dict, dict):
+                                all_judge_results.extend(parsed_dict.get("datas", []))
+                            else:
+                                raise ValueError("Parsed object is not a dictionary")
+                        except Exception as ast_err:
+                            import logging
+                            logging.error(f"Failed to parse chunk_results string: {e} (ast fallback also failed: {ast_err})")
+                elif hasattr(chunk_results, "model_dump"):
+                    all_judge_results.extend(chunk_results.model_dump().get("datas", []))
+                elif hasattr(chunk_results, "dict"):
+                    all_judge_results.extend(chunk_results.dict().get("datas", []))
+                elif isinstance(chunk_results, dict):
+                    all_judge_results.extend(chunk_results.get("datas", []))
             judge_results = all_judge_results
             original_map = {
                 int(item.get("idx")): item
@@ -766,7 +788,28 @@ class NaiveValueGenerator:
 
             all_judge_results = []
             for chunk_results in chunk_results_list:
-                all_judge_results.extend(chunk_results.dict().get("datas"))
+                if isinstance(chunk_results, str):
+                    try:
+                        cleaned = chunk_results.strip().strip("```json").strip("```").strip()
+                        parsed_dict = json.loads(cleaned)
+                        all_judge_results.extend(parsed_dict.get("datas", []))
+                    except Exception as e:
+                        try:
+                            import ast
+                            parsed_dict = ast.literal_eval(cleaned)
+                            if isinstance(parsed_dict, dict):
+                                all_judge_results.extend(parsed_dict.get("datas", []))
+                            else:
+                                raise ValueError("Parsed object is not a dictionary")
+                        except Exception as ast_err:
+                            import logging
+                            logging.error(f"Failed to parse chunk_results string: {e} (ast fallback also failed: {ast_err})")
+                elif hasattr(chunk_results, "model_dump"):
+                    all_judge_results.extend(chunk_results.model_dump().get("datas", []))
+                elif hasattr(chunk_results, "dict"):
+                    all_judge_results.extend(chunk_results.dict().get("datas", []))
+                elif isinstance(chunk_results, dict):
+                    all_judge_results.extend(chunk_results.get("datas", []))
 
             judge_results = all_judge_results
             original_map = {

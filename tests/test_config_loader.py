@@ -233,6 +233,8 @@ def test_run_debug_defaults_false(tmp_path, monkeypatch):
     config = load_config(str(path))
 
     assert config["run"]["debug"] is False
+    assert config["run"]["constraint_mining"] is True
+    assert config["run"]["request_timeout_seconds"] == 300.0
 
 
 def test_run_debug_allows_override_true(tmp_path, monkeypatch):
@@ -265,6 +267,8 @@ def test_run_debug_allows_override_true(tmp_path, monkeypatch):
     max_request_workers = 1
     async_max_concurrent = 1
     debug = true
+    constraint_mining = false
+    request_timeout_seconds = 15.0
     """
     path = tmp_path / "configurations.toml"
     _write_config(path, content)
@@ -272,6 +276,8 @@ def test_run_debug_allows_override_true(tmp_path, monkeypatch):
     config = load_config(str(path))
 
     assert config["run"]["debug"] is True
+    assert config["run"]["constraint_mining"] is False
+    assert config["run"]["request_timeout_seconds"] == 15.0
 
 
 def test_prompt_llm_override_inherits_common_provider(tmp_path):

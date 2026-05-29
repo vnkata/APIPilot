@@ -1,0 +1,31 @@
+[project]
+spec_path = "datasets/ohsome_20_endpoint.json"
+base_url = "https://api.ohsome.org/v1"
+base_title = "ohsome_apilot"
+
+[llm]
+provider = "azure_openai"
+model = "gpt-4.1-mini-2"
+temperature = 0.0
+
+[llm.azure_openai]
+api_key = "${AZURE_OPENAI_API_KEY}"
+endpoint = "${AZURE_OPENAI_ENDPOINT}"
+api_version = "2024-12-01-preview"
+
+[embedding]
+provider = "huggingface"
+model = "google/embeddinggemma-300m"
+use_half = false
+
+[run]
+num_generations = 1
+num_test_cases = 1
+mutation_ratio = 0.0
+header_mutation_ratio = 0.0
+async_mode = true
+debug = true
+constraint_mining = false
+max_request_workers = 2
+async_max_concurrent = 2
+request_timeout_seconds = 15.0

@@ -10,5 +10,6 @@
   },
   "[jsonc]": {
     "editor.defaultFormatter": "vscode.json-language-features"
-  }
+  },
+  "liveServer.settings.port": 5501
 }

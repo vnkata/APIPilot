@@ -55,6 +55,19 @@ class OpenAIModel(APITestingBaseLLMModel):
     # ========================
     def load_model(self, *args, **kwargs):
         self.api_key = self.api_key or os.getenv("OPENAI_API_KEY")
+        if self.api_key:
+            self.api_key = self.api_key.strip()
+            if self.api_key.startswith('"') and self.api_key.endswith('"'):
+                self.api_key = self.api_key[1:-1]
+            elif self.api_key.startswith("'") and self.api_key.endswith("'"):
+                self.api_key = self.api_key[1:-1]
+            if self.api_key.startswith("OPENAI_API_KEY="):
+                self.api_key = self.api_key.split("OPENAI_API_KEY=")[1].strip()
+                if self.api_key.startswith('"') and self.api_key.endswith('"'):
+                    self.api_key = self.api_key[1:-1]
+                elif self.api_key.startswith("'") and self.api_key.endswith("'"):
+                    self.api_key = self.api_key[1:-1]
+
         if not self.api_key:
             raise ValueError(
                 "OpenAI API key is required. Set OPENAI_API_KEY or pass api_key."
@@ -172,8 +185,13 @@ class OpenAIModel(APITestingBaseLLMModel):
                 parsed = schema.model_validate_json(text)
                 return parsed, 0
             except Exception:
-                logging.error("Async JSON parse failed")
-                return text, 0
+                try:
+                    cleaned = text.strip("```json").strip("```").strip()
+                    parsed = schema.model_validate_json(cleaned)
+                    return parsed, 0
+                except Exception as e:
+                    logging.error(f"Async JSON parse failed: {e}")
+                    return text, 0
 
         return text, 0
 

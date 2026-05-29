@@ -165,3 +165,36 @@ def test_exec_async_closes_sender_when_no_data():
 
     assert result == []
     assert closed["value"] is True
+
+
+def test_executor_passes_request_timeout_to_async_sender(monkeypatch):
+    captured = {}
+
+    class DummySender:
+        def __init__(self, **kwargs):
+            captured.update(kwargs)
+
+    monkeypatch.setattr("api_testing.generators.executor.AsyncRequestor", DummySender)
+    monkeypatch.setattr(
+        "api_testing.generators.executor.AsyncRequestBatch",
+        lambda sender, max_concurrent: object(),
+    )
+
+    operation = SimpleNamespace(
+        minetypes=["application/json"],
+        request_body={"application/json": {}},
+        uuid="op-timeout",
+        endpoint_path="/issues",
+        http_method="POST",
+        parameters={},
+    )
+    Executor(
+        api_url="http://localhost:30000",
+        strategy=Strategy.NAIVE_VALUE,
+        operation=operation,
+        configuration=DummyConfiguration(),
+        use_async=True,
+        request_timeout_seconds=15.0,
+    )
+
+    assert captured["timeout_seconds"] == 15.0

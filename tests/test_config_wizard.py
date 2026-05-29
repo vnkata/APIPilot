@@ -15,6 +15,8 @@ def test_render_toml_includes_debug_flag() -> None:
     rendered = _render_toml(DEFAULT_CONFIG)
 
     assert "debug = false" in rendered
+    assert "constraint_mining = true" in rendered
+    assert "request_timeout_seconds = 300.0" in rendered
 
 
 def test_render_toml_with_comments_includes_debug_flag() -> None:
@@ -24,6 +26,7 @@ def test_render_toml_with_comments_includes_debug_flag() -> None:
         "debug = false  # When true, skip the TUI and print logs to the terminal."
         in rendered
     )
+    assert "constraint_mining = true  # Generate static, dynamic, and combined constraint artifacts during the run." in rendered
 
 
 def test_summary_table_includes_debug_label_and_value() -> None:
@@ -34,6 +37,7 @@ def test_summary_table_includes_debug_label_and_value() -> None:
     output = console.export_text()
 
     assert "Debug mode" in output
+    assert "Constraint mining" in output
     assert "False" in output
 
 

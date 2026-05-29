@@ -70,8 +70,10 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "header_mutation_ratio": 0.5,
         "async_mode": False,
         "debug": False,
+        "constraint_mining": True,
         "max_request_workers": 10,
         "async_max_concurrent": 20,
+        "request_timeout_seconds": 300.0,
     },
     "headers": {},
 }
