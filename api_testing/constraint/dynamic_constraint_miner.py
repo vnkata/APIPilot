@@ -68,9 +68,10 @@ class DynamicConstraintMiner:
     INVARIANTS_FILENAME = "invariants.csv"
     MAIN_CACHE = "dynamic_constraint_miner.json"
 
-    def __init__(self, spec_parser=None, model=None, cache_dir=None):
+    def __init__(self, spec_parser=None, model=None, cache_dir=None, prompt_factory=None):
         self.spec_parser = spec_parser
         self.model = model
+        self.prompt_factory = prompt_factory
         self.cache_dir = Path(cache_dir or '.')
         self.cache_file = self.cache_dir / self.MAIN_CACHE
         self.logger = getLogger(__name__)
@@ -83,7 +84,11 @@ class DynamicConstraintMiner:
         self.extractor = InvariantExtractor(cache_dir=self.cache_dir)
         self._invariant_kinds = self._load_invariant_kinds()
 
-        self.classifier = InvariantClassification(llm=self.model)
+        self.classifier = (
+            self.prompt_factory.create(InvariantClassification)
+            if self.prompt_factory
+            else InvariantClassification(llm=self.model)
+        )
         
     @staticmethod
     def _load_invariant_kinds() -> dict[str, str]:
@@ -323,7 +328,7 @@ The return fields refer to the path {params['response_container_path'] or "__ROO
                     for k, v in operation.parameters.items()
                 ]),
                 "responses": "\n".join([
-                    f"- {k.replace("[]", "")} : {ItemProperties.from_dict(v).to_human_readable()}"
+                    f"- {k.replace('[]', '')} : {ItemProperties.from_dict(v).to_human_readable()}"
                     for k, v in flatten_responses.items()
                 ]),
                 "invariants": "\n".join(data)

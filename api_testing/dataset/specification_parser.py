@@ -35,7 +35,19 @@ class SpecificationParser:
         """
         Extract the server URL from the specification file.
         """
-        return self.resolving_parser.specification.get('servers', {}).get("0", {}).get('url', None)
+        servers = self.resolving_parser.specification.get("servers")
+
+        if isinstance(servers, list) and servers:
+            return servers[0].get("url")
+
+        if isinstance(servers, dict):
+            if "0" in servers and isinstance(servers.get("0"), dict):
+                return servers.get("0", {}).get("url")
+            for value in servers.values():
+                if isinstance(value, dict) and "url" in value:
+                    return value.get("url")
+
+        return None
 
     def get_api_title(self) -> str:
         """

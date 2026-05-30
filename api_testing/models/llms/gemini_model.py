@@ -1,4 +1,5 @@
 import logging
+import os
 import random
 import re
 from api_testing.models.base_model import APITestingBaseLLMModel
@@ -72,10 +73,10 @@ class GeminiModel(APITestingBaseLLMModel):
             or default_gemini_model
         )
 
-        # Get API key from key handler if not provided
-        self.api_key = api_key
-        self.project = project
-        self.location = location
+        # Get API key and Vertex AI settings from the environment if not provided.
+        self.api_key = api_key or os.getenv("GOOGLE_API_KEY")
+        self.project = project or os.getenv("GOOGLE_CLOUD_PROJECT")
+        self.location = location or os.getenv("GOOGLE_CLOUD_LOCATION")
         self.use_vertexai = False
         if temperature < 0:
             raise ValueError("Temperature must be >= 0.")
@@ -206,7 +207,10 @@ class GeminiModel(APITestingBaseLLMModel):
             return response.text, 0
 
     async def a_generate(
-        self, prompt: str, schema: Optional[BaseModel] = None
+        self,
+        prompt: Union[str, List],
+        system_prompt=None,
+        schema: Optional[BaseModel] = None,
     ) -> str:
         """Asynchronously generates text from a prompt.
 
@@ -217,27 +221,40 @@ class GeminiModel(APITestingBaseLLMModel):
         Returns:
             Generated text response or structured output as Pydantic model
         """
+        configure_params = {
+            "safety_settings": self.model_safety_settings,
+            "temperature": self.temperature,
+            "thinking_config": types.ThinkingConfig(
+                thinking_budget=0
+            ),
+        }
+        if system_prompt:
+            configure_params["system_instruction"] = system_prompt
+
         if schema is not None:
             response = await self.client.aio.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
-                config=types.GenerateContentConfig(
-                    response_mime_type="application/json",
-                    response_schema=schema,
-                    safety_settings=self.model_safety_settings,
-                    temperature=self.temperature,
-                ),
+                config=types.GenerateContentConfig(**configure_params),
             )
-            return response.parsed, 0
+            cleaned = re.sub(r"^```json\s*|\s*```$", "", response.text.strip(), flags=re.MULTILINE)
+            usage = getattr(response, "usage_metadata", None)
+            if usage:
+                prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                completion_tokens = getattr(usage, "candidates_token_count", 0)
+                add_usage(prompt_tokens, completion_tokens)
+            return schema.model_validate_json(cleaned), 0
         else:
             response = await self.client.aio.models.generate_content(
                 model=self.model_name,
                 contents=prompt,
-                config=types.GenerateContentConfig(
-                    safety_settings=self.model_safety_settings,
-                    temperature=self.temperature,
-                ),
+                config=types.GenerateContentConfig(**configure_params),
             )
+            usage = getattr(response, "usage_metadata", None)
+            if usage:
+                prompt_tokens = getattr(usage, "prompt_token_count", 0)
+                completion_tokens = getattr(usage, "candidates_token_count", 0)
+                add_usage(prompt_tokens, completion_tokens)
             return response.text, 0
 
     def get_model_name(self) -> str:

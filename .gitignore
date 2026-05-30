@@ -15,3 +15,7 @@ venv/
 tools/
 tools/**/*
 .hypothesis/
+.config/opencode
+opencode.json
+GEMINI.md
+.gemini

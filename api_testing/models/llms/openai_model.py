@@ -54,7 +54,7 @@ class OpenAIModel(APITestingBaseLLMModel):
     # Load model / client
     # ========================
     def load_model(self, *args, **kwargs):
-        self.api_key = os.getenv("OPENAI_API_KEY")
+        self.api_key = self.api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError(
                 "OpenAI API key is required. Set OPENAI_API_KEY or pass api_key."

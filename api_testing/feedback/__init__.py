@@ -23,10 +23,15 @@ def normalize_error(text):
 
 class FeedbackAnalyzer:
 
-    def __init__(self, model=None, embed=None, cache_dir=None):
+    def __init__(self, model=None, embed=None, cache_dir=None, prompt_factory=None):
 
         self.model = model
-        self.feedback_eval = FeedBackJudge(self.model)
+        self.prompt_factory = prompt_factory
+        self.feedback_eval = (
+            prompt_factory.create(FeedBackJudge)
+            if prompt_factory
+            else FeedBackJudge(self.model)
+        )
 
         self.feedback = []
 

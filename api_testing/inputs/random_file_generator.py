@@ -1,9 +1,28 @@
+import io
 import random
 from typing import Any, Literal, Callable
 from faker import Faker
 
 from api_testing.inputs.fuzz_strategy import FuzzStrategy
 from .random_generator import RandomGenerator
+
+
+def _pil_image_generator(width=800, height=200, image_format="PNG"):
+    try:
+        from PIL import Image, ImageDraw, ImageFont
+        img = Image.new("RGB", (width, height), color=(73, 109, 137))
+        d = ImageDraw.Draw(img)
+        text = "Sample Generated Image"
+        try:
+            font = ImageFont.truetype("arial.ttf", 20)
+        except Exception:
+            font = ImageFont.load_default()
+        d.text((width // 2 - 60, height // 2 - 10), text, fill=(255, 255, 255), font=font)
+        buf = io.BytesIO()
+        img.save(buf, format=image_format)
+        return buf.getvalue()
+    except Exception:
+        return b""
 
 
 class RandomFileGenerator(RandomGenerator):
@@ -53,49 +72,81 @@ class RandomFileGenerator(RandomGenerator):
         self.fake = Faker()
         self._register_providers()
 
-        # map type → generator function
         self._generators: dict[str, Callable[[], tuple[str, bytes, str]]] = {
             t: lambda t=t: self._generate_file(t)
             for t in self.SUPPORTED_TYPES
         }
 
-    # --------------------------
-    # Provider registration
-    # --------------------------
     def _register_providers(self):
-        providers = [
-            ("faker_file.providers.pdf_file", "PdfFileProvider"),
-            ("faker_file.providers.docx_file", "DocxFileProvider"),
-            ("faker_file.providers.txt_file", "TxtFileProvider"),
-            ("faker_file.providers.png_file", "PngFileProvider"),
-            ("faker_file.providers.jpeg_file", "JpegFileProvider"),
-            ("faker_file.providers.bmp_file", "BmpFileProvider"),
-        ]
+        pass
 
-        for module, cls in providers:
-            try:
-                mod = __import__(module, fromlist=[cls])
-                provider_cls = getattr(mod, cls)
-                self.fake.add_provider(provider_cls)
-            except Exception:
-                # fallback silently but safe
-                continue
-
-    # --------------------------
-    # Core generator
-    # --------------------------
-    def _generate_file(self, file_type: str) -> tuple[str, bytes, str]:        
+    def _generate_file(self, file_type: str) -> tuple[str, bytes, str]:
         method_name = f"{file_type}_file"
 
-        if hasattr(self.fake, method_name):
+        try:
             content = getattr(self.fake, method_name)(raw=True)
-        else:
-            # fallback nếu thiếu faker-file
-            content = self.rand.randbytes(1024)
+        except Exception:
+            content = self._fallback_generate(file_type)
 
         filename = f"{self.fake.uuid4()}{self.EXTENSIONS[file_type]}"
         content_type = self.MIME_TYPES[file_type]
         return (filename, content, content_type)
+
+    def _fallback_generate(self, file_type: str) -> bytes:
+        if file_type == "txt":
+            return self.fake.text(max_nb_chars=500).encode("utf-8")
+        elif file_type == "png":
+            return _pil_image_generator(image_format="PNG")
+        elif file_type == "jpeg":
+            return _pil_image_generator(image_format="JPEG")
+        elif file_type == "bmp":
+            return _pil_image_generator(image_format="BMP")
+        elif file_type == "pdf":
+            return self._fallback_pdf()
+        elif file_type == "docx":
+            return self._fallback_docx()
+        return self.rand.randbytes(1024)
+
+    def _fallback_pdf(self) -> bytes:
+        try:
+            from faker import Faker as FakeFaker
+            f = FakeFaker()
+            try:
+                from reportlab.pdfgen import canvas
+                from reportlab.lib.pagesizes import letter
+                pdf_buf = io.BytesIO()
+                c = canvas.Canvas(pdf_buf, pagesize=letter)
+                text_obj = c.beginText(50, 742)
+                text_obj.setFont("Helvetica", 12)
+                for line in f.text(max_nb_chars=500).split("\n"):
+                    text_obj.textLine(line)
+                c.drawText(text_obj)
+                c.save()
+                return pdf_buf.getvalue()
+            except Exception:
+                pass
+            try:
+                from faker_file.providers.pdf_file.generators.pil_generator import PilPdfGenerator
+                gen = PilPdfGenerator(generator=f)
+                content = gen.generate("Sample PDF content", {}, f)
+                return content
+            except Exception:
+                pass
+            return self.rand.randbytes(512)
+        except Exception:
+            return b"PDF content"
+
+    def _fallback_docx(self) -> bytes:
+        try:
+            buf = io.BytesIO()
+            from docx import Document
+            doc = Document()
+            doc.add_heading("Sample Document", 0)
+            doc.add_paragraph(self.fake.text(max_nb_chars=500))
+            doc.save(buf)
+            return buf.getvalue()
+        except Exception:
+            return b"Docx content"
 
     # --------------------------
     # Public API

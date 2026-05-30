@@ -8,7 +8,6 @@ import logging
 import json
 from typing import Optional, List, Union, Tuple, Dict, Any
 from pydantic import BaseModel
-import litellm
 
 from tenacity import (
     retry,
@@ -21,6 +20,16 @@ from tenacity import (
 from api_testing.models.base_model import APITestingBaseLLMModel
 from api_testing.utils.llm_tracker import add_usage
 from api_testing.utils import remove_think_tags
+
+
+def _import_litellm():
+    try:
+        import litellm
+    except ImportError as exc:
+        raise ImportError(
+            "LiteLLMModel requires the 'litellm' package. Install it before using provider='litellm'."
+        ) from exc
+    return litellm
 
 
 def log_retry_error(retry_state: RetryCallState):
@@ -68,13 +77,6 @@ class LiteLLMModel(APITestingBaseLLMModel):
         self.base_url = base_url
         self.max_tokens = max_tokens
         self.extra_kwargs = kwargs
-
-        # Set API key if provided
-        if self.api_key:
-            # Extract provider from model name for API key setting
-            provider = self._get_provider_from_model(self.model_name)
-            if provider:
-                litellm.api_key = self.api_key
 
         super().__init__(self.model_name, **kwargs)
 
@@ -127,6 +129,9 @@ class LiteLLMModel(APITestingBaseLLMModel):
             Tuple of (response, cost_estimate)
         """
         messages = self._prepare_messages(prompt, system_prompt)
+        litellm = _import_litellm()
+        if self.api_key:
+            litellm.api_key = self.api_key
 
         # Prepare call arguments
         call_kwargs = {
@@ -200,6 +205,9 @@ class LiteLLMModel(APITestingBaseLLMModel):
             Tuple of (response, cost_estimate)
         """
         messages = self._prepare_messages(prompt, system_prompt)
+        litellm = _import_litellm()
+        if self.api_key:
+            litellm.api_key = self.api_key
 
         # Prepare call arguments
         call_kwargs = {

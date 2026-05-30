@@ -25,26 +25,34 @@ class ConstraintMiner:
         spec_parser: Any,
         model: Optional[Any] = None,
         embedding_model: Optional[Any] = None,
-        cache_dir: Optional[str] = None
+        cache_dir: Optional[str] = None,
+        prompt_factory: Optional[Any] = None,
     ) -> None:
         self.spec_parser = spec_parser
         self.model = model
         self.embedder = embedding_model
         self.project_dir = cache_dir
+        self.prompt_factory = prompt_factory
         self.staic_miner = StaticConstraintMiner(
             spec_parser=self.spec_parser,
             model=self.model,
             embedding_model=self.embedder,
-            cache_dir=self.project_dir
+            cache_dir=self.project_dir,
+            prompt_factory=self.prompt_factory,
         )
         self.dynamic_miner = DynamicConstraintMiner(
             spec_parser=self.spec_parser,
             model=self.model,
-            cache_dir=self.project_dir
+            cache_dir=self.project_dir,
+            prompt_factory=self.prompt_factory,
         )
         self.operations = self.spec_parser.operations
 
-        self.arbitration = ConstraintArbitration(llm=self.model)
+        self.arbitration = (
+            self.prompt_factory.create(ConstraintArbitration)
+            if self.prompt_factory
+            else ConstraintArbitration(llm=self.model)
+        )
     def static_mining(self):
         self.static_constraints = self.staic_miner.mining()
         return self.static_constraints
@@ -128,7 +136,7 @@ class ConstraintMiner:
                         for k, v in operation.parameters.items()
                     ]),
                     "responses": "\n".join([
-                        f"- {k.replace("[]", "")} : {ItemProperties.from_dict(v).to_human_readable()}"
+                        f"- {k.replace('[]', '')} : {ItemProperties.from_dict(v).to_human_readable()}"
                         for k, v in flatten_responses.items()
                     ]),
                     "constraints": "\n".join(data)

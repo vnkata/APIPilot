@@ -42,7 +42,7 @@ class ConfigurationParser:
     It supports both heuristic-based and GPT-assisted parsing strategies.
     """
 
-    def __init__(self, spec_parser=None, model=None, cache_dir=None):
+    def __init__(self, spec_parser=None, model=None, cache_dir=None, prompt_factory=None):
         """
         Initialize the ConfigurationParser.
 
@@ -53,11 +53,16 @@ class ConfigurationParser:
         """
         self.spec_parser = spec_parser
         self.model = model
+        self.prompt_factory = prompt_factory
         self.configurations: List[OperationConfiguration] = []
         self.cache_file = os.path.join(cache_dir, CACHE_FILE_NAME) if cache_dir else None
         if cache_dir and not os.path.exists(cache_dir):
             os.makedirs(cache_dir)
-        self.parameter_random_mapper = ParameterRandomMapper(llm=model)
+        self.parameter_random_mapper = (
+            prompt_factory.create(ParameterRandomMapper)
+            if prompt_factory
+            else ParameterRandomMapper(llm=model)
+        )
         self.logger = getLogger(__name__)
         self.load_or_initialize()
 
@@ -172,7 +177,7 @@ class ConfigurationParser:
     def load_or_initialize(self):
         """Load configurations from cache or initialize by parsing specifications."""
         if self.cache_file and os.path.exists(self.cache_file):
-            self.logger.info(f"Loading Configuration from cache: {self.cache_file}")
+            self.logger.debug(f"Loading Configuration from cache: {self.cache_file}")
             try:
                 with open(self.cache_file, "r", encoding="utf-8") as file:
                     data = json.load(file)
@@ -182,7 +187,7 @@ class ConfigurationParser:
                 self.parse()
                 self.json_output()
         else:
-            self.logger.info("Cache file not found. Initializing Configuration...")
+            self.logger.debug("Cache file not found. Initializing Configuration...")
             self.parse()
             self.json_output()
     
@@ -374,7 +379,7 @@ class ConfigurationParser:
         try:
             with open(self.cache_file, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=4, default=str)
-            self.logger.info(f"Configuration saved to: {self.cache_file}")
+            self.logger.debug(f"Configuration saved to: {self.cache_file}")
         except IOError as e:
             self.logger.error(f"Failed to save configuration: {e}")
 
@@ -412,6 +417,6 @@ class ConfigurationParser:
         try:
             with open(filepath, "w", encoding="utf-8") as f:
                 json.dump(output, f, indent=4, default=str)
-            self.logger.info(f"Debug log exported to: {filepath}")
+            self.logger.debug(f"Debug log exported to: {filepath}")
         except IOError as e:
             self.logger.error(f"Failed to export debug log: {e}")
