@@ -7,7 +7,7 @@ const nullableString = z
 const limit = z.coerce.number().int().min(1).max(200).catch(25)
 const offset = z.coerce.number().int().min(0).catch(0)
 const sortOrder = z.enum(['asc', 'desc']).catch('asc')
-const overviewView = z.enum(['classic', 'command']).catch('classic')
+const overviewView = z.enum(['classic', 'command']).catch('command')
 const operationsView = z.enum(['table', 'canvas', 'cards']).catch('table')
 const graphView = z.enum(['explorer', 'journey', 'spatial']).catch('explorer')
 const focusMode = z.enum(['all', 'neighborhood', 'path']).catch('all')
@@ -15,7 +15,8 @@ const motionMode = z.enum(['auto', 'reduced', 'off']).catch('auto')
 const constraintsView = z.enum(['workbench', 'table', 'matrix']).catch('workbench')
 const constraintDetailView = z.enum(['readable', 'raw']).catch('readable')
 const matrixBy = z.enum(['source', 'kind', 'readiness']).catch('source')
-const artifactsView = z.enum(['classic', 'workbench']).catch('classic')
+const artifactsView = z.enum(['classic', 'workbench']).catch('workbench')
+const artifactMode = z.enum(['compare', 'raw', 'summary']).optional().catch(undefined)
 const booleanFlag = z
   .preprocess((value) => value === true || value === 'true' || value === '1', z.boolean())
   .catch(false)
@@ -105,12 +106,18 @@ export const constraintsSearchSchema = z.object({
   sourceType: nullableString,
 })
 
-export const artifactsSearchSchema = z.object({
-  artifactId: nullableString,
-  artifactsView,
-  compare: booleanFlag,
-  raw: booleanFlag,
-})
+export const artifactsSearchSchema = z
+  .object({
+    artifactId: nullableString,
+    artifactMode,
+    artifactsView,
+    compare: booleanFlag,
+    raw: booleanFlag,
+  })
+  .transform((search) => ({
+    ...search,
+    artifactMode: search.artifactMode ?? (search.compare ? 'compare' : search.raw ? 'raw' : 'summary'),
+  }))
 
 export const reportsSearchSchema = z.object({
   groupBy: nullableString,

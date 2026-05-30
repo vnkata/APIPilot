@@ -7,15 +7,19 @@ import { ArtifactsPage } from './ArtifactsPage'
 describe('ArtifactsPage', () => {
   it('renders artifact catalog and lazy raw viewer for selected artifact', async () => {
     const user = userEvent.setup()
+    window.history.replaceState({}, '', '/runs/Run%20A/artifacts?artifactId=specification&raw=true')
     renderWithProviders(
       <ArtifactsPage runName="Run A" search={{ artifactId: 'specification', compare: false, raw: true }} />,
     )
 
+    expect(await screen.findByRole('heading', { name: /artifact workbench/i })).toBeInTheDocument()
     expect((await screen.findAllByText('specification')).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/raw_json/i).length).toBeGreaterThan(0)
 
     await user.click(screen.getByRole('button', { name: /summary/i }))
     expect(screen.getAllByText(/summary/i).length).toBeGreaterThan(0)
+    expect(window.location.search).toContain('artifactMode=summary')
+    expect(window.location.search).not.toContain('raw=true')
   })
 
   it('renders compare mode and exports only visible sanitized artifact data', async () => {
@@ -30,6 +34,10 @@ describe('ArtifactsPage', () => {
     expect(await screen.findByRole('dialog', { name: /export snapshot/i })).toBeInTheDocument()
     expect(screen.getByLabelText(/export preview/i)).toHaveTextContent('specification')
     expect(screen.getByLabelText(/export preview/i)).not.toHaveTextContent('test-response-token')
+    await user.click(screen.getByRole('checkbox', { name: /include visible bodies/i }))
+    expect(screen.getByRole('button', { name: /download json/i })).toBeDisabled()
+    await user.click(screen.getByRole('checkbox', { name: /reviewed the risk/i }))
+    expect(screen.getByRole('button', { name: /download json/i })).toBeEnabled()
   })
 
   it('renders raw CSV artifacts as a scan-friendly table', async () => {
@@ -46,7 +54,7 @@ describe('ArtifactsPage', () => {
     renderWithProviders(
       <ArtifactsPage
         runName="Run A"
-        search={{ artifactId: 'specification', artifactsView: 'workbench', compare: false, raw: false }}
+        search={{ artifactId: 'specification', artifactMode: 'summary', artifactsView: 'workbench', compare: false, raw: false }}
       />,
     )
 

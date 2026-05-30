@@ -14,6 +14,7 @@ import ViewCompactIcon from '@mui/icons-material/ViewCompact'
 import {
   AppBar,
   Box,
+  Chip,
   Divider,
   Drawer,
   IconButton,
@@ -34,14 +35,19 @@ import { useAppDispatch, useAppSelector } from './hooks'
 import {
   selectWorkspacePreferences,
   setSidebarCollapsed,
+  setTableDensity,
   setThemeMode,
 } from '../features/workspace-preferences/workspacePreferencesSlice'
 import { BackendHealthChip } from '../features/health/BackendHealthChip'
+import { ProductTourHost } from '../features/product-tour/ProductTourHost'
+import { TourHelpMenu } from '../features/product-tour/TourHelpMenu'
+import { TOUR_ANCHORS, tourAnchor } from '../features/product-tour/tourAnchors'
 import { encodeRoutePart } from '../shared/lib/format'
 import { navigateInApp } from '../shared/lib/navigation'
 import { AppLink } from '../shared/ui/AppLink'
 
-const drawerWidth = 272
+const drawerWidthExpanded = 272
+const drawerWidthCollapsed = 72
 
 type NavItem = {
   href: string
@@ -80,7 +86,15 @@ function isNavItemSelected(pathname: string, href: string) {
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
-function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
+function SidebarContent({
+  collapsed = false,
+  onNavigate,
+  showCollapseControl = true,
+}: {
+  collapsed?: boolean
+  onNavigate?: () => void
+  showCollapseControl?: boolean
+}) {
   const { pathname } = useLocation()
   const runName = extractRunName(pathname)
   const preferences = useAppSelector(selectWorkspacePreferences)
@@ -89,54 +103,113 @@ function SidebarContent({ onNavigate }: { onNavigate?: () => void }) {
 
   return (
     <Stack sx={{ height: '100%' }}>
-      <Box sx={{ p: 2 }}>
-        <Typography sx={{ fontWeight: 800 }} variant="h3">
-          APIPilot
-        </Typography>
-        <Typography color="text.secondary" variant="caption">
-          Artifact query workspace
-        </Typography>
+      <Box
+        sx={{
+          display: 'flex',
+          justifyContent: collapsed ? 'center' : 'flex-start',
+          minHeight: collapsed ? 64 : 'auto',
+          p: collapsed ? 1.25 : 2,
+        }}
+        {...tourAnchor(TOUR_ANCHORS.appSidebar)}
+      >
+        {collapsed ? (
+          <Box
+            aria-label="APIPilot artifact workspace"
+            sx={(theme) => ({
+              alignItems: 'center',
+              bgcolor: theme.apiTesting.httpMethod.GET.bg,
+              border: '1px solid',
+              borderColor: theme.apiTesting.httpMethod.GET.border,
+              borderRadius: 1.25,
+              color: theme.apiTesting.httpMethod.GET.fg,
+              display: 'flex',
+              fontWeight: 900,
+              height: 40,
+              justifyContent: 'center',
+              width: 40,
+            })}
+          >
+            AP
+          </Box>
+        ) : (
+          <Box sx={{ minWidth: 0 }}>
+            <Typography sx={{ fontWeight: 800 }} variant="h3">
+              APIPilot
+            </Typography>
+            <Typography color="text.secondary" variant="caption">
+              Artifact Command Center
+            </Typography>
+          </Box>
+        )}
       </Box>
       <Divider />
       <List dense sx={{ flex: 1, px: 1 }}>
         {items.map((item) => {
           const selected = isNavItemSelected(pathname, item.href)
           return (
-            <ListItemButton
-              aria-current={selected ? 'page' : undefined}
-              key={item.href}
-              onClick={() => {
-                navigateInApp(item.href)
-                onNavigate?.()
-              }}
-              selected={selected}
-              sx={{ borderRadius: 1, mb: 0.5 }}
-            >
-              <ListItemIcon sx={{ minWidth: 36 }}>{item.icon}</ListItemIcon>
-              <ListItemText primary={item.label} />
-            </ListItemButton>
+            <Tooltip key={item.href} placement="right" title={collapsed ? item.label : ''}>
+              <ListItemButton
+                aria-current={selected ? 'page' : undefined}
+                onClick={() => {
+                  navigateInApp(item.href)
+                  onNavigate?.()
+                }}
+                selected={selected}
+                sx={{
+                  borderRadius: 1,
+                  justifyContent: collapsed ? 'center' : 'flex-start',
+                  mb: 0.5,
+                  minHeight: 42,
+                  px: collapsed ? 1 : 1.25,
+                }}
+              >
+                <ListItemIcon
+                  sx={{
+                    color: 'inherit',
+                    justifyContent: 'center',
+                    minWidth: collapsed ? 0 : 36,
+                  }}
+                >
+                  {item.icon}
+                </ListItemIcon>
+                {collapsed ? null : (
+                  <ListItemText
+                    primary={item.label}
+                    slotProps={{ primary: { noWrap: true, variant: 'body2' } }}
+                  />
+                )}
+              </ListItemButton>
+            </Tooltip>
           )
         })}
       </List>
-      <Divider />
-      <Stack spacing={1} sx={{ p: 1.5 }}>
-        <Tooltip title="Toggle theme mode">
-          <IconButton
-            aria-label="Toggle theme mode"
-            onClick={() => dispatch(setThemeMode(preferences.themeMode === 'dark' ? 'light' : 'dark'))}
+      {showCollapseControl ? (
+        <>
+          <Divider />
+          <Stack
+            direction={collapsed ? 'column' : 'row'}
+            spacing={1}
+            sx={{
+              justifyContent: collapsed ? 'center' : 'space-between',
+              p: 1.5,
+            }}
           >
-            {preferences.themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
-          </IconButton>
-        </Tooltip>
-        <Tooltip title="Collapse sidebar">
-          <IconButton
-            aria-label="Collapse sidebar"
-            onClick={() => dispatch(setSidebarCollapsed(!preferences.sidebarCollapsed))}
-          >
-            <MenuIcon />
-          </IconButton>
-        </Tooltip>
-      </Stack>
+            {!collapsed ? (
+              <Typography color="text.secondary" variant="caption">
+                Workspace
+              </Typography>
+            ) : null}
+            <Tooltip title={preferences.sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}>
+              <IconButton
+                aria-label={preferences.sidebarCollapsed ? 'Expand sidebar' : 'Collapse sidebar'}
+                onClick={() => dispatch(setSidebarCollapsed(!preferences.sidebarCollapsed))}
+              >
+                <MenuIcon />
+              </IconButton>
+            </Tooltip>
+          </Stack>
+        </>
+      ) : null}
     </Stack>
   )
 }
@@ -146,9 +219,15 @@ export function AppShell() {
   const theme = useTheme()
   const desktop = useMediaQuery(theme.breakpoints.up('lg'))
   const preferences = useAppSelector(selectWorkspacePreferences)
-  const drawerVisible = desktop && !preferences.sidebarCollapsed
+  const dispatch = useAppDispatch()
+  const drawerWidth = desktop
+    ? preferences.sidebarCollapsed
+      ? drawerWidthCollapsed
+      : drawerWidthExpanded
+    : 0
   const { pathname } = useLocation()
   const runName = extractRunName(pathname)
+  const densityLabel = preferences.tableDensity === 'compact' ? 'Compact density' : 'Comfortable density'
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -157,14 +236,16 @@ export function AppShell() {
         elevation={0}
         position="fixed"
         sx={{
+          backgroundImage: theme.apiTesting.gradient.topBar,
           borderBottom: '1px solid',
-          borderColor: 'divider',
-          ml: drawerVisible ? `${drawerWidth}px` : 0,
-          width: drawerVisible ? `calc(100% - ${drawerWidth}px)` : '100%',
+          borderColor: theme.apiTesting.border.default,
+          backdropFilter: 'blur(16px)',
+          ml: drawerWidth ? `${drawerWidth}px` : 0,
+          width: drawerWidth ? `calc(100% - ${drawerWidth}px)` : '100%',
         }}
       >
         <Toolbar variant="dense">
-          {!drawerVisible ? (
+          {!desktop ? (
             <IconButton
               aria-label="Open navigation"
               edge="start"
@@ -174,18 +255,53 @@ export function AppShell() {
               <MenuIcon />
             </IconButton>
           ) : null}
-          <Stack direction="row" spacing={1} sx={{ alignItems: 'baseline', minWidth: 0 }}>
-            <Typography noWrap sx={{ fontWeight: 700 }}>
-              {runName ?? 'Run catalog'}
-            </Typography>
-            {runName ? (
-              <Typography color="text.secondary" noWrap variant="caption">
-                query-only local artifact workspace
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', minWidth: 0 }}>
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ alignItems: 'center', minWidth: 0 }}
+              {...tourAnchor(TOUR_ANCHORS.appRunContext)}
+            >
+              <Chip label="APIPilot" size="small" variant="outlined" />
+              <Typography noWrap sx={{ fontWeight: 700, minWidth: 0 }}>
+                {runName ?? 'Run catalog'}
               </Typography>
-            ) : null}
+              {runName ? (
+                <Typography color="text.secondary" noWrap variant="caption">
+                  Artifact Command Center
+                </Typography>
+              ) : null}
+            </Stack>
           </Stack>
           <Box sx={{ flex: 1 }} />
-          <BackendHealthChip />
+          <Box {...tourAnchor(TOUR_ANCHORS.appDensityControl)}>
+            <Tooltip title={densityLabel}>
+              <IconButton
+                aria-label="Toggle table density"
+                onClick={() =>
+                  dispatch(
+                    setTableDensity(preferences.tableDensity === 'compact' ? 'comfortable' : 'compact'),
+                  )
+                }
+                size="small"
+              >
+                <ViewCompactIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
+          <Tooltip title="Toggle theme mode">
+            <IconButton
+              aria-label="Toggle theme mode"
+              onClick={() => dispatch(setThemeMode(preferences.themeMode === 'dark' ? 'light' : 'dark'))}
+              size="small"
+            >
+              {preferences.themeMode === 'dark' ? <LightModeIcon fontSize="small" /> : <DarkModeIcon fontSize="small" />}
+            </IconButton>
+          </Tooltip>
+          <Box {...tourAnchor(TOUR_ANCHORS.appBackendHealth)}>
+            <BackendHealthChip />
+          </Box>
+          <TourHelpMenu pathname={pathname} />
           <Box sx={{ width: 12 }} />
           <AppLink href="/runs">Runs</AppLink>
         </Toolbar>
@@ -198,15 +314,15 @@ export function AppShell() {
         variant="temporary"
         ModalProps={{ keepMounted: true }}
       >
-        <Box sx={{ width: drawerWidth }}>
-          <SidebarContent onNavigate={() => setMobileOpen(false)} />
+        <Box sx={{ width: drawerWidthExpanded }}>
+          <SidebarContent onNavigate={() => setMobileOpen(false)} showCollapseControl={false} />
         </Box>
       </Drawer>
 
       <Drawer
         open
         sx={{
-          display: drawerVisible ? 'block' : 'none',
+          display: { xs: 'none', lg: 'block' },
           '& .MuiDrawer-paper': {
             boxSizing: 'border-box',
             width: drawerWidth,
@@ -214,7 +330,7 @@ export function AppShell() {
         }}
         variant="permanent"
       >
-        <SidebarContent />
+        <SidebarContent collapsed={preferences.sidebarCollapsed} />
       </Drawer>
 
       <Box
@@ -222,13 +338,14 @@ export function AppShell() {
         sx={{
           flex: 1,
           minWidth: 0,
-          ml: drawerVisible ? `${drawerWidth}px` : 0,
+          ml: drawerWidth ? `${drawerWidth}px` : 0,
           p: { xs: 2, md: 3 },
           pt: { xs: '64px', md: '72px' },
         }}
       >
         <Outlet />
       </Box>
+      <ProductTourHost />
     </Box>
   )
 }

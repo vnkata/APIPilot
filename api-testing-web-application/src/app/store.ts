@@ -1,6 +1,14 @@
 import { configureStore } from '@reduxjs/toolkit'
 
 import {
+  initialProductTourPersistedState,
+  loadProductTourState,
+  productTourReducer,
+  saveProductTourState,
+  selectSerializableProductTourState,
+  type ProductTourPersistedState,
+} from '../features/product-tour/productTourSlice'
+import {
   initialWorkspacePreferencesState,
   loadWorkspacePreferencesState,
   saveWorkspacePreferencesState,
@@ -10,15 +18,22 @@ import {
 } from '../features/workspace-preferences/workspacePreferencesSlice'
 
 export type AppPreloadedState = {
+  productTour?: ProductTourPersistedState
   workspacePreferences?: WorkspacePreferencesState
 }
 
 export function createAppStore(preloadedState: AppPreloadedState = {}) {
   return configureStore({
     reducer: {
+      productTour: productTourReducer,
       workspacePreferences: workspacePreferencesReducer,
     },
     preloadedState: {
+      productTour: {
+        ...initialProductTourPersistedState,
+        ...(preloadedState.productTour ?? initialProductTourPersistedState),
+        activeStepIndex: 0,
+      },
       workspacePreferences:
         preloadedState.workspacePreferences ?? initialWorkspacePreferencesState,
     },
@@ -27,11 +42,15 @@ export function createAppStore(preloadedState: AppPreloadedState = {}) {
 }
 
 export const store = createAppStore({
+  productTour: loadProductTourState(),
   workspacePreferences: loadWorkspacePreferencesState(),
 })
 
 if (typeof window !== 'undefined') {
   store.subscribe(() => {
+    saveProductTourState(
+      selectSerializableProductTourState(store.getState().productTour),
+    )
     saveWorkspacePreferencesState(
       selectSerializableWorkspacePreferences(store.getState().workspacePreferences),
     )

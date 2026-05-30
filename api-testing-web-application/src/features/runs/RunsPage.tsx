@@ -13,6 +13,7 @@ import { AppLink } from '../../shared/ui/AppLink'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import { useRuns } from './api'
 
 export function RunsPage() {
@@ -25,6 +26,7 @@ export function RunsPage() {
         eyebrow="APIPilot artifact backend"
         title="Runs"
         subtitle="Read-only local cache catalog. Select a run to inspect operations, graphs, constraints, artifacts, reports, test cases, and HAR history."
+        {...tourAnchor(TOUR_ANCHORS.runsHeader)}
       />
 
       <QueryState
@@ -39,7 +41,7 @@ export function RunsPage() {
         {runs.length === 0 ? (
           <EmptyState title="No runs available" />
         ) : (
-          <Grid container spacing={2}>
+          <Grid container spacing={2} {...tourAnchor(TOUR_ANCHORS.runsCatalog)}>
             {runs.map((run) => {
               const href = `/runs/${encodeRoutePart(run.run_name)}`
               return (

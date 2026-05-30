@@ -1,5 +1,7 @@
-import { Paper, Stack } from '@mui/material'
+import { Stack } from '@mui/material'
 import type { ReactNode } from 'react'
+
+import { Panel } from './Panel'
 
 type FilterToolbarProps = {
   children: ReactNode
@@ -7,16 +9,7 @@ type FilterToolbarProps = {
 
 export function FilterToolbar({ children }: FilterToolbarProps) {
   return (
-    <Paper
-      component={Stack}
-      spacing={1.5}
-      sx={{
-        bgcolor: 'background.paper',
-        borderColor: 'divider',
-        p: 1.5,
-      }}
-      variant="outlined"
-    >
+    <Panel sx={{ p: 1.5 }}>
       <Stack
         direction={{ xs: 'column', md: 'row' }}
         spacing={0}
@@ -30,6 +23,6 @@ export function FilterToolbar({ children }: FilterToolbarProps) {
       >
         {children}
       </Stack>
-    </Paper>
+    </Panel>
   )
 }

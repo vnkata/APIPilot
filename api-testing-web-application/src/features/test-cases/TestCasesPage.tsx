@@ -1,4 +1,3 @@
-import CloseIcon from '@mui/icons-material/Close'
 import { useMemo, useState } from 'react'
 import {
   Alert,
@@ -7,11 +6,8 @@ import {
   CardContent,
   Checkbox,
   Divider,
-  Drawer,
   FormControlLabel,
-  IconButton,
   Stack,
-  TextField,
   Typography,
 } from '@mui/material'
 import type { GridColDef } from '@mui/x-data-grid'
@@ -20,14 +16,19 @@ import type { TestCaseResponse } from '../../shared/api/generated/model'
 import { stringifySafe } from '../../shared/lib/json'
 import { replaceSearchParams } from '../../shared/lib/navigation'
 import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
+import { DebouncedTextField } from '../../shared/ui/DebouncedTextField'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
 import { FilterToolbar } from '../../shared/ui/FilterToolbar'
+import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
 import { JsonBlock } from '../../shared/ui/JsonBlock'
 import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
+import { HttpMethodBadge, StatusCodeBadge } from '../../shared/ui/SemanticBadges'
+import { SensitiveDataNotice } from '../../shared/ui/SensitiveDataNotice'
 import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import { useTestCases } from './api'
 
 export type TestCasesPageSearch = {
@@ -62,70 +63,55 @@ function TestCaseDetailDrawer({
   }
 
   return (
-    <Drawer
-      anchor="right"
+    <InvestigationDrawer
+      ariaLabel="Test case detail"
       onClose={handleClose}
       open={open}
-      slotProps={{ paper: { sx: { maxWidth: '100%', width: { xs: '100%', sm: 560 } } } }}
-      variant="persistent"
+      subtitle={row?.test_case_id}
+      title="Test case detail"
+      data-tour-anchor={TOUR_ANCHORS.testCasesDetail}
     >
-      <Stack aria-label="Test case detail" role="dialog" spacing={2} sx={{ height: '100%', overflow: 'auto', p: 2 }}>
-        <Stack direction="row" sx={{ alignItems: 'flex-start', gap: 1 }}>
-          <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-            <Typography component="h2" variant="h3">
-              Test case detail
-            </Typography>
-            <Typography color="text.secondary" noWrap variant="body2">
-              {row?.test_case_id}
+      {row ? (
+        <Stack spacing={2}>
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+            <Button
+              onClick={() => replaceSearchParams({ operationId: row.operation_id })}
+              size="small"
+              variant="outlined"
+            >
+              {row.operation_id}
+            </Button>
+            <HttpMethodBadge method={row.http_method} />
+            {row.status_code ? <StatusCodeBadge statusCode={row.status_code} /> : null}
+            <Typography component="span" sx={{ overflowWrap: 'anywhere' }} variant="body2">
+              {row.path ?? ''}
             </Typography>
           </Stack>
-          <IconButton aria-label="Close test case detail" onClick={handleClose} size="small">
-            <CloseIcon fontSize="small" />
-          </IconButton>
-        </Stack>
-
-        {row ? (
-          <>
-            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-              <Button
-                onClick={() => replaceSearchParams({ operationId: row.operation_id })}
-                size="small"
-                variant="outlined"
-              >
-                {row.operation_id}
-              </Button>
-              <Typography component="span" variant="body2">
-                {row.http_method?.toUpperCase() ?? 'UNKNOWN'} {row.path ?? ''}
+          <Divider />
+          <Typography component="h3" variant="subtitle2">
+            Parameters
+          </Typography>
+          <JsonBlock maxHeight={180} value={row.parameters ?? {}} />
+          {includeBody ? (
+            <>
+              <SensitiveDataNotice>
+                Sanitized test payloads are visible for debugging. Review them before exporting or sharing snapshots.
+              </SensitiveDataNotice>
+              <Typography component="h3" variant="subtitle2">
+                Request body
               </Typography>
-              {row.status_code ? (
-                <Typography component="span" variant="body2">
-                  Status {row.status_code}
-                </Typography>
-              ) : null}
-            </Stack>
-            <Divider />
-            <Typography component="h3" variant="subtitle2">
-              Parameters
-            </Typography>
-            <JsonBlock maxHeight={180} value={row.parameters ?? {}} />
-            {includeBody ? (
-              <>
-                <Typography component="h3" variant="subtitle2">
-                  Request body
-                </Typography>
-                <JsonBlock maxHeight={180} value={row.request_body ?? null} />
-                <Typography component="h3" variant="subtitle2">
-                  Response body
-                </Typography>
-                <JsonBlock maxHeight={220} value={row.response_body ?? null} />
-              </>
-            ) : (
-              <Alert severity="info">Payload fields are hidden. Enable sanitized bodies to inspect them.</Alert>
-            )}
-          </>
-        ) : null}
-      </Stack>
-    </Drawer>
+              <JsonBlock maxHeight={180} value={row.request_body ?? null} />
+              <Typography component="h3" variant="subtitle2">
+                Response body
+              </Typography>
+              <JsonBlock maxHeight={220} value={row.response_body ?? null} />
+            </>
+          ) : (
+            <Alert severity="info">Payload fields are hidden. Enable sanitized bodies to inspect them.</Alert>
+          )}
+        </Stack>
+      ) : null}
+    </InvestigationDrawer>
   )
 }
 
@@ -166,9 +152,22 @@ export function TestCasesPage({ runName, search }: TestCasesPageProps) {
             </Button>
           ),
         },
-        { field: 'http_method', flex: 0.5, headerName: 'Method', minWidth: 100 },
+        {
+          field: 'http_method',
+          flex: 0.5,
+          headerName: 'Method',
+          minWidth: 112,
+          renderCell: (params) => <HttpMethodBadge method={params.row.http_method} />,
+        },
         { field: 'path', flex: 1, headerName: 'Path', minWidth: 160 },
-        { field: 'status_code', flex: 0.5, headerName: 'Status', minWidth: 100, type: 'number' },
+        {
+          field: 'status_code',
+          flex: 0.6,
+          headerName: 'Status',
+          minWidth: 150,
+          renderCell: (params) => <StatusCodeBadge statusCode={params.row.status_code} />,
+          type: 'number',
+        },
         {
           field: 'parameters',
           flex: 1,
@@ -213,29 +212,30 @@ export function TestCasesPage({ runName, search }: TestCasesPageProps) {
         eyebrow="Generated test cases"
         title="Test cases"
         subtitle="Review sanitized request and response examples without persisting payloads into client state."
+        {...tourAnchor(TOUR_ANCHORS.testCasesHeader)}
       />
 
       <Alert severity="info">
         Test case bodies are omitted by default. Enable sanitized backend payloads only when you need body-level debugging.
       </Alert>
 
-      <Card variant="outlined">
+      <Card variant="outlined" {...tourAnchor(TOUR_ANCHORS.testCasesResults)}>
         <CardContent>
           <Stack spacing={2}>
             <FilterToolbar>
-              <TextField
+              <DebouncedTextField
                 label="Operation"
-                onChange={(event) => replaceSearchParams({ offset: 0, operationId: event.target.value, testCaseId: undefined })}
+                onDebouncedChange={(value) => replaceSearchParams({ offset: 0, operationId: value, testCaseId: undefined })}
                 size="small"
                 sx={{ minWidth: 220 }}
                 value={search.operationId ?? ''}
               />
-              <TextField
+              <DebouncedTextField
                 label="Status"
-                onChange={(event) => replaceSearchParams({ offset: 0, statusCode: event.target.value, testCaseId: undefined })}
+                onDebouncedChange={(value) => replaceSearchParams({ offset: 0, statusCode: value, testCaseId: undefined })}
                 size="small"
                 sx={{ minWidth: 120 }}
-                value={search.statusCode ?? ''}
+                value={search.statusCode === undefined ? '' : String(search.statusCode)}
               />
               <FormControlLabel
                 control={
@@ -258,9 +258,9 @@ export function TestCasesPage({ runName, search }: TestCasesPageProps) {
               ]}
             />
             {includeBody ? (
-              <Typography color="text.secondary" variant="body2">
-                sanitized backend payloads only
-              </Typography>
+              <SensitiveDataNotice>
+                Sanitized backend payloads are included in the table and drawer for this view only.
+              </SensitiveDataNotice>
             ) : null}
 
             <QueryState

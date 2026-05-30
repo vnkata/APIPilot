@@ -98,7 +98,7 @@ describe('route search params', () => {
   })
 
   it('parses route-specific view modes with backward-compatible defaults', () => {
-    expect(runOverviewSearchSchema.parse({})).toMatchObject({ overviewView: 'classic' })
+    expect(runOverviewSearchSchema.parse({})).toMatchObject({ overviewView: 'command' })
     expect(operationsSearchSchema.parse({})).toMatchObject({ operationsView: 'table' })
     expect(constraintsSearchSchema.parse({})).toMatchObject({
       constraintDetailView: 'readable',
@@ -110,7 +110,10 @@ describe('route search params', () => {
       graphView: 'explorer',
       motionMode: 'auto',
     })
-    expect(artifactsSearchSchema.parse({})).toMatchObject({ artifactsView: 'classic' })
+    expect(artifactsSearchSchema.parse({})).toMatchObject({
+      artifactMode: 'summary',
+      artifactsView: 'workbench',
+    })
 
     expect(runOverviewSearchSchema.parse({ overviewView: 'command' })).toMatchObject({ overviewView: 'command' })
     expect(operationsSearchSchema.parse({ operationsView: 'canvas' })).toMatchObject({ operationsView: 'canvas' })
@@ -128,9 +131,16 @@ describe('route search params', () => {
     expect(graphSearchSchema.parse({ motionMode: 'reduced' })).toMatchObject({ motionMode: 'reduced' })
     expect(graphSearchSchema.parse({ motionMode: 'off' })).toMatchObject({ motionMode: 'off' })
     expect(graphSearchSchema.parse({ selectedPath: 'seq-create-list' })).toMatchObject({ selectedPath: 'seq-create-list' })
+    expect(artifactsSearchSchema.parse({ artifactMode: 'raw' })).toMatchObject({ artifactMode: 'raw' })
+    expect(artifactsSearchSchema.parse({ artifactMode: 'compare' })).toMatchObject({ artifactMode: 'compare' })
+    expect(artifactsSearchSchema.parse({ raw: 'true' })).toMatchObject({ artifactMode: 'raw', raw: true })
+    expect(artifactsSearchSchema.parse({ compare: 'true' })).toMatchObject({
+      artifactMode: 'compare',
+      compare: true,
+    })
     expect(artifactsSearchSchema.parse({ artifactsView: 'workbench' })).toMatchObject({ artifactsView: 'workbench' })
 
-    expect(runOverviewSearchSchema.parse({ overviewView: 'timeline' })).toMatchObject({ overviewView: 'classic' })
+    expect(runOverviewSearchSchema.parse({ overviewView: 'timeline' })).toMatchObject({ overviewView: 'command' })
     expect(operationsSearchSchema.parse({ operationsView: 'timeline' })).toMatchObject({ operationsView: 'table' })
     expect(constraintsSearchSchema.parse({ constraintsView: 'timeline' })).toMatchObject({ constraintsView: 'workbench' })
     expect(constraintsSearchSchema.parse({ constraintDetailView: 'timeline' })).toMatchObject({ constraintDetailView: 'readable' })
@@ -138,6 +148,7 @@ describe('route search params', () => {
     expect(graphSearchSchema.parse({ focusMode: 'timeline' })).toMatchObject({ focusMode: 'all' })
     expect(graphSearchSchema.parse({ graphView: 'timeline' })).toMatchObject({ graphView: 'explorer' })
     expect(graphSearchSchema.parse({ motionMode: 'timeline' })).toMatchObject({ motionMode: 'auto' })
-    expect(artifactsSearchSchema.parse({ artifactsView: 'timeline' })).toMatchObject({ artifactsView: 'classic' })
+    expect(artifactsSearchSchema.parse({ artifactMode: 'timeline' })).toMatchObject({ artifactMode: 'summary' })
+    expect(artifactsSearchSchema.parse({ artifactsView: 'timeline' })).toMatchObject({ artifactsView: 'workbench' })
   })
 })

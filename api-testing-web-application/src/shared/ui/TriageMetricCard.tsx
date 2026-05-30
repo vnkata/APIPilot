@@ -1,6 +1,7 @@
 import { alpha, useTheme } from '@mui/material/styles'
 import { Card, CardContent, Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
+import type { AppTone } from '../../theme/tokens'
 
 type TriageTone = 'danger' | 'neutral' | 'success' | 'warning'
 
@@ -11,11 +12,11 @@ type TriageMetricCardProps = {
   value: ReactNode
 }
 
-function toneColor(tone: TriageTone, mode: 'dark' | 'light') {
-  if (tone === 'danger') return mode === 'dark' ? '#fb7185' : '#dc2626'
-  if (tone === 'warning') return mode === 'dark' ? '#fbbf24' : '#b45309'
-  if (tone === 'success') return mode === 'dark' ? '#34d399' : '#047857'
-  return mode === 'dark' ? '#93c5fd' : '#2563eb'
+function toneToken(tone: TriageTone): AppTone {
+  if (tone === 'danger') return 'danger'
+  if (tone === 'warning') return 'warning'
+  if (tone === 'success') return 'success'
+  return 'info'
 }
 
 export function TriageMetricCard({
@@ -25,7 +26,7 @@ export function TriageMetricCard({
   value,
 }: TriageMetricCardProps) {
   const theme = useTheme()
-  const accent = toneColor(tone, theme.palette.mode)
+  const token = theme.apiTesting.status[toneToken(tone)]
 
   return (
     <Card
@@ -35,7 +36,7 @@ export function TriageMetricCard({
         overflow: 'hidden',
         position: 'relative',
         '&::before': {
-          bgcolor: accent,
+          bgcolor: token.fg,
           content: '""',
           height: '100%',
           left: 0,
@@ -50,13 +51,13 @@ export function TriageMetricCard({
           <Typography color="text.secondary" sx={{ fontWeight: 700, textTransform: 'uppercase' }} variant="caption">
             {label}
           </Typography>
-          <Typography component="div" sx={{ color: accent }} variant="h2">
+          <Typography component="div" sx={{ color: token.fg }} variant="h2">
             {value}
           </Typography>
           {caption ? (
             <Typography
               sx={{
-                bgcolor: alpha(accent, theme.palette.mode === 'dark' ? 0.12 : 0.08),
+                bgcolor: alpha(token.fg, theme.palette.mode === 'dark' ? 0.12 : 0.08),
                 borderRadius: 1,
                 color: 'text.secondary',
                 px: 1,

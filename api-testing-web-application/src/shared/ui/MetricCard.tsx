@@ -1,5 +1,7 @@
-import { Card, CardContent, Stack, Typography } from '@mui/material'
+import { Stack, Typography } from '@mui/material'
 import type { ReactNode } from 'react'
+
+import { Panel } from './Panel'
 
 type MetricCardProps = {
   caption?: ReactNode
@@ -9,22 +11,20 @@ type MetricCardProps = {
 
 export function MetricCard({ caption, label, value }: MetricCardProps) {
   return (
-    <Card variant="outlined" sx={{ height: '100%' }}>
-      <CardContent>
-        <Stack spacing={0.5}>
-          <Typography color="text.secondary" variant="caption">
-            {label}
+    <Panel sx={{ height: '100%' }}>
+      <Stack spacing={0.5}>
+        <Typography color="text.secondary" sx={{ fontWeight: 800, textTransform: 'uppercase' }} variant="caption">
+          {label}
+        </Typography>
+        <Typography component="div" variant="h2">
+          {value}
+        </Typography>
+        {caption ? (
+          <Typography color="text.secondary" variant="body2">
+            {caption}
           </Typography>
-          <Typography component="div" variant="h2">
-            {value}
-          </Typography>
-          {caption ? (
-            <Typography color="text.secondary" variant="body2">
-              {caption}
-            </Typography>
-          ) : null}
-        </Stack>
-      </CardContent>
-    </Card>
+        ) : null}
+      </Stack>
+    </Panel>
   )
 }

@@ -40,7 +40,7 @@ describe('GraphPage', () => {
       <GraphPage runName="Run A" search={{ operationId: 'get-/items', q: '', limit: 25, offset: 0 }} />,
     )
 
-    expect(await screen.findByRole('dialog', { name: /operation detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /operation detail/i })).toBeInTheDocument()
     expect(await screen.findByText('ListItems')).toBeInTheDocument()
   })
 
@@ -94,7 +94,7 @@ describe('GraphPage', () => {
     expect(requestedUrl?.searchParams.get('evidence_source')).toBe('final_graph')
     expect(requestedUrl?.searchParams.get('group_by')).toBe('from_node')
     expect(requestedUrl?.searchParams.get('limit')).toBe('10')
-    expect(await screen.findByRole('dialog', { name: /edge detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /edge detail/i })).toBeInTheDocument()
     expect(detailRequested).toBe(true)
     expect((await screen.findAllByText(/item\.id/)).length).toBeGreaterThan(0)
 
@@ -118,7 +118,7 @@ describe('GraphPage', () => {
 
     expect(await screen.findByRole('tab', { name: /sequences/i })).toBeInTheDocument()
     expect(await screen.findByRole('grid', { name: /graph sequences/i })).toBeInTheDocument()
-    expect(await screen.findByRole('dialog', { name: /sequence detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /sequence detail/i })).toBeInTheDocument()
     expect(screen.getAllByText('dependency_chain').length).toBeGreaterThan(0)
   })
 

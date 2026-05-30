@@ -27,15 +27,14 @@ export class OverviewPage {
   constructor(private readonly page: Page) {}
 
   async expectLoaded(runName = 'Run A') {
-    await expect(this.page.getByRole('heading', { name: runName })).toBeVisible()
+    await expect(this.page.getByRole('heading', { name: 'QA Mission Control' })).toBeVisible()
+    await expect(this.page.getByText(runName).first()).toBeVisible()
     await expect(this.page.getByText('Run overview')).toBeVisible()
     await expect(this.page.getByRole('main').getByText('Operations', { exact: true })).toBeVisible()
-    await expect(this.page.getByRole('main').getByText('Artifacts', { exact: true })).toBeVisible()
+    await expect(this.page.getByRole('link', { name: 'Artifact workbench' })).toBeVisible()
   }
 
   async expectCommandMode() {
-    await this.page.getByRole('button', { name: 'Command' }).click()
-    await expect(this.page).toHaveURL(/overviewView=command/)
     await expect(this.page.getByRole('heading', { name: 'QA Mission Control' })).toBeVisible()
     await expect(this.page.getByRole('link', { name: 'Review risky operations' })).toBeVisible()
   }
@@ -52,9 +51,9 @@ export class GraphPage {
     await expect(this.page.getByRole('heading', { name: 'Graph and operations' })).toBeVisible()
     await this.page.getByRole('button', { exact: true, name: 'post-/items' }).first().click()
     await expect(this.page.getByText('Navigator inspector')).toBeVisible()
-    const dialog = this.page.getByRole('dialog', { name: 'Operation detail' })
-    await expect(dialog).toBeVisible()
-    await expect(dialog).toContainText('post-/items')
+    const inspector = this.page.locator('[aria-label="Operation detail"]')
+    await expect(inspector).toBeVisible()
+    await expect(inspector).toContainText('post-/items')
   }
 
   async expectJourneyMode(runName: string) {
@@ -84,7 +83,7 @@ export class OperationsPage {
     await expect(this.page.getByRole('heading', { name: 'Operations Explorer' })).toBeVisible()
     await expect(this.page.getByRole('grid', { name: 'operation explorer entries' })).toBeVisible()
     await this.page.getByRole('button', { name: 'get-/items' }).first().click()
-    await expect(this.page.getByRole('dialog', { name: 'Operation explorer detail' })).toBeVisible()
+    await expect(this.page.locator('[aria-label="Operation explorer detail"]')).toBeVisible()
     await expect(this.page.getByRole('link', { name: 'Graph' })).toBeVisible()
     await expect(this.page.getByRole('link', { name: 'Constraints' })).toBeVisible()
   }
@@ -108,7 +107,8 @@ export class ConstraintsPage {
     await expect(this.page.getByRole('heading', { name: /Constraints and invariants/ })).toBeVisible()
     await expect(this.page.getByRole('heading', { name: 'Constraint Workbench' })).toBeVisible()
     await expect(this.page.getByRole('button', { name: 'Workbench' })).toHaveAttribute('aria-pressed', 'true')
-    await expect(this.page.getByRole('button', { name: /input\.limit/ }).first()).toBeVisible()
+    await expect(this.page.getByText(/input\.limit/).first()).toBeVisible()
+    await expect(this.page.getByRole('button', { name: 'Open detail' }).first()).toBeVisible()
 
     await this.page.getByRole('button', { exact: true, name: 'Explorer' }).click()
     await expect(this.page).toHaveURL(/constraintsView=table/)
@@ -141,11 +141,11 @@ export class ArtifactsPage {
   constructor(private readonly page: Page) {}
 
   async goto(runName: string) {
-    await this.page.goto(`${runPath(runName)}/artifacts?artifactId=specification&raw=true`)
+    await this.page.goto(`${runPath(runName)}/artifacts?artifactId=specification&artifactMode=raw`)
   }
 
   async expectRawViewer() {
-    await expect(this.page.getByRole('heading', { name: 'Artifacts' })).toBeVisible()
+    await expect(this.page.getByRole('heading', { name: 'Artifact Workbench' })).toBeVisible()
     await expect(this.page.getByRole('heading', { name: 'specification' })).toBeVisible()
     await expect(this.page.getByLabel('artifact raw content')).toBeVisible()
   }
@@ -173,10 +173,13 @@ export class ReportsPage {
   async expectMediumStatusFilterFlow() {
     await expect(this.page.getByRole('heading', { name: 'Reports' })).toBeVisible()
     await this.page.getByRole('textbox', { name: 'Status' }).fill('404')
-    await expect(this.page.getByRole('gridcell', { name: 'get-/api/v1/holidays/{id}' }).first()).toBeVisible()
-    await expect(this.page.getByRole('gridcell', { name: '404' }).first()).toBeVisible()
-    await this.page.getByRole('button', { name: 'get-/api/v1/holidays/{id}' }).first().click()
-    await expect(this.page.getByRole('dialog', { name: 'Operation detail' })).toBeVisible()
+    await expect(this.page).toHaveURL(/statusCode=404/)
+    const targetRow = this.page.getByRole('row', {
+      name: /get-\/api\/v1\/holidays\/\{id\} 404 Client error/,
+    })
+    await expect(targetRow).toBeVisible()
+    await targetRow.getByRole('button', { name: 'get-/api/v1/holidays/{id}' }).click()
+    await expect(this.page.getByRole('dialog', { name: /operation detail/i })).toBeVisible()
     await expect(this.page.getByText('GetHoliday')).toBeVisible()
   }
 }
@@ -192,7 +195,7 @@ export class TestCasesPage {
     await expect(this.page.getByRole('heading', { name: 'Test cases' })).toBeVisible()
     await expect(this.page.getByText('tc-1')).toBeVisible()
     await this.page.getByRole('gridcell', { name: 'tc-1' }).click()
-    await expect(this.page.getByRole('dialog', { name: 'Test case detail' })).toBeVisible()
+    await expect(this.page.locator('[aria-label="Test case detail"]')).toBeVisible()
   }
 }
 
@@ -209,6 +212,6 @@ export class HistoryPage {
     await expect(this.page.getByText('session-1').first()).toBeVisible()
     await expect(this.page.getByText('<REDACTED>').first()).toBeVisible()
     await this.page.getByRole('button', { name: /^session-1:/ }).first().click()
-    await expect(this.page.getByRole('dialog', { name: 'HAR entry detail' })).toBeVisible()
+    await expect(this.page.locator('[aria-label="HAR entry detail"]')).toBeVisible()
   }
 }

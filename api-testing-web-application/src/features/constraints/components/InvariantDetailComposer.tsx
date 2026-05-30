@@ -11,10 +11,20 @@ import {
 } from '@mui/material'
 
 import type { InvariantExplorerDetailResponse } from '../../../shared/api/generated/model'
+import { monoFontFamily } from '../../../theme/typography'
 import { EvidenceLinkSet } from '../../../shared/ui/EvidenceLinkSet'
 import { JsonBlock } from '../../../shared/ui/JsonBlock'
 import { ViewModeToggle } from '../../../shared/ui/ViewModeToggle'
+import { readableIdentifier } from '../constraintViewModels'
 import { AssertionSummaryPanel } from './AssertionSummaryPanel'
+import {
+  AssertionBadge,
+  ConstraintKindBadge,
+  CorrelationBadge,
+  OracleReadinessBadge,
+} from './ConstraintBadges'
+import { ConstraintMetadataPanel } from './ConstraintMetadataPanel'
+import { ConstraintReadingGuide } from './ConstraintReadingGuide'
 
 type InvariantDetailComposerProps = {
   detail: InvariantExplorerDetailResponse
@@ -48,13 +58,7 @@ export function InvariantDetailComposer({
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
-        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-          <Chip label={detail.invariant_kind} size="small" />
-          <Chip label={detail.oracle_readiness} size="small" variant="outlined" />
-          <Chip label={detail.correlation_confidence} size="small" variant="outlined" />
-          <Chip label={detail.assertion_available ? 'Assertion available' : 'No assertion'} size="small" />
-        </Stack>
+      <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
         <ViewModeToggle
           ariaLabel="Invariant detail view"
           onChange={onDetailViewChange}
@@ -66,6 +70,26 @@ export function InvariantDetailComposer({
         />
       </Stack>
 
+      <ConstraintMetadataPanel
+        badges={
+          <>
+            <ConstraintKindBadge kind={detail.invariant_kind} />
+            <OracleReadinessBadge readiness={detail.oracle_readiness} />
+            <CorrelationBadge confidence={detail.correlation_confidence} />
+            <AssertionBadge available={detail.assertion_available} />
+          </>
+        }
+        items={[
+          { label: 'Operation', value: readableIdentifier(detail.operation_id) },
+          { label: 'Primary property', value: readableIdentifier(detail.primary_property_path) },
+          { label: 'Invariant type', value: readableIdentifier(detail.invariant_type) },
+          { label: 'Related constraints', value: detail.related_constraint_ids.length },
+        ]}
+        title="Invariant context"
+      />
+
+      <ConstraintReadingGuide kind="invariant" />
+
       <EvidenceLinkSet links={evidenceLinks} />
 
       <Card variant="outlined">
@@ -74,7 +98,7 @@ export function InvariantDetailComposer({
             <Typography component="h3" variant="h3">
               Invariant
             </Typography>
-            <Typography sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', overflowWrap: 'anywhere' }} variant="body2">
+            <Typography sx={{ fontFamily: monoFontFamily, overflowWrap: 'anywhere' }} variant="body2">
               {detail.invariant ?? detail.invariant_id}
             </Typography>
             <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>

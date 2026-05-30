@@ -1,13 +1,4 @@
-import DownloadIcon from '@mui/icons-material/Download'
-import {
-  Button,
-  Card,
-  CardContent,
-  Chip,
-  MenuItem,
-  Stack,
-  TextField,
-} from '@mui/material'
+import { Button, Stack } from '@mui/material'
 import type { GridColDef } from '@mui/x-data-grid'
 import { useMemo, useState } from 'react'
 
@@ -19,16 +10,11 @@ import type {
 } from '../../shared/api/generated/model'
 import { encodeRoutePart } from '../../shared/lib/format'
 import { replaceSearchParams } from '../../shared/lib/navigation'
-import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
-import { FacetFilterBar, type FacetFilter } from '../../shared/ui/FacetFilterBar'
-import { FilterToolbar } from '../../shared/ui/FilterToolbar'
 import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
 import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
-import { PageHeader } from '../../shared/ui/PageHeader'
-import { QueryState } from '../../shared/ui/QueryState'
-import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
+import { TOUR_ANCHORS } from '../product-tour/tourAnchors'
 import {
   toConstraintExplorerParams,
   toConstraintFacetParams,
@@ -45,13 +31,16 @@ import {
   useStaticConstraintEntries,
   useStaticConstraintsSummary,
 } from './api'
+import { ConstraintAdvancedFiltersDrawer } from './components/ConstraintAdvancedFiltersDrawer'
+import { ConstraintAppliedFiltersBar } from './components/ConstraintAppliedFiltersBar'
 import { ConstraintDetailComposer } from './components/ConstraintDetailComposer'
-import { ConstraintModeSegments } from './components/ConstraintModeSegments'
-import { ConstraintWorkbench } from './components/ConstraintWorkbench'
-import { CurrentPageConstraintMatrix } from './components/CurrentPageConstraintMatrix'
+import { ConstraintFilterPanel } from './components/ConstraintFilterPanel'
+import { ConstraintPageHeader } from './components/ConstraintPageHeader'
+import { ConstraintResultsRegion } from './components/ConstraintResultsRegion'
 import { InvariantDetailComposer } from './components/InvariantDetailComposer'
 import { LegacyConstraintDetailComposer } from './components/LegacyConstraintDetailComposer'
 import type { MatrixBy } from './constraintViewModels'
+import type { ConstraintGridColumns, ConstraintQueryState, LegacyConstraintRow } from './types'
 
 export type ConstraintTab = 'dynamic' | 'explorer' | 'invariants' | 'static'
 
@@ -88,8 +77,6 @@ type ConstraintsPageProps = {
   search: ConstraintsPageSearch
 }
 
-type LegacyConstraintRow = ConstraintEntryDetailResponse & { id: string }
-
 function constraintRows(items: ConstraintEntryDetailResponse[]) {
   return items.map((item, index) => ({
     ...item,
@@ -97,22 +84,9 @@ function constraintRows(items: ConstraintEntryDetailResponse[]) {
   }))
 }
 
-function booleanSelectValue(value: boolean | undefined) {
-  if (value === undefined) return ''
-  return value ? 'true' : 'false'
-}
-
-function booleanSearchValue(value: string) {
-  return value === '' ? undefined : value
-}
-
-function selectedBoolean(value: boolean | undefined) {
-  if (value === undefined) return undefined
-  return String(value)
-}
-
 export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const [legacyDetail, setLegacyDetail] = useState<LegacyConstraintRow | null>(null)
+  const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
   const [exportOpen, setExportOpen] = useState(false)
   const encodedRunName = encodeRoutePart(runName)
   const gridState = useUrlBackedGridState(search)
@@ -280,6 +254,14 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     ],
     [],
   )
+  const columns = useMemo<ConstraintGridColumns>(
+    () => ({
+      explorer: explorerColumns,
+      invariants: invariantColumns,
+      legacy: legacyConstraintColumns,
+    }),
+    [explorerColumns, invariantColumns, legacyConstraintColumns],
+  )
 
   function applyGroupFilter(key: string | null | undefined) {
     if (!key) return
@@ -302,56 +284,6 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     })
   }
 
-  const constraintFacets = explorerFacetsQuery.data
-  const invariantFacets = invariantFacetsQuery.data
-  const facetFilters: FacetFilter[] = tab === 'invariants'
-    ? [
-        {
-          buckets: invariantFacets?.oracle_readiness,
-          label: 'Oracle readiness',
-          onSelect: (value) => replaceSearchParams({ offset: 0, oracleReadiness: value }),
-          selectedValue: search.oracleReadiness,
-        },
-        {
-          buckets: invariantFacets?.correlation_confidence,
-          label: 'Correlation',
-          onSelect: (value) => replaceSearchParams({ correlationConfidence: value, offset: 0 }),
-          selectedValue: search.correlationConfidence,
-        },
-        {
-          buckets: invariantFacets?.invariant_kind,
-          label: 'Invariant kind',
-          onSelect: (value) => replaceSearchParams({ invariantKind: value, offset: 0 }),
-          selectedValue: search.invariantKind,
-        },
-      ]
-    : [
-        {
-          buckets: constraintFacets?.source,
-          label: 'Source',
-          onSelect: (value) => replaceSearchParams({ offset: 0, source: value }),
-          selectedValue: search.source,
-        },
-        {
-          buckets: constraintFacets?.agreement_status,
-          label: 'Agreement',
-          onSelect: (value) => replaceSearchParams({ agreementStatus: value, offset: 0 }),
-          selectedValue: search.agreementStatus,
-        },
-        {
-          buckets: constraintFacets?.constraint_kind,
-          label: 'Kind',
-          onSelect: (value) => replaceSearchParams({ constraintKind: value, offset: 0 }),
-          selectedValue: search.constraintKind,
-        },
-        {
-          buckets: constraintFacets?.assertion_available,
-          label: 'Assertion',
-          onSelect: (value) => replaceSearchParams({ assertionAvailable: value, offset: 0 }),
-          selectedValue: selectedBoolean(search.assertionAvailable),
-        },
-      ]
-
   const selectedOperationId =
     constraintDetailQuery.data?.operation_id ?? invariantDetailQuery.data?.operation_id ?? search.operationId
   const encodedOperationId = encodeURIComponent(selectedOperationId ?? '')
@@ -362,272 +294,80 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         { href: `/runs/${encodedRunName}/reports?operationId=${encodedOperationId}`, label: 'Reports' },
       ]
     : []
+  const explorerState: ConstraintQueryState = {
+    error: explorerQuery.error,
+    isError: explorerQuery.isError,
+    isFetching: explorerQuery.isFetching,
+    isLoading: explorerQuery.isLoading,
+    refetch: explorerQuery.refetch,
+  }
+  const invariantState: ConstraintQueryState = {
+    error: invariantExplorerQuery.error,
+    isError: invariantExplorerQuery.isError,
+    isFetching: invariantExplorerQuery.isFetching,
+    isLoading: invariantExplorerQuery.isLoading,
+    refetch: invariantExplorerQuery.refetch,
+  }
+  const legacyState: ConstraintQueryState = {
+    error: legacyQuery.error,
+    isError: legacyQuery.isError,
+    isFetching: legacyQuery.isFetching,
+    isLoading: legacyQuery.isLoading,
+    refetch: legacyQuery.refetch,
+  }
 
   return (
     <Stack spacing={2}>
-      <PageHeader
-        actions={
-          <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
-            <ConstraintModeSegments constraintTab={tab} constraintsView={constraintsView} />
-            <Button onClick={() => setExportOpen(true)} startIcon={<DownloadIcon />} variant="outlined">
-              Export snapshot
-            </Button>
-          </Stack>
-        }
-        eyebrow="Constraint oracle workspace"
-        subtitle="Explore static, dynamic, combined constraints, and invariant candidates without copying server cache into Redux."
-        title="Constraints and invariants"
+      <ConstraintPageHeader
+        constraintTab={tab}
+        constraintsView={constraintsView}
+        dynamicCount={dynamicSummaryQuery.data?.constraint_count ?? 0}
+        invariantCount={dynamicSummaryQuery.data?.invariant_count ?? invariantExplorerQuery.data?.pagination.total ?? 0}
+        onExport={() => setExportOpen(true)}
+        staticCount={staticSummaryQuery.data?.constraint_count ?? 0}
       />
 
-      <Card variant="outlined">
-        <CardContent>
-          <Stack spacing={2}>
-            <Stack direction={{ xs: 'column', md: 'row' }} spacing={2}>
-              <TextField
-                fullWidth
-                label="Search constraints"
-                onChange={(event) => replaceSearchParams({ offset: 0, q: event.target.value })}
-                size="small"
-                value={search.q ?? ''}
-              />
-              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-                <Chip label={`Static ${staticSummaryQuery.data?.constraint_count ?? 0}`} size="small" />
-                <Chip label={`Dynamic ${dynamicSummaryQuery.data?.constraint_count ?? 0}`} size="small" />
-                <Chip label={`Invariants ${dynamicSummaryQuery.data?.invariant_count ?? invariantExplorerQuery.data?.pagination.total ?? 0}`} size="small" />
-              </Stack>
-            </Stack>
+      <ConstraintFilterPanel
+        constraintFacets={explorerFacetsQuery.data}
+        invariantFacets={invariantFacetsQuery.data}
+        onAdvancedOpen={() => setAdvancedFiltersOpen(true)}
+        search={search}
+        tab={tab}
+      />
 
-            <FilterToolbar>
-              <TextField
-                label="Operation"
-                onChange={(event) => replaceSearchParams({ offset: 0, operationId: event.target.value })}
-                size="small"
-                sx={{ minWidth: 220 }}
-                value={search.operationId ?? ''}
-              />
-              <TextField
-                label="Section"
-                onChange={(event) => replaceSearchParams({ offset: 0, section: event.target.value })}
-                size="small"
-                sx={{ minWidth: 180 }}
-                value={search.section ?? ''}
-              />
-              <TextField
-                disabled={tab === 'static' || tab === 'dynamic'}
-                label="Source"
-                onChange={(event) => replaceSearchParams({ offset: 0, source: event.target.value })}
-                select
-                size="small"
-                sx={{ minWidth: 150 }}
-                value={search.source ?? ''}
-              >
-                <MenuItem value="">Any</MenuItem>
-                <MenuItem value="static">Static</MenuItem>
-                <MenuItem value="dynamic">Dynamic</MenuItem>
-                <MenuItem value="combined">Combined</MenuItem>
-              </TextField>
-              <TextField
-                disabled={tab === 'static' || tab === 'dynamic'}
-                label="Kind"
-                onChange={(event) =>
-                  replaceSearchParams(
-                    tab === 'invariants'
-                      ? { invariantKind: event.target.value, offset: 0 }
-                      : { constraintKind: event.target.value, offset: 0 },
-                  )
-                }
-                size="small"
-                sx={{ minWidth: 180 }}
-                value={search.constraintKind ?? search.invariantKind ?? ''}
-              />
-              <TextField
-                disabled={tab !== 'explorer'}
-                label="Agreement"
-                onChange={(event) => replaceSearchParams({ agreementStatus: event.target.value, offset: 0 })}
-                size="small"
-                sx={{ minWidth: 180 }}
-                value={search.agreementStatus ?? ''}
-              />
-              <TextField
-                disabled={tab !== 'invariants'}
-                label="Oracle readiness"
-                onChange={(event) => replaceSearchParams({ offset: 0, oracleReadiness: event.target.value })}
-                size="small"
-                sx={{ minWidth: 200 }}
-                value={search.oracleReadiness ?? ''}
-              />
-              <TextField
-                label="Assertion"
-                onChange={(event) => replaceSearchParams({ assertionAvailable: booleanSearchValue(event.target.value), offset: 0 })}
-                select
-                size="small"
-                sx={{ minWidth: 150 }}
-                value={booleanSelectValue(search.assertionAvailable)}
-              >
-                <MenuItem value="">Any</MenuItem>
-                <MenuItem value="true">Available</MenuItem>
-                <MenuItem value="false">Missing</MenuItem>
-              </TextField>
-              <TextField
-                label="Group"
-                onChange={(event) => replaceSearchParams({ groupBy: event.target.value, offset: 0 })}
-                select
-                size="small"
-                sx={{ minWidth: 180 }}
-                value={search.groupBy ?? ''}
-              >
-                <MenuItem value="">No grouping</MenuItem>
-                <MenuItem value="source">Source</MenuItem>
-                <MenuItem value="operation_id">Operation</MenuItem>
-                <MenuItem value="section">Section</MenuItem>
-                <MenuItem value="constraint_kind">Constraint kind</MenuItem>
-                <MenuItem value="agreement_status">Agreement</MenuItem>
-                <MenuItem value="invariant_kind">Invariant kind</MenuItem>
-                <MenuItem value="oracle_readiness">Oracle readiness</MenuItem>
-              </TextField>
-            </FilterToolbar>
+      <ConstraintAppliedFiltersBar search={search} />
 
-            {tab === 'explorer' || tab === 'invariants' ? <FacetFilterBar filters={facetFilters} /> : null}
+      <ConstraintResultsRegion
+        columns={columns}
+        constraintsView={constraintsView}
+        explorerQuery={explorerState}
+        explorerRowCount={explorerQuery.data?.pagination.total ?? 0}
+        explorerRows={explorerRows}
+        gridState={gridState}
+        invariantQuery={invariantState}
+        invariantRowCount={invariantExplorerQuery.data?.pagination.total ?? 0}
+        invariantRows={invariantRowsNew}
+        legacyQuery={legacyState}
+        legacyRowCount={legacyQuery.data?.pagination.total ?? 0}
+        legacyRows={legacyConstraintRows}
+        matrixBy={matrixBy}
+        onApplyMatrixFilter={applyMatrixFilter}
+        onMatrixByChange={(value) => replaceSearchParams({ matrixBy: value })}
+        onSelectConstraint={(constraintId) => replaceSearchParams({ constraintId })}
+        onSelectInvariant={(invariantId) => replaceSearchParams({ invariantId })}
+        tab={tab}
+      />
 
-            <ActiveFilterChips
-              filters={[
-                { key: 'q', label: 'Search', value: search.q },
-                { key: 'operationId', label: 'Operation', value: search.operationId },
-                { key: 'section', label: 'Section', value: search.section },
-                { key: 'source', label: 'Source', value: search.source },
-                { key: 'constraintKind', label: 'Constraint kind', value: search.constraintKind },
-                { key: 'agreementStatus', label: 'Agreement', value: search.agreementStatus },
-                { key: 'assertionAvailable', label: 'Assertion', value: search.assertionAvailable },
-                { key: 'invariantKind', label: 'Invariant kind', value: search.invariantKind },
-                { key: 'oracleReadiness', label: 'Oracle readiness', value: search.oracleReadiness },
-                { key: 'correlationConfidence', label: 'Correlation', value: search.correlationConfidence },
-                { key: 'groupBy', label: 'Group', value: search.groupBy },
-                { key: 'constraintId', label: 'Constraint', value: search.constraintId },
-                { key: 'invariantId', label: 'Invariant', value: search.invariantId },
-              ]}
-            />
-
-            {activeGroups.length > 0 ? (
-              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-                {activeGroups.map((group) => (
-                  <Chip
-                    key={`${group.key ?? 'empty'}-${group.count}`}
-                    label={`${group.key ?? 'empty'} (${group.count})`}
-                    onClick={() => applyGroupFilter(group.key)}
-                    size="small"
-                  />
-                ))}
-              </Stack>
-            ) : null}
-
-            {constraintsView === 'workbench' ? (
-              <QueryState
-                empty={explorerRows.length === 0 && invariantRowsNew.length === 0}
-                error={explorerQuery.error ?? invariantExplorerQuery.error}
-                isError={explorerQuery.isError || invariantExplorerQuery.isError}
-                isLoading={explorerQuery.isLoading || invariantExplorerQuery.isLoading}
-                onRetry={() => {
-                  void explorerQuery.refetch()
-                  void invariantExplorerQuery.refetch()
-                }}
-              >
-                <ConstraintWorkbench
-                  constraints={explorerRows}
-                  invariants={invariantRowsNew}
-                  matrixBy={matrixBy}
-                  onApplyFilter={applyMatrixFilter}
-                  onMatrixByChange={(value) => replaceSearchParams({ matrixBy: value })}
-                  onSelectConstraint={(constraintId) => replaceSearchParams({ constraintId })}
-                  onSelectInvariant={(invariantId) => replaceSearchParams({ invariantId })}
-                />
-              </QueryState>
-            ) : constraintsView === 'matrix' ? (
-              <QueryState
-                empty={explorerRows.length === 0 && invariantRowsNew.length === 0}
-                error={explorerQuery.error ?? invariantExplorerQuery.error}
-                isError={explorerQuery.isError || invariantExplorerQuery.isError}
-                isLoading={explorerQuery.isLoading || invariantExplorerQuery.isLoading}
-                onRetry={() => {
-                  void explorerQuery.refetch()
-                  void invariantExplorerQuery.refetch()
-                }}
-              >
-                <CurrentPageConstraintMatrix
-                  constraints={explorerRows}
-                  invariants={invariantRowsNew}
-                  matrixBy={matrixBy}
-                  onApplyFilter={applyMatrixFilter}
-                />
-              </QueryState>
-            ) : tab === 'explorer' ? (
-              <QueryState
-                empty={explorerRows.length === 0}
-                error={explorerQuery.error}
-                isError={explorerQuery.isError}
-                isLoading={explorerQuery.isLoading}
-                onRetry={() => void explorerQuery.refetch()}
-              >
-                <ServerDataGridPanel
-                  ariaLabel="constraint explorer entries"
-                  columns={explorerColumns}
-                  getRowId={(row) => row.constraint_id}
-                  loading={explorerQuery.isFetching}
-                  onPaginationModelChange={gridState.handlePaginationModelChange}
-                  onRowClick={(params) => replaceSearchParams({ constraintId: params.row.constraint_id })}
-                  onSortModelChange={gridState.handleSortModelChange}
-                  paginationModel={gridState.paginationModel}
-                  rowCount={explorerQuery.data?.pagination.total ?? 0}
-                  rows={explorerRows}
-                  sortModel={gridState.sortModel}
-                />
-              </QueryState>
-            ) : tab === 'invariants' ? (
-              <QueryState
-                empty={invariantRowsNew.length === 0}
-                error={invariantExplorerQuery.error}
-                isError={invariantExplorerQuery.isError}
-                isLoading={invariantExplorerQuery.isLoading}
-                onRetry={() => void invariantExplorerQuery.refetch()}
-              >
-                <ServerDataGridPanel
-                  ariaLabel="invariant explorer entries"
-                  columns={invariantColumns}
-                  getRowId={(row) => row.invariant_id}
-                  loading={invariantExplorerQuery.isFetching}
-                  onPaginationModelChange={gridState.handlePaginationModelChange}
-                  onRowClick={(params) => replaceSearchParams({ invariantId: params.row.invariant_id })}
-                  onSortModelChange={gridState.handleSortModelChange}
-                  paginationModel={gridState.paginationModel}
-                  rowCount={invariantExplorerQuery.data?.pagination.total ?? 0}
-                  rows={invariantRowsNew}
-                  sortModel={gridState.sortModel}
-                />
-              </QueryState>
-            ) : (
-              <QueryState
-                empty={legacyConstraintRows.length === 0}
-                error={legacyQuery.error}
-                isError={legacyQuery.isError}
-                isLoading={legacyQuery.isLoading}
-                onRetry={() => void legacyQuery.refetch()}
-              >
-                <ServerDataGridPanel
-                  ariaLabel={`${tab} constraint entries`}
-                  columns={legacyConstraintColumns}
-                  getRowId={(row) => row.id}
-                  loading={legacyQuery.isFetching}
-                  onPaginationModelChange={gridState.handlePaginationModelChange}
-                  onSortModelChange={gridState.handleSortModelChange}
-                  paginationModel={gridState.paginationModel}
-                  rowCount={legacyQuery.data?.pagination.total ?? 0}
-                  rows={legacyConstraintRows}
-                  sortModel={gridState.sortModel}
-                />
-              </QueryState>
-            )}
-          </Stack>
-        </CardContent>
-      </Card>
+      <ConstraintAdvancedFiltersDrawer
+        activeGroups={activeGroups}
+        constraintFacets={explorerFacetsQuery.data}
+        invariantFacets={invariantFacetsQuery.data}
+        onApplyGroupFilter={applyGroupFilter}
+        onClose={() => setAdvancedFiltersOpen(false)}
+        open={advancedFiltersOpen}
+        search={search}
+        tab={tab}
+      />
 
       <InvestigationDrawer
         ariaLabel="Constraint detail"
@@ -639,6 +379,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         open={constraintDetailOpen}
         subtitle={search.constraintId}
         title="Constraint detail"
+        data-tour-anchor={TOUR_ANCHORS.constraintsDetail}
       >
         {constraintDetailQuery.data ? (
           <ConstraintDetailComposer
@@ -660,6 +401,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         open={invariantDetailOpen}
         subtitle={search.invariantId}
         title="Invariant detail"
+        data-tour-anchor={TOUR_ANCHORS.constraintsDetail}
       >
         {invariantDetailQuery.data ? (
           <InvariantDetailComposer
@@ -677,6 +419,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         open={Boolean(legacyDetail)}
         subtitle="Legacy static/dynamic entry"
         title="Constraint detail"
+        data-tour-anchor={TOUR_ANCHORS.constraintsDetail}
       >
         {legacyDetail ? <LegacyConstraintDetailComposer detail={legacyDetail} /> : null}
       </InvestigationDrawer>

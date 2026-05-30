@@ -5,7 +5,6 @@ import {
   CardContent,
   Chip,
   Divider,
-  Grid,
   MenuItem,
   Stack,
   TextField,
@@ -18,7 +17,7 @@ import type { OperationExplorerEntryResponse, SortOrder } from '../../shared/api
 import { encodeRoutePart } from '../../shared/lib/format'
 import { replaceSearchParams } from '../../shared/lib/navigation'
 import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
-import { EvidenceSummaryCard } from '../../shared/ui/EvidenceSummaryCard'
+import { DebouncedTextField } from '../../shared/ui/DebouncedTextField'
 import { EvidenceLinkSet } from '../../shared/ui/EvidenceLinkSet'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
 import { FacetFilterBar, type FacetFilter } from '../../shared/ui/FacetFilterBar'
@@ -27,10 +26,11 @@ import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
 import { RawFieldsAccordion } from '../../shared/ui/RawFieldsAccordion'
+import { HttpMethodBadge, StatusCodeBadge } from '../../shared/ui/SemanticBadges'
 import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
-import { StatusSignalStrip } from '../../shared/ui/StatusSignalStrip'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
 import { ViewModeToggle } from '../../shared/ui/ViewModeToggle'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import {
   toOperationExplorerParams,
   toOperationFacetParams,
@@ -38,10 +38,8 @@ import {
   useOperationExplorerEntries,
   useOperationExplorerFacets,
 } from './api'
-import {
-  buildOperationMissionBoard,
-  summarizeOperationDetail,
-} from './operationViewModels'
+import { OperationCardsView, OperationEvidenceCanvas } from './OperationEvidenceViews'
+import { summarizeOperationDetail } from './operationViewModels'
 
 export type OperationsPageSearch = {
   groupBy?: string
@@ -83,121 +81,6 @@ function toBooleanSearchValue(value: string) {
 
 function statusColor(hasFailures: boolean) {
   return hasFailures ? 'error' : 'success'
-}
-
-function OperationEvidenceBadges({ operation }: { operation: OperationExplorerEntryResponse }) {
-  return (
-    <>
-      <Chip label={operation.http_method?.toUpperCase() ?? 'UNKNOWN'} size="small" />
-      <Chip label={operation.response_statuses.join(', ')} size="small" variant="outlined" />
-      <Chip label={`${operation.constraint_count} constraints`} size="small" variant="outlined" />
-      <Chip label={`${operation.invariant_count} invariants`} size="small" variant="outlined" />
-      <Chip label={`${operation.test_case_count} test cases`} size="small" variant="outlined" />
-      <Chip label={`${operation.graph_in_degree} in / ${operation.graph_out_degree} out`} size="small" variant="outlined" />
-    </>
-  )
-}
-
-function OperationCard({
-  onSelect,
-  operation,
-}: {
-  onSelect: (operationKey: string) => void
-  operation: OperationExplorerEntryResponse
-}) {
-  return (
-    <EvidenceSummaryCard
-      actionLabel={operation.display_operation_id ?? operation.operation_id}
-      badges={<OperationEvidenceBadges operation={operation} />}
-      description={operation.path_template}
-      metric={operation.has_failures ? 'Failures' : 'Clean'}
-      onAction={() => onSelect(operation.operation_key)}
-      title={operation.operation_id}
-      tone={operation.has_failures ? 'danger' : 'success'}
-    />
-  )
-}
-
-function OperationCardsView({
-  onSelect,
-  rows,
-}: {
-  onSelect: (operationKey: string) => void
-  rows: OperationExplorerEntryResponse[]
-}) {
-  return (
-    <Grid aria-label="Operation cards" component="section" container role="region" spacing={2}>
-      {rows.map((operation) => (
-        <Grid key={operation.operation_key} size={{ xs: 12, md: 6, xl: 4 }}>
-          <OperationCard onSelect={onSelect} operation={operation} />
-        </Grid>
-      ))}
-    </Grid>
-  )
-}
-
-function OperationEvidenceCanvas({
-  onSelect,
-  rows,
-}: {
-  onSelect: (operationKey: string) => void
-  rows: OperationExplorerEntryResponse[]
-}) {
-  const board = buildOperationMissionBoard(rows)
-
-  return (
-    <Stack spacing={2}>
-      <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'center' } }}>
-        <Stack spacing={0.5} sx={{ flex: 1 }}>
-          <Typography component="h2" variant="h2">
-            Operation Mission Board
-          </Typography>
-          <Typography color="text.secondary" variant="body2">
-            Triage the visible server-paginated result set by failures, dependency pressure, constraints, and evidence readiness.
-          </Typography>
-        </Stack>
-        <StatusSignalStrip
-          ariaLabel="Operation evidence signals"
-          signals={[
-            { label: 'Failures', tone: board.metrics.failures > 0 ? 'danger' : 'success', value: board.metrics.failures },
-            { label: 'Graph linked', tone: board.metrics.graphLinked > 0 ? 'success' : 'neutral', value: board.metrics.graphLinked },
-            { label: 'Low evidence', tone: board.metrics.lowEvidence > 0 ? 'warning' : 'success', value: board.metrics.lowEvidence },
-            { label: 'Visible', value: board.metrics.visible },
-          ]}
-        />
-      </Stack>
-
-      <Grid container spacing={2}>
-        {board.lanes.map((lane) => (
-          <Grid key={lane.id} size={{ xs: 12, lg: lane.id === 'failures' ? 12 : 6, xl: 4 }}>
-            <Card variant="outlined" sx={{ height: '100%' }}>
-              <CardContent>
-                <Stack spacing={1.5}>
-                  <Stack spacing={0.5}>
-                    <Typography component="h3" variant="h3">
-                      {lane.title}
-                    </Typography>
-                    <Typography color="text.secondary" variant="body2">
-                      {lane.description}
-                    </Typography>
-                  </Stack>
-                  {lane.operations.length > 0 ? (
-                    lane.operations.map((operation) => (
-                      <OperationCard key={operation.operation_key} onSelect={onSelect} operation={operation} />
-                    ))
-                  ) : (
-                    <Typography color="text.secondary" variant="body2">
-                      No visible operations in this lane.
-                    </Typography>
-                  )}
-                </Stack>
-              </CardContent>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-    </Stack>
-  )
 }
 
 export function OperationsPage({ runName, search }: OperationsPageProps) {
@@ -244,13 +127,29 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
           </Button>
         ),
       },
-      { field: 'http_method', headerName: 'Method', minWidth: 96 },
+      {
+        field: 'http_method',
+        headerName: 'Method',
+        minWidth: 112,
+        renderCell: (params) => <HttpMethodBadge method={params.row.http_method} />,
+      },
       { field: 'path_template', flex: 1, headerName: 'Path', minWidth: 160 },
       {
         field: 'response_statuses',
         flex: 0.9,
         headerName: 'Statuses',
-        minWidth: 160,
+        minWidth: 220,
+        renderCell: (params) => (
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.5 }}>
+            {params.row.response_statuses.length > 0 ? (
+              params.row.response_statuses.map((status) => (
+                <StatusCodeBadge key={`${params.row.operation_key}:${status}`} statusCode={status} />
+              ))
+            ) : (
+              <StatusCodeBadge statusCode={undefined} />
+            )}
+          </Stack>
+        ),
         valueGetter: (_value, row) => row.response_statuses.join(', '),
       },
       { field: 'constraint_count', headerName: 'Constraints', minWidth: 120 },
@@ -347,22 +246,23 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
         eyebrow="Investigation hub"
         subtitle="Triage operations by failures, evidence coverage, graph links, constraints, invariants, and test cases."
         title="Operations Explorer"
+        {...tourAnchor(TOUR_ANCHORS.operationsHeader)}
       />
 
-      <Card variant="outlined">
+      <Card variant="outlined" {...tourAnchor(TOUR_ANCHORS.operationsFilters)}>
         <CardContent>
           <Stack spacing={2}>
             <FilterToolbar>
-              <TextField
+              <DebouncedTextField
                 fullWidth
                 label="Search operations"
-                onChange={(event) => replaceSearchParams({ offset: 0, q: event.target.value })}
+                onDebouncedChange={(value) => replaceSearchParams({ offset: 0, q: value })}
                 size="small"
                 value={search.q ?? ''}
               />
-              <TextField
+              <DebouncedTextField
                 label="Status"
-                onChange={(event) => replaceSearchParams({ offset: 0, responseStatus: event.target.value })}
+                onDebouncedChange={(value) => replaceSearchParams({ offset: 0, responseStatus: value })}
                 size="small"
                 sx={{ minWidth: 120 }}
                 value={search.responseStatus ?? ''}
@@ -412,33 +312,35 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
               ]}
             />
 
-            <QueryState
-              empty={rows.length === 0}
-              error={entriesQuery.error}
-              isError={entriesQuery.isError}
-              isLoading={entriesQuery.isLoading}
-              onRetry={() => void entriesQuery.refetch()}
-            >
-              {operationsView === 'canvas' ? (
-                <OperationEvidenceCanvas onSelect={selectOperation} rows={rows} />
-              ) : operationsView === 'cards' ? (
-                <OperationCardsView onSelect={selectOperation} rows={rows} />
-              ) : (
-                <ServerDataGridPanel
-                  ariaLabel="operation explorer entries"
-                  columns={columns}
-                  getRowId={(row) => row.operation_key}
-                  loading={entriesQuery.isFetching}
-                  onPaginationModelChange={gridState.handlePaginationModelChange}
-                  onRowClick={(params) => selectOperation(params.row.operation_key)}
-                  onSortModelChange={gridState.handleSortModelChange}
-                  paginationModel={gridState.paginationModel}
-                  rowCount={entriesQuery.data?.pagination.total ?? 0}
-                  rows={rows}
-                  sortModel={gridState.sortModel}
-                />
-              )}
-            </QueryState>
+            <Stack {...tourAnchor(TOUR_ANCHORS.operationsResults)}>
+              <QueryState
+                empty={rows.length === 0}
+                error={entriesQuery.error}
+                isError={entriesQuery.isError}
+                isLoading={entriesQuery.isLoading}
+                onRetry={() => void entriesQuery.refetch()}
+              >
+                {operationsView === 'canvas' ? (
+                  <OperationEvidenceCanvas onSelect={selectOperation} rows={rows} />
+                ) : operationsView === 'cards' ? (
+                  <OperationCardsView onSelect={selectOperation} rows={rows} />
+                ) : (
+                  <ServerDataGridPanel
+                    ariaLabel="operation explorer entries"
+                    columns={columns}
+                    getRowId={(row) => row.operation_key}
+                    loading={entriesQuery.isFetching}
+                    onPaginationModelChange={gridState.handlePaginationModelChange}
+                    onRowClick={(params) => selectOperation(params.row.operation_key)}
+                    onSortModelChange={gridState.handleSortModelChange}
+                    paginationModel={gridState.paginationModel}
+                    rowCount={entriesQuery.data?.pagination.total ?? 0}
+                    rows={rows}
+                    sortModel={gridState.sortModel}
+                  />
+                )}
+              </QueryState>
+            </Stack>
           </Stack>
         </CardContent>
       </Card>
@@ -456,6 +358,7 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
         open={detailOpen}
         subtitle={selectedOperationKey}
         title="Operation explorer detail"
+        data-tour-anchor={TOUR_ANCHORS.operationsDetail}
       >
         {detailQuery.data ? (
           (() => {
@@ -463,7 +366,7 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
             return (
               <Stack spacing={2}>
                 <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-                  <Chip label={detailQuery.data.http_method?.toUpperCase() ?? 'UNKNOWN'} size="small" />
+                  <HttpMethodBadge method={detailQuery.data.http_method} />
                   <Chip label={detailQuery.data.path_template ?? detailQuery.data.operation_id} size="small" variant="outlined" />
                   <Chip color={statusColor(detailQuery.data.has_failures)} label={detailQuery.data.has_failures ? 'Has failures' : 'No failures'} size="small" />
                 </Stack>
@@ -531,7 +434,7 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
                     <Card key={response.status} variant="outlined">
                       <CardContent>
                         <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-                          <Chip label={response.status} size="small" />
+                          <StatusCodeBadge statusCode={response.status} />
                           <Typography color="text.secondary" variant="body2">
                             {response.summary}
                           </Typography>

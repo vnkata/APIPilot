@@ -31,7 +31,7 @@ describe('TestCasesPage', () => {
     )
 
     await user.click(await screen.findByRole('button', { name: /get-\/items/i }))
-    expect(await screen.findByRole('dialog', { name: /operation detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /operation detail/i })).toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /export snapshot/i }))
     const preview = await screen.findByLabelText(/export preview/i)
@@ -67,8 +67,8 @@ describe('TestCasesPage', () => {
     await waitFor(() => expect(requestedUrl?.searchParams.get('operation_id')).toBe('get-/items'))
     expect(requestedUrl?.searchParams.get('status_code')).toBe('200')
     expect(requestedUrl?.searchParams.get('limit')).toBe('10')
-    const dialog = await screen.findByRole('dialog', { name: /test case detail/i })
-    expect(within(dialog).getByText('tc-1')).toBeInTheDocument()
+    const inspector = await screen.findByRole('complementary', { name: /test case detail/i })
+    expect(within(inspector).getByText('tc-1')).toBeInTheDocument()
     expect(screen.queryByText(/response body/i)).not.toBeInTheDocument()
 
     const results = await axe(container)

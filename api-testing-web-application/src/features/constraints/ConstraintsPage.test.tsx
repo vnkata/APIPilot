@@ -22,13 +22,16 @@ describe('ConstraintsPage', () => {
     )
 
     expect(await screen.findByRole('heading', { name: /constraint workbench/i })).toBeInTheDocument()
+    expect(screen.getByLabelText(/constraint workspace summary/i)).toBeInTheDocument()
+    expect(screen.getByLabelText(/constraint workbench start here/i)).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /top constraint signals/i })).toBeInTheDocument()
     expect(screen.getAllByText(/current page/i).length).toBeGreaterThan(0)
-    expect(await screen.findByRole('button', { name: /input.limit >= 1/i })).toBeInTheDocument()
+    expect(await screen.findByText(/input.limit >= 1/i)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /workbench/i })).toHaveAttribute('aria-pressed', 'true')
 
     const results = await axe(container)
     expect(results).toHaveNoViolations()
-  })
+  }, 10_000)
 
   it('renders the explorer table mode and maps URL-backed filters to explorer APIs', async () => {
     let requestedUrl: URL | undefined
@@ -60,7 +63,7 @@ describe('ConstraintsPage', () => {
     )
 
     await screen.findByRole('grid', { name: /constraint explorer entries/i })
-    await screen.findByRole('dialog', { name: /constraint detail/i })
+    await screen.findByRole('complementary', { name: /constraint detail/i })
     expect(requestedUrl?.searchParams.get('agreement_status')).toBe('both_present')
     expect(requestedUrl?.searchParams.get('assertion_available')).toBe('true')
     expect(requestedUrl?.searchParams.get('constraint_kind')).toBe('bounds')
@@ -99,7 +102,7 @@ describe('ConstraintsPage', () => {
     await screen.findByRole('grid', { name: /invariant explorer entries/i })
     expect(requestedUrl?.searchParams.get('invariant_kind')).toBe('bounds')
     expect(requestedUrl?.searchParams.get('oracle_readiness')).toBe('verified_runtime_oracle')
-    expect(await screen.findByRole('dialog', { name: /invariant detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /invariant detail/i })).toBeInTheDocument()
     expect(screen.getAllByText('verified_runtime_oracle').length).toBeGreaterThan(0)
   })
 
@@ -126,7 +129,7 @@ describe('ConstraintsPage', () => {
     expect(screen.getByRole('button', { name: /invariants/i })).toBeInTheDocument()
   })
 
-  it('exposes URL-backed filters, group chips, row detail, and operation drawer', async () => {
+  it('exposes URL-backed filters, advanced group chips, row detail, and operation drawer', async () => {
     const user = userEvent.setup()
     renderWithProviders(
       <ConstraintsPage
@@ -150,13 +153,16 @@ describe('ConstraintsPage', () => {
     expect(screen.getByDisplayValue('request_response')).toBeInTheDocument()
     expect(await screen.findByRole('grid', { name: /static constraint entries/i })).toBeInTheDocument()
 
+    await user.click(screen.getByRole('button', { name: /advanced filters/i }))
+    expect(await screen.findByRole('dialog', { name: /advanced constraint filters/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /request_response \(1\)/i }))
     expect(window.location.search).toContain('section=request_response')
+    await user.click(screen.getByRole('button', { name: /^done$/i }))
 
-    expect(await screen.findByRole('dialog', { name: /operation detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /operation detail/i })).toBeInTheDocument()
 
     await user.click(screen.getAllByRole('button', { name: /input.limit >= 1/i })[0])
-    expect(await screen.findByRole('dialog', { name: /constraint detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /constraint detail/i })).toBeInTheDocument()
   })
 
   it('renders matrix mode for oracle readiness triage', async () => {
@@ -175,7 +181,36 @@ describe('ConstraintsPage', () => {
     expect(await screen.findByRole('heading', { name: /readiness matrix/i })).toBeInTheDocument()
     expect(screen.getAllByText(/current page/i).length).toBeGreaterThan(0)
     await waitFor(() => expect(screen.getAllByText(/both_present/i).length).toBeGreaterThan(0))
-    expect(screen.getAllByText(/assertion available/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/assertion evidence/i)).toBeInTheDocument()
+  })
+
+  it('keeps primary filters URL-backed while clear filters resets query state', async () => {
+    const user = userEvent.setup()
+    renderWithProviders(
+      <ConstraintsPage
+        runName="Run A"
+        search={{
+          constraintTab: 'explorer',
+          constraintsView: 'workbench',
+          limit: 25,
+          offset: 0,
+          q: 'limit',
+        }}
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { name: /constraint workbench/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /combined 1/i }))
+    expect(window.location.search).toContain('source=combined')
+
+    await user.clear(screen.getByRole('textbox', { name: /search constraints/i }))
+    await user.type(screen.getByRole('textbox', { name: /search constraints/i }), 'date')
+    await user.tab()
+    expect(window.location.search).toContain('q=date')
+
+    await user.click(screen.getByRole('button', { name: /clear filters/i }))
+    expect(window.location.search).not.toContain('q=')
+    expect(window.location.search).not.toContain('source=')
   })
 
   it('switches top segmented modes through URL-backed params', async () => {
@@ -213,7 +248,8 @@ describe('ConstraintsPage', () => {
       />,
     )
 
-    expect(await screen.findByRole('dialog', { name: /constraint detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /constraint detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('button', { name: /how to read this/i })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: /source lineage/i })).toBeInTheDocument()
     expect(screen.getByText(/Text matches static expression/i)).toBeInTheDocument()
     expect(screen.getAllByText(/Minimum bound/i).length).toBeGreaterThan(0)
@@ -250,7 +286,7 @@ describe('ConstraintsPage', () => {
       />,
     )
 
-    expect(await screen.findByRole('dialog', { name: /invariant detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /invariant detail/i })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: /correlation evidence/i })).toBeInTheDocument()
     expect(screen.getByText(/property path matched input.limit/i)).toBeInTheDocument()
     expect(screen.getByText(/Minimum bound/i)).toBeInTheDocument()

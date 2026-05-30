@@ -41,7 +41,7 @@ describe('HistoryPage', () => {
       />,
     )
 
-    expect(await screen.findByRole('dialog', { name: /har entry detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /har entry detail/i })).toBeInTheDocument()
     await user.click(await screen.findByRole('button', { name: /session-2/i }))
 
     expect(window.location.search).toContain('sessionId=session-2')

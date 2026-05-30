@@ -1,7 +1,8 @@
 import { Box, Stack, Typography } from '@mui/material'
+import { useTheme, type Theme } from '@mui/material/styles'
 import ForceGraph3D from 'react-force-graph-3d'
 
-import type { SpatialGraphData } from './graphViewModels'
+import type { GraphNodeRisk, SpatialGraphData } from './graphViewModels'
 
 type SpatialGraph3DProps = {
   data: SpatialGraphData
@@ -16,7 +17,16 @@ function linkEndpointId(endpoint: string | SpatialNode) {
   return typeof endpoint === 'string' ? endpoint : endpoint.id
 }
 
+function riskColor(theme: Theme, risk: GraphNodeRisk) {
+  if (risk === 'danger') return theme.palette.error.main
+  if (risk === 'warning') return theme.palette.warning.main
+  if (risk === 'success') return theme.palette.success.main
+  return theme.palette.text.secondary
+}
+
 export function SpatialGraph3D({ data, motionEnabled, onNodeSelect }: SpatialGraph3DProps) {
+  const theme = useTheme()
+
   return (
     <Stack spacing={1.5}>
       <Stack spacing={0.5}>
@@ -31,19 +41,21 @@ export function SpatialGraph3D({ data, motionEnabled, onNodeSelect }: SpatialGra
         aria-label="Spatial graph viewport"
         role="region"
         sx={{
-          bgcolor: '#020617',
+          bgcolor: theme.apiTesting.code.background,
           border: '1px solid',
-          borderColor: 'divider',
+          borderColor: theme.apiTesting.border.default,
           borderRadius: 1,
           height: 520,
           overflow: 'hidden',
         }}
       >
         <ForceGraph3D
-          backgroundColor="#020617"
+          backgroundColor={theme.apiTesting.code.background}
           graphData={data}
           height={520}
-          linkColor={(link) => (link as SpatialLink).color}
+          linkColor={(link) =>
+            (link as SpatialLink).isPathLink ? theme.palette.primary.main : theme.palette.text.secondary
+          }
           linkDirectionalArrowLength={3}
           linkDirectionalArrowRelPos={1}
           linkDirectionalParticles={(link) => (motionEnabled && (link as SpatialLink).isPathLink ? 3 : 0)}
@@ -53,7 +65,7 @@ export function SpatialGraph3D({ data, motionEnabled, onNodeSelect }: SpatialGra
           }}
           linkWidth={(link) => ((link as SpatialLink).isPathLink ? 2.2 : 1)}
           nodeAutoColorBy="group"
-          nodeColor={(node) => (node as SpatialNode).color}
+          nodeColor={(node) => riskColor(theme, (node as SpatialNode).risk)}
           nodeLabel={(node) => {
             const item = node as SpatialNode
             return `${item.name} (${item.risk})`

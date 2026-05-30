@@ -39,7 +39,6 @@ export type GraphNavigatorModel = {
 
 export type SpatialGraphData = {
   links: Array<{
-    color: string
     isPathLink: boolean
     source: string
     status: string
@@ -47,7 +46,6 @@ export type SpatialGraphData = {
     value: number
   }>
   nodes: Array<{
-    color: string
     group: string
     id: string
     name: string
@@ -67,13 +65,6 @@ type BuildNavigatorInput = {
   q?: string
   selectedNodeId?: string | null
   selectedPathSequence?: GraphSequenceResponse
-}
-
-const nodeRiskColor: Record<GraphNodeRisk, string> = {
-  danger: '#dc2626',
-  neutral: '#64748b',
-  success: '#059669',
-  warning: '#d97706',
 }
 
 export function shouldAnimateGraph(motionMode: MotionMode, prefersReducedMotion: boolean) {
@@ -239,7 +230,6 @@ export function buildGraphNavigatorModel(input: BuildNavigatorInput): GraphNavig
 export function buildSpatialGraphData(model: GraphNavigatorModel): SpatialGraphData {
   return {
     links: model.edges.map((edge) => ({
-      color: edge.data?.isPathEdge ? '#2563eb' : '#94a3b8',
       isPathLink: Boolean(edge.data?.isPathEdge),
       source: edge.source,
       status: edge.data?.statusLabel ?? 'candidate',
@@ -247,7 +237,6 @@ export function buildSpatialGraphData(model: GraphNavigatorModel): SpatialGraphD
       value: Math.max(1, edge.data?.evidenceCount ?? 1),
     })),
     nodes: model.nodes.map((node) => ({
-      color: nodeRiskColor[node.data.risk],
       group: node.data.risk,
       id: node.id,
       name: node.data.label,

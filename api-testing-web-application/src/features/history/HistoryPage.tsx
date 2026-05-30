@@ -1,16 +1,12 @@
-import CloseIcon from '@mui/icons-material/Close'
 import { useMemo } from 'react'
 import {
   Alert,
-  Box,
   Card,
   CardContent,
   Chip,
   Divider,
-  Drawer,
   FormControlLabel,
   Grid,
-  IconButton,
   List,
   ListItemButton,
   ListItemText,
@@ -25,11 +21,15 @@ import { formatBytes, formatDateTime } from '../../shared/lib/format'
 import { stringifySafe } from '../../shared/lib/json'
 import { replaceSearchParams } from '../../shared/lib/navigation'
 import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
+import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
 import { JsonBlock } from '../../shared/ui/JsonBlock'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
+import { HttpMethodBadge, StatusCodeBadge } from '../../shared/ui/SemanticBadges'
+import { SensitiveDataNotice } from '../../shared/ui/SensitiveDataNotice'
 import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import { useHarEntries, useHarSessions } from './api'
 
 export type HistoryPageSearch = {
@@ -68,72 +68,58 @@ function HarEntryDetailDrawer({
   }
 
   return (
-    <Drawer
-      anchor="right"
+    <InvestigationDrawer
+      ariaLabel="HAR entry detail"
       onClose={handleClose}
       open={open}
-      slotProps={{ paper: { sx: { maxWidth: '100%', width: { xs: '100%', sm: 600 } } } }}
-      variant="persistent"
+      subtitle={row?.entry_id}
+      title="HAR entry detail"
+      data-tour-anchor={TOUR_ANCHORS.historyDetail}
     >
-      <Box aria-label="HAR entry detail" role="dialog" sx={{ height: '100%', overflow: 'auto', p: 2 }}>
+      {row ? (
         <Stack spacing={2}>
-          <Stack direction="row" sx={{ alignItems: 'flex-start', gap: 1 }}>
-            <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>
-              <Typography component="h2" variant="h3">
-                HAR entry detail
-              </Typography>
-              <Typography color="text.secondary" noWrap variant="body2">
-                {row?.entry_id}
-              </Typography>
-            </Stack>
-            <IconButton aria-label="Close HAR entry detail" onClick={handleClose} size="small">
-              <CloseIcon fontSize="small" />
-            </IconButton>
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+            <HttpMethodBadge method={row.request_method} />
+            <StatusCodeBadge statusCode={row.response_status} />
+            <Chip label={`${row.duration_ms ?? 0} ms`} variant="outlined" />
+            {hasRedactionMarker(row) ? <Chip color="warning" label="<REDACTED>" /> : null}
           </Stack>
-
-          {row ? (
+          <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }} variant="body2">
+            {row.request_url}
+          </Typography>
+          <Divider />
+          <Typography component="h3" variant="subtitle2">
+            Query parameters
+          </Typography>
+          <JsonBlock maxHeight={160} value={row.query_params} />
+          <Typography component="h3" variant="subtitle2">
+            Request headers
+          </Typography>
+          <JsonBlock maxHeight={180} value={row.request_headers} />
+          <Typography component="h3" variant="subtitle2">
+            Response headers
+          </Typography>
+          <JsonBlock maxHeight={180} value={row.response_headers} />
+          {includeBody ? (
             <>
-              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-                <Chip label={row.request_method ?? 'UNKNOWN'} />
-                <Chip label={`Status ${row.response_status ?? 'unknown'}`} variant="outlined" />
-                <Chip label={`${row.duration_ms ?? 0} ms`} variant="outlined" />
-                {hasRedactionMarker(row) ? <Chip color="warning" label="<REDACTED>" /> : null}
-              </Stack>
-              <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }} variant="body2">
-                {row.request_url}
-              </Typography>
-              <Divider />
+              <SensitiveDataNotice>
+                Sanitized HAR bodies are visible for this entry. Redaction markers do not guarantee all payload context is safe to share.
+              </SensitiveDataNotice>
               <Typography component="h3" variant="subtitle2">
-                Query parameters
+                Request body
               </Typography>
-              <JsonBlock maxHeight={160} value={row.query_params} />
+              <JsonBlock maxHeight={180} value={row.request_body ?? null} />
               <Typography component="h3" variant="subtitle2">
-                Request headers
+                Response body
               </Typography>
-              <JsonBlock maxHeight={180} value={row.request_headers} />
-              <Typography component="h3" variant="subtitle2">
-                Response headers
-              </Typography>
-              <JsonBlock maxHeight={180} value={row.response_headers} />
-              {includeBody ? (
-                <>
-                  <Typography component="h3" variant="subtitle2">
-                    Request body
-                  </Typography>
-                  <JsonBlock maxHeight={180} value={row.request_body ?? null} />
-                  <Typography component="h3" variant="subtitle2">
-                    Response body
-                  </Typography>
-                  <JsonBlock maxHeight={220} value={row.response_body ?? null} />
-                </>
-              ) : (
-                <Alert severity="info">Payload fields are hidden. Enable sanitized bodies to inspect them.</Alert>
-              )}
+              <JsonBlock maxHeight={220} value={row.response_body ?? null} />
             </>
-          ) : null}
+          ) : (
+            <Alert severity="info">Payload fields are hidden. Enable sanitized bodies to inspect them.</Alert>
+          )}
         </Stack>
-      </Box>
-    </Drawer>
+      ) : null}
+    </InvestigationDrawer>
   )
 }
 
@@ -164,9 +150,22 @@ export function HistoryPage({ runName, search }: HistoryPageProps) {
   const entryColumns = useMemo<GridColDef<HarEntryRow>[]>(
     () => [
       { field: 'entry_id', flex: 0.8, headerName: 'Entry', minWidth: 140 },
-      { field: 'request_method', flex: 0.5, headerName: 'Method', minWidth: 100 },
+      {
+        field: 'request_method',
+        flex: 0.5,
+        headerName: 'Method',
+        minWidth: 112,
+        renderCell: (params) => <HttpMethodBadge method={params.row.request_method} />,
+      },
       { field: 'request_url', flex: 1.5, headerName: 'URL', minWidth: 260 },
-      { field: 'response_status', flex: 0.6, headerName: 'Status', minWidth: 110, type: 'number' },
+      {
+        field: 'response_status',
+        flex: 0.6,
+        headerName: 'Status',
+        minWidth: 150,
+        renderCell: (params) => <StatusCodeBadge statusCode={params.row.response_status} />,
+        type: 'number',
+      },
       { field: 'duration_ms', flex: 0.6, headerName: 'Duration ms', minWidth: 120, type: 'number' },
       {
         field: 'request_headers',
@@ -192,6 +191,7 @@ export function HistoryPage({ runName, search }: HistoryPageProps) {
         eyebrow="HTTP history"
         title="HAR sessions"
         subtitle="Inspect sanitized request/response history entries captured by APIPilot."
+        {...tourAnchor(TOUR_ANCHORS.historyHeader)}
       />
 
       <Alert severity="info">
@@ -200,7 +200,7 @@ export function HistoryPage({ runName, search }: HistoryPageProps) {
 
       <Grid container spacing={2}>
         <Grid size={{ xs: 12, md: 4, xl: 3 }}>
-          <Card variant="outlined">
+          <Card variant="outlined" {...tourAnchor(TOUR_ANCHORS.historySessions)}>
             <CardContent>
               <Typography component="h2" sx={{ mb: 1 }} variant="h3">
                 Sessions
@@ -238,7 +238,7 @@ export function HistoryPage({ runName, search }: HistoryPageProps) {
         </Grid>
 
         <Grid size={{ xs: 12, md: 8, xl: 9 }}>
-          <Card variant="outlined">
+          <Card variant="outlined" {...tourAnchor(TOUR_ANCHORS.historyResults)}>
             <CardContent>
               <Stack spacing={2}>
                 <Stack
@@ -273,6 +273,11 @@ export function HistoryPage({ runName, search }: HistoryPageProps) {
                     { key: 'includeBody', label: 'Bodies', value: search.includeBody ? 'included' : undefined },
                   ]}
                 />
+                {includeBody ? (
+                  <SensitiveDataNotice>
+                    Sanitized HAR bodies are included in this table and drawer. Keep exported evidence local unless reviewed.
+                  </SensitiveDataNotice>
+                ) : null}
 
                 <QueryState
                   empty={rows.length === 0}

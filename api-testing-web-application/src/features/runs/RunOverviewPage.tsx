@@ -1,4 +1,4 @@
-import { Box, Button, Card, CardContent, Chip, Divider, Grid, Stack, Typography } from '@mui/material'
+import { Alert, Box, Button, Card, CardContent, Chip, Divider, Grid, Stack, Typography } from '@mui/material'
 
 import { encodeRoutePart, formatBytes, formatDateTime } from '../../shared/lib/format'
 import { replaceSearchParams } from '../../shared/lib/navigation'
@@ -12,6 +12,7 @@ import { QueryState } from '../../shared/ui/QueryState'
 import { StatusSignalStrip } from '../../shared/ui/StatusSignalStrip'
 import { TriageMetricCard } from '../../shared/ui/TriageMetricCard'
 import { ViewModeToggle } from '../../shared/ui/ViewModeToggle'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import { StatusBarChart } from '../reports/StatusBarChart'
 import {
   useRunArtifacts,
@@ -35,7 +36,7 @@ function statusChartData(statusCounts: Record<string, number> | undefined) {
 }
 
 export function RunOverviewPage({ runName, search }: RunOverviewPageProps) {
-  return <RunOverviewPageContent runName={runName} search={search ?? { overviewView: 'classic' }} />
+  return <RunOverviewPageContent runName={runName} search={search ?? { overviewView: 'command' }} />
 }
 
 export function RunOverviewPageContent({ runName, search }: RunOverviewPageProps) {
@@ -44,7 +45,7 @@ export function RunOverviewPageContent({ runName, search }: RunOverviewPageProps
   const operationsQuery = useRunOperations(runName)
   const artifactsQuery = useRunArtifacts(runName)
   const sessionsQuery = useRunHarSessions(runName)
-  const overviewView = search?.overviewView ?? 'classic'
+  const overviewView = search?.overviewView ?? 'command'
   const encodedRunName = encodeRoutePart(runName)
 
   if (metadataQuery.isLoading || summaryQuery.isLoading) return <PageSkeleton />
@@ -57,6 +58,14 @@ export function RunOverviewPageContent({ runName, search }: RunOverviewPageProps
   const totalConstraints = (summaryQuery.data?.static_constraint_count ?? 0) + (summaryQuery.data?.dynamic_constraint_count ?? 0)
   const artifactCount = artifactsQuery.data?.artifacts.length ?? summaryQuery.data?.artifact_count ?? 0
   const healthTone = failureOperations > 0 ? 'danger' : totalConstraints > 0 ? 'warning' : 'success'
+  const partialSignals = [
+    operationsQuery.isError ? 'Operation evidence is unavailable; failure signal may be incomplete.' : undefined,
+    artifactsQuery.isError ? 'Artifact catalog is unavailable; artifact count falls back to summary data.' : undefined,
+    sessionsQuery.isError ? 'HAR sessions are unavailable; test evidence count falls back to summary data.' : undefined,
+    operationsQuery.isFetching && !operationsQuery.data ? 'Operation evidence is still loading.' : undefined,
+    artifactsQuery.isFetching && !artifactsQuery.data ? 'Artifact catalog is still loading.' : undefined,
+    sessionsQuery.isFetching && !sessionsQuery.data ? 'HAR sessions are still loading.' : undefined,
+  ].filter(Boolean)
   const headerActions = (
     <ViewModeToggle
       ariaLabel="Overview view mode"
@@ -81,6 +90,7 @@ export function RunOverviewPageContent({ runName, search }: RunOverviewPageProps
               : 'Run metadata unavailable'
           }
           title="QA Mission Control"
+          {...tourAnchor(TOUR_ANCHORS.overviewHeader)}
         />
 
         <QueryState
@@ -90,7 +100,13 @@ export function RunOverviewPageContent({ runName, search }: RunOverviewPageProps
           isLoading={summaryQuery.isLoading}
           onRetry={() => void summaryQuery.refetch()}
         >
-          <Card variant="outlined">
+          {partialSignals.length > 0 ? (
+            <Alert severity="info" variant="outlined">
+              {partialSignals.join(' ')}
+            </Alert>
+          ) : null}
+
+          <Card variant="outlined" {...tourAnchor(TOUR_ANCHORS.overviewHealthSignals)}>
             <CardContent>
               <Stack spacing={2}>
                 <Stack direction={{ xs: 'column', md: 'row' }} spacing={2} sx={{ alignItems: { md: 'center' } }}>
@@ -152,7 +168,7 @@ export function RunOverviewPageContent({ runName, search }: RunOverviewPageProps
 
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, lg: 7 }}>
-              <Card variant="outlined" sx={{ height: '100%' }}>
+              <Card variant="outlined" sx={{ height: '100%' }} {...tourAnchor(TOUR_ANCHORS.overviewNextInspection)}>
                 <CardContent>
                   <Typography component="h2" sx={{ mb: 2 }} variant="h3">
                     Status distribution
@@ -212,6 +228,7 @@ export function RunOverviewPageContent({ runName, search }: RunOverviewPageProps
             ? `${metadataQuery.data.artifact_count} artifacts · ${formatBytes(metadataQuery.data.size_bytes)} · modified ${formatDateTime(metadataQuery.data.modified_at)}`
             : 'Run metadata unavailable'
         }
+        {...tourAnchor(TOUR_ANCHORS.overviewHeader)}
       />
 
       <QueryState

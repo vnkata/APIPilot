@@ -4,6 +4,7 @@ import {
   Stack,
   Typography,
 } from '@mui/material'
+import { useTheme } from '@mui/material/styles'
 import {
   BaseEdge,
   EdgeLabelRenderer,
@@ -69,6 +70,7 @@ export function EvidenceGraphEdge({
   targetX,
   targetY,
 }: EdgeProps<NavigatorEdgeData>) {
+  const theme = useTheme()
   const [edgePath, labelX, labelY] = getBezierPath({
     sourcePosition,
     sourceX,
@@ -85,7 +87,7 @@ export function EvidenceGraphEdge({
         markerEnd={markerEnd}
         path={edgePath}
         style={{
-          stroke: data?.isPathEdge ? '#2563eb' : '#94a3b8',
+          stroke: data?.isPathEdge ? theme.palette.primary.main : theme.palette.text.secondary,
           strokeWidth: data?.isPathEdge ? 2.4 : 1.4,
         }}
       />

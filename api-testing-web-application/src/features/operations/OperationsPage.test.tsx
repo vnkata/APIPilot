@@ -58,7 +58,7 @@ describe('OperationsPage', () => {
 
     expect(await screen.findByRole('heading', { name: /operations explorer/i })).toBeInTheDocument()
     expect(screen.getByRole('grid', { name: /operation explorer entries/i })).toBeInTheDocument()
-    expect(await screen.findByRole('dialog', { name: /operation explorer detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /operation explorer detail/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /graph/i })).toHaveAttribute('href', expect.stringContaining('/graph'))
 
     const results = await axe(container)
@@ -74,7 +74,7 @@ describe('OperationsPage', () => {
       />,
     )
 
-    await screen.findByRole('dialog', { name: /operation explorer detail/i })
+    await screen.findByRole('complementary', { name: /operation explorer detail/i })
     await user.click(screen.getByRole('button', { name: /export snapshot/i }))
     const preview = await screen.findByLabelText(/export preview/i)
     expect(preview).toHaveTextContent('op-get-items')
@@ -95,7 +95,7 @@ describe('OperationsPage', () => {
 
     expect(await screen.findByRole('heading', { name: /operation mission board/i })).toBeInTheDocument()
     await user.click(screen.getByRole('button', { name: /listitems/i }))
-    expect(await screen.findByRole('dialog', { name: /operation explorer detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /operation explorer detail/i })).toBeInTheDocument()
   })
 
   it('renders compact cards mode for mobile triage', async () => {

@@ -20,7 +20,7 @@ export const initialWorkspacePreferencesState: WorkspacePreferencesState = {
   graphLayoutMode: 'dagre',
   sidebarCollapsed: false,
   tableDensity: 'compact',
-  themeMode: 'light',
+  themeMode: 'dark',
 }
 
 const persistedPreferencesSchema = z.object({

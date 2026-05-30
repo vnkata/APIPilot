@@ -26,7 +26,7 @@ export function ServerDataGridPanel<TRow extends GridValidRowModel>({
   const preferences = useAppSelector(selectWorkspacePreferences)
 
   return (
-    <Box sx={{ minHeight: 360, width: '100%' }}>
+    <Box sx={{ minHeight: 360, minWidth: 0, width: '100%' }}>
       <DataGrid
         aria-label={ariaLabel}
         density={preferences.tableDensity}
@@ -35,8 +35,8 @@ export function ServerDataGridPanel<TRow extends GridValidRowModel>({
         paginationMode="server"
         sortingMode="server"
         sx={{
-          bgcolor: 'background.paper',
-          borderColor: 'divider',
+          bgcolor: (theme) => theme.apiTesting.surface.default,
+          borderColor: (theme) => theme.apiTesting.border.default,
           '& .MuiDataGrid-cell': {
             alignItems: 'center',
             display: 'flex',

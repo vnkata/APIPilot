@@ -1,22 +1,24 @@
 import { useMemo, useState } from 'react'
 import {
+  Box,
   Button,
-  Card,
-  CardContent,
   Chip,
   Grid,
   List,
   ListItemButton,
   ListItemText,
+  MenuItem,
   Stack,
-  Switch,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
+  TextField,
   Typography,
+  ToggleButton,
+  ToggleButtonGroup,
 } from '@mui/material'
 
 import type { ArtifactContentResponse } from '../../shared/api/generated/model'
@@ -26,14 +28,20 @@ import { replaceSearchParams } from '../../shared/lib/navigation'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
 import { JsonBlock } from '../../shared/ui/JsonBlock'
 import { PageHeader } from '../../shared/ui/PageHeader'
+import { Panel } from '../../shared/ui/Panel'
 import { QueryState } from '../../shared/ui/QueryState'
 import { ResponsiveWorkbenchLayout } from '../../shared/ui/ResponsiveWorkbenchLayout'
+import { SensitiveDataNotice } from '../../shared/ui/SensitiveDataNotice'
 import { ViewModeToggle } from '../../shared/ui/ViewModeToggle'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import { useArtifactContent, useArtifacts } from './api'
 import { CodeViewerLazy, DiffViewerLazy } from './CodeViewerLazy'
 
+type ArtifactMode = 'compare' | 'raw' | 'summary'
+
 export type ArtifactsPageSearch = {
   artifactId?: string
+  artifactMode?: ArtifactMode
   artifactsView?: 'classic' | 'workbench'
   compare?: boolean
   raw?: boolean
@@ -58,6 +66,21 @@ function contentValue(content: ArtifactContentResponse['content']) {
   if ('value' in content) return stringifySafe(content.value)
   if ('text' in content) return content.text
   return stringifySafe(content)
+}
+
+function resolveArtifactMode(search: ArtifactsPageSearch): ArtifactMode {
+  if (search.artifactMode) return search.artifactMode
+  if (search.compare) return 'compare'
+  if (search.raw) return 'raw'
+  return 'summary'
+}
+
+function replaceArtifactSearch(updates: Record<string, boolean | string | undefined>) {
+  replaceSearchParams({
+    ...updates,
+    compare: undefined,
+    raw: undefined,
+  })
 }
 
 function CsvPreviewTable({ rows }: { rows: Array<Record<string, string>> }) {
@@ -136,13 +159,22 @@ function ArtifactContentPanel({ content }: { content: ArtifactContentResponse })
 
 export function ArtifactsPage({ runName, search }: ArtifactsPageProps) {
   const [exportOpen, setExportOpen] = useState(false)
+  const [catalogQuery, setCatalogQuery] = useState('')
+  const [kindFilter, setKindFilter] = useState('')
+  const [policyFilter, setPolicyFilter] = useState('')
   const artifactsQuery = useArtifacts(runName)
-  const artifactsView = search.artifactsView ?? 'classic'
+  const artifactsView = search.artifactsView ?? 'workbench'
   const defaultArtifactId = artifactsQuery.data?.artifacts[0]?.artifact_id
-  const [selectedArtifactId, setSelectedArtifactId] = useState(search.artifactId)
-  const [raw, setRaw] = useState(Boolean(search.raw))
-  const artifactId = selectedArtifactId ?? defaultArtifactId
-  const compare = Boolean(search.compare)
+  const artifactId = search.artifactId ?? defaultArtifactId
+  const selectedArtifact = useMemo(
+    () => artifactsQuery.data?.artifacts.find((artifact) => artifact.artifact_id === artifactId),
+    [artifactId, artifactsQuery.data?.artifacts],
+  )
+  const requestedMode = resolveArtifactMode(search)
+  const rawSupported = selectedArtifact?.raw_supported ?? true
+  const artifactMode: ArtifactMode = rawSupported || requestedMode === 'summary' ? requestedMode : 'summary'
+  const raw = artifactMode === 'raw'
+  const compare = artifactMode === 'compare'
   const contentQuery = useArtifactContent(
     runName,
     artifactId ?? '',
@@ -162,114 +194,189 @@ export function ArtifactsPage({ runName, search }: ArtifactsPageProps) {
     { query: { enabled: Boolean(artifactId) && compare } },
   )
 
-  const selectedArtifact = useMemo(
-    () => artifactsQuery.data?.artifacts.find((artifact) => artifact.artifact_id === artifactId),
-    [artifactId, artifactsQuery.data?.artifacts],
+  const artifacts = useMemo(
+    () => artifactsQuery.data?.artifacts ?? [],
+    [artifactsQuery.data?.artifacts],
+  )
+  const kindOptions = useMemo(
+    () => Array.from(new Set(artifacts.map((artifact) => artifact.kind))).sort(),
+    [artifacts],
+  )
+  const policyOptions = useMemo(
+    () => Array.from(new Set(artifacts.map((artifact) => artifact.raw_policy))).sort(),
+    [artifacts],
+  )
+  const filteredArtifacts = useMemo(
+    () =>
+      artifacts.filter((artifact) => {
+        const query = catalogQuery.trim().toLowerCase()
+        const matchesQuery =
+          query.length === 0 ||
+          [
+            artifact.artifact_id,
+            artifact.kind,
+            artifact.media_type,
+            artifact.raw_policy,
+            artifact.relative_path,
+          ].some((value) => value.toLowerCase().includes(query))
+
+        return (
+          matchesQuery &&
+          (!kindFilter || artifact.kind === kindFilter) &&
+          (!policyFilter || artifact.raw_policy === policyFilter)
+        )
+      }),
+    [artifacts, catalogQuery, kindFilter, policyFilter],
   )
 
   const catalogPanel = (
-    <Card variant="outlined">
-      <CardContent>
-        <Typography component="h2" sx={{ mb: 1 }} variant="h3">
-          Catalog
-        </Typography>
+    <Panel
+      subtitle={`${filteredArtifacts.length} of ${artifacts.length} artifacts visible`}
+      title="Catalog"
+      {...tourAnchor(TOUR_ANCHORS.artifactsCatalog)}
+    >
+      <Stack spacing={1.5}>
+        <TextField
+          fullWidth
+          label="Search catalog"
+          onChange={(event) => setCatalogQuery(event.target.value)}
+          size="small"
+          value={catalogQuery}
+        />
+        <Stack direction={{ xs: 'column', sm: 'row', md: 'column' }} spacing={1}>
+          <TextField
+            label="Kind"
+            onChange={(event) => setKindFilter(event.target.value)}
+            select
+            size="small"
+            value={kindFilter}
+          >
+            <MenuItem value="">All kinds</MenuItem>
+            {kindOptions.map((kind) => (
+              <MenuItem key={kind} value={kind}>
+                {kind}
+              </MenuItem>
+            ))}
+          </TextField>
+          <TextField
+            label="Raw policy"
+            onChange={(event) => setPolicyFilter(event.target.value)}
+            select
+            size="small"
+            value={policyFilter}
+          >
+            <MenuItem value="">All policies</MenuItem>
+            {policyOptions.map((policy) => (
+              <MenuItem key={policy} value={policy}>
+                {policy}
+              </MenuItem>
+            ))}
+          </TextField>
+        </Stack>
         <List dense>
-          {(artifactsQuery.data?.artifacts ?? []).map((artifact) => (
-            <ListItemButton
-              key={artifact.artifact_id}
-              onClick={() => {
-                setSelectedArtifactId(artifact.artifact_id)
-                replaceSearchParams({ artifactId: artifact.artifact_id, raw })
-              }}
-              selected={artifact.artifact_id === artifactId}
-            >
-              <ListItemText
-                primary={artifact.artifact_id}
-                secondary={
-                  artifactsView === 'workbench'
-                    ? `${artifact.kind} · ${formatBytes(artifact.size_bytes)} · Raw policy: ${artifact.raw_policy}`
-                    : `${artifact.kind} · ${formatBytes(artifact.size_bytes)}`
-                }
-              />
-            </ListItemButton>
-          ))}
+          {filteredArtifacts.map((artifact) => {
+            const nextMode = artifact.raw_supported ? artifactMode : 'summary'
+            return (
+              <ListItemButton
+                key={artifact.artifact_id}
+                onClick={() => {
+                  replaceArtifactSearch({ artifactId: artifact.artifact_id, artifactMode: nextMode })
+                }}
+                selected={artifact.artifact_id === artifactId}
+              >
+                <ListItemText
+                  primary={artifact.artifact_id}
+                  secondary={
+                    artifactsView === 'workbench'
+                      ? `${artifact.kind} · ${formatBytes(artifact.size_bytes)} · Raw policy: ${artifact.raw_policy}`
+                      : `${artifact.kind} · ${formatBytes(artifact.size_bytes)}`
+                  }
+                />
+              </ListItemButton>
+            )
+          })}
         </List>
-      </CardContent>
-    </Card>
+        {filteredArtifacts.length === 0 ? (
+          <Typography color="text.secondary" variant="body2">
+            No artifacts match the current catalog filters.
+          </Typography>
+        ) : null}
+      </Stack>
+    </Panel>
   )
 
   const detailPanel = (
-    <Card variant="outlined">
-      <CardContent>
-        <Stack spacing={2}>
-          <Stack
-            direction={{ xs: 'column', md: 'row' }}
-            spacing={1}
-            sx={{
-              alignItems: { xs: 'flex-start', md: 'center' },
-              justifyContent: 'space-between',
-            }}
-          >
-            <Stack spacing={0.5}>
-              <Typography component="h2" variant="h3">
-                {artifactId ?? 'No artifact selected'}
+    <Panel {...tourAnchor(TOUR_ANCHORS.artifactsDetail)}>
+      <Stack spacing={2}>
+        <Stack
+          direction={{ xs: 'column', md: 'row' }}
+          spacing={1}
+          sx={{
+            alignItems: { xs: 'flex-start', md: 'center' },
+            justifyContent: 'space-between',
+          }}
+        >
+          <Stack spacing={0.5}>
+            <Typography component="h2" variant="h3">
+              {artifactId ?? 'No artifact selected'}
+            </Typography>
+            {selectedArtifact ? (
+              <Typography color="text.secondary" variant="caption">
+                {selectedArtifact.relative_path} · {selectedArtifact.media_type} · modified {formatDateTime(selectedArtifact.modified_at)}
               </Typography>
-              {selectedArtifact ? (
-                <Typography color="text.secondary" variant="caption">
-                  {selectedArtifact.relative_path} · {selectedArtifact.media_type} · modified {formatDateTime(selectedArtifact.modified_at)}
-                </Typography>
-              ) : null}
-            </Stack>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
-              <Typography variant="body2">Summary</Typography>
-              <Switch
-                checked={raw}
-                disabled={!selectedArtifact?.raw_supported}
-                onChange={(event) => {
-                  setRaw(event.target.checked)
-                  replaceSearchParams({ artifactId, compare: false, raw: event.target.checked })
-                }}
-                slotProps={{ input: { 'aria-label': 'Raw mode' } }}
-              />
-              <Typography variant="body2">Raw</Typography>
-              <Button
-                onClick={() => {
-                  setRaw(false)
-                  replaceSearchParams({ artifactId, compare: false, raw: false })
-                }}
-                size="small"
-                variant={!raw && !compare ? 'contained' : 'outlined'}
-              >
-                Summary
-              </Button>
-              <Button
-                onClick={() => {
-                  setRaw(true)
-                  replaceSearchParams({ artifactId, compare: false, raw: true })
-                }}
-                size="small"
-                variant={raw && !compare ? 'contained' : 'outlined'}
-              >
-                Raw
-              </Button>
-              <Button
-                disabled={!selectedArtifact?.raw_supported}
-                onClick={() => replaceSearchParams({ artifactId, compare: true, raw: false })}
-                size="small"
-                variant={compare ? 'contained' : 'outlined'}
-              >
-                Compare
-              </Button>
-            </Stack>
+            ) : null}
           </Stack>
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <ToggleButtonGroup
+              aria-label="Artifact content mode"
+              exclusive
+              onChange={(_, value: ArtifactMode | null) => {
+                if (value) replaceArtifactSearch({ artifactId, artifactMode: value })
+              }}
+              size="small"
+              value={artifactMode}
+            >
+              <ToggleButton value="summary">Summary</ToggleButton>
+              <ToggleButton disabled={!selectedArtifact?.raw_supported} value="raw">
+                Raw
+              </ToggleButton>
+              <ToggleButton disabled={!selectedArtifact?.raw_supported} value="compare">
+                Compare
+              </ToggleButton>
+            </ToggleButtonGroup>
+          </Stack>
+        </Stack>
 
           {artifactsView === 'workbench' && selectedArtifact ? (
-            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-              <Chip label={`Raw policy: ${selectedArtifact.raw_policy}`} size="small" />
-              <Chip label={selectedArtifact.summary_supported ? 'Summary supported' : 'Summary missing'} size="small" variant="outlined" />
-              <Chip label={selectedArtifact.raw_supported ? 'Raw supported' : 'Raw missing'} size="small" variant="outlined" />
-            </Stack>
+            <Box
+              sx={(theme) => ({
+                bgcolor: theme.apiTesting.surface.overlay,
+                border: '1px solid',
+                borderColor: theme.apiTesting.border.default,
+                borderRadius: 1.25,
+                p: 1.5,
+                position: { md: 'sticky' },
+                top: { md: 72 },
+                zIndex: 1,
+              })}
+            >
+              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                <Chip label={`Raw policy: ${selectedArtifact.raw_policy}`} size="small" />
+                <Chip label={selectedArtifact.media_type} size="small" variant="outlined" />
+                <Chip label={formatBytes(selectedArtifact.size_bytes)} size="small" variant="outlined" />
+                <Chip label={selectedArtifact.summary_supported ? 'Summary supported' : 'Summary missing'} size="small" variant="outlined" />
+                <Chip label={selectedArtifact.raw_supported ? 'Raw supported' : 'Raw missing'} size="small" variant="outlined" />
+              </Stack>
+            </Box>
           ) : null}
+
+          {requestedMode !== 'summary' && !rawSupported ? (
+            <SensitiveDataNotice severity="info" title="Raw content unavailable">
+              This artifact does not expose raw content. APIPilot is showing the summary view while preserving the selected artifact.
+            </SensitiveDataNotice>
+          ) : null}
+
+          {raw || compare ? <SensitiveDataNotice /> : null}
 
           {compare ? (
             <QueryState
@@ -309,9 +416,8 @@ export function ArtifactsPage({ runName, search }: ArtifactsPageProps) {
               {contentQuery.data ? <ArtifactContentPanel content={contentQuery.data} /> : null}
             </QueryState>
           )}
-        </Stack>
-      </CardContent>
-    </Card>
+      </Stack>
+    </Panel>
   )
 
   return (
@@ -321,7 +427,7 @@ export function ArtifactsPage({ runName, search }: ArtifactsPageProps) {
           <Stack direction="row" spacing={1} sx={{ flexWrap: 'wrap', justifyContent: { xs: 'flex-start', md: 'flex-end' } }}>
             <ViewModeToggle
               ariaLabel="Artifacts view mode"
-              onChange={(value) => replaceSearchParams({ artifactsView: value })}
+              onChange={(value) => replaceArtifactSearch({ artifactsView: value })}
               options={[
                 { description: 'Current catalog and inspector.', label: 'Classic', value: 'classic' },
                 { description: 'Metadata-rich artifact inspection workbench.', label: 'Workbench', value: 'workbench' },
@@ -336,6 +442,7 @@ export function ArtifactsPage({ runName, search }: ArtifactsPageProps) {
         eyebrow="Artifact viewer"
         title={artifactsView === 'workbench' ? 'Artifact Workbench' : 'Artifacts'}
         subtitle="Inspect summary, raw JSON/text/CSV, sanitized test cases, and sanitized HAR artifacts."
+        {...tourAnchor(TOUR_ANCHORS.artifactsHeader)}
       />
 
       <QueryState

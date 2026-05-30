@@ -12,11 +12,20 @@ import {
 } from '@mui/material'
 
 import type { ConstraintExplorerDetailResponse } from '../../../shared/api/generated/model'
+import { monoFontFamily } from '../../../theme/typography'
 import { EvidenceLinkSet } from '../../../shared/ui/EvidenceLinkSet'
 import { JsonBlock } from '../../../shared/ui/JsonBlock'
 import { ViewModeToggle } from '../../../shared/ui/ViewModeToggle'
-import { deriveConstraintLineage } from '../constraintViewModels'
+import { deriveConstraintLineage, readableIdentifier } from '../constraintViewModels'
 import { AssertionSummaryPanel } from './AssertionSummaryPanel'
+import {
+  AgreementBadge,
+  AssertionBadge,
+  ConstraintKindBadge,
+  ConstraintSourceBadge,
+} from './ConstraintBadges'
+import { ConstraintMetadataPanel } from './ConstraintMetadataPanel'
+import { ConstraintReadingGuide } from './ConstraintReadingGuide'
 
 type ConstraintDetailComposerProps = {
   detail: ConstraintExplorerDetailResponse
@@ -41,7 +50,7 @@ function ExpressionCard({
           </Typography>
           <Typography
             color={value ? 'text.primary' : 'text.secondary'}
-            sx={{ fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace', overflowWrap: 'anywhere' }}
+            sx={{ fontFamily: monoFontFamily, overflowWrap: 'anywhere' }}
             variant="body2"
           >
             {value ?? 'Not present'}
@@ -79,13 +88,7 @@ export function ConstraintDetailComposer({
 
   return (
     <Stack spacing={2}>
-      <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, justifyContent: 'space-between' }}>
-        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-          <Chip label={detail.source} size="small" />
-          <Chip label={detail.constraint_kind} size="small" variant="outlined" />
-          <Chip label={detail.agreement_status} size="small" variant="outlined" />
-          <Chip label={detail.assertion_available ? 'Assertion available' : 'No assertion'} size="small" />
-        </Stack>
+      <Stack direction="row" sx={{ justifyContent: 'flex-end' }}>
         <ViewModeToggle
           ariaLabel="Constraint detail view"
           onChange={onDetailViewChange}
@@ -96,6 +99,26 @@ export function ConstraintDetailComposer({
           value={detailView}
         />
       </Stack>
+
+      <ConstraintMetadataPanel
+        badges={
+          <>
+            <ConstraintSourceBadge source={detail.source} />
+            <ConstraintKindBadge kind={detail.constraint_kind} />
+            <AgreementBadge agreement={detail.agreement_status} />
+            <AssertionBadge available={detail.assertion_available} />
+          </>
+        }
+        items={[
+          { label: 'Operation', value: readableIdentifier(detail.operation_id) },
+          { label: 'Property', value: readableIdentifier(detail.property_path) },
+          { label: 'Section', value: readableIdentifier(detail.section) },
+          { label: 'Source type', value: readableIdentifier(detail.source_type) },
+        ]}
+        title="Constraint context"
+      />
+
+      <ConstraintReadingGuide kind="constraint" />
 
       <EvidenceLinkSet links={evidenceLinks} />
 

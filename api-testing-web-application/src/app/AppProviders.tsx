@@ -10,7 +10,7 @@ import { selectThemeMode } from '../features/workspace-preferences/workspacePref
 import { useAppSelector } from './hooks'
 import { queryClient } from './queryClient'
 import { store } from './store'
-import { createAppTheme } from './theme'
+import { createAppTheme } from '../theme'
 
 function ThemedWorkspace({ children }: PropsWithChildren) {
   const themeMode = useAppSelector(selectThemeMode)

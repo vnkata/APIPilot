@@ -1,4 +1,16 @@
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { alpha, useTheme } from '@mui/material/styles'
+import {
+  Bar,
+  BarChart,
+  CartesianGrid,
+  Cell,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
+} from 'recharts'
+
+import { getStatusCodeToken } from '../../shared/ui/semanticBadgeUtils'
 
 export type StatusChartDatum = {
   count: number
@@ -10,13 +22,36 @@ type StatusBarChartProps = {
 }
 
 function Chart({ data, height, width }: StatusBarChartProps & { height: number; width: number }) {
+  const theme = useTheme()
+
   return (
     <BarChart data={data} height={height} width={width}>
-      <CartesianGrid strokeDasharray="3 3" />
-      <XAxis dataKey="status" />
-      <YAxis allowDecimals={false} />
-      <Tooltip />
-      <Bar dataKey="count" fill="#1f6feb" radius={[4, 4, 0, 0]} />
+      <CartesianGrid stroke={theme.apiTesting.border.subtle} strokeDasharray="3 3" />
+      <XAxis
+        dataKey="status"
+        stroke={theme.palette.text.secondary}
+        tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+      />
+      <YAxis
+        allowDecimals={false}
+        stroke={theme.palette.text.secondary}
+        tick={{ fill: theme.palette.text.secondary, fontSize: 12 }}
+      />
+      <Tooltip
+        contentStyle={{
+          background: theme.apiTesting.surface.elevated,
+          border: `1px solid ${theme.apiTesting.border.default}`,
+          borderRadius: 8,
+          color: theme.palette.text.primary,
+        }}
+        cursor={{ fill: alpha(theme.palette.primary.main, 0.08) }}
+      />
+      <Bar dataKey="count" radius={[4, 4, 0, 0]}>
+        {data.map((datum) => {
+          const token = theme.apiTesting.statusCode[getStatusCodeToken(datum.status)]
+          return <Cell fill={token.fg} key={datum.status} />
+        })}
+      </Bar>
     </BarChart>
   )
 }

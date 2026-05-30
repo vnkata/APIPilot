@@ -1,18 +1,36 @@
 import { useMemo, useState } from 'react'
-import { Button, Card, CardContent, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import {
+  Button,
+  Card,
+  CardContent,
+  Grid,
+  MenuItem,
+  Stack,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  TextField,
+  Typography,
+} from '@mui/material'
 import type { GridColDef } from '@mui/x-data-grid'
 
 import type { StatusReportEntryResponse } from '../../shared/api/generated/model'
 import { replaceSearchParams } from '../../shared/lib/navigation'
 import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
+import { DebouncedTextField } from '../../shared/ui/DebouncedTextField'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
 import { FilterToolbar } from '../../shared/ui/FilterToolbar'
 import { MetricCard } from '../../shared/ui/MetricCard'
 import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
+import { StatusCodeBadge } from '../../shared/ui/SemanticBadges'
 import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import { useReportEntries, useReports } from './api'
 import { StatusBarChart } from './StatusBarChart'
 
@@ -40,6 +58,45 @@ function statusChartData(statusCounts: Record<string, number> | undefined) {
   return Object.entries(statusCounts ?? {}).map(([status, count]) => ({ count, status }))
 }
 
+function statusGroup(status: string) {
+  if (status.startsWith('2')) return 'Success'
+  if (status.startsWith('3')) return 'Redirect'
+  if (status.startsWith('4')) return 'Client risk'
+  if (status.startsWith('5')) return 'Server risk'
+  return 'Unknown'
+}
+
+function StatusDistributionTable({ statusCounts }: { statusCounts: Record<string, number> | undefined }) {
+  const rows = Object.entries(statusCounts ?? {}).sort(([left], [right]) => Number(left) - Number(right))
+
+  if (rows.length === 0) return null
+
+  return (
+    <TableContainer sx={{ mt: 2 }}>
+      <Table aria-label="status distribution summary" size="small">
+        <TableHead>
+          <TableRow>
+            <TableCell>Status</TableCell>
+            <TableCell>Group</TableCell>
+            <TableCell align="right">Count</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {rows.map(([status, count]) => (
+            <TableRow key={status}>
+              <TableCell>
+                <StatusCodeBadge statusCode={status} />
+              </TableCell>
+              <TableCell>{statusGroup(status)}</TableCell>
+              <TableCell align="right">{count}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
+  )
+}
+
 export function ReportsPage({ runName, search }: ReportsPageProps) {
   const [exportOpen, setExportOpen] = useState(false)
   const gridState = useUrlBackedGridState(search)
@@ -58,6 +115,12 @@ export function ReportsPage({ runName, search }: ReportsPageProps) {
     ...item,
     id: `${item.operation_id}:${item.status_code}`,
   }))
+  const statusCounts = reportsQuery.data?.status_counts
+  const statusRows = statusChartData(statusCounts)
+  const totalStatusCount = statusRows.reduce((total, item) => total + item.count, 0)
+  const riskStatusCount = statusRows
+    .filter((item) => item.status.startsWith('4') || item.status.startsWith('5'))
+    .reduce((total, item) => total + item.count, 0)
   const reportColumns = useMemo<GridColDef<ReportRow>[]>(
     () => [
       {
@@ -74,7 +137,13 @@ export function ReportsPage({ runName, search }: ReportsPageProps) {
           </Button>
         ),
       },
-      { field: 'status_code', flex: 0.6, headerName: 'Status', minWidth: 120 },
+      {
+        field: 'status_code',
+        flex: 0.8,
+        headerName: 'Status',
+        minWidth: 150,
+        renderCell: (params) => <StatusCodeBadge statusCode={params.row.status_code} />,
+      },
       { field: 'count', flex: 0.5, headerName: 'Count', minWidth: 100, type: 'number' },
     ],
     [],
@@ -90,33 +159,41 @@ export function ReportsPage({ runName, search }: ReportsPageProps) {
         }
         eyebrow="Report analyzer"
         title="Reports"
-        subtitle="Aggregate APIPilot status report entries and inspect operation/status distribution."
+        subtitle="Analyze APIPilot Artifact Command Center status distribution and operation risk concentration."
+        {...tourAnchor(TOUR_ANCHORS.reportsHeader)}
       />
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <MetricCard
             label="Report entries"
             value={reportsQuery.data?.entries.length ?? 0}
             caption="Loaded from /reports"
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <MetricCard
             label="Paginated rows"
             value={entriesQuery.data?.pagination.total ?? 0}
             caption="Loaded from /reports/entries"
           />
         </Grid>
-        <Grid size={{ xs: 12, md: 4 }}>
+        <Grid size={{ xs: 12, md: 3 }}>
           <MetricCard
             label="Distinct statuses"
-            value={Object.keys(reportsQuery.data?.status_counts ?? {}).length}
+            value={Object.keys(statusCounts ?? {}).length}
+          />
+        </Grid>
+        <Grid size={{ xs: 12, md: 3 }}>
+          <MetricCard
+            caption={totalStatusCount > 0 ? `${Math.round((riskStatusCount / totalStatusCount) * 100)}% of visible status events` : 'No status events loaded'}
+            label="4xx/5xx risk"
+            value={riskStatusCount}
           />
         </Grid>
       </Grid>
 
-      <Card variant="outlined">
+      <Card variant="outlined" {...tourAnchor(TOUR_ANCHORS.reportsStatusDistribution)}>
         <CardContent>
           <Typography component="h2" sx={{ mb: 2 }} variant="h3">
             Status distribution
@@ -128,46 +205,53 @@ export function ReportsPage({ runName, search }: ReportsPageProps) {
             isLoading={reportsQuery.isLoading}
             onRetry={() => void reportsQuery.refetch()}
           >
-            <StatusBarChart data={statusChartData(reportsQuery.data?.status_counts)} />
+            <StatusBarChart data={statusRows} />
             <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1, mt: 2 }}>
-              {Object.keys(reportsQuery.data?.status_counts ?? {}).map((status) => (
+              {Object.entries(statusCounts ?? {}).map(([status, count]) => (
                 <Button
+                  aria-label={`Filter reports by ${status} status with ${count} entries`}
                   key={status}
                   onClick={() => replaceSearchParams({ offset: 0, statusCode: status })}
                   size="small"
                   variant={search.statusCode === status ? 'contained' : 'outlined'}
                 >
-                  {status}
+                  <Stack direction="row" spacing={0.75} sx={{ alignItems: 'center' }}>
+                    <StatusCodeBadge statusCode={status} />
+                    <Typography component="span" variant="caption">
+                      {count}
+                    </Typography>
+                  </Stack>
                 </Button>
               ))}
             </Stack>
+            <StatusDistributionTable statusCounts={statusCounts} />
           </QueryState>
         </CardContent>
       </Card>
 
-      <Card variant="outlined">
+      <Card variant="outlined" {...tourAnchor(TOUR_ANCHORS.reportsResults)}>
         <CardContent>
           <Typography component="h2" sx={{ mb: 2 }} variant="h3">
             Report entries
           </Typography>
           <FilterToolbar>
-            <TextField
+            <DebouncedTextField
               fullWidth
               label="Search reports"
-              onChange={(event) => replaceSearchParams({ offset: 0, q: event.target.value })}
+              onDebouncedChange={(value) => replaceSearchParams({ offset: 0, q: value })}
               size="small"
               value={search.q ?? ''}
             />
-            <TextField
+            <DebouncedTextField
               label="Operation"
-              onChange={(event) => replaceSearchParams({ offset: 0, operationId: event.target.value })}
+              onDebouncedChange={(value) => replaceSearchParams({ offset: 0, operationId: value })}
               size="small"
               sx={{ minWidth: 220 }}
               value={search.operationId ?? ''}
             />
-            <TextField
+            <DebouncedTextField
               label="Status"
-              onChange={(event) => replaceSearchParams({ offset: 0, statusCode: event.target.value })}
+              onDebouncedChange={(value) => replaceSearchParams({ offset: 0, statusCode: value })}
               size="small"
               sx={{ minWidth: 120 }}
               value={search.statusCode ?? ''}

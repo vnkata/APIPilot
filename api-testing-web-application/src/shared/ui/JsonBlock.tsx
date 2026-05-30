@@ -1,5 +1,6 @@
 import { Box } from '@mui/material'
 
+import { monoFontFamily } from '../../theme/typography'
 import { stringifySafe } from '../lib/json'
 
 type JsonBlockProps = {
@@ -14,11 +15,12 @@ export function JsonBlock({ ariaLabel = 'JSON preview', maxHeight = 320, value }
       aria-label={ariaLabel}
       component="pre"
       sx={{
-        bgcolor: 'background.default',
+        bgcolor: (theme) => theme.apiTesting.code.background,
         border: '1px solid',
-        borderColor: 'divider',
-        borderRadius: 1,
-        fontFamily: 'ui-monospace, SFMono-Regular, Menlo, Consolas, monospace',
+        borderColor: (theme) => theme.apiTesting.code.border,
+        borderRadius: 1.25,
+        color: (theme) => theme.apiTesting.code.text,
+        fontFamily: monoFontFamily,
         fontSize: 12,
         lineHeight: 1.6,
         m: 0,

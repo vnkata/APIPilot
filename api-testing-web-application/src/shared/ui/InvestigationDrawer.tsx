@@ -7,13 +7,16 @@ import {
   Stack,
   Tooltip,
   Typography,
+  useMediaQuery,
+  type BoxProps,
 } from '@mui/material'
-import type { ReactNode } from 'react'
+import { useTheme } from '@mui/material/styles'
+import { useEffect, useRef, type KeyboardEvent, type ReactNode } from 'react'
 
 import { ApiErrorAlert } from './ApiErrorAlert'
 import { PageSkeleton } from './PageSkeleton'
 
-type InvestigationDrawerProps = {
+type InvestigationDrawerProps = Omit<BoxProps, 'children' | 'title'> & {
   ariaLabel: string
   children?: ReactNode
   error?: unknown
@@ -37,16 +40,60 @@ export function InvestigationDrawer({
   open,
   subtitle,
   title,
+  sx,
+  ...props
 }: InvestigationDrawerProps) {
+  const theme = useTheme()
+  const desktop = useMediaQuery(theme.breakpoints.up('md'), { defaultMatches: true })
+  const returnFocusRef = useRef<HTMLElement | null>(null)
+  const role = desktop ? 'complementary' : 'dialog'
+
+  useEffect(() => {
+    if (open && !returnFocusRef.current) {
+      returnFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null
+    }
+
+    if (!open && returnFocusRef.current) {
+      const element = returnFocusRef.current
+      returnFocusRef.current = null
+      window.setTimeout(() => {
+        if (document.contains(element)) {
+          element.focus()
+        }
+      }, 0)
+    }
+  }, [open])
+
+  function handleKeyDown(event: KeyboardEvent<HTMLDivElement>) {
+    if (event.key === 'Escape') {
+      event.stopPropagation()
+      onClose()
+    }
+  }
+
   return (
     <Drawer
       anchor="right"
       onClose={onClose}
       open={open}
-      slotProps={{ paper: { sx: { maxWidth: '100%', width: { xs: '100%', sm: 560 } } } }}
-      variant="persistent"
+      slotProps={{
+        paper: {
+          sx: {
+            maxWidth: '100%',
+            width: { xs: '100%', sm: 560 },
+          },
+        },
+      }}
+      variant={desktop ? 'persistent' : 'temporary'}
     >
-      <Box aria-label={ariaLabel} role="dialog" sx={{ height: '100%', overflow: 'auto', p: 2 }}>
+      <Box
+        aria-label={ariaLabel}
+        onKeyDown={handleKeyDown}
+        role={role}
+        sx={[{ height: '100%', overflow: 'auto', p: 2 }, ...(sx ? (Array.isArray(sx) ? sx : [sx]) : [])]}
+        tabIndex={-1}
+        {...props}
+      >
         <Stack spacing={2}>
           <Stack direction="row" sx={{ alignItems: 'flex-start', gap: 1 }}>
             <Stack spacing={0.5} sx={{ flex: 1, minWidth: 0 }}>

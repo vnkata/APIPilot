@@ -7,6 +7,10 @@ import {
 } from './workspacePreferencesSlice'
 
 describe('workspacePreferencesSlice', () => {
+  it('defaults new workspaces to dark technical mode', () => {
+    expect(initialWorkspacePreferencesState.themeMode).toBe('dark')
+  })
+
   it('stores only local UI preferences', () => {
     const state = workspacePreferencesReducer(
       initialWorkspacePreferencesState,

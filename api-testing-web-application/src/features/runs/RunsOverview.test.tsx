@@ -21,11 +21,12 @@ describe('runs vertical slice', () => {
   it('renders summary metrics and artifact availability for the selected run', async () => {
     renderWithProviders(<RunOverviewPage runName="Run A" />)
 
-    expect(await screen.findByText('Run A')).toBeInTheDocument()
-    expect(screen.getByText(/Operations/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /qa mission control/i })).toBeInTheDocument()
+    expect(screen.getByText('Run A')).toBeInTheDocument()
+    expect(screen.getAllByText(/operations/i).length).toBeGreaterThan(0)
     expect(screen.getAllByText('2').length).toBeGreaterThan(0)
     expect(screen.getAllByText(/Artifacts/i).length).toBeGreaterThan(0)
-    expect(screen.getByText(/static_constraints/i)).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /review risky operations/i })).toBeInTheDocument()
   })
 
   it('renders command center mode for QA triage drilldown', async () => {

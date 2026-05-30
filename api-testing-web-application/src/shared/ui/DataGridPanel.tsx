@@ -14,15 +14,15 @@ export function DataGridPanel<TRow extends GridValidRowModel>({
   ...props
 }: DataGridPanelProps<TRow>) {
   return (
-    <Box sx={{ minHeight: 280, width: '100%' }}>
+    <Box sx={{ minHeight: 280, minWidth: 0, width: '100%' }}>
       <DataGrid
         aria-label={ariaLabel}
         density="compact"
         disableRowSelectionOnClick
         pageSizeOptions={[10, 25, 50, 100, 200]}
         sx={{
-          bgcolor: 'background.paper',
-          borderColor: 'divider',
+          bgcolor: (theme) => theme.apiTesting.surface.default,
+          borderColor: (theme) => theme.apiTesting.border.default,
           '& .MuiDataGrid-cell': {
             alignItems: 'center',
             display: 'flex',

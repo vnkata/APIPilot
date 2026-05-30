@@ -12,7 +12,7 @@ describe('ReportsPage', () => {
     renderWithProviders(<ReportsPage runName="Run A" search={{ limit: 25, offset: 0 }} />)
 
     expect((await screen.findAllByText(/Status distribution/i)).length).toBeGreaterThan(0)
-    expect((await screen.findAllByText('404')).length).toBeGreaterThan(0)
+    expect((await screen.findAllByText(/404 Client error/)).length).toBeGreaterThan(0)
     expect(screen.getByRole('grid', { name: /report entries/i })).toBeInTheDocument()
   })
 
@@ -50,7 +50,7 @@ describe('ReportsPage', () => {
     expect(requests.at(-1)?.searchParams.get('group_by')).toBe('operation_id')
 
     await user.click(screen.getAllByRole('button', { name: /get-\/items/i })[0])
-    expect(await screen.findByRole('dialog', { name: /operation detail/i })).toBeInTheDocument()
+    expect(await screen.findByRole('complementary', { name: /operation detail/i })).toBeInTheDocument()
     expect(screen.getByText('ListItems')).toBeInTheDocument()
   })
 })
