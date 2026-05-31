@@ -17,6 +17,7 @@ const constraintDetailView = z.enum(['readable', 'raw']).catch('readable')
 const matrixBy = z.enum(['source', 'kind', 'readiness']).catch('source')
 const artifactsView = z.enum(['classic', 'workbench']).catch('workbench')
 const artifactMode = z.enum(['compare', 'raw', 'summary']).optional().catch(undefined)
+const workspaceView = z.enum(['cockpit', 'compare', 'graph', 'operations']).catch('cockpit')
 const booleanFlag = z
   .preprocess((value) => value === true || value === 'true' || value === '1', z.boolean())
   .catch(false)
@@ -152,4 +153,25 @@ export const compareSearchSchema = z.object({
   leftRun: nullableString,
   raw: booleanFlag,
   rightRun: nullableString,
+})
+
+export const builderRunConfigSearchSchema = z.object({
+  specId: nullableString,
+})
+
+export const builderExecutionsSearchSchema = z.object({
+  mode: nullableString,
+  status: nullableString,
+})
+
+export const workspaceSearchSchema = z.object({
+  edgeId: nullableString,
+  limit,
+  offset,
+  operationId: nullableString,
+  operationKey: nullableString,
+  q: nullableString,
+  savedViewId: nullableString,
+  sequenceId: nullableString,
+  workspaceView,
 })

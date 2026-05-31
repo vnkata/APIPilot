@@ -27,6 +27,14 @@ import type {
   ReportsResponse,
   RunCatalogResponse,
   RunMetadataResponse,
+  RunConfigListResponse,
+  RunConfigResponse,
+  SpecListResponse,
+  SpecMetadataResponse,
+  SpecOperationsResponse,
+  ExecutionListResponse,
+  ExecutionResponse,
+  ExecutionEventListResponse,
   RunSummaryResponse,
   TestCasePageResponse,
 } from '../shared/api/generated/model'
@@ -41,6 +49,117 @@ export const runA: RunMetadataResponse = {
 
 export const runCatalog: RunCatalogResponse = {
   runs: [runA],
+}
+
+export const uploadedSpec: SpecMetadataResponse = {
+  spec_id: 'spec-items',
+  filename: 'items.yaml',
+  title: 'Items API',
+  content: null,
+  content_hash: 'hash-items',
+  operation_count: 2,
+  created_at: '2026-01-01T00:00:00Z',
+}
+
+export const specCatalog: SpecListResponse = {
+  specs: [uploadedSpec],
+}
+
+export const specOperations: SpecOperationsResponse = {
+  spec_id: uploadedSpec.spec_id,
+  title: uploadedSpec.title,
+  version: '1.0.0',
+  operations: [
+    {
+      operation_id: 'get-/items',
+      display_operation_id: 'ListItems',
+      method: 'get',
+      path: '/items',
+      summary: 'List items',
+      has_request_body: false,
+      response_statuses: ['200'],
+    },
+    {
+      operation_id: 'post-/items',
+      display_operation_id: 'CreateItem',
+      method: 'post',
+      path: '/items',
+      summary: 'Create item',
+      has_request_body: true,
+      response_statuses: ['201'],
+    },
+  ],
+}
+
+export const runConfig: RunConfigResponse = {
+  run_config_id: 'config-items',
+  name: 'Items dry run',
+  spec_id: uploadedSpec.spec_id,
+  base_url: 'https://example.test',
+  live_api: false,
+  request_budget: 5,
+  timeout_seconds: 10,
+  created_at: '2026-01-01T00:01:00Z',
+  llm: { provider: 'openai', model: 'gpt-4.1-mini', api_key: { type: 'env', configured: true } },
+  embedding: { provider: 'huggingface', model: 'test-embedding' },
+  headers: { Authorization: { type: 'env', configured: true } },
+}
+
+export const runConfigCatalog: RunConfigListResponse = {
+  run_configs: [runConfig],
+}
+
+export const executionQueued: ExecutionResponse = {
+  execution_id: 'exec-items',
+  spec_id: uploadedSpec.spec_id,
+  run_config_id: runConfig.run_config_id,
+  mode: 'dry_run',
+  status: 'queued',
+  run_name: null,
+  summary: {},
+  created_at: '2026-01-01T00:02:00Z',
+  started_at: null,
+  completed_at: null,
+}
+
+export const executionCompleted: ExecutionResponse = {
+  ...executionQueued,
+  status: 'completed',
+  run_name: 'Items-API-exec-items',
+  summary: { generated_artifacts: 2 },
+  started_at: '2026-01-01T00:02:01Z',
+  completed_at: '2026-01-01T00:02:03Z',
+}
+
+export const executionCatalog: ExecutionListResponse = {
+  executions: [executionCompleted],
+}
+
+export const executionEvents: ExecutionEventListResponse = {
+  events: [
+    {
+      event_id: 'event-queued',
+      execution_id: executionCompleted.execution_id,
+      sequence: 1,
+      event_type: 'queued',
+      phase: 'execution',
+      message: 'Execution queued',
+      status: 'queued',
+      metadata: {},
+      created_at: '2026-01-01T00:02:00Z',
+    },
+    {
+      event_id: 'event-completed',
+      execution_id: executionCompleted.execution_id,
+      sequence: 2,
+      event_type: 'completed',
+      phase: 'execution',
+      message: 'Execution completed',
+      status: 'completed',
+      metadata: { generated_artifacts: 2, token: '<REDACTED>' },
+      created_at: '2026-01-01T00:02:03Z',
+    },
+  ],
 }
 
 export const runSummary: RunSummaryResponse = {

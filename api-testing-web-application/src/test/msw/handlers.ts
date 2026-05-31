@@ -7,6 +7,9 @@ import {
   constraintExplorerEntries,
   constraintFacets,
   dynamicConstraints,
+  executionCatalog,
+  executionCompleted,
+  executionEvents,
   graph,
   graphEdgeDetail,
   graphEdges,
@@ -30,15 +33,47 @@ import {
   reports,
   runA,
   runCatalog,
+  runConfig,
+  runConfigCatalog,
   runSummary,
+  specCatalog,
+  specOperations,
   staticConstraints,
   testCases,
+  uploadedSpec,
 } from '../fixtures'
 
 const api = (path: string) => `*/api/v1${path}`
+let latestUploadedSpec = uploadedSpec
 
 export const handlers = [
   http.get('*/health', () => HttpResponse.json({ status: 'ok' })),
+  http.get(api('/specs'), () => HttpResponse.json({ ...specCatalog, specs: [latestUploadedSpec] })),
+  http.post(api('/specs'), async ({ request }) => {
+    const body = await request.json() as { filename?: string; title?: string }
+    latestUploadedSpec = {
+      ...uploadedSpec,
+      filename: body.filename ?? uploadedSpec.filename,
+      title: body.title || uploadedSpec.title,
+    }
+    return HttpResponse.json(latestUploadedSpec, { status: 201 })
+  }),
+  http.get(api('/specs/:specId'), () => HttpResponse.json(uploadedSpec)),
+  http.get(api('/specs/:specId/operations'), () => HttpResponse.json(specOperations)),
+  http.get(api('/run-configs'), () => HttpResponse.json(runConfigCatalog)),
+  http.post(api('/run-configs/validate'), () => HttpResponse.json({ valid: true, errors: [] })),
+  http.post(api('/run-configs'), () => HttpResponse.json(runConfig, { status: 201 })),
+  http.get(api('/run-configs/:runConfigId'), () => HttpResponse.json(runConfig)),
+  http.get(api('/executions'), () => HttpResponse.json(executionCatalog)),
+  http.post(api('/executions'), () => HttpResponse.json(executionCompleted, { status: 202 })),
+  http.get(api('/executions/:executionId'), () => HttpResponse.json(executionCompleted)),
+  http.post(api('/executions/:executionId/cancel'), () =>
+    HttpResponse.json({ ...executionCompleted, status: 'cancel_requested' }),
+  ),
+  http.get(api('/executions/:executionId/events'), () => HttpResponse.json(executionEvents)),
+  http.get(api('/executions/:executionId/run'), () =>
+    HttpResponse.json({ execution_id: executionCompleted.execution_id, run_name: executionCompleted.run_name }),
+  ),
   http.get(api('/runs'), () => HttpResponse.json(runCatalog)),
   http.get(api('/runs/:runName'), ({ params }) => {
     return params.runName === 'Run A'

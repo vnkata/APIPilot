@@ -40,6 +40,40 @@ export class OverviewPage {
   }
 }
 
+export class WorkspacePage {
+  constructor(private readonly page: Page) {}
+
+  async goto(runName: string) {
+    await this.page.goto(`${runPath(runName)}/workspace`)
+  }
+
+  async expectInvestigationWorkflow() {
+    await expect(this.page.getByRole('heading', { name: 'Investigation Workspace' })).toBeVisible()
+    await expect(this.page.getByRole('grid', { name: 'workspace operations' })).toBeVisible()
+    await expect(this.page.getByRole('group', { name: 'Workspace layout preset' })).toBeVisible()
+    await this.page.getByRole('button', { name: 'Graph focus' }).click()
+    await expect
+      .poll(() =>
+        this.page.evaluate(() => window.localStorage.getItem('apipilot.layoutPresets.v1') ?? ''),
+      )
+      .toContain('"layout":"graph"')
+    await this.page.getByRole('textbox', { name: 'Workspace search' }).fill('items')
+    await expect(this.page).toHaveURL(/q=items/)
+    await this.page.getByRole('button', { name: 'ListItems' }).first().click()
+    await expect(this.page.getByText('Selected operation')).toBeVisible()
+    await this.page.getByRole('button', { name: 'Inspect edge' }).first().click()
+    await expect(this.page.getByText('Selected edge')).toBeVisible()
+    await this.page.getByRole('button', { name: 'Bookmark selected' }).click()
+    await expect(this.page.getByRole('heading', { name: 'Pinned evidence and recent activity' })).toBeVisible()
+    await this.page.getByRole('button', { name: 'Save view' }).click()
+    await this.page.getByRole('textbox', { name: 'View name' }).fill('Risky items')
+    await this.page.getByRole('button', { exact: true, name: 'Save' }).click()
+    await expect(this.page.getByRole('button', { name: 'Risky items' })).toBeVisible()
+    await this.page.getByRole('button', { name: 'Risky items' }).click()
+    await expect(this.page).toHaveURL(/savedViewId=/)
+  }
+}
+
 export class GraphPage {
   constructor(private readonly page: Page) {}
 
@@ -213,5 +247,65 @@ export class HistoryPage {
     await expect(this.page.getByText('<REDACTED>').first()).toBeVisible()
     await this.page.getByRole('button', { name: /^session-1:/ }).first().click()
     await expect(this.page.locator('[aria-label="HAR entry detail"]')).toBeVisible()
+  }
+}
+
+export class BuilderPage {
+  constructor(private readonly page: Page) {}
+
+  async runDryRunWriteFlow() {
+    await this.page.goto('/builder/specs')
+    await expect(this.page.getByRole('heading', { name: 'Spec Manager' })).toBeVisible()
+    await this.page.getByRole('button', { name: 'Upload spec' }).click()
+    await this.page.getByLabel('OpenAPI file').setInputFiles({
+      name: 'items.json',
+      mimeType: 'application/json',
+      buffer: Buffer.from(JSON.stringify({
+        openapi: '3.0.3',
+        info: { title: 'Items API', version: '1.0.0' },
+        servers: [{ url: 'https://example.test' }],
+        paths: {
+          '/items': {
+            get: {
+              operationId: 'listItems',
+              responses: { '200': { description: 'OK' } },
+            },
+            post: {
+              operationId: 'createItem',
+              requestBody: {
+                content: {
+                  'application/json': {
+                    schema: { type: 'object', properties: { name: { type: 'string' } } },
+                  },
+                },
+              },
+              responses: { '201': { description: 'Created' } },
+            },
+          },
+        },
+      })),
+    })
+    await this.page.getByRole('textbox', { name: 'Title' }).fill('Items E2E')
+    await this.page.getByRole('button', { name: 'Create spec' }).click()
+    await expect(this.page.getByText('items.json')).toBeVisible()
+    await this.page.getByRole('link', { name: 'Preview operations' }).first().click()
+    await expect(this.page.getByRole('heading', { name: 'Items E2E' })).toBeVisible()
+    await expect(this.page.getByRole('grid', { name: 'spec operations' })).toBeVisible()
+    await this.page.getByRole('link', { name: 'Create run config' }).click()
+
+    await expect(this.page.getByRole('heading', { name: 'Run Config Builder' })).toBeVisible()
+    await this.page.getByRole('textbox', { name: 'Config name' }).fill('Items E2E dry run')
+    await this.page.getByRole('textbox', { name: 'Base URL' }).fill('https://example.test')
+    await this.page.getByRole('button', { name: 'Validate config' }).click()
+    await expect(this.page.getByText('Configuration is valid')).toBeVisible()
+    await this.page.getByRole('button', { name: 'Create and run' }).click()
+    await expect(this.page.getByRole('link', { name: 'Open execution detail' })).toBeVisible()
+    await this.page.getByRole('link', { name: 'Open execution detail' }).click()
+
+    await expect(this.page.getByRole('heading', { name: 'Execution Detail' })).toBeVisible()
+    await expect(this.page.getByText(/Execution completed|completed/).first()).toBeVisible({ timeout: 10_000 })
+    await expect(this.page.getByRole('link', { name: 'Open generated run' })).toBeVisible({ timeout: 10_000 })
+    await this.page.getByRole('link', { name: 'Open generated run' }).click()
+    await expect(this.page.getByRole('heading', { name: 'QA Mission Control' })).toBeVisible()
   }
 }

@@ -28,8 +28,32 @@ export const Runs: Story = {
   args: { path: '/runs' },
 }
 
+export const BuilderSpecs: Story = {
+  args: { path: '/builder/specs' },
+}
+
+export const BuilderSpecDetail: Story = {
+  args: { path: '/builder/specs/spec-items' },
+}
+
+export const BuilderRunConfig: Story = {
+  args: { path: '/builder/run-configs/new?specId=spec-items' },
+}
+
+export const BuilderExecutions: Story = {
+  args: { path: '/builder/executions' },
+}
+
+export const BuilderExecutionDetail: Story = {
+  args: { path: '/builder/executions/exec-items' },
+}
+
 export const Overview: Story = {
   args: { path: '/runs/Run%20A' },
+}
+
+export const Workspace: Story = {
+  args: { path: '/runs/Run%20A/workspace?operationKey=op-get-items' },
 }
 
 export const Operations: Story = {
@@ -62,4 +86,8 @@ export const History: Story = {
 
 export const Compare: Story = {
   args: { path: '/compare?leftRun=Run%20A&rightRun=Run%20A&artifactId=specification' },
+}
+
+export const CompareRaw: Story = {
+  args: { path: '/compare?leftRun=Run%20A&rightRun=Run%20A&artifactId=specification&raw=true' },
 }

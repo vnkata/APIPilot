@@ -3,6 +3,7 @@ from __future__ import annotations
 import tempfile
 import os
 import sys
+import types
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import ClassVar
@@ -10,6 +11,12 @@ from typing import ClassVar
 REPO_ROOT = Path(__file__).resolve().parents[2]
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
+
+# Keep the artifact backend E2E fixture independent from optional research-core
+# imports performed by api_testing/__init__.py, such as vector DB dependencies.
+api_testing_package = types.ModuleType("api_testing")
+api_testing_package.__path__ = [str(REPO_ROOT / "api_testing")]
+sys.modules.setdefault("api_testing", api_testing_package)
 
 from fastapi.testclient import TestClient
 
@@ -24,6 +31,9 @@ class FixtureBackendHandler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         self._proxy("GET")
 
+    def do_POST(self) -> None:
+        self._proxy("POST")
+
     def do_OPTIONS(self) -> None:
         self._proxy("OPTIONS")
 
@@ -31,9 +41,12 @@ class FixtureBackendHandler(BaseHTTPRequestHandler):
         return
 
     def _proxy(self, method: str) -> None:
+        content_length = int(self.headers.get("content-length", "0") or "0")
+        body = self.rfile.read(content_length) if content_length else None
         response = self.client.request(
             method,
             self.path,
+            content=body,
             headers={key: value for key, value in self.headers.items()},
         )
         self.send_response(response.status_code)
@@ -57,11 +70,17 @@ def main() -> None:
         "http://127.0.0.1:5174",
     )
     fixture_parent = tempfile.TemporaryDirectory(prefix="apipilot-e2e-")
-    cache_root = build_artifact_cache(Path(fixture_parent.name))
+    fixture_root = Path(fixture_parent.name)
+    cache_root = build_artifact_cache(fixture_root)
     app = create_app(
         BackendSettings(
             cache_root=cache_root,
+            metadata_db_path=fixture_root / "backend.db",
+            spec_storage_root=fixture_root / "specs",
             allowed_origins=(allowed_origin,),
+            allowed_target_base_urls=("https://example.test",),
+            default_request_budget=5,
+            default_execution_timeout_seconds=10,
         )
     )
     FixtureBackendHandler.client = TestClient(app)

@@ -1,11 +1,14 @@
 import {
   artifactsSearchSchema,
+  builderExecutionsSearchSchema,
+  builderRunConfigSearchSchema,
   constraintsSearchSchema,
   graphSearchSchema,
   historySearchSchema,
   operationsSearchSchema,
   runOverviewSearchSchema,
   testCasesSearchSchema,
+  workspaceSearchSchema,
 } from './searchParams'
 
 describe('route search params', () => {
@@ -150,5 +153,55 @@ describe('route search params', () => {
     expect(graphSearchSchema.parse({ motionMode: 'timeline' })).toMatchObject({ motionMode: 'auto' })
     expect(artifactsSearchSchema.parse({ artifactMode: 'timeline' })).toMatchObject({ artifactMode: 'summary' })
     expect(artifactsSearchSchema.parse({ artifactsView: 'timeline' })).toMatchObject({ artifactsView: 'workbench' })
+  })
+
+  it('parses workspace search params without affecting existing route defaults', () => {
+    expect(workspaceSearchSchema.parse({})).toMatchObject({
+      limit: 25,
+      offset: 0,
+      workspaceView: 'cockpit',
+    })
+
+    expect(
+      workspaceSearchSchema.parse({
+        edgeId: 'edge-create-list',
+        limit: '10',
+        offset: '20',
+        operationId: 'get-/items',
+        operationKey: 'op-get-items',
+        q: 'items',
+        savedViewId: 'view-1',
+        sequenceId: 'seq-create-list',
+        workspaceView: 'graph',
+      }),
+    ).toMatchObject({
+      edgeId: 'edge-create-list',
+      limit: 10,
+      offset: 20,
+      operationId: 'get-/items',
+      operationKey: 'op-get-items',
+      q: 'items',
+      savedViewId: 'view-1',
+      sequenceId: 'seq-create-list',
+      workspaceView: 'graph',
+    })
+
+    expect(workspaceSearchSchema.parse({ workspaceView: 'unknown' })).toMatchObject({
+      workspaceView: 'cockpit',
+    })
+  })
+
+  it('parses builder search params without changing existing route defaults', () => {
+    expect(builderRunConfigSearchSchema.parse({ specId: 'spec-items' })).toMatchObject({
+      specId: 'spec-items',
+    })
+
+    expect(builderExecutionsSearchSchema.parse({ mode: 'dry_run', status: 'running' })).toMatchObject({
+      mode: 'dry_run',
+      status: 'running',
+    })
+
+    expect(builderRunConfigSearchSchema.parse({})).toEqual({})
+    expect(builderExecutionsSearchSchema.parse({})).toEqual({})
   })
 })

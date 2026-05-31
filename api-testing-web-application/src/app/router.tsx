@@ -11,6 +11,8 @@ import {
 import { AppShell } from './AppShell'
 import {
   artifactsSearchSchema,
+  builderExecutionsSearchSchema,
+  builderRunConfigSearchSchema,
   compareSearchSchema,
   constraintsSearchSchema,
   graphSearchSchema,
@@ -19,6 +21,7 @@ import {
   reportsSearchSchema,
   runOverviewSearchSchema,
   testCasesSearchSchema,
+  workspaceSearchSchema,
 } from './searchParams'
 import { PageSkeleton } from '../shared/ui/PageSkeleton'
 import { RunOverviewPage } from '../features/runs/RunOverviewPage'
@@ -29,6 +32,9 @@ const LazyGraphPage = lazy(() =>
 )
 const LazyOperationsPage = lazy(() =>
   import('../features/operations/OperationsPage').then((module) => ({ default: module.OperationsPage })),
+)
+const LazyWorkspacePage = lazy(() =>
+  import('../features/workspace/WorkspacePage').then((module) => ({ default: module.WorkspacePage })),
 )
 const LazyConstraintsPage = lazy(() =>
   import('../features/constraints/ConstraintsPage').then((module) => ({ default: module.ConstraintsPage })),
@@ -47,6 +53,21 @@ const LazyHistoryPage = lazy(() =>
 )
 const LazyComparePage = lazy(() =>
   import('../features/compare/ComparePage').then((module) => ({ default: module.ComparePage })),
+)
+const LazySpecsPage = lazy(() =>
+  import('../features/builder/SpecsPage').then((module) => ({ default: module.SpecsPage })),
+)
+const LazySpecDetailPage = lazy(() =>
+  import('../features/builder/SpecDetailPage').then((module) => ({ default: module.SpecDetailPage })),
+)
+const LazyRunConfigBuilderPage = lazy(() =>
+  import('../features/builder/RunConfigBuilderPage').then((module) => ({ default: module.RunConfigBuilderPage })),
+)
+const LazyExecutionsPage = lazy(() =>
+  import('../features/builder/ExecutionsPage').then((module) => ({ default: module.ExecutionsPage })),
+)
+const LazyExecutionDetailPage = lazy(() =>
+  import('../features/builder/ExecutionDetailPage').then((module) => ({ default: module.ExecutionDetailPage })),
 )
 
 function RouteFallback({ children }: { children: ReactNode }) {
@@ -67,6 +88,78 @@ const runsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/runs',
   component: RunsPage,
+})
+
+const builderIndexRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/builder',
+  component: () => <Navigate to="/builder/specs" replace />,
+})
+
+const builderSpecsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/builder/specs',
+  component: function BuilderSpecsRoute() {
+    return (
+      <RouteFallback>
+        <LazySpecsPage />
+      </RouteFallback>
+    )
+  },
+})
+
+const builderSpecDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/builder/specs/$specId',
+  component: function BuilderSpecDetailRoute() {
+    const { specId } = builderSpecDetailRoute.useParams()
+    return (
+      <RouteFallback>
+        <LazySpecDetailPage specId={specId} />
+      </RouteFallback>
+    )
+  },
+})
+
+const builderRunConfigRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/builder/run-configs/new',
+  validateSearch: (search) => builderRunConfigSearchSchema.parse(search),
+  component: function BuilderRunConfigRoute() {
+    const search = builderRunConfigRoute.useSearch()
+    return (
+      <RouteFallback>
+        <LazyRunConfigBuilderPage search={search} />
+      </RouteFallback>
+    )
+  },
+})
+
+const builderExecutionsRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/builder/executions',
+  validateSearch: (search) => builderExecutionsSearchSchema.parse(search),
+  component: function BuilderExecutionsRoute() {
+    const search = builderExecutionsRoute.useSearch()
+    return (
+      <RouteFallback>
+        <LazyExecutionsPage search={search} />
+      </RouteFallback>
+    )
+  },
+})
+
+const builderExecutionDetailRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/builder/executions/$executionId',
+  component: function BuilderExecutionDetailRoute() {
+    const { executionId } = builderExecutionDetailRoute.useParams()
+    return (
+      <RouteFallback>
+        <LazyExecutionDetailPage executionId={executionId} />
+      </RouteFallback>
+    )
+  },
 })
 
 const compareRoute = createRoute({
@@ -91,6 +184,21 @@ const runOverviewRoute = createRoute({
     const { runName } = runOverviewRoute.useParams()
     const search = runOverviewRoute.useSearch()
     return <RunOverviewPage runName={runName} search={search} />
+  },
+})
+
+const workspaceRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/runs/$runName/workspace',
+  validateSearch: (search) => workspaceSearchSchema.parse(search),
+  component: function WorkspaceRoute() {
+    const { runName } = workspaceRoute.useParams()
+    const search = workspaceRoute.useSearch()
+    return (
+      <RouteFallback>
+        <LazyWorkspacePage runName={runName} search={search} />
+      </RouteFallback>
+    )
   },
 })
 
@@ -202,8 +310,15 @@ const historyRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   runsRoute,
+  builderIndexRoute,
+  builderSpecsRoute,
+  builderSpecDetailRoute,
+  builderRunConfigRoute,
+  builderExecutionsRoute,
+  builderExecutionDetailRoute,
   compareRoute,
   runOverviewRoute,
+  workspaceRoute,
   operationsRoute,
   graphRoute,
   constraintsRoute,

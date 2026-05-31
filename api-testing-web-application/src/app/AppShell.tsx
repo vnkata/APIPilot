@@ -1,15 +1,18 @@
 import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import AssessmentIcon from '@mui/icons-material/Assessment'
+import BuildIcon from '@mui/icons-material/Build'
 import BugReportIcon from '@mui/icons-material/BugReport'
 import CompareArrowsIcon from '@mui/icons-material/CompareArrows'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
+import DashboardIcon from '@mui/icons-material/Dashboard'
 import FolderZipIcon from '@mui/icons-material/FolderZip'
 import HistoryIcon from '@mui/icons-material/History'
 import LightModeIcon from '@mui/icons-material/LightMode'
 import ListAltIcon from '@mui/icons-material/ListAlt'
 import MenuIcon from '@mui/icons-material/Menu'
 import ManageSearchIcon from '@mui/icons-material/ManageSearch'
+import PlayCircleIcon from '@mui/icons-material/PlayCircle'
 import RuleIcon from '@mui/icons-material/Rule'
 import ViewCompactIcon from '@mui/icons-material/ViewCompact'
 import {
@@ -68,6 +71,8 @@ function extractRunName(pathname: string) {
 function navItems(runName: string | undefined): NavItem[] {
   const items: NavItem[] = [
     { href: '/runs', icon: <ListAltIcon fontSize="small" />, label: 'Runs' },
+    { href: '/builder/specs', icon: <BuildIcon fontSize="small" />, label: 'Builder' },
+    { href: '/builder/executions', icon: <PlayCircleIcon fontSize="small" />, label: 'Executions' },
     { href: '/compare', icon: <CompareArrowsIcon fontSize="small" />, label: 'Compare' },
   ]
 
@@ -77,6 +82,7 @@ function navItems(runName: string | undefined): NavItem[] {
   return [
     ...items,
     { href: `/runs/${encodedRunName}`, icon: <ViewCompactIcon fontSize="small" />, label: 'Overview' },
+    { href: `/runs/${encodedRunName}/workspace`, icon: <DashboardIcon fontSize="small" />, label: 'Workspace' },
     { href: `/runs/${encodedRunName}/operations`, icon: <ManageSearchIcon fontSize="small" />, label: 'Operations' },
     { href: `/runs/${encodedRunName}/graph`, icon: <AccountTreeIcon fontSize="small" />, label: 'Graph' },
     { href: `/runs/${encodedRunName}/constraints`, icon: <RuleIcon fontSize="small" />, label: 'Constraints' },
@@ -87,8 +93,83 @@ function navItems(runName: string | undefined): NavItem[] {
   ]
 }
 
+function pageLabel(pathname: string) {
+  const segment = pathname.split('/').filter(Boolean).at(-1)
+  switch (segment) {
+    case 'artifacts':
+      return 'Artifacts'
+    case 'constraints':
+      return 'Constraints'
+    case 'graph':
+      return 'Graph'
+    case 'history':
+      return 'History'
+    case 'operations':
+      return 'Operations'
+    case 'reports':
+      return 'Reports'
+    case 'test-cases':
+      return 'Test cases'
+    case 'workspace':
+      return 'Workspace'
+    default:
+      return 'Overview'
+  }
+}
+
+function shellContext(pathname: string, runName: string | undefined) {
+  if (pathname.startsWith('/builder/executions')) {
+    return {
+      mode: 'Builder',
+      subtitle: pathname === '/builder/executions' ? 'Builder / Execution Center' : 'Builder / Execution detail',
+      title: pathname === '/builder/executions' ? 'Execution Center' : 'Execution detail',
+    }
+  }
+
+  if (pathname.startsWith('/builder/run-configs')) {
+    return {
+      mode: 'Builder',
+      subtitle: 'Builder / Run Config Builder',
+      title: 'Run Config Builder',
+    }
+  }
+
+  if (pathname.startsWith('/builder/specs')) {
+    return {
+      mode: 'Builder',
+      subtitle: pathname === '/builder/specs' ? 'Builder / Spec Manager' : 'Builder / Spec preview',
+      title: pathname === '/builder/specs' ? 'Spec Manager' : 'Spec preview',
+    }
+  }
+
+  if (pathname.startsWith('/compare')) {
+    return {
+      mode: 'Compare',
+      subtitle: 'Compare / Cross-run evidence lab',
+      title: 'Compare Lab',
+    }
+  }
+
+  if (runName) {
+    const label = pageLabel(pathname)
+    return {
+      mode: 'Investigation',
+      subtitle: `Investigation / ${label}`,
+      title: runName,
+    }
+  }
+
+  return {
+    mode: 'Catalog',
+    subtitle: 'Local artifacts and generated runs',
+    title: 'Run catalog',
+  }
+}
+
 function isNavItemSelected(pathname: string, href: string) {
   if (href === '/runs') return pathname === href
+  if (href === '/builder/specs') return pathname.startsWith('/builder') && !pathname.startsWith('/builder/executions')
+  if (href === '/builder/executions') return pathname.startsWith('/builder/executions')
   return pathname === href || pathname.startsWith(`${href}/`)
 }
 
@@ -235,6 +316,7 @@ export function AppShell() {
     : 0
   const { pathname } = location
   const runName = extractRunName(pathname)
+  const context = shellContext(pathname, runName)
   const densityLabel = preferences.tableDensity === 'compact' ? 'Compact density' : 'Comfortable density'
 
   useEffect(() => {
@@ -285,15 +367,13 @@ export function AppShell() {
               sx={{ alignItems: 'center', minWidth: 0 }}
               {...tourAnchor(TOUR_ANCHORS.appRunContext)}
             >
-              <Chip label="APIPilot" size="small" variant="outlined" />
+              <Chip label={context.mode} size="small" variant="outlined" />
               <Typography noWrap sx={{ fontWeight: 700, minWidth: 0 }}>
-                {runName ?? 'Run catalog'}
+                {context.title}
               </Typography>
-              {runName ? (
-                <Typography color="text.secondary" noWrap variant="caption">
-                  Artifact Command Center
-                </Typography>
-              ) : null}
+              <Typography color="text.secondary" noWrap variant="caption">
+                {context.subtitle}
+              </Typography>
             </Stack>
           </Stack>
           <Box sx={{ flex: 1 }} />
@@ -329,7 +409,7 @@ export function AppShell() {
           </Suspense>
           <TourHelpMenu pathname={pathname} />
           <Box sx={{ width: 12 }} />
-          <AppLink href="/runs">Runs</AppLink>
+          <AppLink href="/runs">Catalog</AppLink>
         </Toolbar>
       </AppBar>
 

@@ -2,6 +2,7 @@ import { expect, test } from '@playwright/test'
 
 import {
   ArtifactsPage,
+  BuilderPage,
   ConstraintsPage,
   GraphPage,
   HistoryPage,
@@ -10,6 +11,7 @@ import {
   ReportsPage,
   RunsPage,
   TestCasesPage,
+  WorkspacePage,
 } from './pages/apipilot.page'
 
 test('QA can inspect a sanitized APIPilot run across key artifact views', async ({ page }) => {
@@ -21,6 +23,10 @@ test('QA can inspect a sanitized APIPilot run across key artifact views', async 
   const overview = new OverviewPage(page)
   await overview.expectLoaded()
   await overview.expectCommandMode()
+
+  const workspace = new WorkspacePage(page)
+  await workspace.goto('Run A')
+  await workspace.expectInvestigationWorkflow()
 
   const operations = new OperationsPage(page)
   await operations.goto('Run A')
@@ -84,6 +90,12 @@ test('desktop QA can use command palette and compare run artifacts', async ({ pa
   await expect(page.getByRole('heading', { name: 'Compare runs' })).toBeVisible()
 
   await page.goto('/compare?leftRun=Run%20A&rightRun=Run%20A&artifactId=specification')
+  await expect(page.getByRole('heading', { name: 'Artifact metadata diff' })).toBeVisible()
+  await expect(page.getByRole('heading', { name: 'JSON structural diff' })).toBeVisible()
   await expect(page.getByText(/artifacts/).first()).toBeVisible()
   await expect(page.getByLabel('Run A artifact content').first()).toContainText('content_kind')
+})
+
+test('desktop QA can upload a spec and launch a dry-run execution', async ({ page }) => {
+  await new BuilderPage(page).runDryRunWriteFlow()
 })
