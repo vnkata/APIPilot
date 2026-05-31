@@ -4,11 +4,8 @@ from datetime import datetime
 class RuleFunctions:
     # --- Logical Operators ---
     @staticmethod
-    def eq(a, b): 
-        a_num = int(a)
-        b_num = int(b)
-        if a_num is not None and b_num is not None:
-            return a_num == b_num
+    def eq(a, b):
+        return a == b
 
     @staticmethod
     def neq(a, b): return a != b
@@ -17,21 +14,15 @@ class RuleFunctions:
     def gt(a, b): return a > b
 
     @staticmethod
-    def gte(a, b): 
-        a_num = int(a)
-        b_num = int(b)
-        if a_num is not None and b_num is not None:
-            return a_num >= b_num
+    def gte(a, b):
+        return a >= b
 
     @staticmethod
     def lt(a, b): return a < b
 
     @staticmethod
-    def lte(a, b): 
-        a_num = int(a)
-        b_num = int(b)
-        if a_num is not None and b_num is not None:
-            return a_num <= b_num
+    def lte(a, b):
+        return a <= b
 
     @staticmethod
     def and_op(*args): return all(args)
@@ -63,8 +54,16 @@ class RuleFunctions:
     @staticmethod
     def contains(collection, item):
         try:
-            return item in collection
+            if isinstance(collection, (list, tuple, set, str)):
+                return item in collection
+            return collection == item
         except: return False
+
+    @staticmethod
+    def all_eq(collection, item):
+        if isinstance(collection, list):
+            return all(value == item for value in collection)
+        return collection == item
 
     @staticmethod
     def default(val, fallback):
@@ -96,6 +95,14 @@ class RuleFunctions:
             datetime.fromisoformat(str(val).replace('Z', '+00:00'))
             return True
         except: return False
+
+    @staticmethod
+    def is_date_time(val):
+        try:
+            datetime.fromisoformat(str(val).replace('Z', '+00:00'))
+            return 'T' in str(val) or ' ' in str(val)
+        except Exception:
+            return False
 
     @staticmethod
     def between(val, low, high):

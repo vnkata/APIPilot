@@ -1,0 +1,115 @@
+AST Structural Mapping,API Runtime Test Outcome (Counter-Example Result),System Action,Generic Output Schema
+"Data Type / Logic Conflict
+
+(e.g., Type(Static) != Type(Dynamic))","Satisfies Static rule,
+
+Violates Dynamic rule.","Discard Dynamic
+
+(Dynamic False Positive)","{
+
+""property"": ""Generic_Property_Name"",
+
+""status"": ""NOT_COMBINED"",
+
+""final_constraint"": ""Static_Rule"",
+
+""reason"": ""CONFLICT: Type/Format mismatch. STATIC_WIN because live server values validated the static specification rules."",
+
+""counter_example"": {""invalid_for_dynamic_sample"": ""Actual_Runtime_Data""}
+
+}"
+"Data Type / Logic Conflict
+
+(e.g., Predicate(Static) != Predicate(Dynamic))","Satisfies Dynamic rule,
+
+Violates Static rule.","Discard Static
+
+(Static Spec Outdated)","{
+
+""property"": ""Generic_Property_Name"",
+
+""status"": ""NOT_COMBINED"",
+
+""final_constraint"": ""Dynamic_Rule"",
+
+""reason"": ""CONFLICT: Specification outdated. DYNAMIC_WIN because live server response violated the static rule but matched runtime history."",
+
+""counter_example"": {""invalid_for_static_sample"": ""Actual_Runtime_Data""}
+
+}"
+"Guard / Assertion Conflict
+
+(e.g., Mutually exclusive constraints on the same parameter)","Violates Static rule,
+
+Violates Dynamic rule.
+
+(Server returns HTTP 500/Crashes)","Freeze Constraints
+
+(Both False / Server Bug)","{
+
+""property"": ""Generic_Property_Name"",
+
+""status"": ""NOT_COMBINED"",
+
+""final_constraint"": null,
+
+""reason"": ""CONFLICT_BOTH_FALSE: Unhandled server exception. The edge-case payload crashed the backend, rendering both constraints invalid."",
+
+""counter_example"": {""crash_trigger_payload"": ""Error_Inducing_Data""}
+
+}"
+"Boundary / Value Set Overlap
+
+(e.g., Dynamic bounds are subset/narrower than Static)","Satisfies Static rule,
+
+Satisfies Dynamic rule.
+
+(Dynamic boundary cannot be broken)","Merge via AND
+
+(Union $\rightarrow$ Equivalent)","{
+
+""property"": ""Generic_Property_Name"",
+
+""status"": ""COMBINED_UNION"",
+
+""final_constraint"": ""and(Static_Rule, Dynamic_Rule)"",
+
+""reason"": ""UNION: No counter-example could be found. Both rules are valid simultaneously, creating a tighter constraint boundary."",
+
+""counter_example"": null
+
+}"
+"Semantic Equivalence
+
+(e.g., x > 0 vs x >= 1)","Not Applicable
+
+(No execution needed)","Mathematical Match
+
+(Equivalent)","{
+
+""property"": ""Generic_Property_Name"",
+
+""status"": ""COMBINED_EQUIVALENT"",
+
+""final_constraint"": ""Normalized_Static_Rule"",
+
+""reason"": ""EQUIVALENT: Semantic syntax parsing confirms rules are mathematically identical. Counted as 1 feature."",
+
+""counter_example"": null
+
+}"
+"Unique Constraint
+
+(Property exists in only 1 of the 2 files)",Not Applicable,Retain Existing Rule,"{
+
+""property"": ""Generic_Property_Name"",
+
+""status"": ""UNIQUE_STATIC"" or ""UNIQUE_DYNAMIC"",
+
+""final_constraint"": ""Unique_Rule"",
+
+""reason"": ""UNIQUE: Constraint exists exclusively in one source file."",
+
+""counter_example"": null
+
+}"

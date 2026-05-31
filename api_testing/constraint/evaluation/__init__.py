@@ -36,16 +36,20 @@ class DSLEvaluationContext:
             return None
 
         values: List[Any] = [container]
-        for token in path.split("."):
+        tokens = path.split(".")
+        for index, token in enumerate(tokens):
             next_values: List[Any] = []
             wildcard = token.endswith("[]")
             key = token[:-2] if wildcard else token
+            found_empty_terminal_collection = False
 
             for value in values:
                 if isinstance(value, dict) and key in value:
                     next_value = value[key]
                     if wildcard:
                         if isinstance(next_value, list):
+                            if not next_value and index == len(tokens) - 1:
+                                found_empty_terminal_collection = True
                             next_values.extend(next_value)
                     else:
                         next_values.append(next_value)
@@ -55,12 +59,16 @@ class DSLEvaluationContext:
                             next_value = item[key]
                             if wildcard:
                                 if isinstance(next_value, list):
+                                    if not next_value and index == len(tokens) - 1:
+                                        found_empty_terminal_collection = True
                                     next_values.extend(next_value)
                             else:
                                 next_values.append(next_value)
 
             values = next_values
             if not values:
+                if found_empty_terminal_collection:
+                    return []
                 return None
 
         if len(values) == 1:

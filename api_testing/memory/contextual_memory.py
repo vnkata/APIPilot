@@ -564,7 +564,6 @@ class ContextualMemory:
         if key not in existing:
             return False
         return True
-
     def add(self, resources):
         endpoint_ctx = self.contexts.setdefault(self.current_uuid, {})
         if not isinstance(endpoint_ctx, dict):
