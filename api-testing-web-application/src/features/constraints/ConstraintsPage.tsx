@@ -11,10 +11,11 @@ import type {
 import { encodeRoutePart } from '../../shared/lib/format'
 import { replaceSearchParams } from '../../shared/lib/navigation'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
+import { PageLearningPanel } from '../../shared/ui/Guidance'
 import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
 import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
-import { TOUR_ANCHORS } from '../product-tour/tourAnchors'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import {
   toConstraintExplorerParams,
   toConstraintFacetParams,
@@ -325,6 +326,25 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         invariantCount={dynamicSummaryQuery.data?.invariant_count ?? invariantExplorerQuery.data?.pagination.total ?? 0}
         onExport={() => setExportOpen(true)}
         staticCount={staticSummaryQuery.data?.constraint_count ?? 0}
+      />
+
+      <PageLearningPanel
+        defaultExpanded
+        sections={[
+          {
+            body: 'Source tells you whether the signal came from static mining, dynamic observations, or a combined static/dynamic view.',
+            title: 'Start with source',
+          },
+          {
+            body: 'Agreement explains whether static and runtime evidence support each other, conflict, or only exist on one side.',
+            title: 'Then check agreement',
+          },
+          {
+            body: 'Assertion availability and oracle readiness tell you whether a signal can become executable test logic or still needs human review.',
+            title: 'Decide the next action',
+          },
+        ]}
+        {...tourAnchor(TOUR_ANCHORS.constraintsLearningPanel)}
       />
 
       <ConstraintFilterPanel

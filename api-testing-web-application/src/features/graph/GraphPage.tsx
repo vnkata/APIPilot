@@ -43,6 +43,7 @@ import { EmptyState } from '../../shared/ui/EmptyState'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
 import { FacetFilterBar, type FacetFilter } from '../../shared/ui/FacetFilterBar'
 import { FilterToolbar } from '../../shared/ui/FilterToolbar'
+import { GuidanceCallout } from '../../shared/ui/Guidance'
 import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
 import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
 import { PageHeader } from '../../shared/ui/PageHeader'
@@ -345,6 +346,15 @@ export function GraphPage({ runName, search }: GraphPageProps) {
         subtitle="Visualize operation dependencies, edge evidence, nodes, and generated operation sequences."
         title="Graph and operations"
         {...tourAnchor(TOUR_ANCHORS.graphHeader)}
+      />
+
+      <GuidanceCallout
+        bullets={[
+          'Explorer is the safest first stop for exact edge evidence.',
+          'Journey is keyboard-friendly when Spatial looks sparse or inactive.',
+          'Spatial is lazy-loaded and best for desktop visual scanning.',
+        ]}
+        title="Graph lens guide"
       />
 
       <QueryState

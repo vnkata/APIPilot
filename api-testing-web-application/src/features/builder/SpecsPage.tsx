@@ -21,8 +21,10 @@ import { useMemo, useState } from 'react'
 import type { SpecMetadataResponse } from '../../shared/api/generated/model'
 import { normalizeApiError } from '../../shared/api/errors'
 import { PageHeader } from '../../shared/ui/PageHeader'
+import { GuidanceCallout } from '../../shared/ui/Guidance'
 import { QueryState } from '../../shared/ui/QueryState'
 import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import { builderQueryKeys, useCreateSpec, useSpecs } from './api'
 import { builderPath, encodePathPart } from './builderUtils'
 import { SpecEditorLazy } from './SpecEditorLazy'
@@ -179,13 +181,27 @@ export function SpecsPage() {
     <Stack spacing={2}>
       <PageHeader
         actions={
-          <Button onClick={() => setUploadOpen(true)} startIcon={<UploadFileIcon />} variant="contained">
+          <Button
+            onClick={() => setUploadOpen(true)}
+            startIcon={<UploadFileIcon />}
+            variant="contained"
+            {...tourAnchor(TOUR_ANCHORS.builderSpecsUpload)}
+          >
             Upload spec
           </Button>
         }
         eyebrow="Builder"
         subtitle="Upload OpenAPI JSON or YAML and preview operations before creating APIPilot run configs."
         title="Spec Manager"
+        {...tourAnchor(TOUR_ANCHORS.builderSpecsHeader)}
+      />
+      <GuidanceCallout
+        bullets={[
+          'Upload the OpenAPI document first.',
+          'Preview operations before creating a run config.',
+          'Use dry-run execution unless you intentionally need live target traffic.',
+        ]}
+        title="Builder workflow"
       />
       <QueryState
         empty={rows.length === 0}
@@ -203,6 +219,7 @@ export function SpecsPage() {
           paginationModel={{ page: 0, pageSize: 25 }}
           rowCount={rows.length}
           rows={rows}
+          {...tourAnchor(TOUR_ANCHORS.builderSpecsCatalog)}
         />
       </QueryState>
       <UploadSpecDialog onClose={() => setUploadOpen(false)} open={uploadOpen} />

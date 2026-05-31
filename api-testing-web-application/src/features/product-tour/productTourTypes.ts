@@ -2,15 +2,24 @@ export type TourRole = 'qa-qc'
 
 export type TourId =
   | 'app-shell'
+  | 'onboarding'
   | 'runs'
   | 'overview'
+  | 'workspace'
   | 'operations'
   | 'graph'
-  | 'constraints'
+  | 'constraints-fundamentals'
+  | 'constraints-workbench'
+  | 'constraints-explorer'
   | 'artifacts'
   | 'reports'
   | 'test-cases'
   | 'history'
+  | 'compare'
+  | 'builder-specs'
+  | 'builder-run-config'
+  | 'builder-executions'
+  | 'builder-execution-detail'
 
 export type TourAnchorId =
   | 'app-sidebar'
@@ -18,11 +27,17 @@ export type TourAnchorId =
   | 'app-density-control'
   | 'app-backend-health'
   | 'app-help'
+  | 'onboarding-paths'
   | 'runs-header'
   | 'runs-catalog'
   | 'overview-header'
   | 'overview-health-signals'
   | 'overview-next-inspection'
+  | 'workspace-header'
+  | 'workspace-operations'
+  | 'workspace-graph-focus'
+  | 'workspace-inspector'
+  | 'workspace-evidence-tray'
   | 'operations-header'
   | 'operations-filters'
   | 'operations-results'
@@ -36,6 +51,7 @@ export type TourAnchorId =
   | 'constraints-workbench'
   | 'constraints-matrix'
   | 'constraints-detail'
+  | 'constraints-learning-panel'
   | 'artifacts-header'
   | 'artifacts-catalog'
   | 'artifacts-detail'
@@ -49,6 +65,27 @@ export type TourAnchorId =
   | 'history-sessions'
   | 'history-results'
   | 'history-detail'
+  | 'compare-header'
+  | 'compare-selectors'
+  | 'compare-metadata-diff'
+  | 'compare-content-diff'
+  | 'compare-content-panels'
+  | 'builder-specs-header'
+  | 'builder-specs-catalog'
+  | 'builder-specs-upload'
+  | 'builder-spec-detail-header'
+  | 'builder-spec-operations'
+  | 'builder-run-config-header'
+  | 'builder-run-config-summary'
+  | 'builder-run-config-stepper'
+  | 'builder-run-config-fields'
+  | 'builder-run-config-actions'
+  | 'builder-executions-header'
+  | 'builder-executions-filters'
+  | 'builder-executions-table'
+  | 'builder-execution-header'
+  | 'builder-execution-summary'
+  | 'builder-execution-timeline'
 
 export type TourStepPlacement = 'auto' | 'bottom' | 'center' | 'left' | 'right' | 'top'
 
@@ -61,9 +98,15 @@ export type TourStep = {
   action?: TourStepAction
   anchorId: TourAnchorId
   body: string
+  bullets?: string[]
+  domainTerm?: {
+    definition: string
+    term: string
+  }
   id: string
   placement?: TourStepPlacement
   title: string
+  whyItMatters?: string
 }
 
 export type TourDefinition = {

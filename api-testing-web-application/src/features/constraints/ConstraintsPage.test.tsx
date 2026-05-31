@@ -22,6 +22,8 @@ describe('ConstraintsPage', () => {
     )
 
     expect(await screen.findByRole('heading', { name: /constraint workbench/i })).toBeInTheDocument()
+    expect(screen.getByText(/what am i looking at/i)).toBeInTheDocument()
+    expect(screen.getByText(/source tells you whether the signal came from static mining/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/constraint workspace summary/i)).toBeInTheDocument()
     expect(screen.getByLabelText(/constraint workbench start here/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /top constraint signals/i })).toBeInTheDocument()

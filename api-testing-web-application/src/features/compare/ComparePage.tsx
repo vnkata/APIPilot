@@ -20,6 +20,7 @@ import { replaceSearchParams } from '../../shared/lib/navigation'
 import { stringifySafe } from '../../shared/lib/json'
 import { ApiErrorAlert } from '../../shared/ui/ApiErrorAlert'
 import { EmptyState } from '../../shared/ui/EmptyState'
+import { GuidanceCallout } from '../../shared/ui/Guidance'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
 import { QueryState } from '../../shared/ui/QueryState'
@@ -29,6 +30,7 @@ import {
   extractComparableContent,
 } from './compareDiff'
 import type { ArtifactCatalogResponse, ArtifactContentResponse } from '../../shared/api/generated/model'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 
 type CompareSearch = {
   artifactId?: string
@@ -145,7 +147,11 @@ function MetadataDiffPanel({
           : `${diff.changed.length} metadata changes`
 
   return (
-    <Panel title="Artifact metadata diff" subtitle="Presence, size, media type, raw policy, and capability deltas.">
+    <Panel
+      title="Artifact metadata diff"
+      subtitle="Presence, size, media type, raw policy, and capability deltas."
+      {...tourAnchor(TOUR_ANCHORS.compareMetadataDiff)}
+    >
       <Stack spacing={1.5}>
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
           <Chip color={diff.status === 'match' ? 'success' : 'warning'} label={statusLabel} size="small" />
@@ -201,6 +207,7 @@ function ContentDiffPanel({
     <Panel
       title={raw ? 'Raw artifact diff' : 'JSON structural diff'}
       subtitle={raw ? 'Monaco is loaded only for raw/text diff mode.' : 'Added, removed, and changed JSON-like paths.'}
+      {...tourAnchor(TOUR_ANCHORS.compareContentDiff)}
     >
       {!leftContent || !rightContent ? (
         <EmptyState description="Choose two runs and an artifact to compare content." title="No comparable content" />
@@ -290,6 +297,7 @@ export function ComparePage({ search }: ComparePageProps) {
         eyebrow="Investigation"
         title="Compare runs"
         subtitle="Review run summaries and inspect the same artifact across two local APIPilot runs."
+        {...tourAnchor(TOUR_ANCHORS.compareHeader)}
         actions={
           search.leftRun ? (
             <Button
@@ -305,7 +313,16 @@ export function ComparePage({ search }: ComparePageProps) {
 
       {runsQuery.isError ? <ApiErrorAlert error={runsQuery.error} onRetry={() => void runsQuery.refetch()} /> : null}
 
-      <Panel>
+      <GuidanceCallout
+        bullets={[
+          'Choose both runs before interpreting missing artifacts.',
+          'Use metadata diff before raw content to identify policy or availability changes.',
+          'Keep raw content off unless you need text-level review.',
+        ]}
+        title="Compare safely"
+      />
+
+      <Panel {...tourAnchor(TOUR_ANCHORS.compareSelectors)}>
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 4 }}>
             <TextField
@@ -398,12 +415,12 @@ export function ComparePage({ search }: ComparePageProps) {
           </QueryState>
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
-          <Panel>
+          <Panel {...tourAnchor(TOUR_ANCHORS.compareContentPanels)}>
             <ArtifactContentPanel artifactId={selectedArtifactId} raw={search.raw} runName={search.leftRun} />
           </Panel>
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
-          <Panel>
+          <Panel {...tourAnchor(TOUR_ANCHORS.compareContentPanels)}>
             <ArtifactContentPanel artifactId={selectedArtifactId} raw={search.raw} runName={search.rightRun} />
           </Panel>
         </Grid>

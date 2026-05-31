@@ -21,14 +21,16 @@ export function TourPrompt({ onDismiss, onStart, tour }: TourPromptProps) {
         border: '1px solid',
         borderColor: theme.apiTesting.border.strong,
         borderRadius: 1.5,
-        bottom: 24,
+        bottom: { xs: 16, md: 'auto' },
         boxShadow: theme.apiTesting.shadow.floating,
         maxWidth: 420,
         p: 1.5,
+        pointerEvents: 'none',
         position: 'fixed',
-        right: 24,
+        right: { xs: 16, md: 24 },
+        top: { xs: 'auto', md: 88 },
         width: { xs: 'calc(100vw - 32px)', sm: 420 },
-        zIndex: theme.zIndex.snackbar,
+        zIndex: theme.zIndex.modal - 1,
       })}
     >
       <Stack direction="row" spacing={1.25} sx={{ alignItems: 'flex-start' }}>
@@ -41,16 +43,16 @@ export function TourPrompt({ onDismiss, onStart, tour }: TourPromptProps) {
             Take the {tour.label.toLowerCase()} to learn the fastest QA/QC path through this page.
           </Typography>
           <Stack direction="row" spacing={1}>
-            <Button onClick={onStart} size="small" variant="contained">
+            <Button onClick={onStart} size="small" sx={{ pointerEvents: 'auto' }} variant="contained">
               Start tour
             </Button>
-            <Button onClick={onDismiss} size="small">
+            <Button onClick={onDismiss} size="small" sx={{ pointerEvents: 'auto' }}>
               Not now
             </Button>
           </Stack>
         </Stack>
         <Tooltip title="Dismiss tour prompt">
-          <IconButton aria-label="Dismiss tour prompt" onClick={onDismiss} size="small">
+          <IconButton aria-label="Dismiss tour prompt" onClick={onDismiss} size="small" sx={{ pointerEvents: 'auto' }}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Tooltip>

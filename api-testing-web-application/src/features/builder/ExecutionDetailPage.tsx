@@ -11,6 +11,7 @@ import {
 import { useQueryClient } from '@tanstack/react-query'
 
 import { normalizeApiError } from '../../shared/api/errors'
+import { GuidanceCallout } from '../../shared/ui/Guidance'
 import { JsonBlock } from '../../shared/ui/JsonBlock'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
@@ -27,6 +28,7 @@ import {
   isActiveExecution,
   jsonPreview,
 } from './builderUtils'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 
 type ExecutionDetailPageProps = {
   executionId: string
@@ -86,6 +88,15 @@ export function ExecutionDetailPage({ executionId }: ExecutionDetailPageProps) {
         eyebrow="Builder / Execution"
         subtitle={execution ? `${execution.mode} · ${execution.spec_id} · ${execution.run_config_id}` : executionId}
         title="Execution Detail"
+        {...tourAnchor(TOUR_ANCHORS.builderExecutionHeader)}
+      />
+      <GuidanceCallout
+        bullets={[
+          'Active executions refresh every 1.5 seconds.',
+          'Terminal executions stop polling.',
+          'Metadata is displayed through sanitized JSON previews.',
+        ]}
+        title="Reading execution detail"
       />
       {cancelError ? <Alert severity="error">{cancelError.message}</Alert> : null}
       <QueryState
@@ -99,7 +110,7 @@ export function ExecutionDetailPage({ executionId }: ExecutionDetailPageProps) {
       >
         {execution ? (
           <Stack spacing={2}>
-            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }}>
+            <Stack direction="row" spacing={1} sx={{ alignItems: 'center' }} {...tourAnchor(TOUR_ANCHORS.builderExecutionSummary)}>
               <Chip
                 color={executionStatusColor(execution.status)}
                 label={execution.status}
@@ -115,7 +126,12 @@ export function ExecutionDetailPage({ executionId }: ExecutionDetailPageProps) {
               ) : null}
             </Stack>
             <JsonBlock ariaLabel="execution summary" maxHeight={180} value={jsonPreview(execution.summary)} />
-            <Stack aria-label="execution timeline" role="region" spacing={1}>
+            <Stack
+              aria-label="execution timeline"
+              role="region"
+              spacing={1}
+              {...tourAnchor(TOUR_ANCHORS.builderExecutionTimeline)}
+            >
               <Typography component="h2" variant="h2">
                 Event timeline
               </Typography>

@@ -5,6 +5,7 @@ import LaunchIcon from '@mui/icons-material/Launch'
 import {
   Box,
   Button,
+  Divider,
   IconButton,
   LinearProgress,
   Paper,
@@ -119,6 +120,53 @@ export function CoachMark({
         <Typography color="text.secondary" id="product-tour-step-description" variant="body2">
           {step.body}
         </Typography>
+
+        {step.bullets?.length ? (
+          <Stack component="ul" spacing={0.75} sx={{ m: 0, pl: 2.5 }}>
+            {step.bullets.map((bullet) => (
+              <Typography color="text.secondary" component="li" key={bullet} variant="body2">
+                {bullet}
+              </Typography>
+            ))}
+          </Stack>
+        ) : null}
+
+        {step.domainTerm ? (
+          <Paper
+            elevation={0}
+            sx={(muiTheme) => ({
+              bgcolor: muiTheme.apiTesting.surface.subtle,
+              border: '1px solid',
+              borderColor: muiTheme.apiTesting.border.default,
+              borderRadius: 1,
+              p: 1.25,
+            })}
+            variant="outlined"
+          >
+            <Stack spacing={0.5}>
+              <Typography sx={{ fontWeight: 800 }} variant="caption">
+                {step.domainTerm.term}
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                {step.domainTerm.definition}
+              </Typography>
+            </Stack>
+          </Paper>
+        ) : null}
+
+        {step.whyItMatters ? (
+          <>
+            <Divider />
+            <Stack spacing={0.5}>
+              <Typography sx={{ fontWeight: 800 }} variant="caption">
+                Why this matters
+              </Typography>
+              <Typography color="text.secondary" variant="body2">
+                {step.whyItMatters}
+              </Typography>
+            </Stack>
+          </>
+        ) : null}
 
         {!rect ? (
           <Typography color="warning.main" variant="caption">

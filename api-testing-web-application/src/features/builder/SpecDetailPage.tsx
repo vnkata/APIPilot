@@ -14,6 +14,7 @@ import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
 import { HttpMethodBadge } from '../../shared/ui/SemanticBadges'
 import { useSpec, useSpecOperations } from './api'
 import { builderPath } from './builderUtils'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 
 type SpecDetailPageProps = {
   specId: string
@@ -76,6 +77,7 @@ export function SpecDetailPage({ specId }: SpecDetailPageProps) {
         eyebrow="Builder / Spec"
         subtitle={`${specQuery.data?.filename ?? 'Uploaded spec'} · ${specQuery.data?.operation_count ?? operations.length} operations`}
         title={title}
+        {...tourAnchor(TOUR_ANCHORS.builderSpecDetailHeader)}
       />
       <QueryState
         empty={operations.length === 0}
@@ -96,6 +98,7 @@ export function SpecDetailPage({ specId }: SpecDetailPageProps) {
           paginationModel={{ page: 0, pageSize: 25 }}
           rowCount={operations.length}
           rows={operations}
+          {...tourAnchor(TOUR_ANCHORS.builderSpecOperations)}
         />
       </QueryState>
     </Stack>

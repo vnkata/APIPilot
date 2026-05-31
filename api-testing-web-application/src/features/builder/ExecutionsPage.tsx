@@ -16,6 +16,7 @@ import { useMemo } from 'react'
 import type { ExecutionResponse } from '../../shared/api/generated/model'
 import { normalizeApiError } from '../../shared/api/errors'
 import { replaceSearchParams } from '../../shared/lib/navigation'
+import { GuidanceCallout } from '../../shared/ui/Guidance'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { QueryState } from '../../shared/ui/QueryState'
 import { ServerDataGridPanel } from '../../shared/ui/ServerDataGridPanel'
@@ -26,6 +27,7 @@ import {
   executionCanCancel,
   executionStatusColor,
 } from './builderUtils'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 
 export type ExecutionsPageSearch = {
   mode?: string
@@ -132,8 +134,17 @@ export function ExecutionsPage({ search }: ExecutionsPageProps) {
         eyebrow="Builder"
         subtitle={`${activeCount} active executions. Dry-run execution is deterministic; live execution remains guarded.`}
         title="Execution Center"
+        {...tourAnchor(TOUR_ANCHORS.builderExecutionsHeader)}
       />
-      <Stack direction="row" spacing={1}>
+      <GuidanceCallout
+        bullets={[
+          'Queued, running, and cancel requested executions poll automatically.',
+          'Completed executions may expose an Open generated run action.',
+          'Cancel is available only while the backend reports an active status.',
+        ]}
+        title="Execution status guide"
+      />
+      <Stack direction="row" spacing={1} {...tourAnchor(TOUR_ANCHORS.builderExecutionsFilters)}>
         <TextField
           label="Status filter"
           onChange={(event) => replaceSearchParams({ status: event.target.value || undefined })}
@@ -178,6 +189,7 @@ export function ExecutionsPage({ search }: ExecutionsPageProps) {
           paginationModel={{ page: 0, pageSize: 25 }}
           rowCount={rows.length}
           rows={rows}
+          {...tourAnchor(TOUR_ANCHORS.builderExecutionsTable)}
         />
       </QueryState>
     </Stack>

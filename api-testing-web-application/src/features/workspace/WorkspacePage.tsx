@@ -54,6 +54,7 @@ import { DebouncedTextField } from '../../shared/ui/DebouncedTextField'
 import { DesktopLayoutPresetControl } from '../../shared/ui/DesktopLayoutPresetControl'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { ExportSnapshotDialog } from '../../shared/ui/ExportSnapshotDialog'
+import { PageLearningPanel } from '../../shared/ui/Guidance'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
 import { QueryState } from '../../shared/ui/QueryState'
@@ -66,6 +67,7 @@ import {
   useOperationExplorerDetail,
   useOperationExplorerEntries,
 } from '../operations/api'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 
 export type WorkspacePageSearch = {
   edgeId?: string
@@ -414,6 +416,20 @@ export function WorkspacePage({ runName, search }: WorkspacePageProps) {
         eyebrow="Desktop investigation"
         subtitle="Triage operations, graph evidence, pinned bookmarks, and local notes in one run-scoped workspace."
         title="Investigation Workspace"
+        {...tourAnchor(TOUR_ANCHORS.workspaceHeader)}
+      />
+
+      <PageLearningPanel
+        sections={[
+          {
+            body: 'Use the operations pane to choose an endpoint, then keep graph evidence and inspector context visible while you work.',
+            title: 'Desktop investigation flow',
+          },
+          {
+            body: 'Saved views, notes, bookmarks, and layout presets stay local to this browser unless you explicitly include them in export.',
+            title: 'Local-only context',
+          },
+        ]}
       />
 
       <Grid container spacing={2}>
@@ -426,6 +442,7 @@ export function WorkspacePage({ runName, search }: WorkspacePageProps) {
             }
             subtitle="URL-backed filters with local saved views."
             title="Operations"
+            {...tourAnchor(TOUR_ANCHORS.workspaceOperations)}
           >
             <Stack spacing={1.5}>
               <DebouncedTextField
@@ -472,7 +489,11 @@ export function WorkspacePage({ runName, search }: WorkspacePageProps) {
         </Grid>
 
         <Grid size={layoutColumns.graph}>
-          <Panel title="Graph focus" subtitle="Performance-first dependency evidence lens.">
+          <Panel
+            title="Graph focus"
+            subtitle="Performance-first dependency evidence lens."
+            {...tourAnchor(TOUR_ANCHORS.workspaceGraphFocus)}
+          >
             <Box aria-label="workspace graph focus" role="region">
               <QueryState
                 empty={(graphQuery.data?.nodes.length ?? 0) === 0}
@@ -520,7 +541,11 @@ export function WorkspacePage({ runName, search }: WorkspacePageProps) {
         </Grid>
 
         <Grid size={layoutColumns.inspector}>
-          <Panel title="Inspector" subtitle="Entity details, graph context, and local notes.">
+          <Panel
+            title="Inspector"
+            subtitle="Entity details, graph context, and local notes."
+            {...tourAnchor(TOUR_ANCHORS.workspaceInspector)}
+          >
             <Stack spacing={2}>
               {selectedOperation ? (
                 <Stack spacing={1}>
@@ -616,6 +641,7 @@ export function WorkspacePage({ runName, search }: WorkspacePageProps) {
         id="pinned-evidence-tray"
         subtitle={`${runBookmarks.length} pinned entities · ${runRecentEntities.length} recent entities`}
         title="Pinned evidence and recent activity"
+        {...tourAnchor(TOUR_ANCHORS.workspaceEvidenceTray)}
       >
         <Stack spacing={2}>
           {runBookmarks.length > 0 ? (

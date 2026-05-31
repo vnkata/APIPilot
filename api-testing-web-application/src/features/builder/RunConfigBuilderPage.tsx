@@ -30,9 +30,11 @@ import { useEffect, useMemo, useState } from 'react'
 
 import type { ExecutionResponse, RunConfigRequest } from '../../shared/api/generated/model'
 import { normalizeApiError } from '../../shared/api/errors'
+import { GuidanceCallout, InfoHint, PageLearningPanel } from '../../shared/ui/Guidance'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
 import { QueryState } from '../../shared/ui/QueryState'
+import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import {
   builderQueryKeys,
   useCreateExecution,
@@ -253,6 +255,20 @@ export function RunConfigBuilderPage({ search }: RunConfigBuilderPageProps) {
         eyebrow="Builder"
         subtitle="Create validated APIPilot run configs from uploaded specs. Sensitive runtime values should be referenced by environment variable name."
         title="Run Config Builder"
+        {...tourAnchor(TOUR_ANCHORS.builderRunConfigHeader)}
+      />
+
+      <PageLearningPanel
+        sections={[
+          {
+            body: 'Dry run is deterministic and safe for repeatable validation. Live mode can send requests to a target API and stays behind explicit confirmation.',
+            title: 'Choose execution mode deliberately',
+          },
+          {
+            body: 'Draft persistence intentionally avoids base URLs, raw headers, secret ref names, provider endpoints, and validation responses.',
+            title: 'Drafts are privacy-limited',
+          },
+        ]}
       />
 
       <Panel
@@ -260,6 +276,7 @@ export function RunConfigBuilderPage({ search }: RunConfigBuilderPageProps) {
         role="region"
         subtitle="Desktop guidance for the next execution before you commit the config."
         title="Config summary"
+        {...tourAnchor(TOUR_ANCHORS.builderRunConfigSummary)}
       >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, md: 3 }}>
@@ -272,7 +289,7 @@ export function RunConfigBuilderPage({ search }: RunConfigBuilderPageProps) {
           </Grid>
           <Grid size={{ xs: 12, md: 3 }}>
             <Typography color="text.secondary" variant="caption">
-              Validation
+              Validation <InfoHint label="Validation help" title="Run backend validation before creating or executing a config. Validation errors are shown inline and are not persisted in local draft storage." />
             </Typography>
             <Typography sx={{ fontWeight: 800 }} variant="body2">
               Validation: {validationStatus}
@@ -295,12 +312,17 @@ export function RunConfigBuilderPage({ search }: RunConfigBuilderPageProps) {
             </Typography>
           </Grid>
         </Grid>
-        <Alert severity={liveApi ? 'warning' : 'info'} sx={{ mt: 2 }} variant="outlined">
-          Dry run uses deterministic local execution. Live mode can send requests to the configured target and requires explicit confirmation.
-        </Alert>
+        <GuidanceCallout
+          bullets={[
+            'Dry run uses deterministic local execution.',
+            'Live mode can send requests to the configured target.',
+            'Live execution still requires explicit confirmation.',
+          ]}
+          title={liveApi ? 'Live mode selected' : 'Dry-run mode selected'}
+        />
       </Panel>
 
-      <Stepper activeStep={activeStep} alternativeLabel>
+      <Stepper activeStep={activeStep} alternativeLabel {...tourAnchor(TOUR_ANCHORS.builderRunConfigStepper)}>
         {steps.map((label) => (
           <Step key={label}>
             <StepLabel>{label}</StepLabel>
@@ -326,7 +348,7 @@ export function RunConfigBuilderPage({ search }: RunConfigBuilderPageProps) {
         isError={specsQuery.isError}
         isLoading={specsQuery.isLoading}
       >
-        <Stack spacing={2}>
+        <Stack spacing={2} {...tourAnchor(TOUR_ANCHORS.builderRunConfigFields)}>
           <Grid container spacing={2}>
             <Grid size={{ xs: 12, md: 6 }}>
               <TextField
@@ -506,6 +528,7 @@ export function RunConfigBuilderPage({ search }: RunConfigBuilderPageProps) {
               position: { md: 'sticky' },
               zIndex: 2,
             })}
+            {...tourAnchor(TOUR_ANCHORS.builderRunConfigActions)}
           >
             <Button disabled={activeStep === 0} onClick={() => setActiveStep((step) => Math.max(0, step - 1))}>Back</Button>
             <Button disabled={activeStep === steps.length - 1} onClick={() => setActiveStep((step) => Math.min(steps.length - 1, step + 1))}>Next</Button>
