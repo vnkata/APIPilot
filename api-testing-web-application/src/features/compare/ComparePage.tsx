@@ -3,6 +3,7 @@ import {
   Box,
   Button,
   Chip,
+  Divider,
   FormControlLabel,
   Grid,
   MenuItem,
@@ -13,13 +14,21 @@ import {
 } from '@mui/material'
 
 import { useArtifactContent, useArtifacts } from '../artifacts/api'
+import { DiffViewerLazy } from '../artifacts/CodeViewerLazy'
 import { useRunSummary, useRuns } from '../runs/api'
 import { replaceSearchParams } from '../../shared/lib/navigation'
+import { stringifySafe } from '../../shared/lib/json'
 import { ApiErrorAlert } from '../../shared/ui/ApiErrorAlert'
 import { EmptyState } from '../../shared/ui/EmptyState'
 import { PageHeader } from '../../shared/ui/PageHeader'
 import { Panel } from '../../shared/ui/Panel'
 import { QueryState } from '../../shared/ui/QueryState'
+import {
+  buildArtifactMetadataDiff,
+  buildJsonDiff,
+  extractComparableContent,
+} from './compareDiff'
+import type { ArtifactCatalogResponse, ArtifactContentResponse } from '../../shared/api/generated/model'
 
 type CompareSearch = {
   artifactId?: string
@@ -34,6 +43,12 @@ type ComparePageProps = {
 
 function formatJson(value: unknown) {
   return JSON.stringify(value, null, 2)
+}
+
+function diffLanguage(mediaType?: string) {
+  if (mediaType?.includes('json')) return 'json'
+  if (mediaType?.includes('csv')) return 'csv'
+  return 'text'
 }
 
 function SummaryPanel({ runName }: { runName?: string }) {
@@ -112,6 +127,136 @@ function ArtifactContentPanel({
   )
 }
 
+function MetadataDiffPanel({
+  leftArtifact,
+  rightArtifact,
+}: {
+  leftArtifact?: ArtifactCatalogResponse['artifacts'][number]
+  rightArtifact?: ArtifactCatalogResponse['artifacts'][number]
+}) {
+  const diff = buildArtifactMetadataDiff(leftArtifact, rightArtifact)
+  const statusLabel =
+    diff.status === 'match'
+      ? 'Present on both sides'
+      : diff.status === 'left-only'
+        ? 'Missing on right'
+        : diff.status === 'right-only'
+          ? 'Missing on left'
+          : `${diff.changed.length} metadata changes`
+
+  return (
+    <Panel title="Artifact metadata diff" subtitle="Presence, size, media type, raw policy, and capability deltas.">
+      <Stack spacing={1.5}>
+        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+          <Chip color={diff.status === 'match' ? 'success' : 'warning'} label={statusLabel} size="small" />
+          {leftArtifact ? <Chip label={`Left size ${leftArtifact.size_bytes} bytes`} size="small" variant="outlined" /> : null}
+          {rightArtifact ? <Chip label={`Right size ${rightArtifact.size_bytes} bytes`} size="small" variant="outlined" /> : null}
+        </Stack>
+        {diff.changed.length > 0 ? (
+          <Stack divider={<Divider flexItem />} spacing={1}>
+            {diff.changed.map((item) => (
+              <Grid key={String(item.field)} container spacing={1}>
+                <Grid size={{ xs: 12, md: 3 }}>
+                  <Typography sx={{ fontWeight: 800 }} variant="body2">
+                    {String(item.field)}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4.5 }}>
+                  <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }} variant="body2">
+                    {String(item.left)}
+                  </Typography>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4.5 }}>
+                  <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }} variant="body2">
+                    {String(item.right)}
+                  </Typography>
+                </Grid>
+              </Grid>
+            ))}
+          </Stack>
+        ) : (
+          <Typography color="text.secondary" variant="body2">
+            No artifact metadata deltas for the current selection.
+          </Typography>
+        )}
+      </Stack>
+    </Panel>
+  )
+}
+
+function ContentDiffPanel({
+  leftContent,
+  raw,
+  rightContent,
+}: {
+  leftContent?: ArtifactContentResponse
+  raw: boolean
+  rightContent?: ArtifactContentResponse
+}) {
+  const leftComparable = extractComparableContent(leftContent)
+  const rightComparable = extractComparableContent(rightContent)
+  const jsonDiff = buildJsonDiff(leftComparable, rightComparable)
+
+  return (
+    <Panel
+      title={raw ? 'Raw artifact diff' : 'JSON structural diff'}
+      subtitle={raw ? 'Monaco is loaded only for raw/text diff mode.' : 'Added, removed, and changed JSON-like paths.'}
+    >
+      {!leftContent || !rightContent ? (
+        <EmptyState description="Choose two runs and an artifact to compare content." title="No comparable content" />
+      ) : raw ? (
+        <DiffViewerLazy
+          language={diffLanguage(rightContent.metadata.media_type || leftContent.metadata.media_type)}
+          modified={typeof rightComparable === 'string' ? rightComparable : stringifySafe(rightComparable)}
+          original={typeof leftComparable === 'string' ? leftComparable : stringifySafe(leftComparable)}
+        />
+      ) : (
+        <Stack spacing={1.5}>
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+            <Chip label={`${jsonDiff.summary.added} added`} size="small" />
+            <Chip label={`${jsonDiff.summary.removed} removed`} size="small" />
+            <Chip label={`${jsonDiff.summary.changed} changed`} size="small" />
+          </Stack>
+          {jsonDiff.items.length > 0 ? (
+            <Stack divider={<Divider flexItem />} spacing={1}>
+              {jsonDiff.items.slice(0, 50).map((item) => (
+                <Grid key={`${item.kind}:${item.path}`} container spacing={1}>
+                  <Grid size={{ xs: 12, md: 2 }}>
+                    <Chip
+                      color={item.kind === 'changed' ? 'warning' : item.kind === 'added' ? 'success' : 'default'}
+                      label={item.kind}
+                      size="small"
+                    />
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 4 }}>
+                    <Typography sx={{ fontFamily: 'monospace', overflowWrap: 'anywhere' }} variant="body2">
+                      {item.path}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }} variant="caption">
+                      {item.left === undefined ? '' : stringifySafe(item.left)}
+                    </Typography>
+                  </Grid>
+                  <Grid size={{ xs: 12, md: 3 }}>
+                    <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }} variant="caption">
+                      {item.right === undefined ? '' : stringifySafe(item.right)}
+                    </Typography>
+                  </Grid>
+                </Grid>
+              ))}
+            </Stack>
+          ) : (
+            <Typography color="text.secondary" variant="body2">
+              No structural content deltas for the current selection.
+            </Typography>
+          )}
+        </Stack>
+      )}
+    </Panel>
+  )
+}
+
 export function ComparePage({ search }: ComparePageProps) {
   const runsQuery = useRuns()
   const leftArtifactsQuery = useArtifacts(search.leftRun ?? '', {
@@ -130,6 +275,14 @@ export function ComparePage({ search }: ComparePageProps) {
     .sort()
 
   const selectedArtifactId = search.artifactId ?? artifactOptions[0]
+  const leftArtifact = leftArtifactsQuery.data?.artifacts.find((artifact) => artifact.artifact_id === selectedArtifactId)
+  const rightArtifact = rightArtifactsQuery.data?.artifacts.find((artifact) => artifact.artifact_id === selectedArtifactId)
+  const leftContentQuery = useArtifactContent(search.leftRun ?? '', selectedArtifactId ?? '', { raw: search.raw }, {
+    query: { enabled: Boolean(search.leftRun && selectedArtifactId) },
+  })
+  const rightContentQuery = useArtifactContent(search.rightRun ?? '', selectedArtifactId ?? '', { raw: search.raw }, {
+    query: { enabled: Boolean(search.rightRun && selectedArtifactId) },
+  })
 
   return (
     <Stack spacing={3}>
@@ -222,6 +375,27 @@ export function ComparePage({ search }: ComparePageProps) {
           <Panel>
             <SummaryPanel runName={search.rightRun} />
           </Panel>
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <MetadataDiffPanel leftArtifact={leftArtifact} rightArtifact={rightArtifact} />
+        </Grid>
+        <Grid size={{ xs: 12 }}>
+          <QueryState
+            empty={!leftContentQuery.data || !rightContentQuery.data}
+            error={leftContentQuery.error ?? rightContentQuery.error}
+            isError={leftContentQuery.isError || rightContentQuery.isError}
+            isLoading={leftContentQuery.isLoading || rightContentQuery.isLoading}
+            onRetry={() => {
+              void leftContentQuery.refetch()
+              void rightContentQuery.refetch()
+            }}
+          >
+            <ContentDiffPanel
+              leftContent={leftContentQuery.data}
+              raw={search.raw}
+              rightContent={rightContentQuery.data}
+            />
+          </QueryState>
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
           <Panel>

@@ -91,4 +91,44 @@ describe('buildExportSnapshot', () => {
       },
     })
   })
+
+  it('keeps local notes and bookmarks out of exports unless explicitly included', () => {
+    const snapshotWithoutLocalContext = buildExportSnapshot({
+      data: { rows: [] },
+      includeBodies: false,
+      localContext: {
+        bookmarks: [{ label: 'ListItems' }],
+        notes: [{ note: 'May include a pasted token secret-value' }],
+      },
+      route: '/runs/Run%20A/workspace',
+      title: 'Workspace',
+    })
+
+    expect(JSON.stringify(snapshotWithoutLocalContext)).not.toContain('ListItems')
+    expect(JSON.stringify(snapshotWithoutLocalContext)).not.toContain('secret-value')
+
+    const snapshotWithLocalContext = buildExportSnapshot({
+      data: { rows: [] },
+      includeBodies: false,
+      includeLocalContext: true,
+      localContext: {
+        bookmarks: [{ label: 'ListItems' }],
+        notes: [{ note: 'Review evidence', token: 'secret-value' }],
+      },
+      route: '/runs/Run%20A/workspace',
+      title: 'Workspace',
+    })
+
+    expect(snapshotWithLocalContext).toMatchObject({
+      include_local_context: true,
+      local_context: {
+        bookmarks: [{ label: 'ListItems' }],
+        notes: [{ note: 'Review evidence', token: '<REDACTED>' }],
+      },
+      redaction_summary: {
+        redacted_fields: expect.any(Number),
+      },
+    })
+    expect(JSON.stringify(snapshotWithLocalContext)).not.toContain('secret-value')
+  })
 })

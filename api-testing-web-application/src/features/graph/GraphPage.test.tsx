@@ -169,6 +169,10 @@ describe('GraphPage', () => {
     )
 
     expect(await screen.findByRole('heading', { name: /spatial dependency graph/i })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: /spatial graph status/i })).toHaveTextContent('2 nodes')
+    expect(screen.getByRole('button', { name: /open journey/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /open navigator list/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /reset selection/i })).toBeInTheDocument()
     expect(await screen.findByRole('img', { name: /experimental 3d dependency graph/i })).toHaveTextContent('2 spatial nodes / 1 spatial links')
 
     Object.defineProperty(window, 'matchMedia', {

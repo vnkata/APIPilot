@@ -1,4 +1,5 @@
 import DownloadIcon from '@mui/icons-material/Download'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 import {
   Button,
   Checkbox,
@@ -19,6 +20,8 @@ import { SensitiveDataNotice } from './SensitiveDataNotice'
 type ExportSnapshotDialogProps = {
   data: unknown
   filters?: Record<string, unknown>
+  localContext?: unknown
+  localContextLabel?: string
   open: boolean
   route: string
   selectedContext?: unknown
@@ -29,6 +32,8 @@ type ExportSnapshotDialogProps = {
 export function ExportSnapshotDialog({
   data,
   filters,
+  localContext,
+  localContextLabel,
   onClose,
   open,
   route,
@@ -37,9 +42,19 @@ export function ExportSnapshotDialog({
 }: ExportSnapshotDialogProps) {
   const [includeBodies, setIncludeBodies] = useState(false)
   const [confirmedIncludeBodies, setConfirmedIncludeBodies] = useState(false)
+  const [includeLocalContext, setIncludeLocalContext] = useState(false)
   const snapshot = useMemo(
-    () => buildExportSnapshot({ data, filters, includeBodies, route, selectedContext, title }),
-    [data, filters, includeBodies, route, selectedContext, title],
+    () => buildExportSnapshot({
+      data,
+      filters,
+      includeBodies,
+      includeLocalContext,
+      localContext,
+      route,
+      selectedContext,
+      title,
+    }),
+    [data, filters, includeBodies, includeLocalContext, localContext, route, selectedContext, title],
   )
   const preview = formatExportSnapshot(snapshot)
   const downloadDisabled = includeBodies && !confirmedIncludeBodies
@@ -59,7 +74,12 @@ export function ExportSnapshotDialog({
   function handleClose() {
     setIncludeBodies(false)
     setConfirmedIncludeBodies(false)
+    setIncludeLocalContext(false)
     onClose()
+  }
+
+  async function handleCopy() {
+    await navigator.clipboard?.writeText(preview)
   }
 
   return (
@@ -70,6 +90,17 @@ export function ExportSnapshotDialog({
           <Typography color="text.secondary" variant="body2">
             Export current visible sanitized data, selected context, and route filters. Body fields are excluded unless explicitly enabled.
           </Typography>
+          {localContext ? (
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={includeLocalContext}
+                  onChange={(event) => setIncludeLocalContext(event.target.checked)}
+                />
+              }
+              label={`Include ${localContextLabel ?? 'local notes and bookmarks'}`}
+            />
+          ) : null}
           <FormControlLabel
             control={
               <Checkbox
@@ -98,11 +129,17 @@ export function ExportSnapshotDialog({
               />
             </>
           ) : null}
+          <Typography color="text.secondary" variant="caption">
+            Redacted fields: {snapshot.redaction_summary.redacted_fields}. Omitted body fields: {snapshot.redaction_summary.omitted_body_fields}.
+          </Typography>
           <JsonBlock ariaLabel="export preview" maxHeight={360} value={preview} />
         </Stack>
       </DialogContent>
       <DialogActions>
         <Button onClick={handleClose}>Close</Button>
+        <Button onClick={() => void handleCopy()} startIcon={<ContentCopyIcon />}>
+          Copy JSON
+        </Button>
         <Button disabled={downloadDisabled} onClick={handleDownload} startIcon={<DownloadIcon />} variant="contained">
           Download JSON
         </Button>

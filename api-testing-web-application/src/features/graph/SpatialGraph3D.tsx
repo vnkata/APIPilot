@@ -30,8 +30,8 @@ export function SpatialGraph3D({ data, motionEnabled, onNodeSelect }: SpatialGra
   return (
     <Stack spacing={1.5}>
       <Stack spacing={0.5}>
-        <Typography component="h2" variant="h3">
-          Spatial dependency graph
+        <Typography component="h3" variant="subtitle2">
+          3D viewport
         </Typography>
         <Typography color="text.secondary" variant="body2">
           Experimental desktop 3D view. Use Journey or Navigator lists for keyboard-first review.

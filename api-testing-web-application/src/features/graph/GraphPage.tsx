@@ -36,6 +36,7 @@ import type {
 } from '../../shared/api/generated/model'
 import { encodeRoutePart } from '../../shared/lib/format'
 import { replaceSearchParams } from '../../shared/lib/navigation'
+import { useGraphSearchActions } from '../../shared/lib/searchActions'
 import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
 import { DebouncedTextField } from '../../shared/ui/DebouncedTextField'
 import { EmptyState } from '../../shared/ui/EmptyState'
@@ -128,6 +129,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
   const isDesktop = useMediaQuery('(min-width:900px)')
   const preferences = useAppSelector(selectWorkspacePreferences)
   const dispatch = useAppDispatch()
+  const graphSearchActions = useGraphSearchActions()
   const gridState = useUrlBackedGridState(search)
   const encodedRunName = encodeRoutePart(runName)
   const layoutMode = preferences.graphLayoutMode
@@ -406,16 +408,66 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                     <ToggleButton value="grid">Grid</ToggleButton>
                   </ToggleButtonGroup>
                 </Stack>
+                <Stack
+                  aria-label="Graph legend"
+                  direction="row"
+                  sx={{ flexWrap: 'wrap', gap: 1, mb: 2 }}
+                >
+                  <Chip label="Legend" size="small" />
+                  <Chip label="final: high-confidence dependency" size="small" variant="outlined" />
+                  <Chip label="candidate: lower-confidence evidence" size="small" variant="outlined" />
+                  <Chip label={`Focus lens: ${focusMode}`} size="small" variant="outlined" />
+                </Stack>
 
                 {graphView === 'spatial' ? (
                   isDesktop ? (
-                    <Suspense fallback={<EmptyState title="Loading spatial graph" />}>
-                      <SpatialGraph3D
-                        data={spatialGraph}
-                        motionEnabled={motionEnabled}
-                        onNodeSelect={(operationId) => replaceSearchParams({ operationId })}
-                      />
-                    </Suspense>
+                    <Stack spacing={2}>
+                      <Box aria-label="Spatial graph status" role="region">
+                        <Stack spacing={1.5}>
+                          <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ alignItems: { md: 'center' } }}>
+                            <Typography component="h2" sx={{ flex: 1 }} variant="h3">
+                              Spatial dependency graph
+                            </Typography>
+                            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                              <Chip label={`${spatialGraph.nodes.length} nodes`} size="small" />
+                              <Chip label={`${spatialGraph.links.length} links`} size="small" variant="outlined" />
+                              <Chip label={`Selected: ${selectedNodeId ?? search.selectedPath ?? 'none'}`} size="small" variant="outlined" />
+                              <Chip label={`Motion: ${motionEnabled ? 'on' : 'off'}`} size="small" variant="outlined" />
+                            </Stack>
+                          </Stack>
+                          <Typography color="text.secondary" variant="body2">
+                            Viewport ready. Use Journey or Navigator when you need a keyboard-first evidence path, or reset selection to return to the full dependency map.
+                          </Typography>
+                          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
+                            <Button onClick={() => replaceSearchParams({ graphTab: 'sequences', graphView: 'journey' })} size="small" variant="outlined">
+                              Open Journey
+                            </Button>
+                            <Button onClick={() => replaceSearchParams({ graphTab: 'visual', graphView: 'explorer' })} size="small" variant="outlined">
+                              Open Navigator list
+                            </Button>
+                            <Button
+                              onClick={() => replaceSearchParams({
+                                edgeId: undefined,
+                                operationId: undefined,
+                                selectedPath: undefined,
+                                sequenceId: undefined,
+                              })}
+                              size="small"
+                              variant="outlined"
+                            >
+                              Reset selection
+                            </Button>
+                          </Stack>
+                        </Stack>
+                      </Box>
+                      <Suspense fallback={<EmptyState title="Loading spatial graph" />}>
+                        <SpatialGraph3D
+                          data={spatialGraph}
+                          motionEnabled={motionEnabled}
+                          onNodeSelect={(operationId) => replaceSearchParams({ operationId })}
+                        />
+                      </Suspense>
+                    </Stack>
                   ) : (
                     <Alert severity="info" variant="outlined">
                       <Stack spacing={1}>
@@ -448,7 +500,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                           nodeTypes={nodeTypes}
                           nodes={flow.nodes}
                           onNodeClick={(_, node) => {
-                            replaceSearchParams({ operationId: node.id })
+                            graphSearchActions.selectOperation(node.id)
                           }}
                         >
                           <MiniMap pannable zoomable />
@@ -463,7 +515,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                         <Button
                           key={node.id}
                           onClick={() => {
-                            replaceSearchParams({ operationId: node.id })
+                            graphSearchActions.selectOperation(node.id)
                           }}
                           size="small"
                           variant={selectedNodeId === node.id ? 'contained' : 'outlined'}
@@ -597,6 +649,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                   <ServerDataGridPanel
                     ariaLabel="graph nodes"
                     columns={nodeColumns}
+                    copyCellOnDoubleClick
                     getRowId={(row) => row.node_id}
                     loading={nodesQuery.isFetching}
                     onPaginationModelChange={gridState.handlePaginationModelChange}
@@ -605,6 +658,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                     rowCount={nodesQuery.data?.pagination.total ?? 0}
                     rows={nodeRows}
                     sortModel={gridState.sortModel}
+                    tableLayout={{ page: 'graph', runName, tableId: 'nodes' }}
                   />
                 </QueryState>
               ) : tab === 'sequences' ? (
@@ -618,6 +672,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                   <ServerDataGridPanel
                     ariaLabel="graph sequences"
                     columns={sequenceColumns}
+                    copyCellOnDoubleClick
                     getRowId={(row) => row.sequence_id}
                     loading={sequencesQuery.isFetching}
                     onPaginationModelChange={gridState.handlePaginationModelChange}
@@ -630,6 +685,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                     rowCount={sequencesQuery.data?.pagination.total ?? 0}
                     rows={sequenceRows}
                     sortModel={gridState.sortModel}
+                    tableLayout={{ page: 'graph', runName, tableId: 'sequences' }}
                   />
                 </QueryState>
               ) : (
@@ -643,6 +699,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                   <ServerDataGridPanel
                     ariaLabel="graph edges"
                     columns={edgeColumns}
+                    copyCellOnDoubleClick
                     getRowId={(row) => row.edge_id}
                     loading={edgesQuery.isFetching}
                     onPaginationModelChange={gridState.handlePaginationModelChange}
@@ -652,6 +709,7 @@ export function GraphPage({ runName, search }: GraphPageProps) {
                     rowCount={edgesQuery.data?.pagination.total ?? 0}
                     rows={edgeRows}
                     sortModel={gridState.sortModel}
+                    tableLayout={{ page: 'graph', runName, tableId: 'edges' }}
                   />
                 </QueryState>
               )}

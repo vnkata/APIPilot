@@ -16,6 +16,7 @@ import { useCallback, useMemo, useState } from 'react'
 import type { OperationExplorerEntryResponse, SortOrder } from '../../shared/api/generated/model'
 import { encodeRoutePart } from '../../shared/lib/format'
 import { replaceSearchParams } from '../../shared/lib/navigation'
+import { useOperationsSearchActions } from '../../shared/lib/searchActions'
 import { ActiveFilterChips } from '../../shared/ui/ActiveFilterChips'
 import { DebouncedTextField } from '../../shared/ui/DebouncedTextField'
 import { EvidenceLinkSet } from '../../shared/ui/EvidenceLinkSet'
@@ -86,6 +87,7 @@ function statusColor(hasFailures: boolean) {
 export function OperationsPage({ runName, search }: OperationsPageProps) {
   const [exportOpen, setExportOpen] = useState(false)
   const [localOperationKey, setLocalOperationKey] = useState<string>()
+  const searchActions = useOperationsSearchActions()
   const encodedRunName = encodeRoutePart(runName)
   const operationsView = search.operationsView ?? 'table'
   const gridState = useUrlBackedGridState(search)
@@ -103,8 +105,8 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
 
   const selectOperation = useCallback((operationKey: string) => {
     setLocalOperationKey(operationKey)
-    replaceSearchParams({ operationKey })
-  }, [])
+    searchActions.selectOperation(operationKey)
+  }, [searchActions])
 
   const rows = entriesQuery.data?.items ?? []
   const columns = useMemo<GridColDef<OperationExplorerEntryResponse>[]>(
@@ -328,6 +330,7 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
                   <ServerDataGridPanel
                     ariaLabel="operation explorer entries"
                     columns={columns}
+                    copyCellOnDoubleClick
                     getRowId={(row) => row.operation_key}
                     loading={entriesQuery.isFetching}
                     onPaginationModelChange={gridState.handlePaginationModelChange}
@@ -337,6 +340,7 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
                     rowCount={entriesQuery.data?.pagination.total ?? 0}
                     rows={rows}
                     sortModel={gridState.sortModel}
+                    tableLayout={{ page: 'operations', runName, tableId: 'operation-explorer' }}
                   />
                 )}
               </QueryState>
