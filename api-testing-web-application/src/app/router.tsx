@@ -4,11 +4,14 @@ import {
   createRoute,
   createRouter,
   Navigate,
+  parseSearchWith,
+  stringifySearchWith,
 } from '@tanstack/react-router'
 
 import { AppShell } from './AppShell'
 import {
   artifactsSearchSchema,
+  compareSearchSchema,
   constraintsSearchSchema,
   graphSearchSchema,
   historySearchSchema,
@@ -42,6 +45,9 @@ const LazyTestCasesPage = lazy(() =>
 const LazyHistoryPage = lazy(() =>
   import('../features/history/HistoryPage').then((module) => ({ default: module.HistoryPage })),
 )
+const LazyComparePage = lazy(() =>
+  import('../features/compare/ComparePage').then((module) => ({ default: module.ComparePage })),
+)
 
 function RouteFallback({ children }: { children: ReactNode }) {
   return <Suspense fallback={<PageSkeleton />}>{children}</Suspense>
@@ -61,6 +67,20 @@ const runsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/runs',
   component: RunsPage,
+})
+
+const compareRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/compare',
+  validateSearch: (search) => compareSearchSchema.parse(search),
+  component: function CompareRoute() {
+    const search = compareRoute.useSearch()
+    return (
+      <RouteFallback>
+        <LazyComparePage search={search} />
+      </RouteFallback>
+    )
+  },
 })
 
 const runOverviewRoute = createRoute({
@@ -182,6 +202,7 @@ const historyRoute = createRoute({
 const routeTree = rootRoute.addChildren([
   indexRoute,
   runsRoute,
+  compareRoute,
   runOverviewRoute,
   operationsRoute,
   graphRoute,
@@ -192,7 +213,11 @@ const routeTree = rootRoute.addChildren([
   historyRoute,
 ])
 
-export const router = createRouter({ routeTree })
+export const router = createRouter({
+  routeTree,
+  parseSearch: parseSearchWith((value) => value),
+  stringifySearch: stringifySearchWith(String),
+})
 
 declare module '@tanstack/react-router' {
   interface Register {

@@ -28,7 +28,7 @@ export class OverviewPage {
 
   async expectLoaded(runName = 'Run A') {
     await expect(this.page.getByRole('heading', { name: 'QA Mission Control' })).toBeVisible()
-    await expect(this.page.getByText(runName).first()).toBeVisible()
+    await expect(this.page.getByRole('main').getByText(runName).first()).toBeVisible()
     await expect(this.page.getByText('Run overview')).toBeVisible()
     await expect(this.page.getByRole('main').getByText('Operations', { exact: true })).toBeVisible()
     await expect(this.page.getByRole('link', { name: 'Artifact workbench' })).toBeVisible()

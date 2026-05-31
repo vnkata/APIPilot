@@ -12,7 +12,11 @@
     "test:run": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:e2e": "playwright test",
+    "test:visual": "playwright test --config playwright.visual.config.ts",
     "preview": "vite preview",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build",
+    "analyze": "ANALYZE=true vite build",
     "openapi:fetch": "sh -c 'curl -fsSL \"${VITE_OPENAPI_URL:-http://localhost:8000/openapi.json}\" -o openapi.json'",
     "api:generate": "orval --config ./orval.config.ts",
     "api:watch": "orval --config ./orval.config.ts --watch",
@@ -45,6 +49,9 @@
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.60.0",
+    "@storybook/addon-a11y": "^10.4.1",
+    "@storybook/addon-docs": "^10.4.1",
+    "@storybook/react-vite": "^10.4.1",
     "@testing-library/dom": "^10.4.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.2",
@@ -62,10 +69,18 @@
     "jest-axe": "^10.0.0",
     "jsdom": "^29.1.1",
     "msw": "^2.14.6",
+    "msw-storybook-addon": "^2.0.7",
     "orval": "^8.10.0",
+    "rollup-plugin-visualizer": "^7.0.1",
+    "storybook": "^10.4.1",
     "typescript": "~6.0.2",
     "typescript-eslint": "^8.59.2",
     "vite": "^8.0.12",
     "vitest": "^4.1.6"
+  },
+  "msw": {
+    "workerDirectory": [
+      "public"
+    ]
   }
 }

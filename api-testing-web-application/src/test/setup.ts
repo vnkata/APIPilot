@@ -3,6 +3,7 @@ import '@testing-library/jest-dom/vitest'
 import { toHaveNoViolations } from 'jest-axe'
 import { afterAll, afterEach, beforeAll, expect } from 'vitest'
 
+import { resetNavigationAdapter } from '../shared/lib/navigation'
 import { server } from './msw/server'
 
 expect.extend(toHaveNoViolations as Parameters<typeof expect.extend>[0])
@@ -24,5 +25,8 @@ Object.defineProperty(globalThis, 'ResizeObserver', {
 })
 
 beforeAll(() => server.listen({ onUnhandledRequest: 'error' }))
-afterEach(() => server.resetHandlers())
+afterEach(() => {
+  resetNavigationAdapter()
+  server.resetHandlers()
+})
 afterAll(() => server.close())

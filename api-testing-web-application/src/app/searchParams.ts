@@ -146,3 +146,10 @@ export const historySearchSchema = z.object({
   offset,
   sessionId: nullableString,
 })
+
+export const compareSearchSchema = z.object({
+  artifactId: nullableString,
+  leftRun: nullableString,
+  raw: booleanFlag,
+  rightRun: nullableString,
+})

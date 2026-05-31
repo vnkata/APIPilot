@@ -1,7 +1,8 @@
-import { Outlet, useLocation } from '@tanstack/react-router'
+import { Outlet, useLocation, useNavigate } from '@tanstack/react-router'
 import AccountTreeIcon from '@mui/icons-material/AccountTree'
 import AssessmentIcon from '@mui/icons-material/Assessment'
 import BugReportIcon from '@mui/icons-material/BugReport'
+import CompareArrowsIcon from '@mui/icons-material/CompareArrows'
 import DarkModeIcon from '@mui/icons-material/DarkMode'
 import FolderZipIcon from '@mui/icons-material/FolderZip'
 import HistoryIcon from '@mui/icons-material/History'
@@ -29,7 +30,7 @@ import {
   useMediaQuery,
 } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
-import { useState, type ReactNode } from 'react'
+import { lazy, Suspense, useEffect, useState, type ReactNode } from 'react'
 
 import { useAppDispatch, useAppSelector } from './hooks'
 import {
@@ -43,11 +44,15 @@ import { ProductTourHost } from '../features/product-tour/ProductTourHost'
 import { TourHelpMenu } from '../features/product-tour/TourHelpMenu'
 import { TOUR_ANCHORS, tourAnchor } from '../features/product-tour/tourAnchors'
 import { encodeRoutePart } from '../shared/lib/format'
-import { navigateInApp } from '../shared/lib/navigation'
+import { applySearchParamUpdates, navigateInApp, setNavigationAdapter } from '../shared/lib/navigation'
 import { AppLink } from '../shared/ui/AppLink'
 
 const drawerWidthExpanded = 272
 const drawerWidthCollapsed = 72
+
+const CommandPalette = lazy(() =>
+  import('../features/command-palette/CommandPalette').then((module) => ({ default: module.CommandPalette })),
+)
 
 type NavItem = {
   href: string
@@ -63,6 +68,7 @@ function extractRunName(pathname: string) {
 function navItems(runName: string | undefined): NavItem[] {
   const items: NavItem[] = [
     { href: '/runs', icon: <ListAltIcon fontSize="small" />, label: 'Runs' },
+    { href: '/compare', icon: <CompareArrowsIcon fontSize="small" />, label: 'Compare' },
   ]
 
   if (!runName) return items
@@ -220,14 +226,31 @@ export function AppShell() {
   const desktop = useMediaQuery(theme.breakpoints.up('lg'))
   const preferences = useAppSelector(selectWorkspacePreferences)
   const dispatch = useAppDispatch()
+  const location = useLocation()
+  const navigate = useNavigate()
   const drawerWidth = desktop
     ? preferences.sidebarCollapsed
       ? drawerWidthCollapsed
       : drawerWidthExpanded
     : 0
-  const { pathname } = useLocation()
+  const { pathname } = location
   const runName = extractRunName(pathname)
   const densityLabel = preferences.tableDensity === 'compact' ? 'Compact density' : 'Comfortable density'
+
+  useEffect(() => {
+    setNavigationAdapter({
+      navigateInApp: (path) => {
+        void navigate({ to: path as never })
+      },
+      replaceSearchParams: (updates) => {
+        void navigate({
+          replace: true,
+          search: (currentSearch) =>
+            applySearchParamUpdates(currentSearch as Record<string, unknown>, updates) as never,
+        })
+      },
+    })
+  }, [navigate])
 
   return (
     <Box sx={{ display: 'flex', minHeight: '100vh' }}>
@@ -301,6 +324,9 @@ export function AppShell() {
           <Box {...tourAnchor(TOUR_ANCHORS.appBackendHealth)}>
             <BackendHealthChip />
           </Box>
+          <Suspense fallback={null}>
+            <CommandPalette runName={runName} />
+          </Suspense>
           <TourHelpMenu pathname={pathname} />
           <Box sx={{ width: 12 }} />
           <AppLink href="/runs">Runs</AppLink>

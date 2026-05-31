@@ -47,13 +47,30 @@ export const store = createAppStore({
 })
 
 if (typeof window !== 'undefined') {
+  let previousProductTourState = JSON.stringify(
+    selectSerializableProductTourState(store.getState().productTour),
+  )
+  let previousWorkspacePreferencesState = JSON.stringify(
+    selectSerializableWorkspacePreferences(store.getState().workspacePreferences),
+  )
+
   store.subscribe(() => {
-    saveProductTourState(
-      selectSerializableProductTourState(store.getState().productTour),
+    const nextProductTourState = selectSerializableProductTourState(store.getState().productTour)
+    const nextWorkspacePreferencesState = selectSerializableWorkspacePreferences(
+      store.getState().workspacePreferences,
     )
-    saveWorkspacePreferencesState(
-      selectSerializableWorkspacePreferences(store.getState().workspacePreferences),
-    )
+    const serializedProductTourState = JSON.stringify(nextProductTourState)
+    const serializedWorkspacePreferencesState = JSON.stringify(nextWorkspacePreferencesState)
+
+    if (serializedProductTourState !== previousProductTourState) {
+      saveProductTourState(nextProductTourState)
+      previousProductTourState = serializedProductTourState
+    }
+
+    if (serializedWorkspacePreferencesState !== previousWorkspacePreferencesState) {
+      saveWorkspacePreferencesState(nextWorkspacePreferencesState)
+      previousWorkspacePreferencesState = serializedWorkspacePreferencesState
+    }
   })
 }
 

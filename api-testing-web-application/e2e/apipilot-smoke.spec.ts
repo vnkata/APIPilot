@@ -1,4 +1,4 @@
-import { test } from '@playwright/test'
+import { expect, test } from '@playwright/test'
 
 import {
   ArtifactsPage,
@@ -71,4 +71,19 @@ test('mobile QA can inspect the medium sanitized fixture through responsive navi
   await page.getByRole('button', { name: 'Reports' }).click()
 
   await new ReportsPage(page).expectMediumStatusFilterFlow()
+})
+
+test('desktop QA can use command palette and compare run artifacts', async ({ page }) => {
+  await page.goto('/runs/Run%20A')
+  await expect(page.getByLabel('Open command palette')).toBeVisible()
+  await page.keyboard.press('Control+K')
+  await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeVisible()
+  await page.getByRole('textbox', { name: 'Search commands' }).fill('compare')
+  await page.getByRole('button', { name: /Compare runs/ }).click()
+  await expect(page).toHaveURL(/\/compare/)
+  await expect(page.getByRole('heading', { name: 'Compare runs' })).toBeVisible()
+
+  await page.goto('/compare?leftRun=Run%20A&rightRun=Run%20A&artifactId=specification')
+  await expect(page.getByText(/artifacts/).first()).toBeVisible()
+  await expect(page.getByLabel('Run A artifact content').first()).toContainText('content_kind')
 })

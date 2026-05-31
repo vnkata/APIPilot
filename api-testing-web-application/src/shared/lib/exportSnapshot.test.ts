@@ -35,4 +35,60 @@ describe('buildExportSnapshot', () => {
     expect(JSON.stringify(snapshot)).not.toContain('request_body')
     expect(JSON.stringify(snapshot)).not.toContain('response_body')
   })
+
+  it('redacts sensitive nested keys even when visible bodies are explicitly included', () => {
+    const snapshot = buildExportSnapshot({
+      data: {
+        rows: [
+          {
+            authorization: 'Bearer test-token',
+            body: {
+              access_token: 'nested-token',
+              items: [{ api_key: 'key-1' }],
+              safe: 'visible',
+            },
+            cookie: 'session=abc',
+          },
+        ],
+      },
+      filters: {
+        sessionId: 'session-1',
+      },
+      includeBodies: true,
+      route: '/runs/Run%20A/history',
+      selectedContext: {
+        headers: {
+          password: 'hidden',
+          trace_id: 'trace-1',
+        },
+      },
+      title: 'History',
+    })
+
+    expect(JSON.stringify(snapshot)).not.toContain('test-token')
+    expect(JSON.stringify(snapshot)).not.toContain('nested-token')
+    expect(JSON.stringify(snapshot)).not.toContain('key-1')
+    expect(JSON.stringify(snapshot)).not.toContain('session=abc')
+    expect(snapshot).toMatchObject({
+      data: {
+        rows: [
+          {
+            authorization: '<REDACTED>',
+            body: {
+              access_token: '<REDACTED>',
+              items: [{ api_key: '<REDACTED>' }],
+              safe: 'visible',
+            },
+            cookie: '<REDACTED>',
+          },
+        ],
+      },
+      selected_context: {
+        headers: {
+          password: '<REDACTED>',
+          trace_id: 'trace-1',
+        },
+      },
+    })
+  })
 })

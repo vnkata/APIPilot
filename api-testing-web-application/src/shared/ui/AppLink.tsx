@@ -15,9 +15,9 @@ export function AppLink({ children, href, onNavigate }: AppLinkProps) {
       return
     }
 
+    onNavigate?.()
     event.preventDefault()
     navigateInApp(href)
-    onNavigate?.()
   }
 
   return (
