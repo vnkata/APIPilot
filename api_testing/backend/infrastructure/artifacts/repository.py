@@ -37,7 +37,11 @@ class FileArtifactRepository:
             return []
         runs: list[Run] = []
         for child in sorted(self.cache_root.iterdir(), key=lambda path: path.name.lower()):
-            if not child.is_dir() or child.name in {"tooling"} or child.name.startswith("."):
+            if (
+                not child.is_dir()
+                or child.name in {"tooling", "_backend"}
+                or child.name.startswith(".")
+            ):
                 continue
             artifacts = self.list_artifacts(child.name)
             runs.append(

@@ -3,10 +3,18 @@ from __future__ import annotations
 from fastapi import Request
 
 from api_testing.backend.application.services import ArtifactQueryService
+from api_testing.backend.application.write_services import WriteFlowService
 
 
 def get_artifact_service(request: Request) -> ArtifactQueryService:
     service = getattr(request.app.state, "artifact_service", None)
     if service is None:
         raise RuntimeError("ArtifactQueryService dependency was not initialized")
+    return service
+
+
+def get_write_flow_service(request: Request) -> WriteFlowService:
+    service = getattr(request.app.state, "write_flow_service", None)
+    if service is None:
+        raise RuntimeError("WriteFlowService dependency was not initialized")
     return service
