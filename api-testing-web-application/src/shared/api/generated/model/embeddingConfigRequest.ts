@@ -7,11 +7,11 @@
  */
 
 export interface EmbeddingConfigRequest {
-  /** @minLength 1 */
-  provider: string;
+  base_url?: string | null;
   /** @minLength 1 */
   model: string;
+  /** @minLength 1 */
+  provider: string;
   use_half?: boolean | null;
-  base_url?: string | null;
   [key: string]: unknown;
  }

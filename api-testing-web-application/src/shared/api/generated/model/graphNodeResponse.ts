@@ -7,14 +7,14 @@
  */
 
 export interface GraphNodeResponse {
+  http_method?: string | null;
+  in_degree: number;
+  label: string;
   node_id: string;
   node_kind: string;
   operation_id: string;
-  label: string;
-  property_path?: string | null;
-  parameter_name?: string | null;
-  http_method?: string | null;
-  path_template?: string | null;
-  in_degree: number;
   out_degree: number;
+  parameter_name?: string | null;
+  path_template?: string | null;
+  property_path?: string | null;
 }

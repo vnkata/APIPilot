@@ -7,7 +7,7 @@
  */
 
 export interface OperationFacetBucketResponse {
-  key: string;
   /** @minimum 0 */
   count: number;
+  key: string;
 }

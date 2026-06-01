@@ -17,8 +17,8 @@ function OperationEvidenceBadges({ operation }: { operation: OperationExplorerEn
       ) : (
         <StatusCodeBadge statusCode={undefined} />
       )}
-      <Chip label={`${operation.constraint_count} constraints`} size="small" variant="outlined" />
-      <Chip label={`${operation.invariant_count} invariants`} size="small" variant="outlined" />
+      <Chip label={`${operation.constraint_count} mapped constraints`} size="small" variant="outlined" />
+      <Chip label={`${operation.invariant_count} raw invariant rows`} size="small" variant="outlined" />
       <Chip label={`${operation.test_case_count} test cases`} size="small" variant="outlined" />
       <Chip label={`${operation.graph_in_degree} in / ${operation.graph_out_degree} out`} size="small" variant="outlined" />
     </>
@@ -80,7 +80,7 @@ export function OperationEvidenceCanvas({
             Operation Mission Board
           </Typography>
           <Typography color="text.secondary" variant="body2">
-            Triage the visible server-paginated result set by failures, dependency pressure, constraints, and evidence readiness.
+            Triage the visible server-paginated result set by failures, dependency pressure, mapped constraints, and evidence readiness.
           </Typography>
         </Stack>
         <StatusSignalStrip

@@ -8,7 +8,7 @@
 import type { OperationCountSummaryResponseByKind } from './operationCountSummaryResponseByKind';
 
 export interface OperationCountSummaryResponse {
+  by_kind: OperationCountSummaryResponseByKind;
   /** @minimum 0 */
   total: number;
-  by_kind: OperationCountSummaryResponseByKind;
 }

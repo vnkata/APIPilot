@@ -4,6 +4,7 @@ import SearchIcon from '@mui/icons-material/Search'
 import { Button, Chip, InputAdornment, MenuItem, Stack, TextField, Tooltip, Typography } from '@mui/material'
 
 import type {
+  CombinationFacetsResponse,
   ConstraintFacetBucketResponse,
   ConstraintFacetsResponse,
   InvariantExplorerFacetsResponse,
@@ -15,6 +16,7 @@ import { TOUR_ANCHORS, tourAnchor } from '../../product-tour/tourAnchors'
 import type { ConstraintTab, ConstraintsPageSearch } from '../ConstraintsPage'
 
 type ConstraintFilterPanelProps = {
+  combinationFacets?: CombinationFacetsResponse
   constraintFacets?: ConstraintFacetsResponse
   invariantFacets?: InvariantExplorerFacetsResponse
   onAdvancedOpen: () => void
@@ -29,6 +31,11 @@ function booleanSelectValue(value: boolean | undefined) {
 
 function booleanSearchValue(value: string) {
   return value === '' ? undefined : value
+}
+
+function selectOptions(buckets: ConstraintFacetBucketResponse[] | undefined, selected?: string) {
+  const values = buckets?.map((bucket) => bucket.key) ?? []
+  return selected && !values.includes(selected) ? [selected, ...values] : values
 }
 
 function FacetPreviewGroup({
@@ -68,15 +75,17 @@ function FacetPreviewGroup({
 }
 
 export function ConstraintFilterPanel({
+  combinationFacets,
   constraintFacets,
   invariantFacets,
   onAdvancedOpen,
   search,
   tab,
 }: ConstraintFilterPanelProps) {
+  const showCombinationFacets = tab === 'combination'
   const showConstraintFacets = tab === 'explorer'
   const showInvariantFacets = tab === 'invariants'
-  const canUseExplorerFilters = tab === 'explorer' || tab === 'invariants'
+  const canUseExplorerFilters = tab === 'combination' || tab === 'explorer' || tab === 'invariants'
 
   return (
     <Panel
@@ -127,7 +136,23 @@ export function ConstraintFilterPanel({
 
         {canUseExplorerFilters ? (
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1.25}>
-            {tab === 'explorer' ? (
+            {tab === 'combination' ? (
+              <TextField
+                label="Status"
+                onChange={(event) => replaceSearchParams({ offset: 0, status: event.target.value })}
+                select
+                size="small"
+                sx={{ minWidth: 220 }}
+                value={search.status ?? ''}
+              >
+                <MenuItem value="">Any status</MenuItem>
+                {selectOptions(combinationFacets?.status, search.status).slice(0, 8).map((status) => (
+                  <MenuItem key={status} value={status}>
+                    {status}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : tab === 'explorer' ? (
               <TextField
                 label="Source"
                 onChange={(event) => replaceSearchParams({ offset: 0, source: event.target.value })}
@@ -158,28 +183,49 @@ export function ConstraintFilterPanel({
                 ))}
               </TextField>
             )}
-            <DebouncedTextField
-              label={tab === 'invariants' ? 'Invariant kind' : 'Constraint kind'}
-              onDebouncedChange={(value) =>
+            {tab === 'combination' ? (
+              <TextField
+                label="Resolved"
+                onChange={(event) => replaceSearchParams({ offset: 0, resolved: booleanSearchValue(event.target.value) })}
+                select
+                size="small"
+                sx={{ minWidth: 180 }}
+                value={booleanSelectValue(search.resolved)}
+              >
+                <MenuItem value="">Any resolution</MenuItem>
+                <MenuItem value="true">Resolved</MenuItem>
+                <MenuItem value="false">Unresolved</MenuItem>
+              </TextField>
+            ) : (
+              <DebouncedTextField
+                label={tab === 'invariants' ? 'Raw invariant kind' : 'Constraint kind'}
+                onDebouncedChange={(value) =>
+                  replaceSearchParams(
+                    tab === 'invariants'
+                      ? { invariantKind: value, offset: 0 }
+                      : { constraintKind: value, offset: 0 },
+                  )
+                }
+                size="small"
+                sx={{ minWidth: 220 }}
+                value={tab === 'invariants' ? search.invariantKind ?? '' : search.constraintKind ?? ''}
+              />
+            )}
+            <TextField
+              label={tab === 'combination' ? 'Runtime evidence' : 'Assertion'}
+              onChange={(event) =>
                 replaceSearchParams(
-                  tab === 'invariants'
-                    ? { invariantKind: value, offset: 0 }
-                    : { constraintKind: value, offset: 0 },
+                  tab === 'combination'
+                    ? { hasRuntimeEvaluation: booleanSearchValue(event.target.value), offset: 0 }
+                    : { assertionAvailable: booleanSearchValue(event.target.value), offset: 0 },
                 )
               }
-              size="small"
-              sx={{ minWidth: 220 }}
-              value={tab === 'invariants' ? search.invariantKind ?? '' : search.constraintKind ?? ''}
-            />
-            <TextField
-              label="Assertion"
-              onChange={(event) => replaceSearchParams({ assertionAvailable: booleanSearchValue(event.target.value), offset: 0 })}
               select
               size="small"
               sx={{ minWidth: 180 }}
-              value={booleanSelectValue(search.assertionAvailable)}
+              value={tab === 'combination' ? booleanSelectValue(search.hasRuntimeEvaluation) : booleanSelectValue(search.assertionAvailable)}
             >
-              <MenuItem value="">Any assertion</MenuItem>
+              <MenuItem value="">{tab === 'combination' ? 'Any evidence' : 'Any assertion'}</MenuItem>
               <MenuItem value="true">Available</MenuItem>
               <MenuItem value="false">Missing</MenuItem>
             </TextField>
@@ -196,6 +242,22 @@ export function ConstraintFilterPanel({
             </Tooltip>
           </Stack>
           <Stack direction={{ xs: 'column', md: 'row' }} spacing={1} sx={{ flexWrap: 'wrap' }}>
+            {showCombinationFacets ? (
+              <>
+                <FacetPreviewGroup
+                  buckets={combinationFacets?.status}
+                  label="Status"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, status: value })}
+                  selectedValue={search.status}
+                />
+                <FacetPreviewGroup
+                  buckets={combinationFacets?.verdict}
+                  label="Verdict"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, verdict: value })}
+                  selectedValue={search.verdict}
+                />
+              </>
+            ) : null}
             {showConstraintFacets ? (
               <>
                 <FacetPreviewGroup

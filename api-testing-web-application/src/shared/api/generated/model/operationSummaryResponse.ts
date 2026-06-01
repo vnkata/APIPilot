@@ -7,11 +7,11 @@
  */
 
 export interface OperationSummaryResponse {
-  operation_id: string;
   display_operation_id?: string | null;
   http_method?: string | null;
-  path_template?: string | null;
+  operation_id: string;
   /** @minimum 0 */
   parameter_count: number;
+  path_template?: string | null;
   response_statuses: string[];
 }

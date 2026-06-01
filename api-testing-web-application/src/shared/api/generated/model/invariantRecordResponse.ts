@@ -7,9 +7,9 @@
  */
 
 export interface InvariantRecordResponse {
-  pptname?: string | null;
   invariant?: string | null;
   invariant_type?: string | null;
-  variables?: string | null;
   postman_assertion?: string | null;
+  pptname?: string | null;
+  variables?: string | null;
 }

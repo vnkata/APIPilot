@@ -11,16 +11,16 @@ import type { SanitizedHarEntryResponseRequestHeaders } from './sanitizedHarEntr
 import type { SanitizedHarEntryResponseResponseHeaders } from './sanitizedHarEntryResponseResponseHeaders';
 
 export interface SanitizedHarEntryResponse {
-  entry_id: string;
-  started_at?: string | null;
   duration_ms?: number | null;
-  request_method?: string | null;
-  request_url?: string | null;
-  request_headers: SanitizedHarEntryResponseRequestHeaders;
+  entry_id: string;
   query_params: SanitizedHarEntryResponseQueryParams;
   request_body: SanitizedBodyResponse;
+  request_headers: SanitizedHarEntryResponseRequestHeaders;
+  request_method?: string | null;
+  request_url?: string | null;
+  response_body: SanitizedBodyResponse;
+  response_headers: SanitizedHarEntryResponseResponseHeaders;
   response_status?: number | null;
   response_status_text?: string | null;
-  response_headers: SanitizedHarEntryResponseResponseHeaders;
-  response_body: SanitizedBodyResponse;
+  started_at?: string | null;
 }

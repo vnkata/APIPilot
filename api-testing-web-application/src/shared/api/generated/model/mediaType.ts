@@ -11,6 +11,7 @@ export type MediaType = typeof MediaType[keyof typeof MediaType];
 
 export const MediaType = {
   'application/json': 'application/json',
+  'application/octet-stream': 'application/octet-stream',
   'text/csv': 'text/csv',
   'text/plain': 'text/plain',
 } as const;

@@ -7,10 +7,10 @@
  */
 
 export interface InvariantDetailResponse {
-  operation_id?: string | null;
-  pptname?: string | null;
   invariant?: string | null;
   invariant_type?: string | null;
-  variables?: string | null;
+  operation_id?: string | null;
   postman_assertion?: string | null;
+  pptname?: string | null;
+  variables?: string | null;
 }

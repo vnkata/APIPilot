@@ -3,6 +3,11 @@ import { http, HttpResponse } from 'msw'
 import {
   artifactCatalog,
   artifactContent,
+  combinationDetail,
+  combinationEntries,
+  combinationFacets,
+  combinationSummary,
+  combineArtifactContent,
   constraintExplorerDetail,
   constraintExplorerEntries,
   constraintFacets,
@@ -29,6 +34,7 @@ import {
   operationFacets,
   operations,
   rawCsvArtifactContent,
+  contextualMemoryDbSummaryContent,
   reportEntries,
   reports,
   runA,
@@ -86,9 +92,12 @@ export const handlers = [
       : HttpResponse.json({ error: { code: 'not_found', message: 'Run not found' } }, { status: 404 })
   }),
   http.get(api('/runs/:runName/artifacts'), () => HttpResponse.json(artifactCatalog)),
-  http.get(api('/runs/:runName/artifacts/:artifactId/content'), ({ params }) =>
-    HttpResponse.json(params.artifactId === 'invariants_csv' ? rawCsvArtifactContent : artifactContent),
-  ),
+  http.get(api('/runs/:runName/artifacts/:artifactId/content'), ({ params }) => {
+    if (params.artifactId === 'invariants_csv') return HttpResponse.json(rawCsvArtifactContent)
+    if (params.artifactId === 'combine_constraint_miners') return HttpResponse.json(combineArtifactContent)
+    if (params.artifactId === 'contextual_memory_db') return HttpResponse.json(contextualMemoryDbSummaryContent)
+    return HttpResponse.json(artifactContent)
+  }),
   http.get(api('/runs/:runName/operations'), () => HttpResponse.json(operations)),
   http.get(api('/runs/:runName/operation'), () => HttpResponse.json(operationDetail)),
   http.get(api('/runs/:runName/operations/entries'), () => HttpResponse.json(operationExplorerEntries)),
@@ -116,6 +125,12 @@ export const handlers = [
   ),
   http.get(api('/runs/:runName/constraints/dynamic/entries'), () => HttpResponse.json(dynamicConstraints)),
   http.get(api('/runs/:runName/constraints/dynamic/invariants'), () => HttpResponse.json(invariants)),
+  http.get(api('/runs/:runName/constraints/combination/summary'), () => HttpResponse.json(combinationSummary)),
+  http.get(api('/runs/:runName/constraints/combination/entries'), () => HttpResponse.json(combinationEntries)),
+  http.get(api('/runs/:runName/constraints/combination/entries/:combinationId'), () =>
+    HttpResponse.json(combinationDetail),
+  ),
+  http.get(api('/runs/:runName/constraints/combination/facets'), () => HttpResponse.json(combinationFacets)),
   http.get(api('/runs/:runName/constraints/entries'), () => HttpResponse.json(constraintExplorerEntries)),
   http.get(api('/runs/:runName/constraints/entries/:constraintId'), () =>
     HttpResponse.json(constraintExplorerDetail),

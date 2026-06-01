@@ -7,12 +7,12 @@
  */
 
 export interface ArtifactAvailabilityResponse {
-  specification?: boolean;
-  reports?: boolean;
-  graph?: boolean;
-  static_constraints?: boolean;
   dynamic_constraints?: boolean;
-  test_cases?: boolean;
-  invariants?: boolean;
+  graph?: boolean;
   history?: boolean;
+  invariants?: boolean;
+  reports?: boolean;
+  specification?: boolean;
+  static_constraints?: boolean;
+  test_cases?: boolean;
 }

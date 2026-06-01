@@ -8,11 +8,11 @@
 import type { GraphSequenceParameterSourceResponse } from './graphSequenceParameterSourceResponse';
 
 export interface GraphSequenceResponse {
-  sequence_id: string;
-  target_operation_id?: string | null;
-  sequence_type: string;
-  operations: string[];
   length: number;
-  score?: number | null;
+  operations: string[];
   parameter_sources: GraphSequenceParameterSourceResponse[];
+  score?: number | null;
+  sequence_id: string;
+  sequence_type: string;
+  target_operation_id?: string | null;
 }

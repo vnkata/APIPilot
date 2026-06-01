@@ -30,6 +30,10 @@ describe('route search params', () => {
       invariantId: 'inv-limit',
       constraintTab: 'explorer',
     })
+    expect(constraintsSearchSchema.parse({ combinationId: 'cmb-limit', limit: 25, offset: 0 })).toMatchObject({
+      combinationId: 'cmb-limit',
+      constraintTab: 'explorer',
+    })
     expect(testCasesSearchSchema.parse({ testCaseId: 'tc-1', limit: 25, offset: 0 })).toMatchObject({
       testCaseId: 'tc-1',
     })
@@ -87,8 +91,8 @@ describe('route search params', () => {
         constraintTab: 'invariants',
         correlationConfidence: 'exact',
         oracleReadiness: 'verified_runtime_oracle',
-        source: 'combined',
-      }),
+      source: 'combined',
+    }),
     ).toMatchObject({
       agreementStatus: 'both_present',
       assertionAvailable: true,
@@ -97,6 +101,24 @@ describe('route search params', () => {
       correlationConfidence: 'exact',
       oracleReadiness: 'verified_runtime_oracle',
       source: 'combined',
+    })
+
+    expect(
+      constraintsSearchSchema.parse({
+        combinationId: 'cmb-limit',
+        constraintTab: 'combination',
+        hasRuntimeEvaluation: 'true',
+        resolved: 'true',
+        status: 'COMBINED_EQUIVALENT',
+        verdict: 'BOTH_TRUE',
+      }),
+    ).toMatchObject({
+      combinationId: 'cmb-limit',
+      constraintTab: 'combination',
+      hasRuntimeEvaluation: true,
+      resolved: true,
+      status: 'COMBINED_EQUIVALENT',
+      verdict: 'BOTH_TRUE',
     })
   })
 
@@ -122,6 +144,7 @@ describe('route search params', () => {
     expect(operationsSearchSchema.parse({ operationsView: 'canvas' })).toMatchObject({ operationsView: 'canvas' })
     expect(operationsSearchSchema.parse({ operationsView: 'cards' })).toMatchObject({ operationsView: 'cards' })
     expect(constraintsSearchSchema.parse({ constraintsView: 'workbench' })).toMatchObject({ constraintsView: 'workbench' })
+    expect(constraintsSearchSchema.parse({ constraintTab: 'combination' })).toMatchObject({ constraintTab: 'combination' })
     expect(constraintsSearchSchema.parse({ constraintDetailView: 'raw' })).toMatchObject({ constraintDetailView: 'raw' })
     expect(constraintsSearchSchema.parse({ matrixBy: 'kind' })).toMatchObject({ matrixBy: 'kind' })
     expect(constraintsSearchSchema.parse({ matrixBy: 'readiness' })).toMatchObject({ matrixBy: 'readiness' })

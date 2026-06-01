@@ -82,13 +82,17 @@ export const graphSearchSchema = z.object({
 export const constraintsSearchSchema = z.object({
   agreementStatus: nullableString,
   assertionAvailable: optionalBooleanFlag,
+  combinationId: nullableString,
   constraintDetailView,
   constraintId: nullableString,
   constraintKind: nullableString,
-  constraintTab: z.enum(['explorer', 'static', 'dynamic', 'invariants']).catch('explorer'),
+  constraintTab: z.enum(['combination', 'explorer', 'static', 'dynamic', 'invariants']).catch('explorer'),
   constraintsView,
   correlationConfidence: nullableString,
   groupBy: nullableString,
+  hasCounterExample: optionalBooleanFlag,
+  hasRuntimeEvaluation: optionalBooleanFlag,
+  hasValidationCases: optionalBooleanFlag,
   invariantId: nullableString,
   invariantKind: nullableString,
   invariantType: nullableString,
@@ -100,11 +104,14 @@ export const constraintsSearchSchema = z.object({
   propertyPath: nullableString,
   propertyPrefix: nullableString,
   q: nullableString,
+  resolved: optionalBooleanFlag,
   section: nullableString,
   sortBy: nullableString,
   sortOrder,
   source: nullableString,
   sourceType: nullableString,
+  status: nullableString,
+  verdict: nullableString,
 })
 
 export const artifactsSearchSchema = z

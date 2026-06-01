@@ -3,6 +3,7 @@ import type { GridColDef } from '@mui/x-data-grid'
 import { useMemo, useState } from 'react'
 
 import type {
+  CombinationEntryResponse,
   ConstraintEntryDetailResponse,
   ConstraintExplorerEntryResponse,
   InvariantExplorerEntryResponse,
@@ -17,10 +18,16 @@ import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
 import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
 import {
+  toCombinationFacetParams,
+  toCombinationParams,
   toConstraintExplorerParams,
   toConstraintFacetParams,
   toInvariantExplorerParams,
   toInvariantFacetParams,
+  useCombinationDetail,
+  useCombinationEntries,
+  useCombinationFacets,
+  useCombinationSummary,
   useConstraintExplorerDetail,
   useConstraintExplorerEntries,
   useConstraintExplorerFacets,
@@ -34,6 +41,7 @@ import {
 } from './api'
 import { ConstraintAdvancedFiltersDrawer } from './components/ConstraintAdvancedFiltersDrawer'
 import { ConstraintAppliedFiltersBar } from './components/ConstraintAppliedFiltersBar'
+import { CombinationDetailComposer } from './components/CombinationDetailComposer'
 import { ConstraintDetailComposer } from './components/ConstraintDetailComposer'
 import { ConstraintFilterPanel } from './components/ConstraintFilterPanel'
 import { ConstraintPageHeader } from './components/ConstraintPageHeader'
@@ -43,11 +51,12 @@ import { LegacyConstraintDetailComposer } from './components/LegacyConstraintDet
 import type { MatrixBy } from './constraintViewModels'
 import type { ConstraintGridColumns, ConstraintQueryState, LegacyConstraintRow } from './types'
 
-export type ConstraintTab = 'dynamic' | 'explorer' | 'invariants' | 'static'
+export type ConstraintTab = 'combination' | 'dynamic' | 'explorer' | 'invariants' | 'static'
 
 export type ConstraintsPageSearch = {
   agreementStatus?: string
   assertionAvailable?: boolean
+  combinationId?: string
   constraintDetailView?: 'raw' | 'readable'
   constraintId?: string
   constraintKind?: string
@@ -55,6 +64,9 @@ export type ConstraintsPageSearch = {
   constraintsView?: 'matrix' | 'table' | 'workbench'
   correlationConfidence?: string
   groupBy?: string
+  hasCounterExample?: boolean
+  hasRuntimeEvaluation?: boolean
+  hasValidationCases?: boolean
   invariantId?: string
   invariantKind?: string
   invariantType?: string
@@ -66,11 +78,14 @@ export type ConstraintsPageSearch = {
   propertyPath?: string
   propertyPrefix?: string
   q?: string
+  resolved?: boolean
   section?: string
   sortBy?: string
   sortOrder?: SortOrder
   source?: string
   sourceType?: string
+  status?: string
+  verdict?: string
 }
 
 type ConstraintsPageProps = {
@@ -95,6 +110,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const constraintsView = search.constraintsView ?? 'workbench'
   const constraintDetailView = search.constraintDetailView ?? 'readable'
   const matrixBy = search.matrixBy ?? 'source'
+  const needsCombination = constraintsView === 'workbench' || (constraintsView === 'table' && tab === 'combination')
   const needsExplorer = constraintsView === 'workbench' || constraintsView === 'matrix' || (constraintsView === 'table' && tab === 'explorer')
   const needsInvariants = constraintsView === 'workbench' || constraintsView === 'matrix' || (constraintsView === 'table' && tab === 'invariants')
   const needsStatic = constraintsView === 'table' && tab === 'static'
@@ -103,9 +119,20 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const dynamicSummaryQuery = useDynamicConstraintsSummary(runName)
   const explorerParams = toConstraintExplorerParams(search)
   const explorerFacetParams = toConstraintFacetParams(search)
+  const combinationParams = toCombinationParams(search)
+  const combinationFacetParams = toCombinationFacetParams(search)
   const invariantParams = toInvariantExplorerParams(search)
   const invariantFacetParams = toInvariantFacetParams(search)
 
+  const combinationSummaryQuery = useCombinationSummary(runName)
+  const combinationQuery = useCombinationEntries(runName, combinationParams, { query: { enabled: needsCombination } })
+  const combinationFacetsQuery = useCombinationFacets(runName, combinationFacetParams, { query: { enabled: needsCombination } })
+  const combinationDetailOpen = Boolean(search.combinationId)
+  const combinationDetailQuery = useCombinationDetail(
+    runName,
+    search.combinationId ?? '',
+    { query: { enabled: combinationDetailOpen } },
+  )
   const explorerQuery = useConstraintExplorerEntries(runName, explorerParams, { query: { enabled: needsExplorer } })
   const explorerFacetsQuery = useConstraintExplorerFacets(runName, explorerFacetParams, { query: { enabled: needsExplorer } })
   const constraintDetailOpen = Boolean(search.constraintId)
@@ -147,22 +174,64 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     () => constraintRows((tab === 'dynamic' ? dynamicEntriesQuery.data?.items : staticEntriesQuery.data?.items) ?? []),
     [dynamicEntriesQuery.data?.items, staticEntriesQuery.data?.items, tab],
   )
+  const combinationRows = combinationQuery.data?.items ?? []
   const explorerRows = explorerQuery.data?.items ?? []
   const invariantRowsNew = invariantExplorerQuery.data?.items ?? []
   const legacyQuery = tab === 'dynamic' ? dynamicEntriesQuery : staticEntriesQuery
   const activeGroups =
-    tab === 'explorer'
+    tab === 'combination'
+      ? combinationQuery.data?.groups ?? []
+      : tab === 'explorer'
       ? explorerQuery.data?.groups ?? []
       : tab === 'invariants'
         ? invariantExplorerQuery.data?.groups ?? []
         : legacyQuery.data?.groups ?? []
   const activeRows =
-    tab === 'explorer'
+    tab === 'combination'
+      ? combinationRows
+      : tab === 'explorer'
       ? explorerRows
       : tab === 'invariants'
         ? invariantRowsNew
         : legacyConstraintRows
 
+  const combinationColumns = useMemo<GridColDef<CombinationEntryResponse>[]>(
+    () => [
+      {
+        field: 'operation_id',
+        flex: 1,
+        headerName: 'Operation',
+        minWidth: 160,
+        renderCell: (params) => (
+          <Button onClick={() => replaceSearchParams({ operationId: params.row.operation_id })} size="small">
+            {params.row.operation_id}
+          </Button>
+        ),
+      },
+      { field: 'status', headerName: 'Status', minWidth: 180 },
+      { field: 'verdict', headerName: 'Verdict', minWidth: 160 },
+      {
+        field: 'resolved',
+        headerName: 'Resolved',
+        minWidth: 120,
+        renderCell: (params) => (params.row.resolved ? 'Resolved' : 'Unresolved'),
+      },
+      { field: 'property_path', flex: 1, headerName: 'Property path', minWidth: 180 },
+      {
+        field: 'final_constraint',
+        flex: 1.5,
+        headerName: 'Final constraint',
+        minWidth: 280,
+        renderCell: (params) => (
+          <Button color="inherit" onClick={() => replaceSearchParams({ combinationId: params.row.combination_id })} size="small">
+            {params.row.final_constraint ?? params.row.static_constraint ?? params.row.dynamic_constraint ?? params.row.combination_id}
+          </Button>
+        ),
+      },
+      { field: 'validation_case_count', headerName: 'Cases', minWidth: 100 },
+    ],
+    [],
+  )
   const explorerColumns = useMemo<GridColDef<ConstraintExplorerEntryResponse>[]>(
     () => [
       {
@@ -257,11 +326,12 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   )
   const columns = useMemo<ConstraintGridColumns>(
     () => ({
+      combination: combinationColumns,
       explorer: explorerColumns,
       invariants: invariantColumns,
       legacy: legacyConstraintColumns,
     }),
-    [explorerColumns, invariantColumns, legacyConstraintColumns],
+    [combinationColumns, explorerColumns, invariantColumns, legacyConstraintColumns],
   )
 
   function applyGroupFilter(key: string | null | undefined) {
@@ -271,6 +341,12 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     if (search.groupBy === 'source') replaceSearchParams({ offset: 0, source: key })
     if (search.groupBy === 'constraint_kind') replaceSearchParams({ constraintKind: key, offset: 0 })
     if (search.groupBy === 'agreement_status') replaceSearchParams({ agreementStatus: key, offset: 0 })
+    if (search.groupBy === 'status') replaceSearchParams({ offset: 0, status: key })
+    if (search.groupBy === 'verdict') replaceSearchParams({ offset: 0, verdict: key })
+    if (search.groupBy === 'resolved') replaceSearchParams({ offset: 0, resolved: key })
+    if (search.groupBy === 'has_counter_example') replaceSearchParams({ hasCounterExample: key, offset: 0 })
+    if (search.groupBy === 'has_runtime_evaluation') replaceSearchParams({ hasRuntimeEvaluation: key, offset: 0 })
+    if (search.groupBy === 'has_validation_cases') replaceSearchParams({ hasValidationCases: key, offset: 0 })
     if (search.groupBy === 'invariant_kind') replaceSearchParams({ invariantKind: key, offset: 0 })
     if (search.groupBy === 'invariant_type') replaceSearchParams({ invariantType: key, offset: 0 })
     if (search.groupBy === 'oracle_readiness') replaceSearchParams({ offset: 0, oracleReadiness: key })
@@ -286,7 +362,10 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   }
 
   const selectedOperationId =
-    constraintDetailQuery.data?.operation_id ?? invariantDetailQuery.data?.operation_id ?? search.operationId
+    combinationDetailQuery.data?.operation_id ??
+    constraintDetailQuery.data?.operation_id ??
+    invariantDetailQuery.data?.operation_id ??
+    search.operationId
   const encodedOperationId = encodeURIComponent(selectedOperationId ?? '')
   const evidenceLinks = selectedOperationId
     ? [
@@ -295,6 +374,13 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         { href: `/runs/${encodedRunName}/reports?operationId=${encodedOperationId}`, label: 'Reports' },
       ]
     : []
+  const combinationState: ConstraintQueryState = {
+    error: combinationQuery.error,
+    isError: combinationQuery.isError,
+    isFetching: combinationQuery.isFetching,
+    isLoading: combinationQuery.isLoading,
+    refetch: combinationQuery.refetch,
+  }
   const explorerState: ConstraintQueryState = {
     error: explorerQuery.error,
     isError: explorerQuery.isError,
@@ -320,6 +406,11 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   return (
     <Stack spacing={2}>
       <ConstraintPageHeader
+        combinationCount={
+          combinationSummaryQuery.data
+            ? combinationSummaryQuery.data.resolved_count + combinationSummaryQuery.data.unresolved_count
+            : combinationQuery.data?.pagination.total ?? 0
+        }
         constraintTab={tab}
         constraintsView={constraintsView}
         dynamicCount={dynamicSummaryQuery.data?.constraint_count ?? 0}
@@ -348,6 +439,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       />
 
       <ConstraintFilterPanel
+        combinationFacets={combinationFacetsQuery.data}
         constraintFacets={explorerFacetsQuery.data}
         invariantFacets={invariantFacetsQuery.data}
         onAdvancedOpen={() => setAdvancedFiltersOpen(true)}
@@ -359,6 +451,9 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
 
       <ConstraintResultsRegion
         columns={columns}
+        combinationQuery={combinationState}
+        combinationRowCount={combinationQuery.data?.pagination.total ?? 0}
+        combinationRows={combinationRows}
         constraintsView={constraintsView}
         explorerQuery={explorerState}
         explorerRowCount={explorerQuery.data?.pagination.total ?? 0}
@@ -373,6 +468,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         matrixBy={matrixBy}
         onApplyMatrixFilter={applyMatrixFilter}
         onMatrixByChange={(value) => replaceSearchParams({ matrixBy: value })}
+        onSelectCombination={(combinationId) => replaceSearchParams({ combinationId })}
         onSelectConstraint={(constraintId) => replaceSearchParams({ constraintId })}
         onSelectInvariant={(invariantId) => replaceSearchParams({ invariantId })}
         tab={tab}
@@ -380,6 +476,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
 
       <ConstraintAdvancedFiltersDrawer
         activeGroups={activeGroups}
+        combinationFacets={combinationFacetsQuery.data}
         constraintFacets={explorerFacetsQuery.data}
         invariantFacets={invariantFacetsQuery.data}
         onApplyGroupFilter={applyGroupFilter}
@@ -388,6 +485,28 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         search={search}
         tab={tab}
       />
+
+      <InvestigationDrawer
+        ariaLabel="Combination detail"
+        error={combinationDetailQuery.error}
+        isError={combinationDetailQuery.isError}
+        isLoading={combinationDetailQuery.isLoading}
+        onClose={() => replaceSearchParams({ combinationId: undefined })}
+        onRetry={() => void combinationDetailQuery.refetch()}
+        open={combinationDetailOpen}
+        subtitle={search.combinationId}
+        title="Combination detail"
+        data-tour-anchor={TOUR_ANCHORS.constraintsDetail}
+      >
+        {combinationDetailQuery.data ? (
+          <CombinationDetailComposer
+            detail={combinationDetailQuery.data}
+            detailView={constraintDetailView}
+            evidenceLinks={evidenceLinks}
+            onDetailViewChange={(value) => replaceSearchParams({ constraintDetailView: value })}
+          />
+        ) : null}
+      </InvestigationDrawer>
 
       <InvestigationDrawer
         ariaLabel="Constraint detail"
@@ -452,7 +571,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         onClose={() => setExportOpen(false)}
         open={exportOpen}
         route={`/runs/${encodedRunName}/constraints`}
-        selectedContext={constraintDetailQuery.data ?? invariantDetailQuery.data ?? legacyDetail}
+        selectedContext={combinationDetailQuery.data ?? constraintDetailQuery.data ?? invariantDetailQuery.data ?? legacyDetail}
         title="Constraints"
       />
     </Stack>

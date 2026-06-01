@@ -7,7 +7,7 @@
  */
 
 export interface SecretRefRequest {
-  type: 'env';
   /** @minLength 1 */
   name: string;
+  type: 'env';
 }

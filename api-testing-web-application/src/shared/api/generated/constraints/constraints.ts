@@ -21,11 +21,16 @@ import type {
 } from '@tanstack/react-query';
 
 import type {
+  CombinationDetailResponse,
+  CombinationEntryPageResponse,
+  CombinationFacetsResponse,
+  CombinationSummaryResponse,
   ConstraintEntryPageResponse,
   ConstraintExplorerDetailResponse,
   ConstraintExplorerPageResponse,
   ConstraintFacetsResponse,
   DynamicConstraintsResponse,
+  GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams,
   GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams,
   GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams,
   HTTPValidationError,
@@ -33,6 +38,7 @@ import type {
   InvariantExplorerFacetsResponse,
   InvariantExplorerPageResponse,
   InvariantPageResponse,
+  ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams,
   ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams,
   ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams,
   ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams,
@@ -50,16 +56,18 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Get Static Constraints
+ * @summary List Combination Entries
  */
-export const getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet = (
+export const listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet = (
     runName: string,
+    params?: ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<StaticConstraintsResponse>(
-      {url: `/api/v1/runs/${runName}/constraints/static`, method: 'GET', signal
+      return customInstance<CombinationEntryPageResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/entries`, method: 'GET',
+        params, signal
     },
       options);
     }
@@ -67,69 +75,75 @@ export const getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet = (
 
 
 
-export const getGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryKey = (runName: string,) => {
+export const getListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetQueryKey = (runName: string,
+    params?: ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams,) => {
     return [
-    `/api/v1/runs/${runName}/constraints/static`
+    `/api/v1/runs/${runName}/constraints/combination/entries`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryOptions = <TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetQueryOptions = <TData = Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryKey(runName);
+  const queryKey =  queryOptions?.queryKey ?? getListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetQueryKey(runName,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>> = ({ signal }) => getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet(runName, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>> = ({ signal }) => listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet(runName,params, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type GetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryResult = NonNullable<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>>
-export type GetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryError = ErrorType<HTTPValidationError>
+export type ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>>
+export type ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetQueryError = ErrorType<HTTPValidationError>
 
 
-export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>> & Pick<
+export function useListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet<TData = Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>,
+          Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>,
           TError,
-          Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>
+          Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>> & Pick<
+export function useListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet<TData = Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>,
+          Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>,
           TError,
-          Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>
+          Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet<TData = Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get Static Constraints
+ * @summary List Combination Entries
  */
 
-export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet<TData = Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryOptions(runName,options)
+  const queryOptions = getListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetQueryOptions(runName,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -142,17 +156,116 @@ export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TDat
 
 
 /**
- * @summary List Static Constraint Entries
+ * @summary Get Combination Entry
  */
-export const listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet = (
+export const getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet = (
     runName: string,
-    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams,
+    combinationId: string,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<ConstraintEntryPageResponse>(
-      {url: `/api/v1/runs/${runName}/constraints/static/entries`, method: 'GET',
+      return customInstance<CombinationDetailResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGetQueryKey = (runName: string,
+    combinationId: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}`
+    ] as const;
+    }
+
+
+export const getGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGetQueryKey(runName,combinationId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>> = ({ signal }) => getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet(runName,combinationId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined && combinationId !== null && combinationId !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>>
+export type GetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet<TData = Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet<TData = Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet<TData = Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Combination Entry
+ */
+
+export function useGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet<TData = Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGetQueryOptions(runName,combinationId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Combination Facets
+ */
+export const getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet = (
+    runName: string,
+    params?: GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CombinationFacetsResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/facets`, method: 'GET',
         params, signal
     },
       options);
@@ -161,75 +274,459 @@ export const listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntries
 
 
 
-export const getListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryKey = (runName: string,
-    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams,) => {
+export const getGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetQueryKey = (runName: string,
+    params?: GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams,) => {
     return [
-    `/api/v1/runs/${runName}/constraints/static/entries`, ...(params ? [params] : [])
+    `/api/v1/runs/${runName}/constraints/combination/facets`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryOptions = <TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
-    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetQueryOptions = <TData = Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryKey(runName,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetQueryKey(runName,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>> = ({ signal }) => listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet(runName,params, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>> = ({ signal }) => getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet(runName,params, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>>
-export type ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryError = ErrorType<HTTPValidationError>
+export type GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetQueryResult = NonNullable<Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>>
+export type GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetQueryError = ErrorType<HTTPValidationError>
 
 
-export function useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet<TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+export function useGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet<TData = Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
  runName: string,
-    params: undefined |  ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>> & Pick<
+    params: undefined |  GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>,
+          Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>,
           TError,
-          Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>
+          Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet<TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+export function useGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet<TData = Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
  runName: string,
-    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>> & Pick<
+    params?: GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>,
+          Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>,
           TError,
-          Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>
+          Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet<TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+export function useGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet<TData = Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
  runName: string,
-    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+    params?: GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary List Static Constraint Entries
+ * @summary Get Combination Facets
  */
 
-export function useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet<TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+export function useGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet<TData = Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError = ErrorType<HTTPValidationError>>(
  runName: string,
-    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+    params?: GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryOptions(runName,params,options)
+  const queryOptions = getGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Combination Summary
+ */
+export const getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet = (
+    runName: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CombinationSummaryResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/summary`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGetQueryKey = (runName: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/combination/summary`
+    ] as const;
+    }
+
+
+export const getGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGetQueryOptions = <TData = Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError = ErrorType<HTTPValidationError>>(runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGetQueryKey(runName);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>> = ({ signal }) => getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet(runName, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGetQueryResult = NonNullable<Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>>
+export type GetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet<TData = Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>,
+          TError,
+          Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet<TData = Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>,
+          TError,
+          Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet<TData = Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Combination Summary
+ */
+
+export function useGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet<TData = Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGetQueryOptions(runName,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Dynamic Constraints
+ */
+export const getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet = (
+    runName: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<DynamicConstraintsResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/dynamic`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryKey = (runName: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/dynamic`
+    ] as const;
+    }
+
+
+export const getGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryOptions = <TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryKey(runName);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>> = ({ signal }) => getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet(runName, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryResult = NonNullable<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>>
+export type GetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>,
+          TError,
+          Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>,
+          TError,
+          Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Dynamic Constraints
+ */
+
+export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryOptions(runName,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Dynamic Constraint Entries
+ */
+export const listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet = (
+    runName: string,
+    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConstraintEntryPageResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/dynamic/entries`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryKey = (runName: string,
+    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/dynamic/entries`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryOptions = <TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>> = ({ signal }) => listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>>
+export type ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet<TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet<TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet<TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Dynamic Constraint Entries
+ */
+
+export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet<TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Dynamic Invariants
+ */
+export const listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet = (
+    runName: string,
+    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<InvariantPageResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/dynamic/invariants`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryKey = (runName: string,
+    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/dynamic/invariants`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryOptions = <TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>> = ({ signal }) => listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>>
+export type ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>,
+          TError,
+          Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Dynamic Invariants
+ */
+
+export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryOptions(runName,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -541,98 +1038,6 @@ export function useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsG
 
 
 /**
- * @summary Get Dynamic Constraints
- */
-export const getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet = (
-    runName: string,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<DynamicConstraintsResponse>(
-      {url: `/api/v1/runs/${runName}/constraints/dynamic`, method: 'GET', signal
-    },
-      options);
-    }
-
-
-
-
-export const getGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryKey = (runName: string,) => {
-    return [
-    `/api/v1/runs/${runName}/constraints/dynamic`
-    ] as const;
-    }
-
-
-export const getGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryOptions = <TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
-) => {
-
-const {query: queryOptions, request: requestOptions} = options ?? {};
-
-  const queryKey =  queryOptions?.queryKey ?? getGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryKey(runName);
-
-
-
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>> = ({ signal }) => getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet(runName, requestOptions, signal);
-
-
-
-
-
-   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
-}
-
-export type GetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryResult = NonNullable<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>>
-export type GetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryError = ErrorType<HTTPValidationError>
-
-
-export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>> & Pick<
-        DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>,
-          TError,
-          Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>> & Pick<
-        UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>,
-          TError,
-          Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>
-        > , 'initialData'
-      >, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
-  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-/**
- * @summary Get Dynamic Constraints
- */
-
-export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient
- ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
-
-  const queryOptions = getGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGetQueryOptions(runName,options)
-
-  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
-
-  return { ...query, queryKey: queryOptions.queryKey };
-}
-
-
-
-
-
-
-/**
  * @summary List Invariant Explorer Entries
  */
 export const listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet = (
@@ -932,18 +1337,16 @@ export function useGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariant
 
 
 /**
- * @summary List Dynamic Constraint Entries
+ * @summary Get Static Constraints
  */
-export const listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet = (
+export const getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet = (
     runName: string,
-    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<ConstraintEntryPageResponse>(
-      {url: `/api/v1/runs/${runName}/constraints/dynamic/entries`, method: 'GET',
-        params, signal
+      return customInstance<StaticConstraintsResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/static`, method: 'GET', signal
     },
       options);
     }
@@ -951,75 +1354,69 @@ export const listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntri
 
 
 
-export const getListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryKey = (runName: string,
-    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams,) => {
+export const getGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryKey = (runName: string,) => {
     return [
-    `/api/v1/runs/${runName}/constraints/dynamic/entries`, ...(params ? [params] : [])
+    `/api/v1/runs/${runName}/constraints/static`
     ] as const;
     }
 
 
-export const getListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryOptions = <TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
-    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryOptions = <TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryKey(runName,params);
+  const queryKey =  queryOptions?.queryKey ?? getGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryKey(runName);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>> = ({ signal }) => listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet(runName,params, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>> = ({ signal }) => getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet(runName, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>>
-export type ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryError = ErrorType<HTTPValidationError>
+export type GetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryResult = NonNullable<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>>
+export type GetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryError = ErrorType<HTTPValidationError>
 
 
-export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet<TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string,
-    params: undefined |  ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>> & Pick<
+export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>,
+          Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>,
           TError,
-          Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>
+          Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet<TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string,
-    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>> & Pick<
+export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>,
+          Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>,
           TError,
-          Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>
+          Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet<TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string,
-    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary List Dynamic Constraint Entries
+ * @summary Get Static Constraints
  */
 
-export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet<TData = Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
- runName: string,
-    params?: ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export function useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet<TData = Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getStaticConstraintsApiV1RunsRunNameConstraintsStaticGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetQueryOptions(runName,params,options)
+  const queryOptions = getGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGetQueryOptions(runName,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 
@@ -1032,17 +1429,17 @@ export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynami
 
 
 /**
- * @summary List Dynamic Invariants
+ * @summary List Static Constraint Entries
  */
-export const listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet = (
+export const listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet = (
     runName: string,
-    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams,
+    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams,
  options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
 ) => {
 
 
-      return customInstance<InvariantPageResponse>(
-      {url: `/api/v1/runs/${runName}/constraints/dynamic/invariants`, method: 'GET',
+      return customInstance<ConstraintEntryPageResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/static/entries`, method: 'GET',
         params, signal
     },
       options);
@@ -1051,75 +1448,75 @@ export const listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGe
 
 
 
-export const getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryKey = (runName: string,
-    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams,) => {
+export const getListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryKey = (runName: string,
+    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams,) => {
     return [
-    `/api/v1/runs/${runName}/constraints/dynamic/invariants`, ...(params ? [params] : [])
+    `/api/v1/runs/${runName}/constraints/static/entries`, ...(params ? [params] : [])
     ] as const;
     }
 
 
-export const getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryOptions = <TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
-    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+export const getListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryOptions = <TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
 ) => {
 
 const {query: queryOptions, request: requestOptions} = options ?? {};
 
-  const queryKey =  queryOptions?.queryKey ?? getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryKey(runName,params);
+  const queryKey =  queryOptions?.queryKey ?? getListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryKey(runName,params);
 
 
 
-    const queryFn: QueryFunction<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>> = ({ signal }) => listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet(runName,params, requestOptions, signal);
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>> = ({ signal }) => listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet(runName,params, requestOptions, signal);
 
 
 
 
 
-   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
 }
 
-export type ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryResult = NonNullable<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>>
-export type ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryError = ErrorType<HTTPValidationError>
+export type ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>>
+export type ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryError = ErrorType<HTTPValidationError>
 
 
-export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+export function useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet<TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
  runName: string,
-    params: undefined |  ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>> & Pick<
+    params: undefined |  ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>> & Pick<
         DefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>,
+          Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>,
           TError,
-          Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>
+          Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+export function useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet<TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
  runName: string,
-    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>> & Pick<
+    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>> & Pick<
         UndefinedInitialDataOptions<
-          Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>,
+          Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>,
           TError,
-          Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>
+          Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>
         > , 'initialData'
       >, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
-export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+export function useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet<TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
  runName: string,
-    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary List Dynamic Invariants
+ * @summary List Static Constraint Entries
  */
 
-export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
+export function useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet<TData = Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
  runName: string,
-    params?: ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+    params?: ListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
  , queryClient?: QueryClient
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
-  const queryOptions = getListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetQueryOptions(runName,params,options)
+  const queryOptions = getListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGetQueryOptions(runName,params,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

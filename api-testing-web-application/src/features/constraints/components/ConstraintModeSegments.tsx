@@ -2,7 +2,7 @@ import { replaceSearchParams } from '../../../shared/lib/navigation'
 import { ViewModeToggle } from '../../../shared/ui/ViewModeToggle'
 import type { ConstraintTab } from '../ConstraintsPage'
 
-export type ConstraintMode = 'dynamic' | 'explorer' | 'invariants' | 'static' | 'workbench'
+export type ConstraintMode = 'combination' | 'dynamic' | 'explorer' | 'invariants' | 'static' | 'workbench'
 
 type ConstraintModeSegmentsProps = {
   constraintTab: ConstraintTab
@@ -22,6 +22,7 @@ export function ConstraintModeSegments({ constraintTab, constraintsView }: Const
         if (value === 'workbench') {
           replaceSearchParams({
             constraintId: undefined,
+            combinationId: undefined,
             constraintTab: 'explorer',
             constraintsView: 'workbench',
             invariantId: undefined,
@@ -31,6 +32,7 @@ export function ConstraintModeSegments({ constraintTab, constraintsView }: Const
         }
 
         replaceSearchParams({
+          combinationId: undefined,
           constraintId: undefined,
           constraintTab: value,
           constraintsView: 'table',
@@ -40,10 +42,11 @@ export function ConstraintModeSegments({ constraintTab, constraintsView }: Const
       }}
       options={[
         { description: 'Readable constraint triage workspace.', label: 'Workbench', value: 'workbench' },
+        { description: 'Combined static/dynamic resolution evidence.', label: 'Combination', value: 'combination' },
         { description: 'Advanced unified constraint table.', label: 'Explorer', value: 'explorer' },
         { description: 'Static constraint debug table.', label: 'Static', value: 'static' },
-        { description: 'Dynamic constraint debug table.', label: 'Dynamic', value: 'dynamic' },
-        { description: 'Invariant debug table.', label: 'Invariants', value: 'invariants' },
+        { description: 'Mapped dynamic constraints derived from Daikon invariants.', label: 'Dynamic', value: 'dynamic' },
+        { description: 'Raw Daikon invariant rows behind dynamic constraints.', label: 'Raw invariants', value: 'invariants' },
       ]}
       value={selectedMode(constraintsView, constraintTab)}
     />

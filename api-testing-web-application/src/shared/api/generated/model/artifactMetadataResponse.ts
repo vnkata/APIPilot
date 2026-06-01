@@ -11,14 +11,14 @@ import type { RawPolicy } from './rawPolicy';
 
 export interface ArtifactMetadataResponse {
   artifact_id: string;
-  run_name: string;
   kind: ArtifactKind;
-  relative_path: string;
   media_type: MediaType;
+  modified_at?: string | null;
+  raw_policy: RawPolicy;
+  raw_supported: boolean;
+  relative_path: string;
+  run_name: string;
   /** @minimum 0 */
   size_bytes: number;
-  modified_at?: string | null;
-  raw_supported: boolean;
   summary_supported: boolean;
-  raw_policy: RawPolicy;
 }

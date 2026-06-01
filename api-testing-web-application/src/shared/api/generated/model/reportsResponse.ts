@@ -9,7 +9,7 @@ import type { ReportsResponseStatusCounts } from './reportsResponseStatusCounts'
 import type { StatusReportEntryResponse } from './statusReportEntryResponse';
 
 export interface ReportsResponse {
-  run_name: string;
   entries: StatusReportEntryResponse[];
+  run_name: string;
   status_counts: ReportsResponseStatusCounts;
 }

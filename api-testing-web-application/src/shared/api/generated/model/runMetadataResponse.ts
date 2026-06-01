@@ -7,11 +7,11 @@
  */
 
 export interface RunMetadataResponse {
-  run_name: string;
   /** @minimum 0 */
   artifact_count: number;
   has_history: boolean;
+  modified_at?: string | null;
+  run_name: string;
   /** @minimum 0 */
   size_bytes: number;
-  modified_at?: string | null;
 }

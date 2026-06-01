@@ -8,8 +8,8 @@
 import type { ConstraintSectionResponse } from './constraintSectionResponse';
 
 export interface StaticConstraintsResponse {
-  run_name: string;
-  sections: ConstraintSectionResponse[];
   /** @minimum 0 */
   constraint_count: number;
+  run_name: string;
+  sections: ConstraintSectionResponse[];
 }

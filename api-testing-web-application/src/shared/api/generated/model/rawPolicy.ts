@@ -13,6 +13,7 @@ export const RawPolicy = {
   raw_json: 'raw_json',
   raw_text: 'raw_text',
   raw_csv: 'raw_csv',
+  summary_only: 'summary_only',
   sanitized_test_cases: 'sanitized_test_cases',
   sanitized_har_session: 'sanitized_har_session',
 } as const;

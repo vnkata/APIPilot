@@ -8,7 +8,7 @@
 import type { GraphEdgeResponse } from './graphEdgeResponse';
 
 export interface DependencyGraphResponse {
-  run_name: string;
-  nodes: string[];
   edges: GraphEdgeResponse[];
+  nodes: string[];
+  run_name: string;
 }

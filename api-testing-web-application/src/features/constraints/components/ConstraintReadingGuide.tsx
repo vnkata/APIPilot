@@ -12,9 +12,9 @@ const guideCopy = {
     'Open raw fields only when you need the backend payload shape for debugging.',
   ],
   invariant: [
-    'Start with readiness and correlation badges to judge whether runtime evidence can become an oracle.',
-    'Check assertion summary before trusting the invariant as executable test logic.',
-    'Use related constraints to connect runtime evidence back to static or combined constraints.',
+    'Start with readiness and correlation badges to judge whether the raw Daikon row can become an oracle.',
+    'Check assertion summary before trusting the raw invariant as executable test logic.',
+    'Use related constraints to connect raw runtime evidence back to mapped or combined constraints.',
   ],
   legacy: [
     'Legacy static/dynamic entries expose the original mined expression for compatibility workflows.',

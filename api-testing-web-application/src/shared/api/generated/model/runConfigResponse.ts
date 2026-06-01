@@ -10,15 +10,15 @@ import type { RunConfigResponseHeaders } from './runConfigResponseHeaders';
 import type { RunConfigResponseLlm } from './runConfigResponseLlm';
 
 export interface RunConfigResponse {
-  run_config_id: string;
-  name: string;
-  spec_id: string;
   base_url: string;
-  live_api: boolean;
-  request_budget?: number | null;
-  timeout_seconds?: number | null;
   created_at: string;
-  llm?: RunConfigResponseLlm;
   embedding?: RunConfigResponseEmbedding;
   headers: RunConfigResponseHeaders;
+  live_api: boolean;
+  llm?: RunConfigResponseLlm;
+  name: string;
+  request_budget?: number | null;
+  run_config_id: string;
+  spec_id: string;
+  timeout_seconds?: number | null;
 }

@@ -7,12 +7,12 @@
  */
 
 export interface SpecCreateRequest {
+  /** @minLength 1 */
+  content: string;
   /**
      * @minLength 1
      * @maxLength 255
      */
   filename: string;
-  /** @minLength 1 */
-  content: string;
   title?: string | null;
 }

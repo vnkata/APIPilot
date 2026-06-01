@@ -205,7 +205,7 @@ export function buildCurrentPageConstraintMatrix({
         ...cell,
         filter: { oracleReadiness: cell.label },
       })),
-      description: 'Current page by invariant oracle readiness. Counts use loaded rows only.',
+      description: 'Current page by raw invariant oracle readiness. Counts use loaded rows only.',
       title: 'Current page by readiness',
     }
   }

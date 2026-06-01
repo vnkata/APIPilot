@@ -8,16 +8,16 @@
 import type { GraphSimilarityResponse } from './graphSimilarityResponse';
 
 export interface GraphExplorerEdgeResponse {
-  from_node: string;
-  to_node: string;
-  similar_parameters: GraphSimilarityResponse[];
   edge_id: string;
   edge_status: string;
-  from_operation_id: string;
-  to_operation_id: string;
-  from_node_id: string;
-  to_node_id: string;
   evidence_count: number;
-  evidence_sources: string[];
   evidence_preview: string[];
+  evidence_sources: string[];
+  from_node: string;
+  from_node_id: string;
+  from_operation_id: string;
+  similar_parameters: GraphSimilarityResponse[];
+  to_node: string;
+  to_node_id: string;
+  to_operation_id: string;
 }

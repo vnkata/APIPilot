@@ -10,37 +10,37 @@ import type { LlmConfigRequest } from './llmConfigRequest';
 import type { RunConfigRequestHeaders } from './runConfigRequestHeaders';
 
 export interface RunConfigRequest {
-  /**
-     * @minLength 1
-     * @maxLength 255
-     */
-  name: string;
-  /** @minLength 1 */
-  spec_id: string;
+  async_max_concurrent?: number | null;
+  async_mode?: boolean;
   /** @minLength 1 */
   base_url: string;
+  constraint_mining?: boolean;
+  embedding?: EmbeddingConfigRequest | null;
+  /**
+     * @minimum 0
+     * @maximum 1
+     */
+  header_mutation_ratio?: number;
+  headers?: RunConfigRequestHeaders;
   live_api?: boolean;
-  request_budget?: number | null;
-  timeout_seconds?: number | null;
-  /** @minimum 1 */
-  num_generations?: number;
-  /** @minimum 1 */
-  num_test_cases?: number;
+  llm?: LlmConfigRequest | null;
+  max_request_workers?: number | null;
   /**
      * @minimum 0
      * @maximum 1
      */
   mutation_ratio?: number;
   /**
-     * @minimum 0
-     * @maximum 1
+     * @minLength 1
+     * @maxLength 255
      */
-  header_mutation_ratio?: number;
-  async_mode?: boolean;
-  max_request_workers?: number | null;
-  async_max_concurrent?: number | null;
-  constraint_mining?: boolean;
-  llm?: LlmConfigRequest | null;
-  embedding?: EmbeddingConfigRequest | null;
-  headers?: RunConfigRequestHeaders;
+  name: string;
+  /** @minimum 1 */
+  num_generations?: number;
+  /** @minimum 1 */
+  num_test_cases?: number;
+  request_budget?: number | null;
+  /** @minLength 1 */
+  spec_id: string;
+  timeout_seconds?: number | null;
 }

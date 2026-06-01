@@ -49,7 +49,7 @@ function dependencyDegree(operation: OperationExplorerEntryResponse) {
 }
 
 function isConstraintHeavy(operation: OperationExplorerEntryResponse) {
-  return operation.constraint_count + operation.invariant_count >= 3
+  return operation.constraint_count >= 3
 }
 
 function isLowEvidence(operation: OperationExplorerEntryResponse) {
@@ -92,10 +92,10 @@ export function buildOperationMissionBoard(rows: OperationExplorerEntryResponse[
         title: 'High dependency',
       },
       {
-        description: 'Visible operations carrying dense constraints or invariants.',
+        description: 'Visible operations carrying dense mapped constraints.',
         id: 'constraint_heavy',
         operations: laneMap.constraint_heavy,
-        title: 'Constraint-heavy',
+        title: 'Constraint-rich',
       },
       {
         description: 'Visible operations with little test or graph evidence.',
@@ -143,8 +143,8 @@ export function summarizeOperationDetail(detail: OperationExplorerDetailResponse
   const relatedGroups = [
     { label: 'Incoming edges', values: detail.incoming_edge_ids },
     { label: 'Outgoing edges', values: detail.outgoing_edge_ids },
-    { label: 'Constraints', values: detail.related_constraint_ids },
-    { label: 'Invariants', values: detail.related_invariant_ids },
+    { label: 'Mapped constraints', values: detail.related_constraint_ids },
+    { label: 'Raw invariant rows', values: detail.related_invariant_ids },
   ]
 
   return {

@@ -58,6 +58,8 @@ describe('OperationsPage', () => {
 
     expect(await screen.findByRole('heading', { name: /operations explorer/i })).toBeInTheDocument()
     expect(screen.getByRole('grid', { name: /operation explorer entries/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/mapped constraints/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/raw invariant rows/i).length).toBeGreaterThan(0)
     expect(await screen.findByRole('complementary', { name: /operation explorer detail/i })).toBeInTheDocument()
     expect(screen.getByRole('link', { name: /graph/i })).toHaveAttribute('href', expect.stringContaining('/graph'))
 
@@ -107,6 +109,7 @@ describe('OperationsPage', () => {
     )
 
     expect(await screen.findByRole('region', { name: /operation cards/i })).toBeInTheDocument()
-    expect(screen.getByText(/2 constraints/i)).toBeInTheDocument()
+    expect(screen.getByText(/2 mapped constraints/i)).toBeInTheDocument()
+    expect(screen.getByText(/1 raw invariant rows/i)).toBeInTheDocument()
   })
 })

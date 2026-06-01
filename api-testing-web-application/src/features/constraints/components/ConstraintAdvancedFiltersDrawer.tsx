@@ -16,6 +16,7 @@ import {
 import { useTheme } from '@mui/material/styles'
 
 import type {
+  CombinationFacetsResponse,
   ConstraintFacetBucketResponse,
   ConstraintFacetsResponse,
   GroupCountResponse,
@@ -28,6 +29,7 @@ import type { MatrixBy } from '../constraintViewModels'
 
 type ConstraintAdvancedFiltersDrawerProps = {
   activeGroups: GroupCountResponse[]
+  combinationFacets?: CombinationFacetsResponse
   constraintFacets?: ConstraintFacetsResponse
   invariantFacets?: InvariantExplorerFacetsResponse
   onApplyGroupFilter: (key: string | null | undefined) => void
@@ -90,6 +92,7 @@ function FacetGroup({
 
 export function ConstraintAdvancedFiltersDrawer({
   activeGroups,
+  combinationFacets,
   constraintFacets,
   invariantFacets,
   onApplyGroupFilter,
@@ -100,6 +103,7 @@ export function ConstraintAdvancedFiltersDrawer({
 }: ConstraintAdvancedFiltersDrawerProps) {
   const theme = useTheme()
   const mobile = useMediaQuery(theme.breakpoints.down('md'))
+  const isCombinationTab = tab === 'combination'
   const isInvariantTab = tab === 'invariants'
   const isLegacyTab = tab === 'static' || tab === 'dynamic'
 
@@ -157,7 +161,22 @@ export function ConstraintAdvancedFiltersDrawer({
               size="small"
               value={search.propertyPrefix ?? ''}
             />
-            {!isInvariantTab ? (
+            {isCombinationTab ? (
+              <>
+                <DebouncedTextField
+                  label="Status"
+                  onDebouncedChange={(value) => replaceSearchParams({ offset: 0, status: value })}
+                  size="small"
+                  value={search.status ?? ''}
+                />
+                <DebouncedTextField
+                  label="Verdict"
+                  onDebouncedChange={(value) => replaceSearchParams({ offset: 0, verdict: value })}
+                  size="small"
+                  value={search.verdict ?? ''}
+                />
+              </>
+            ) : !isInvariantTab ? (
               <>
                 <DebouncedTextField
                   disabled={isLegacyTab}
@@ -189,7 +208,7 @@ export function ConstraintAdvancedFiltersDrawer({
                   value={search.correlationConfidence ?? ''}
                 />
                 <DebouncedTextField
-                  label="Invariant type"
+                  label="Raw invariant type"
                   onDebouncedChange={(value) => replaceSearchParams({ invariantType: value, offset: 0 })}
                   size="small"
                   value={search.invariantType ?? ''}
@@ -197,16 +216,59 @@ export function ConstraintAdvancedFiltersDrawer({
               </>
             )}
             <TextField
-              label="Assertion"
-              onChange={(event) => replaceSearchParams({ assertionAvailable: booleanSearchValue(event.target.value), offset: 0 })}
+              label={isCombinationTab ? 'Resolved' : 'Assertion'}
+              onChange={(event) =>
+                replaceSearchParams(
+                  isCombinationTab
+                    ? { offset: 0, resolved: booleanSearchValue(event.target.value) }
+                    : { assertionAvailable: booleanSearchValue(event.target.value), offset: 0 },
+                )
+              }
               select
               size="small"
-              value={booleanSelectValue(search.assertionAvailable)}
+              value={isCombinationTab ? booleanSelectValue(search.resolved) : booleanSelectValue(search.assertionAvailable)}
             >
-              <MenuItem value="">Any assertion</MenuItem>
-              <MenuItem value="true">Available</MenuItem>
-              <MenuItem value="false">Missing</MenuItem>
+              <MenuItem value="">{isCombinationTab ? 'Any resolution' : 'Any assertion'}</MenuItem>
+              <MenuItem value="true">{isCombinationTab ? 'Resolved' : 'Available'}</MenuItem>
+              <MenuItem value="false">{isCombinationTab ? 'Unresolved' : 'Missing'}</MenuItem>
             </TextField>
+            {isCombinationTab ? (
+              <>
+                <TextField
+                  label="Counter-example"
+                  onChange={(event) => replaceSearchParams({ hasCounterExample: booleanSearchValue(event.target.value), offset: 0 })}
+                  select
+                  size="small"
+                  value={booleanSelectValue(search.hasCounterExample)}
+                >
+                  <MenuItem value="">Any counter-example</MenuItem>
+                  <MenuItem value="true">Available</MenuItem>
+                  <MenuItem value="false">Missing</MenuItem>
+                </TextField>
+                <TextField
+                  label="Runtime evaluation"
+                  onChange={(event) => replaceSearchParams({ hasRuntimeEvaluation: booleanSearchValue(event.target.value), offset: 0 })}
+                  select
+                  size="small"
+                  value={booleanSelectValue(search.hasRuntimeEvaluation)}
+                >
+                  <MenuItem value="">Any runtime evaluation</MenuItem>
+                  <MenuItem value="true">Available</MenuItem>
+                  <MenuItem value="false">Missing</MenuItem>
+                </TextField>
+                <TextField
+                  label="Validation cases"
+                  onChange={(event) => replaceSearchParams({ hasValidationCases: booleanSearchValue(event.target.value), offset: 0 })}
+                  select
+                  size="small"
+                  value={booleanSelectValue(search.hasValidationCases)}
+                >
+                  <MenuItem value="">Any validation cases</MenuItem>
+                  <MenuItem value="true">Available</MenuItem>
+                  <MenuItem value="false">Missing</MenuItem>
+                </TextField>
+              </>
+            ) : null}
             <TextField
               label="Group by"
               onChange={(event) => replaceSearchParams({ groupBy: event.target.value, offset: 0 })}
@@ -222,8 +284,14 @@ export function ConstraintAdvancedFiltersDrawer({
               <MenuItem value="source_type">Source type</MenuItem>
               <MenuItem value="agreement_status">Agreement</MenuItem>
               <MenuItem value="assertion_available">Assertion</MenuItem>
-              <MenuItem value="invariant_kind">Invariant kind</MenuItem>
-              <MenuItem value="invariant_type">Invariant type</MenuItem>
+              <MenuItem value="status">Combination status</MenuItem>
+              <MenuItem value="verdict">Verdict</MenuItem>
+              <MenuItem value="resolved">Resolved</MenuItem>
+              <MenuItem value="has_counter_example">Counter-example</MenuItem>
+              <MenuItem value="has_runtime_evaluation">Runtime evaluation</MenuItem>
+              <MenuItem value="has_validation_cases">Validation cases</MenuItem>
+              <MenuItem value="invariant_kind">Raw invariant kind</MenuItem>
+              <MenuItem value="invariant_type">Raw invariant type</MenuItem>
               <MenuItem value="oracle_readiness">Oracle readiness</MenuItem>
               <MenuItem value="correlation_confidence">Correlation</MenuItem>
             </TextField>
@@ -246,7 +314,46 @@ export function ConstraintAdvancedFiltersDrawer({
             <Typography component="h3" variant="h3">
               Facets
             </Typography>
-            {isInvariantTab ? (
+            {isCombinationTab ? (
+              <>
+                <FacetGroup
+                  buckets={combinationFacets?.status}
+                  label="Status"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, status: value })}
+                  selectedValue={search.status}
+                />
+                <FacetGroup
+                  buckets={combinationFacets?.verdict}
+                  label="Verdict"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, verdict: value })}
+                  selectedValue={search.verdict}
+                />
+                <FacetGroup
+                  buckets={combinationFacets?.resolved}
+                  label="Resolved"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, resolved: value })}
+                  selectedValue={selectedBoolean(search.resolved)}
+                />
+                <FacetGroup
+                  buckets={combinationFacets?.has_counter_example}
+                  label="Counter-example"
+                  onSelect={(value) => replaceSearchParams({ hasCounterExample: value, offset: 0 })}
+                  selectedValue={selectedBoolean(search.hasCounterExample)}
+                />
+                <FacetGroup
+                  buckets={combinationFacets?.has_runtime_evaluation}
+                  label="Runtime evaluation"
+                  onSelect={(value) => replaceSearchParams({ hasRuntimeEvaluation: value, offset: 0 })}
+                  selectedValue={selectedBoolean(search.hasRuntimeEvaluation)}
+                />
+                <FacetGroup
+                  buckets={combinationFacets?.has_validation_cases}
+                  label="Validation cases"
+                  onSelect={(value) => replaceSearchParams({ hasValidationCases: value, offset: 0 })}
+                  selectedValue={selectedBoolean(search.hasValidationCases)}
+                />
+              </>
+            ) : isInvariantTab ? (
               <>
                 <FacetGroup
                   buckets={invariantFacets?.oracle_readiness}
@@ -262,13 +369,13 @@ export function ConstraintAdvancedFiltersDrawer({
                 />
                 <FacetGroup
                   buckets={invariantFacets?.invariant_kind}
-                  label="Invariant kind"
+                  label="Raw invariant kind"
                   onSelect={(value) => replaceSearchParams({ invariantKind: value, offset: 0 })}
                   selectedValue={search.invariantKind}
                 />
                 <FacetGroup
                   buckets={invariantFacets?.invariant_type}
-                  label="Invariant type"
+                  label="Raw invariant type"
                   onSelect={(value) => replaceSearchParams({ invariantType: value, offset: 0 })}
                   selectedValue={search.invariantType}
                 />

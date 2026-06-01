@@ -7,7 +7,7 @@
  */
 
 export interface GroupCountResponse {
-  key?: string | null;
   /** @minimum 0 */
   count: number;
+  key?: string | null;
 }

@@ -10,8 +10,8 @@ import type { OperationExplorerEntryResponse } from './operationExplorerEntryRes
 import type { PaginationMetadata } from './paginationMetadata';
 
 export interface OperationExplorerPageResponse {
-  run_name: string;
+  groups: GroupCountResponse[];
   items: OperationExplorerEntryResponse[];
   pagination: PaginationMetadata;
-  groups: GroupCountResponse[];
+  run_name: string;
 }

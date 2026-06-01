@@ -8,6 +8,6 @@
 import type { ArtifactMetadataResponse } from './artifactMetadataResponse';
 
 export interface ArtifactCatalogResponse {
-  run_name: string;
   artifacts: ArtifactMetadataResponse[];
+  run_name: string;
 }

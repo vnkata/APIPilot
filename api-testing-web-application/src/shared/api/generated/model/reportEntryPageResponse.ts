@@ -10,8 +10,8 @@ import type { PaginationMetadata } from './paginationMetadata';
 import type { StatusReportEntryResponse } from './statusReportEntryResponse';
 
 export interface ReportEntryPageResponse {
-  run_name: string;
+  groups: GroupCountResponse[];
   items: StatusReportEntryResponse[];
   pagination: PaginationMetadata;
-  groups: GroupCountResponse[];
+  run_name: string;
 }

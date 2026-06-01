@@ -10,12 +10,12 @@ import type { InvariantGroupResponse } from './invariantGroupResponse';
 import type { InvariantRecordResponse } from './invariantRecordResponse';
 
 export interface DynamicConstraintsResponse {
-  run_name: string;
-  constraints: ConstraintEntryResponse[];
-  groups: InvariantGroupResponse[];
-  invariants: InvariantRecordResponse[];
   /** @minimum 0 */
   constraint_count: number;
+  constraints: ConstraintEntryResponse[];
+  groups: InvariantGroupResponse[];
   /** @minimum 0 */
   invariant_count: number;
+  invariants: InvariantRecordResponse[];
+  run_name: string;
 }

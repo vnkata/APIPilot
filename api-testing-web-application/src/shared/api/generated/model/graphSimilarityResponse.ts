@@ -7,7 +7,7 @@
  */
 
 export interface GraphSimilarityResponse {
+  in_value?: string | null;
   value1?: string | null;
   value2?: string | null;
-  in_value?: string | null;
 }

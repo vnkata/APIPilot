@@ -10,8 +10,8 @@ import type { GroupCountResponse } from './groupCountResponse';
 import type { PaginationMetadata } from './paginationMetadata';
 
 export interface GraphSequencePageResponse {
-  run_name: string;
+  groups: GroupCountResponse[];
   items: GraphSequenceResponse[];
   pagination: PaginationMetadata;
-  groups: GroupCountResponse[];
+  run_name: string;
 }

@@ -7,6 +7,6 @@
  */
 
 export interface RunConfigValidationResponse {
-  valid: boolean;
   errors: string[];
+  valid: boolean;
 }

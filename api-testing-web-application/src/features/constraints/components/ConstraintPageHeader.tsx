@@ -8,6 +8,7 @@ import type { ConstraintTab } from '../ConstraintsPage'
 import { ConstraintModeSegments } from './ConstraintModeSegments'
 
 type ConstraintPageHeaderProps = {
+  combinationCount: number
   constraintTab: ConstraintTab
   constraintsView: 'matrix' | 'table' | 'workbench'
   dynamicCount: number
@@ -36,6 +37,7 @@ function MetricBlock({
 }
 
 export function ConstraintPageHeader({
+  combinationCount,
   constraintTab,
   constraintsView,
   dynamicCount,
@@ -59,8 +61,8 @@ export function ConstraintPageHeader({
           </Stack>
         }
         eyebrow="Constraint oracle workspace"
-        subtitle="Triage generated constraints, invariant candidates, and assertion readiness from cached run artifacts."
-        title="Constraints and invariants"
+        subtitle="Triage generated constraints, mapped dynamic constraints, raw Daikon rows, and assertion readiness from cached run artifacts."
+        title="Constraints and raw invariants"
         {...tourAnchor(TOUR_ANCHORS.constraintsHeader)}
       />
       <Panel aria-label="Constraint workspace summary" sx={{ p: 1.5 }}>
@@ -71,8 +73,9 @@ export function ConstraintPageHeader({
           sx={{ alignItems: { sm: 'center' }, justifyContent: 'space-between' }}
         >
           <MetricBlock label="Static" value={staticCount} />
-          <MetricBlock label="Dynamic" value={dynamicCount} />
-          <MetricBlock label="Invariants" value={invariantCount} />
+          <MetricBlock label="Mapped dynamic" value={dynamicCount} />
+          <MetricBlock label="Combination" value={combinationCount} />
+          <MetricBlock label="Raw invariants" value={invariantCount} />
         </Stack>
       </Panel>
     </Stack>

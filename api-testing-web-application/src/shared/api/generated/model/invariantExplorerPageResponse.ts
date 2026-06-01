@@ -10,8 +10,8 @@ import type { InvariantExplorerEntryResponse } from './invariantExplorerEntryRes
 import type { PaginationMetadata } from './paginationMetadata';
 
 export interface InvariantExplorerPageResponse {
-  run_name: string;
+  groups: GroupCountResponse[];
   items: InvariantExplorerEntryResponse[];
   pagination: PaginationMetadata;
-  groups: GroupCountResponse[];
+  run_name: string;
 }

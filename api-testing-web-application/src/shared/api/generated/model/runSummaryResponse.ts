@@ -9,19 +9,19 @@ import type { ArtifactAvailabilityResponse } from './artifactAvailabilityRespons
 import type { RunSummaryResponseReportStatusCounts } from './runSummaryResponseReportStatusCounts';
 
 export interface RunSummaryResponse {
-  run_name: string;
   /** @minimum 0 */
   artifact_count: number;
+  available_artifacts: ArtifactAvailabilityResponse;
   /** @minimum 0 */
-  operation_count: number;
-  /** @minimum 0 */
-  test_case_count: number;
+  dynamic_constraint_count: number;
   /** @minimum 0 */
   har_session_count: number;
   /** @minimum 0 */
+  operation_count: number;
+  report_status_counts: RunSummaryResponseReportStatusCounts;
+  run_name: string;
+  /** @minimum 0 */
   static_constraint_count: number;
   /** @minimum 0 */
-  dynamic_constraint_count: number;
-  report_status_counts: RunSummaryResponseReportStatusCounts;
-  available_artifacts: ArtifactAvailabilityResponse;
+  test_case_count: number;
 }

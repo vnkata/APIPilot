@@ -4,7 +4,7 @@ import { axe } from 'jest-axe'
 import { http, HttpResponse } from 'msw'
 
 import { renderWithProviders } from '../../test/renderWithProviders'
-import { constraintExplorerEntries, invariantExplorerEntries } from '../../test/fixtures'
+import { combinationEntries, constraintExplorerEntries, invariantExplorerEntries } from '../../test/fixtures'
 import { server } from '../../test/msw/server'
 import { ConstraintsPage } from './ConstraintsPage'
 
@@ -28,8 +28,9 @@ describe('ConstraintsPage', () => {
     expect(screen.getByLabelText(/constraint workbench start here/i)).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /top constraint signals/i })).toBeInTheDocument()
     expect(screen.getAllByText(/current page/i).length).toBeGreaterThan(0)
-    expect(await screen.findByText(/input.limit >= 1/i)).toBeInTheDocument()
+    await waitFor(() => expect(screen.getAllByText(/input.limit >= 1/i).length).toBeGreaterThan(0))
     expect(screen.getByRole('button', { name: /workbench/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(screen.getByRole('button', { name: /raw invariants/i })).toBeInTheDocument()
 
     const results = await axe(container)
     expect(results).toHaveNoViolations()
@@ -108,6 +109,43 @@ describe('ConstraintsPage', () => {
     expect(screen.getAllByText('verified_runtime_oracle').length).toBeGreaterThan(0)
   })
 
+  it('renders combination entries and opens sanitized combination detail', async () => {
+    let requestedUrl: URL | undefined
+    server.use(
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries', ({ request }) => {
+        requestedUrl = new URL(request.url)
+        return HttpResponse.json(combinationEntries)
+      }),
+    )
+
+    renderWithProviders(
+      <ConstraintsPage
+        runName="Run A"
+        search={{
+          combinationId: 'cmb-limit',
+          constraintTab: 'combination',
+          constraintsView: 'table',
+          hasRuntimeEvaluation: true,
+          limit: 25,
+          offset: 0,
+          resolved: true,
+          status: 'COMBINED_EQUIVALENT',
+          verdict: 'BOTH_TRUE',
+        }}
+      />,
+    )
+
+    expect(await screen.findByRole('grid', { name: /combination constraint entries/i })).toBeInTheDocument()
+    expect(requestedUrl?.searchParams.get('status')).toBe('COMBINED_EQUIVALENT')
+    expect(requestedUrl?.searchParams.get('resolved')).toBe('true')
+    expect(requestedUrl?.searchParams.get('has_runtime_evaluation')).toBe('true')
+    expect(screen.getByRole('button', { name: /^combination$/i })).toHaveAttribute('aria-pressed', 'true')
+    expect(await screen.findByRole('complementary', { name: /combination detail/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /constraint resolution/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/COMBINED_EQUIVALENT/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Static and dynamic evidence agree/i)).toBeInTheDocument()
+  })
+
   it('renders static, dynamic, and invariant query results with groups', async () => {
     renderWithProviders(
       <ConstraintsPage
@@ -128,7 +166,7 @@ describe('ConstraintsPage', () => {
     expect(await screen.findByText('input.limit >= 1')).toBeInTheDocument()
     expect(screen.getAllByText(/request_response/i).length).toBeGreaterThan(0)
     expect(screen.getByRole('button', { name: /dynamic/i })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /invariants/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /raw invariants/i })).toBeInTheDocument()
   })
 
   it('exposes URL-backed filters, advanced group chips, row detail, and operation drawer', async () => {

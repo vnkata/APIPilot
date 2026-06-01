@@ -9,12 +9,12 @@ import type { JsonValue } from './jsonValue';
 import type { SanitizedBodyResponse } from './sanitizedBodyResponse';
 
 export interface SanitizedTestCaseResponse {
-  test_case_id: string;
-  operation_id: string;
-  path?: string | null;
   http_method?: string | null;
+  operation_id: string;
   parameters?: JsonValue | null;
+  path?: string | null;
   request_body: SanitizedBodyResponse;
-  status_code?: number | null;
   response_body: SanitizedBodyResponse;
+  status_code?: number | null;
+  test_case_id: string;
 }

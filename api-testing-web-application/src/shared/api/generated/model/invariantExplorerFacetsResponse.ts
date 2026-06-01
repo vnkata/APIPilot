@@ -8,11 +8,11 @@
 import type { ConstraintFacetBucketResponse } from './constraintFacetBucketResponse';
 
 export interface InvariantExplorerFacetsResponse {
-  operation_id: ConstraintFacetBucketResponse[];
-  invariant_kind: ConstraintFacetBucketResponse[];
-  invariant_type: ConstraintFacetBucketResponse[];
-  oracle_readiness: ConstraintFacetBucketResponse[];
   assertion_available: ConstraintFacetBucketResponse[];
   correlation_confidence: ConstraintFacetBucketResponse[];
+  invariant_kind: ConstraintFacetBucketResponse[];
+  invariant_type: ConstraintFacetBucketResponse[];
+  operation_id: ConstraintFacetBucketResponse[];
+  oracle_readiness: ConstraintFacetBucketResponse[];
   primary_property_path: ConstraintFacetBucketResponse[];
 }

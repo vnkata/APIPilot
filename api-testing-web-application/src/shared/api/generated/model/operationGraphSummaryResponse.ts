@@ -10,9 +10,9 @@ export interface OperationGraphSummaryResponse {
   /** @minimum 0 */
   in_degree: number;
   /** @minimum 0 */
-  out_degree: number;
-  /** @minimum 0 */
   incoming_edge_count: number;
+  /** @minimum 0 */
+  out_degree: number;
   /** @minimum 0 */
   outgoing_edge_count: number;
 }

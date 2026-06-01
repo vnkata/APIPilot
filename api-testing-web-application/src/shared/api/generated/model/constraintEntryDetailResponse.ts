@@ -7,8 +7,8 @@
  */
 
 export interface ConstraintEntryDetailResponse {
+  expression: string;
   operation_id: string;
   property_path: string;
-  expression: string;
   section?: string | null;
 }

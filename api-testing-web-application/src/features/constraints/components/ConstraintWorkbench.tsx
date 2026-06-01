@@ -1,6 +1,7 @@
-import { Box, Button, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { Box, Button, Chip, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material'
 
 import type {
+  CombinationEntryResponse,
   ConstraintExplorerEntryResponse,
   InvariantExplorerEntryResponse,
 } from '../../../shared/api/generated/model'
@@ -20,11 +21,13 @@ import {
 import { CurrentPageConstraintMatrix } from './CurrentPageConstraintMatrix'
 
 type ConstraintWorkbenchProps = {
+  combinations: CombinationEntryResponse[]
   constraints: ConstraintExplorerEntryResponse[]
   invariants: InvariantExplorerEntryResponse[]
   matrixBy: MatrixBy
   onApplyFilter: (filter: Record<string, string | undefined>) => void
   onMatrixByChange: (matrixBy: MatrixBy) => void
+  onSelectCombination: (combinationId: string) => void
   onSelectConstraint: (constraintId: string) => void
   onSelectInvariant: (invariantId: string) => void
 }
@@ -200,6 +203,67 @@ function InvariantSignalRow({
   )
 }
 
+function CombinationSignalRow({
+  combination,
+  onSelect,
+}: {
+  combination: CombinationEntryResponse
+  onSelect: (combinationId: string) => void
+}) {
+  return (
+    <Box
+      sx={(theme) => ({
+        border: '1px solid',
+        borderColor: theme.apiTesting.border.default,
+        borderRadius: 1.25,
+        p: 1.25,
+      })}
+    >
+      <Stack spacing={1}>
+        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+          <Chip label={combination.status} size="small" />
+          {combination.verdict ? <Chip label={combination.verdict} size="small" variant="outlined" /> : null}
+          <Chip
+            color={combination.resolved ? 'success' : 'default'}
+            label={combination.resolved ? 'Resolved' : 'Unresolved'}
+            size="small"
+            variant={combination.resolved ? 'filled' : 'outlined'}
+          />
+        </Stack>
+        <Typography
+          component="p"
+          sx={{
+            display: '-webkit-box',
+            fontFamily: monoFontFamily,
+            overflow: 'hidden',
+            overflowWrap: 'anywhere',
+            WebkitBoxOrient: 'vertical',
+            WebkitLineClamp: 2,
+          }}
+          variant="body2"
+        >
+          {combination.final_constraint ?? combination.static_constraint ?? combination.dynamic_constraint ?? combination.combination_id}
+        </Typography>
+        <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
+          <Typography
+            color="text.secondary"
+            sx={{ flex: 1, minWidth: 180, overflowWrap: 'anywhere' }}
+            variant="caption"
+          >
+            {readableIdentifier(combination.operation_id)} / {readableIdentifier(combination.property_path)}
+          </Typography>
+          <Button onClick={() => onSelect(combination.combination_id)} size="small" variant="outlined">
+            Open detail
+          </Button>
+        </Stack>
+        <Typography color="text.secondary" variant="caption">
+          Evidence: runtime {combination.has_runtime_evaluation ? 'available' : 'missing'}, validation cases {combination.validation_case_count}
+        </Typography>
+      </Stack>
+    </Box>
+  )
+}
+
 function constraintRank(row: ConstraintExplorerEntryResponse) {
   return (
     (row.assertion_available ? 100 : 0) +
@@ -217,18 +281,24 @@ function invariantRank(row: InvariantExplorerEntryResponse) {
 }
 
 export function ConstraintWorkbench({
+  combinations,
   constraints,
   invariants,
   matrixBy,
   onApplyFilter,
   onMatrixByChange,
+  onSelectCombination,
   onSelectConstraint,
   onSelectInvariant,
 }: ConstraintWorkbenchProps) {
   const assertionAvailable = constraints.filter((row) => row.assertion_available).length + invariants.filter((row) => row.assertion_available).length
   const bothPresent = constraints.filter((row) => row.agreement_status === 'both_present').length
+  const resolvedCombinations = combinations.filter((row) => row.resolved).length
   const readyInvariants = invariants.filter((row) => row.oracle_readiness === 'verified_runtime_oracle' || row.oracle_readiness === 'schema_supported').length
   const topConstraints = [...constraints].sort((left, right) => constraintRank(right) - constraintRank(left)).slice(0, 5)
+  const topCombinations = [...combinations]
+    .sort((left, right) => Number(right.resolved) - Number(left.resolved) || right.validation_case_count - left.validation_case_count)
+    .slice(0, 3)
   const topInvariants = [...invariants].sort((left, right) => invariantRank(right) - invariantRank(left)).slice(0, 3)
 
   return (
@@ -250,17 +320,23 @@ export function ConstraintWorkbench({
                 <MenuItem value="readiness">Readiness</MenuItem>
               </TextField>
             }
-            subtitle="Current-page signals for fast triage before opening raw detail."
+            subtitle="Current-page constraint signals and raw Daikon rows for fast triage before opening raw detail."
             title="Constraint Workbench"
           >
             <Stack spacing={1.25}>
               <StartHereStrip />
               <Grid container spacing={1.25}>
                 <Grid size={{ xs: 6 }}>
-                  <SummaryMetric label="Constraints" value={constraints.length} />
+                  <SummaryMetric label="Mapped constraints" value={constraints.length} />
                 </Grid>
                 <Grid size={{ xs: 6 }}>
-                  <SummaryMetric label="Invariants" value={invariants.length} />
+                  <SummaryMetric label="Raw invariants" value={invariants.length} />
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <SummaryMetric label="Combination" value={combinations.length} />
+                </Grid>
+                <Grid size={{ xs: 6 }}>
+                  <SummaryMetric label="Resolved" value={resolvedCombinations} />
                 </Grid>
                 <Grid size={{ xs: 6 }}>
                   <SummaryMetric label="Both present" value={bothPresent} />
@@ -289,7 +365,7 @@ export function ConstraintWorkbench({
       </Grid>
 
       <Grid container spacing={2}>
-        <Grid size={{ xs: 12, lg: 7 }}>
+        <Grid size={{ xs: 12, lg: 6 }}>
           <Panel
             subtitle="Curated from the current page. Open a row for full expression comparison and raw fields."
             title="Top constraint signals"
@@ -311,10 +387,32 @@ export function ConstraintWorkbench({
             </Stack>
           </Panel>
         </Grid>
+        <Grid size={{ xs: 12, lg: 6 }}>
+          <Panel
+            subtitle="Resolved static/dynamic combinations with runtime evidence when available."
+            title="Combination evidence"
+          >
+            <Stack spacing={1}>
+              {topCombinations.length > 0 ? (
+                topCombinations.map((combination) => (
+                  <CombinationSignalRow
+                    combination={combination}
+                    key={combination.combination_id}
+                    onSelect={onSelectCombination}
+                  />
+                ))
+              ) : (
+                <Typography color="text.secondary" variant="body2">
+                  No combination evidence is available for the current filters.
+                </Typography>
+              )}
+            </Stack>
+          </Panel>
+        </Grid>
         <Grid size={{ xs: 12, lg: 5 }}>
           <Panel
-            subtitle="Runtime evidence that can become API test oracles."
-            title="Invariant evidence"
+            subtitle="Raw Daikon rows that explain mapped dynamic constraints and oracle readiness."
+            title="Raw invariant evidence"
           >
             <Stack spacing={1}>
               {topInvariants.length > 0 ? (
@@ -327,7 +425,7 @@ export function ConstraintWorkbench({
                 ))
               ) : (
                 <Typography color="text.secondary" variant="body2">
-                  No invariant evidence is available for the current filters.
+                  No raw invariant evidence is available for the current filters.
                 </Typography>
               )}
             </Stack>

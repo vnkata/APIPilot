@@ -4,6 +4,7 @@ import type {
 } from '@mui/x-data-grid'
 
 import type {
+  CombinationEntryResponse,
   ConstraintExplorerEntryResponse,
   InvariantExplorerEntryResponse,
 } from '../../../shared/api/generated/model'
@@ -28,6 +29,9 @@ type GridState = {
 
 type ConstraintResultsRegionProps = {
   columns: ConstraintGridColumns
+  combinationQuery: ConstraintQueryState
+  combinationRowCount: number
+  combinationRows: CombinationEntryResponse[]
   constraintsView: 'matrix' | 'table' | 'workbench'
   explorerQuery: ConstraintQueryState
   explorerRowCount: number
@@ -41,6 +45,7 @@ type ConstraintResultsRegionProps = {
   legacyRows: LegacyConstraintRow[]
   matrixBy: MatrixBy
   onApplyMatrixFilter: (filter: Record<string, string | undefined>) => void
+  onSelectCombination: (combinationId: string) => void
   onMatrixByChange: (value: MatrixBy) => void
   onSelectConstraint: (constraintId: string) => void
   onSelectInvariant: (invariantId: string) => void
@@ -49,6 +54,9 @@ type ConstraintResultsRegionProps = {
 
 export function ConstraintResultsRegion({
   columns,
+  combinationQuery,
+  combinationRowCount,
+  combinationRows,
   constraintsView,
   explorerQuery,
   explorerRowCount,
@@ -62,6 +70,7 @@ export function ConstraintResultsRegion({
   legacyRows,
   matrixBy,
   onApplyMatrixFilter,
+  onSelectCombination,
   onMatrixByChange,
   onSelectConstraint,
   onSelectInvariant,
@@ -70,23 +79,52 @@ export function ConstraintResultsRegion({
   if (constraintsView === 'workbench') {
     return (
       <QueryState
-        empty={explorerRows.length === 0 && invariantRows.length === 0}
-        error={explorerQuery.error ?? invariantQuery.error}
-        isError={explorerQuery.isError || invariantQuery.isError}
-        isLoading={explorerQuery.isLoading || invariantQuery.isLoading}
+        empty={explorerRows.length === 0 && invariantRows.length === 0 && combinationRows.length === 0}
+        error={explorerQuery.error ?? invariantQuery.error ?? combinationQuery.error}
+        isError={explorerQuery.isError || invariantQuery.isError || combinationQuery.isError}
+        isLoading={explorerQuery.isLoading || invariantQuery.isLoading || combinationQuery.isLoading}
         onRetry={() => {
           void explorerQuery.refetch()
           void invariantQuery.refetch()
+          void combinationQuery.refetch()
         }}
       >
         <ConstraintWorkbench
+          combinations={combinationRows}
           constraints={explorerRows}
           invariants={invariantRows}
           matrixBy={matrixBy}
           onApplyFilter={onApplyMatrixFilter}
           onMatrixByChange={onMatrixByChange}
+          onSelectCombination={onSelectCombination}
           onSelectConstraint={onSelectConstraint}
           onSelectInvariant={onSelectInvariant}
+        />
+      </QueryState>
+    )
+  }
+
+  if (tab === 'combination') {
+    return (
+      <QueryState
+        empty={combinationRows.length === 0}
+        error={combinationQuery.error}
+        isError={combinationQuery.isError}
+        isLoading={combinationQuery.isLoading}
+        onRetry={() => void combinationQuery.refetch()}
+      >
+        <ServerDataGridPanel
+          ariaLabel="combination constraint entries"
+          columns={columns.combination}
+          getRowId={(row) => row.combination_id}
+          loading={combinationQuery.isFetching}
+          onPaginationModelChange={gridState.handlePaginationModelChange}
+          onRowClick={(params) => onSelectCombination(params.row.combination_id)}
+          onSortModelChange={gridState.handleSortModelChange}
+          paginationModel={gridState.paginationModel}
+          rowCount={combinationRowCount}
+          rows={combinationRows}
+          sortModel={gridState.sortModel}
         />
       </QueryState>
     )

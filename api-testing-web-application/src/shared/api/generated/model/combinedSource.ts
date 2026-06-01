@@ -11,5 +11,6 @@ export type CombinedSource = typeof CombinedSource[keyof typeof CombinedSource];
 
 export const CombinedSource = {
   artifact: 'artifact',
+  combine_constraint_miners: 'combine_constraint_miners',
   computed_fallback: 'computed_fallback',
 } as const;

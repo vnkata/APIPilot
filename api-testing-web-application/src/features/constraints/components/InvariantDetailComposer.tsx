@@ -82,10 +82,10 @@ export function InvariantDetailComposer({
         items={[
           { label: 'Operation', value: readableIdentifier(detail.operation_id) },
           { label: 'Primary property', value: readableIdentifier(detail.primary_property_path) },
-          { label: 'Invariant type', value: readableIdentifier(detail.invariant_type) },
-          { label: 'Related constraints', value: detail.related_constraint_ids.length },
+          { label: 'Raw invariant type', value: readableIdentifier(detail.invariant_type) },
+          { label: 'Related mapped constraints', value: detail.related_constraint_ids.length },
         ]}
-        title="Invariant context"
+        title="Raw invariant context"
       />
 
       <ConstraintReadingGuide kind="invariant" />

@@ -1,6 +1,7 @@
 import type { GridColDef } from '@mui/x-data-grid'
 
 import type {
+  CombinationEntryResponse,
   ConstraintEntryDetailResponse,
   ConstraintExplorerEntryResponse,
   InvariantExplorerEntryResponse,
@@ -9,6 +10,7 @@ import type {
 export type LegacyConstraintRow = ConstraintEntryDetailResponse & { id: string }
 
 export type ConstraintGridColumns = {
+  combination: GridColDef<CombinationEntryResponse>[]
   explorer: GridColDef<ConstraintExplorerEntryResponse>[]
   invariants: GridColDef<InvariantExplorerEntryResponse>[]
   legacy: GridColDef<LegacyConstraintRow>[]

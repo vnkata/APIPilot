@@ -10,14 +10,14 @@ import type { OperationDetailResponseParameters } from './operationDetailRespons
 import type { OperationDetailResponseResponses } from './operationDetailResponseResponses';
 
 export interface OperationDetailResponse {
-  operation_id: string;
   display_operation_id?: string | null;
   http_method?: string | null;
-  path_template?: string | null;
+  operation_id: string;
   /** @minimum 0 */
   parameter_count: number;
-  response_statuses: string[];
   parameters: OperationDetailResponseParameters;
+  path_template?: string | null;
   request_body?: JsonValue | null;
+  response_statuses: string[];
   responses: OperationDetailResponseResponses;
 }

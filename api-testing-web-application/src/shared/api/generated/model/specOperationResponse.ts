@@ -7,11 +7,11 @@
  */
 
 export interface SpecOperationResponse {
-  operation_id: string;
   display_operation_id?: string | null;
-  method: string;
-  path: string;
-  summary?: string | null;
   has_request_body: boolean;
+  method: string;
+  operation_id: string;
+  path: string;
   response_statuses: string[];
+  summary?: string | null;
 }

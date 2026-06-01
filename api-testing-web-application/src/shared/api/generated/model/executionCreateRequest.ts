@@ -8,9 +8,9 @@
 import type { ExecutionCreateRequestMode } from './executionCreateRequestMode';
 
 export interface ExecutionCreateRequest {
-  /** @minLength 1 */
-  spec_id: string;
+  mode?: ExecutionCreateRequestMode;
   /** @minLength 1 */
   run_config_id: string;
-  mode?: ExecutionCreateRequestMode;
+  /** @minLength 1 */
+  spec_id: string;
 }

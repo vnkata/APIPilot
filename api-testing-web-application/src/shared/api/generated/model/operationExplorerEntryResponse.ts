@@ -7,25 +7,25 @@
  */
 
 export interface OperationExplorerEntryResponse {
-  operation_id: string;
-  display_operation_id?: string | null;
-  http_method?: string | null;
-  path_template?: string | null;
-  /** @minimum 0 */
-  parameter_count: number;
-  response_statuses: string[];
-  operation_key: string;
-  /** @minimum 0 */
-  response_status_count: number;
   /** @minimum 0 */
   constraint_count: number;
-  /** @minimum 0 */
-  invariant_count: number;
+  display_operation_id?: string | null;
   /** @minimum 0 */
   graph_in_degree: number;
   /** @minimum 0 */
   graph_out_degree: number;
+  has_failures: boolean;
+  http_method?: string | null;
+  /** @minimum 0 */
+  invariant_count: number;
+  operation_id: string;
+  operation_key: string;
+  /** @minimum 0 */
+  parameter_count: number;
+  path_template?: string | null;
+  /** @minimum 0 */
+  response_status_count: number;
+  response_statuses: string[];
   /** @minimum 0 */
   test_case_count: number;
-  has_failures: boolean;
 }

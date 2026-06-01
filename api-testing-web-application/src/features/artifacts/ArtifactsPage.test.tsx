@@ -16,7 +16,7 @@ describe('ArtifactsPage', () => {
     expect((await screen.findAllByText('specification')).length).toBeGreaterThan(0)
     expect(screen.getAllByText(/raw_json/i).length).toBeGreaterThan(0)
 
-    await user.click(screen.getByRole('button', { name: /summary/i }))
+    await user.click(screen.getByRole('button', { name: /^summary$/i }))
     expect(screen.getAllByText(/summary/i).length).toBeGreaterThan(0)
     expect(window.location.search).toContain('artifactMode=summary')
     expect(window.location.search).not.toContain('raw=true')
@@ -48,6 +48,23 @@ describe('ArtifactsPage', () => {
     expect(await screen.findByRole('table', { name: /csv preview/i })).toBeInTheDocument()
     expect(screen.getByRole('columnheader', { name: 'pptname' })).toBeInTheDocument()
     expect(screen.getByRole('cell', { name: 'return.items.id >= 1' })).toBeInTheDocument()
+  })
+
+  it('renders combination and contextual memory artifacts from the catalog', async () => {
+    renderWithProviders(
+      <ArtifactsPage
+        runName="Run A"
+        search={{ artifactId: 'contextual_memory_db', artifactMode: 'raw', compare: false, raw: true }}
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { name: /artifact workbench/i })).toBeInTheDocument()
+    expect(screen.getAllByText('combine_constraint_miners').length).toBeGreaterThan(0)
+    expect(screen.getAllByText('contextual_memory_db').length).toBeGreaterThan(0)
+    expect(screen.getByText(/raw content unavailable/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/summary_only/i).length).toBeGreaterThan(0)
+    expect(await screen.findByLabelText(/json preview/i)).toHaveTextContent('get-/items')
+    expect(screen.getByRole('button', { name: /^raw$/i })).toBeDisabled()
   })
 
   it('renders workbench mode with catalog metadata and inspector actions', async () => {

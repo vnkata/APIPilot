@@ -7,6 +7,6 @@
  */
 
 export interface GraphFacetBucketResponse {
-  key: string;
   count: number;
+  key: string;
 }

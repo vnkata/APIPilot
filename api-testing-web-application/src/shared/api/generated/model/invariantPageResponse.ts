@@ -10,8 +10,8 @@ import type { InvariantDetailResponse } from './invariantDetailResponse';
 import type { PaginationMetadata } from './paginationMetadata';
 
 export interface InvariantPageResponse {
-  run_name: string;
+  groups: GroupCountResponse[];
   items: InvariantDetailResponse[];
   pagination: PaginationMetadata;
-  groups: GroupCountResponse[];
+  run_name: string;
 }

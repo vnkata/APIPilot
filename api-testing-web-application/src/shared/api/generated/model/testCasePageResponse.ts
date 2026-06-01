@@ -9,7 +9,7 @@ import type { PaginationMetadata } from './paginationMetadata';
 import type { TestCaseResponse } from './testCaseResponse';
 
 export interface TestCasePageResponse {
-  run_name: string;
   items: TestCaseResponse[];
   pagination: PaginationMetadata;
+  run_name: string;
 }

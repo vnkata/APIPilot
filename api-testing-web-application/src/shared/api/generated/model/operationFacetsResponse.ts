@@ -8,11 +8,11 @@
 import type { OperationFacetBucketResponse } from './operationFacetBucketResponse';
 
 export interface OperationFacetsResponse {
+  has_constraints: OperationFacetBucketResponse[];
+  has_failures: OperationFacetBucketResponse[];
+  has_graph_edges: OperationFacetBucketResponse[];
+  has_invariants: OperationFacetBucketResponse[];
+  has_request_body: OperationFacetBucketResponse[];
   http_method: OperationFacetBucketResponse[];
   response_status: OperationFacetBucketResponse[];
-  has_request_body: OperationFacetBucketResponse[];
-  has_constraints: OperationFacetBucketResponse[];
-  has_invariants: OperationFacetBucketResponse[];
-  has_graph_edges: OperationFacetBucketResponse[];
-  has_failures: OperationFacetBucketResponse[];
 }

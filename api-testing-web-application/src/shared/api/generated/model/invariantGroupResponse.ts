@@ -8,6 +8,6 @@
 import type { JsonValue } from './jsonValue';
 
 export interface InvariantGroupResponse {
-  operation_id: string;
   invariants: JsonValue[];
+  operation_id: string;
 }

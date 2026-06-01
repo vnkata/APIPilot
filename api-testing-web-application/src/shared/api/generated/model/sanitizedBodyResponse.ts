@@ -8,12 +8,12 @@
 import type { JsonValue } from './jsonValue';
 
 export interface SanitizedBodyResponse {
-  included: boolean;
-  truncated: boolean;
   content?: JsonValue | null;
+  included: boolean;
   preview?: string | null;
   /** @minimum 0 */
-  size_bytes: number;
-  /** @minimum 0 */
   redaction_count: number;
+  /** @minimum 0 */
+  size_bytes: number;
+  truncated: boolean;
 }

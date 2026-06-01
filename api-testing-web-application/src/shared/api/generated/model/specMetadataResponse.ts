@@ -7,13 +7,13 @@
  */
 
 export interface SpecMetadataResponse {
-  spec_id: string;
-  filename: string;
-  title: string;
   /** @nullable */
   content?: null;
   content_hash: string;
+  created_at: string;
+  filename: string;
   /** @minimum 0 */
   operation_count: number;
-  created_at: string;
+  spec_id: string;
+  title: string;
 }

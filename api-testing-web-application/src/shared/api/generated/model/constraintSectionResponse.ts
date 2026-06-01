@@ -8,6 +8,6 @@
 import type { ConstraintEntryResponse } from './constraintEntryResponse';
 
 export interface ConstraintSectionResponse {
-  name: string;
   constraints: ConstraintEntryResponse[];
+  name: string;
 }

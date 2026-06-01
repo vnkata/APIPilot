@@ -11,9 +11,9 @@ import type { GroupCountResponse } from './groupCountResponse';
 import type { PaginationMetadata } from './paginationMetadata';
 
 export interface ConstraintExplorerPageResponse {
-  run_name: string;
-  items: ConstraintExplorerEntryResponse[];
-  pagination: PaginationMetadata;
   groups: GroupCountResponse[];
+  items: ConstraintExplorerEntryResponse[];
   metadata: ConstraintQueryMetadataResponse;
+  pagination: PaginationMetadata;
+  run_name: string;
 }

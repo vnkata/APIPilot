@@ -11,20 +11,20 @@ import type { InvariantKind } from './invariantKind';
 import type { OracleReadiness } from './oracleReadiness';
 
 export interface InvariantExplorerEntryResponse {
-  invariant_id: string;
-  operation_id?: string | null;
-  pptname?: string | null;
-  invariant?: string | null;
-  invariant_type?: string | null;
-  variables?: string | null;
-  property_paths: string[];
-  primary_property_path?: string | null;
-  invariant_kind: InvariantKind;
-  oracle_readiness: OracleReadiness;
   assertion_available: boolean;
   assertion_preview?: string | null;
-  postman_assertion?: string | null;
-  related_constraint_ids: string[];
   correlation_confidence: CorrelationConfidence;
   correlation_evidence: InvariantCorrelationEvidenceResponse[];
+  invariant?: string | null;
+  invariant_id: string;
+  invariant_kind: InvariantKind;
+  invariant_type?: string | null;
+  operation_id?: string | null;
+  oracle_readiness: OracleReadiness;
+  postman_assertion?: string | null;
+  pptname?: string | null;
+  primary_property_path?: string | null;
+  property_paths: string[];
+  related_constraint_ids: string[];
+  variables?: string | null;
 }

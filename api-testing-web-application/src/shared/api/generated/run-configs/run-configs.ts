@@ -41,69 +41,6 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
- * @summary Validate Run Config
- */
-export const validateRunConfigApiV1RunConfigsValidatePost = (
-    runConfigRequest: BodyType<RunConfigRequest>,
- options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
-) => {
-
-
-      return customInstance<RunConfigValidationResponse>(
-      {url: `/api/v1/run-configs/validate`, method: 'POST',
-      headers: {'Content-Type': 'application/json', },
-      data: runConfigRequest, signal
-    },
-      options);
-    }
-
-
-
-export const getValidateRunConfigApiV1RunConfigsValidatePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>, TError,{data: BodyType<RunConfigRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
-): UseMutationOptions<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>, TError,{data: BodyType<RunConfigRequest>}, TContext> => {
-
-const mutationKey = ['validateRunConfigApiV1RunConfigsValidatePost'];
-const {mutation: mutationOptions, request: requestOptions} = options ?
-      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
-      options
-      : {...options, mutation: {...options.mutation, mutationKey}}
-      : {mutation: { mutationKey, }, request: undefined};
-
-
-
-
-      const mutationFn: MutationFunction<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>, {data: BodyType<RunConfigRequest>}> = (props) => {
-          const {data} = props ?? {};
-
-          return  validateRunConfigApiV1RunConfigsValidatePost(data,requestOptions)
-        }
-
-
-
-
-
-
-  return  { mutationFn, ...mutationOptions }}
-
-    export type ValidateRunConfigApiV1RunConfigsValidatePostMutationResult = NonNullable<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>>
-    export type ValidateRunConfigApiV1RunConfigsValidatePostMutationBody = BodyType<RunConfigRequest>
-    export type ValidateRunConfigApiV1RunConfigsValidatePostMutationError = ErrorType<HTTPValidationError>
-
-    /**
- * @summary Validate Run Config
- */
-export const useValidateRunConfigApiV1RunConfigsValidatePost = <TError = ErrorType<HTTPValidationError>,
-    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>, TError,{data: BodyType<RunConfigRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
- , queryClient?: QueryClient): UseMutationResult<
-        Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>,
-        TError,
-        {data: BodyType<RunConfigRequest>},
-        TContext
-      > => {
-      return useMutation(getValidateRunConfigApiV1RunConfigsValidatePostMutationOptions(options), queryClient);
-    }
-    /**
  * @summary List Run Configs
  */
 export const listRunConfigsApiV1RunConfigsGet = (
@@ -257,6 +194,69 @@ export const useCreateRunConfigApiV1RunConfigsPost = <TError = ErrorType<HTTPVal
         TContext
       > => {
       return useMutation(getCreateRunConfigApiV1RunConfigsPostMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Validate Run Config
+ */
+export const validateRunConfigApiV1RunConfigsValidatePost = (
+    runConfigRequest: BodyType<RunConfigRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<RunConfigValidationResponse>(
+      {url: `/api/v1/run-configs/validate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: runConfigRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getValidateRunConfigApiV1RunConfigsValidatePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>, TError,{data: BodyType<RunConfigRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>, TError,{data: BodyType<RunConfigRequest>}, TContext> => {
+
+const mutationKey = ['validateRunConfigApiV1RunConfigsValidatePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>, {data: BodyType<RunConfigRequest>}> = (props) => {
+          const {data} = props ?? {};
+
+          return  validateRunConfigApiV1RunConfigsValidatePost(data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ValidateRunConfigApiV1RunConfigsValidatePostMutationResult = NonNullable<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>>
+    export type ValidateRunConfigApiV1RunConfigsValidatePostMutationBody = BodyType<RunConfigRequest>
+    export type ValidateRunConfigApiV1RunConfigsValidatePostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Validate Run Config
+ */
+export const useValidateRunConfigApiV1RunConfigsValidatePost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>, TError,{data: BodyType<RunConfigRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof validateRunConfigApiV1RunConfigsValidatePost>>,
+        TError,
+        {data: BodyType<RunConfigRequest>},
+        TContext
+      > => {
+      return useMutation(getValidateRunConfigApiV1RunConfigsValidatePostMutationOptions(options), queryClient);
     }
     /**
  * @summary Get Run Config

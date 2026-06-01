@@ -1,6 +1,10 @@
 import type {
   ArtifactCatalogResponse,
   ArtifactContentResponse,
+  CombinationDetailResponse,
+  CombinationEntryPageResponse,
+  CombinationFacetsResponse,
+  CombinationSummaryResponse,
   ConstraintExplorerDetailResponse,
   ConstraintExplorerPageResponse,
   ConstraintFacetsResponse,
@@ -534,6 +538,71 @@ export const constraintFacets: ConstraintFacetsResponse = {
   source_type: [{ key: 'constraints', count: 1 }],
 }
 
+export const combinationEntries: CombinationEntryPageResponse = {
+  run_name: 'Run A',
+  items: [
+    {
+      combination_id: 'cmb-limit',
+      dynamic_constraint: 'return.items.id >= 1',
+      final_constraint: 'input.limit >= 1',
+      has_counter_example: false,
+      has_runtime_evaluation: true,
+      operation_id: 'get-/items',
+      property_path: 'input.limit',
+      reason_preview: 'Static and dynamic evidence agree.',
+      resolved: true,
+      source_artifact: 'combine_constraint_miners',
+      static_constraint: 'input.limit >= 1',
+      status: 'COMBINED_EQUIVALENT',
+      validation_case_count: 1,
+      verdict: 'BOTH_TRUE',
+    },
+  ],
+  groups: [{ key: 'COMBINED_EQUIVALENT', count: 1 }],
+  malformed_count: 0,
+  pagination: { limit: 25, offset: 0, total: 1 },
+  warnings: [],
+}
+
+export const combinationDetail: CombinationDetailResponse = {
+  ...combinationEntries.items[0],
+  counter_example: null,
+  raw_record_sanitized: {
+    counter_example: { authorization: '<REDACTED>' },
+    final_constraint: 'input.limit >= 1',
+    secret: '<REDACTED>',
+    status: 'COMBINED_EQUIVALENT',
+  },
+  reason: 'Static and dynamic evidence agree across validation cases.',
+  runtime_evaluation: { passed: true, verdict: 'BOTH_TRUE' },
+  validation_cases: [{ case_id: 'case-1', observed: true }],
+}
+
+export const combinationFacets: CombinationFacetsResponse = {
+  has_counter_example: [{ key: 'false', count: 1 }],
+  has_runtime_evaluation: [{ key: 'true', count: 1 }],
+  has_validation_cases: [{ key: 'true', count: 1 }],
+  malformed_count: 0,
+  operation_id: [{ key: 'get-/items', count: 1 }],
+  resolved: [{ key: 'true', count: 1 }],
+  status: [{ key: 'COMBINED_EQUIVALENT', count: 1 }],
+  verdict: [{ key: 'BOTH_TRUE', count: 1 }],
+  warnings: [],
+}
+
+export const combinationSummary: CombinationSummaryResponse = {
+  endpoint_count: 1,
+  malformed_count: 0,
+  property_count: 1,
+  resolved_count: 1,
+  run_name: 'Run A',
+  source_artifact: 'combine_constraint_miners',
+  status_counts: { COMBINED_EQUIVALENT: 1 },
+  unresolved_count: 0,
+  verdict_counts: { BOTH_TRUE: 1 },
+  warnings: [],
+}
+
 export const invariantExplorerEntries: InvariantExplorerPageResponse = {
   run_name: 'Run A',
   items: [
@@ -618,6 +687,30 @@ export const artifactCatalog: ArtifactCatalogResponse = {
       size_bytes: 1024,
       summary_supported: true,
     },
+    {
+      artifact_id: 'combine_constraint_miners',
+      kind: 'combined_constraints',
+      media_type: 'application/json',
+      modified_at: '2026-01-01T00:00:00Z',
+      raw_policy: 'raw_json',
+      raw_supported: true,
+      relative_path: 'combine_constraint_miners.json',
+      run_name: 'Run A',
+      size_bytes: 2048,
+      summary_supported: true,
+    },
+    {
+      artifact_id: 'contextual_memory_db',
+      kind: 'memory',
+      media_type: 'application/octet-stream',
+      modified_at: '2026-01-01T00:00:00Z',
+      raw_policy: 'summary_only',
+      raw_supported: false,
+      relative_path: 'contextual_memory.db',
+      run_name: 'Run A',
+      size_bytes: 8192,
+      summary_supported: true,
+    },
   ],
 }
 
@@ -652,6 +745,47 @@ export const rawCsvArtifactContent: ArtifactContentResponse = {
         variables: '(return.items.id)',
       },
     ],
+  },
+}
+
+export const combineArtifactContent: ArtifactContentResponse = {
+  run_name: 'Run A',
+  artifact_id: 'combine_constraint_miners',
+  raw: true,
+  metadata: artifactCatalog.artifacts[3],
+  content: {
+    content_kind: 'raw_json',
+    value: {
+      'get-/items': {
+        'input.limit': {
+          final_constraint: 'input.limit >= 1',
+          status: 'COMBINED_EQUIVALENT',
+        },
+      },
+    },
+  },
+}
+
+export const contextualMemoryDbSummaryContent: ArtifactContentResponse = {
+  run_name: 'Run A',
+  artifact_id: 'contextual_memory_db',
+  raw: false,
+  metadata: artifactCatalog.artifacts[4],
+  content: {
+    content_kind: 'summary',
+    context_count: 1,
+    contexts: [
+      {
+        blacklist_count: 1,
+        context_key: 'get-/items',
+        context_kind: 'operation',
+        item_count: 0,
+        payload_kind: 'object',
+        updated_at: '2026-01-01T00:00:00Z',
+        whitelist_count: 2,
+      },
+    ],
+    kind: 'memory',
   },
 }
 

@@ -9,6 +9,6 @@ import type { SanitizedHarEntryResponse } from './sanitizedHarEntryResponse';
 
 export interface SanitizedHarSessionContentResponse {
   content_kind?: 'sanitized_har_session';
-  session_id: string;
   entries: SanitizedHarEntryResponse[];
+  session_id: string;
 }

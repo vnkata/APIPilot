@@ -154,8 +154,8 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
         ),
         valueGetter: (_value, row) => row.response_statuses.join(', '),
       },
-      { field: 'constraint_count', headerName: 'Constraints', minWidth: 120 },
-      { field: 'invariant_count', headerName: 'Invariants', minWidth: 120 },
+      { field: 'constraint_count', headerName: 'Mapped constraints', minWidth: 160 },
+      { field: 'invariant_count', headerName: 'Raw invariant rows', minWidth: 170 },
       { field: 'test_case_count', headerName: 'Test cases', minWidth: 120 },
       {
         field: 'has_failures',
@@ -190,13 +190,13 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
     },
     {
       buckets: facets?.has_constraints,
-      label: 'Constraints',
+      label: 'Mapped constraints',
       onSelect: (value) => replaceSearchParams({ hasConstraints: value, offset: 0 }),
       selectedValue: selectedBoolean(search.hasConstraints),
     },
     {
       buckets: facets?.has_invariants,
-      label: 'Invariants',
+      label: 'Raw invariant rows',
       onSelect: (value) => replaceSearchParams({ hasInvariants: value, offset: 0 }),
       selectedValue: selectedBoolean(search.hasInvariants),
     },
@@ -219,7 +219,7 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
   const evidenceLinks = operationId
     ? [
         { href: `/runs/${encodedRunName}/graph?operationId=${encodedOperationId}`, label: 'Graph' },
-        { href: `/runs/${encodedRunName}/constraints?constraintTab=explorer&operationId=${encodedOperationId}`, label: 'Constraints' },
+        { href: `/runs/${encodedRunName}/constraints?constraintTab=explorer&operationId=${encodedOperationId}`, label: 'Mapped constraints' },
         { href: `/runs/${encodedRunName}/test-cases?operationId=${encodedOperationId}`, label: 'Test cases' },
         { href: `/runs/${encodedRunName}/reports?operationId=${encodedOperationId}`, label: 'Reports' },
       ]
@@ -246,7 +246,7 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
           </Stack>
         }
         eyebrow="Investigation hub"
-        subtitle="Triage operations by failures, evidence coverage, graph links, constraints, invariants, and test cases."
+        subtitle="Triage operations by failures, evidence coverage, graph links, mapped constraints, raw invariant rows, and test cases."
         title="Operations Explorer"
         {...tourAnchor(TOUR_ANCHORS.operationsHeader)}
       />
@@ -292,8 +292,8 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
                 <MenuItem value="">No grouping</MenuItem>
                 <MenuItem value="http_method">Method</MenuItem>
                 <MenuItem value="has_failures">Failures</MenuItem>
-                <MenuItem value="has_constraints">Constraints</MenuItem>
-                <MenuItem value="has_invariants">Invariants</MenuItem>
+                <MenuItem value="has_constraints">Mapped constraints</MenuItem>
+                <MenuItem value="has_invariants">Raw invariant rows</MenuItem>
                 <MenuItem value="has_graph_edges">Graph edges</MenuItem>
               </TextField>
             </FilterToolbar>
@@ -306,8 +306,8 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
                 { key: 'httpMethod', label: 'Method', value: search.httpMethod },
                 { key: 'responseStatus', label: 'Status', value: search.responseStatus },
                 { key: 'hasFailures', label: 'Failures', value: search.hasFailures },
-                { key: 'hasConstraints', label: 'Constraints', value: search.hasConstraints },
-                { key: 'hasInvariants', label: 'Invariants', value: search.hasInvariants },
+                { key: 'hasConstraints', label: 'Mapped constraints', value: search.hasConstraints },
+                { key: 'hasInvariants', label: 'Raw invariant rows', value: search.hasInvariants },
                 { key: 'hasGraphEdges', label: 'Graph edges', value: search.hasGraphEdges },
                 { key: 'groupBy', label: 'Group', value: search.groupBy },
                 { key: 'operationKey', label: 'Selected', value: search.operationKey },
@@ -380,8 +380,8 @@ export function OperationsPage({ runName, search }: OperationsPageProps) {
                 <EvidenceLinkSet links={evidenceLinks} />
                 <Divider />
                 <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
-                  <Chip label={`${detailQuery.data.constraint_count} constraints`} size="small" />
-                  <Chip label={`${detailQuery.data.invariant_count} invariants`} size="small" />
+                  <Chip label={`${detailQuery.data.constraint_count} mapped constraints`} size="small" />
+                  <Chip label={`${detailQuery.data.invariant_count} raw invariant rows`} size="small" />
                   <Chip label={`${detailQuery.data.test_case_count} test cases`} size="small" />
                   <Chip label={`${detailQuery.data.graph_in_degree} in / ${detailQuery.data.graph_out_degree} out`} size="small" />
                 </Stack>

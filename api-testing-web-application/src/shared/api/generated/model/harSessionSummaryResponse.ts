@@ -7,10 +7,10 @@
  */
 
 export interface HarSessionSummaryResponse {
-  session_id: string;
   /** @minimum 0 */
   entry_count: number;
+  modified_at?: string | null;
+  session_id: string;
   /** @minimum 0 */
   size_bytes: number;
-  modified_at?: string | null;
 }

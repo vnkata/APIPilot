@@ -9,8 +9,8 @@ import type { HarEntryResponse } from './harEntryResponse';
 import type { PaginationMetadata } from './paginationMetadata';
 
 export interface HarEntryPageResponse {
-  run_name: string;
-  session_id: string;
   items: HarEntryResponse[];
   pagination: PaginationMetadata;
+  run_name: string;
+  session_id: string;
 }

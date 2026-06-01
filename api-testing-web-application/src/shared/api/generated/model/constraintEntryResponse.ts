@@ -7,7 +7,7 @@
  */
 
 export interface ConstraintEntryResponse {
+  expression: string;
   operation_id: string;
   property_path: string;
-  expression: string;
 }

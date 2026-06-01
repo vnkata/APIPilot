@@ -8,16 +8,16 @@
 import type { SecretRefRequest } from './secretRefRequest';
 
 export interface LlmConfigRequest {
-  /** @minLength 1 */
-  provider: string;
-  /** @minLength 1 */
-  model: string;
-  temperature?: number | null;
   api_key?: SecretRefRequest | null;
+  api_version?: string | null;
   base_url?: string | null;
   endpoint?: string | null;
-  api_version?: string | null;
-  project?: string | null;
   location?: string | null;
+  /** @minLength 1 */
+  model: string;
+  project?: string | null;
+  /** @minLength 1 */
+  provider: string;
+  temperature?: number | null;
   [key: string]: unknown;
  }

@@ -9,12 +9,12 @@ import type { ConstraintFacetBucketResponse } from './constraintFacetBucketRespo
 import type { ConstraintQueryMetadataResponse } from './constraintQueryMetadataResponse';
 
 export interface ConstraintFacetsResponse {
-  source: ConstraintFacetBucketResponse[];
-  operation_id: ConstraintFacetBucketResponse[];
-  section: ConstraintFacetBucketResponse[];
-  constraint_kind: ConstraintFacetBucketResponse[];
-  source_type: ConstraintFacetBucketResponse[];
   agreement_status: ConstraintFacetBucketResponse[];
   assertion_available: ConstraintFacetBucketResponse[];
+  constraint_kind: ConstraintFacetBucketResponse[];
   metadata: ConstraintQueryMetadataResponse;
+  operation_id: ConstraintFacetBucketResponse[];
+  section: ConstraintFacetBucketResponse[];
+  source: ConstraintFacetBucketResponse[];
+  source_type: ConstraintFacetBucketResponse[];
 }

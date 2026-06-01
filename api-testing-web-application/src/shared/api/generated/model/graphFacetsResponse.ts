@@ -11,7 +11,7 @@ export interface GraphFacetsResponse {
   edge_status: GraphFacetBucketResponse[];
   evidence_source: GraphFacetBucketResponse[];
   from_operation_id: GraphFacetBucketResponse[];
-  to_operation_id: GraphFacetBucketResponse[];
   node_kind: GraphFacetBucketResponse[];
   sequence_type: GraphFacetBucketResponse[];
+  to_operation_id: GraphFacetBucketResponse[];
 }

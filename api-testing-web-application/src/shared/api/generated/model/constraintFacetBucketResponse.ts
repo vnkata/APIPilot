@@ -7,7 +7,7 @@
  */
 
 export interface ConstraintFacetBucketResponse {
-  key: string;
   /** @minimum 0 */
   count: number;
+  key: string;
 }

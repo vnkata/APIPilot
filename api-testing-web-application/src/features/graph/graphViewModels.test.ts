@@ -83,6 +83,27 @@ describe('graph view models', () => {
     expect(spatial.links[0]).toMatchObject({ isPathLink: true, value: 1 })
   })
 
+  it('does not mark raw invariant rows alone as graph warning risk', () => {
+    const model = buildGraphNavigatorModel({
+      edgeRows: graphEdges.items,
+      edges: graph.edges,
+      focusMode: 'all',
+      layoutMode: 'dagre',
+      motionEnabled: false,
+      nodes: graph.nodes,
+      operationRows: operationExplorerEntries.items.map((operation) => (
+        operation.operation_id === 'post-/items'
+          ? { ...operation, constraint_count: 0, invariant_count: 4 }
+          : operation
+      )),
+      q: undefined,
+      selectedNodeId: undefined,
+      selectedPathSequence: undefined,
+    })
+
+    expect(model.nodes.find((node) => node.id === 'post-/items')?.data.risk).toBe('success')
+  })
+
   it('summarizes edge evidence without requiring raw JSON', () => {
     expect(
       summarizeGraphEdgeDetail({

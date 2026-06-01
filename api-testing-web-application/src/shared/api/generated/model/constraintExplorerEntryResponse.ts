@@ -10,21 +10,21 @@ import type { ConstraintKind } from './constraintKind';
 import type { ConstraintSource } from './constraintSource';
 
 export interface ConstraintExplorerEntryResponse {
-  constraint_id: string;
-  source: ConstraintSource;
-  operation_id: string;
-  property_path: string;
-  expression: string;
-  section?: string | null;
-  parameter?: string | null;
-  constraint_kind: ConstraintKind;
-  source_type?: string | null;
-  static_expression?: string | null;
-  dynamic_expression?: string | null;
-  combined_expression?: string | null;
-  has_static: boolean;
-  has_dynamic: boolean;
   agreement_status: AgreementStatus;
   assertion_available: boolean;
   assertion_preview?: string | null;
+  combined_expression?: string | null;
+  constraint_id: string;
+  constraint_kind: ConstraintKind;
+  dynamic_expression?: string | null;
+  expression: string;
+  has_dynamic: boolean;
+  has_static: boolean;
+  operation_id: string;
+  parameter?: string | null;
+  property_path: string;
+  section?: string | null;
+  source: ConstraintSource;
+  source_type?: string | null;
+  static_expression?: string | null;
 }

@@ -8,6 +8,6 @@
 import type { OperationSummaryResponse } from './operationSummaryResponse';
 
 export interface OperationListResponse {
-  run_name: string;
   operations: OperationSummaryResponse[];
+  run_name: string;
 }

@@ -9,6 +9,6 @@ import type { GraphSimilarityResponse } from './graphSimilarityResponse';
 
 export interface GraphEdgeResponse {
   from_node: string;
-  to_node: string;
   similar_parameters: GraphSimilarityResponse[];
+  to_node: string;
 }

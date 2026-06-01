@@ -14,9 +14,9 @@ import type { SanitizedHarSessionContentResponse } from './sanitizedHarSessionCo
 import type { SanitizedTestCasesContentResponse } from './sanitizedTestCasesContentResponse';
 
 export interface ArtifactContentResponse {
-  run_name: string;
   artifact_id: string;
-  raw: boolean;
-  metadata: ArtifactMetadataResponse;
   content: ArtifactSummaryContentResponse | RawJsonContentResponse | RawTextContentResponse | RawCsvContentResponse | SanitizedTestCasesContentResponse | SanitizedHarSessionContentResponse;
+  metadata: ArtifactMetadataResponse;
+  raw: boolean;
+  run_name: string;
 }

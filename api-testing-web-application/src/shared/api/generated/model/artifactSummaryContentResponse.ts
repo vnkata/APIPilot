@@ -6,16 +6,19 @@
  * OpenAPI spec version: 0.1.0
  */
 import type { ArtifactKind } from './artifactKind';
+import type { ContextualMemoryContextSummaryResponse } from './contextualMemoryContextSummaryResponse';
 
 export interface ArtifactSummaryContentResponse {
-  content_kind?: 'summary';
-  kind: ArtifactKind;
-  top_level_keys?: string[];
-  object_count?: number | null;
-  item_count?: number | null;
-  row_count?: number | null;
   columns?: string[];
-  value_type?: string | null;
-  session_id?: string | null;
+  content_kind?: 'summary';
+  context_count?: number | null;
+  contexts?: ContextualMemoryContextSummaryResponse[];
   entry_count?: number | null;
+  item_count?: number | null;
+  kind: ArtifactKind;
+  object_count?: number | null;
+  row_count?: number | null;
+  session_id?: string | null;
+  top_level_keys?: string[];
+  value_type?: string | null;
 }

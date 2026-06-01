@@ -7,8 +7,8 @@
  */
 
 export interface InvariantCorrelationEvidenceResponse {
+  constraint_id?: string | null;
   evidence_type: string;
   message: string;
   property_path?: string | null;
-  constraint_id?: string | null;
 }

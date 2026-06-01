@@ -8,14 +8,14 @@
 import type { ExecutionEventResponseMetadata } from './executionEventResponseMetadata';
 
 export interface ExecutionEventResponse {
+  created_at: string;
   event_id: string;
+  event_type: string;
   execution_id: string;
+  message?: string | null;
+  metadata: ExecutionEventResponseMetadata;
+  phase?: string | null;
   /** @minimum 1 */
   sequence: number;
-  event_type: string;
-  phase?: string | null;
-  message?: string | null;
   status?: string | null;
-  metadata: ExecutionEventResponseMetadata;
-  created_at: string;
 }

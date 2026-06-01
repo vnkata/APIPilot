@@ -7,8 +7,8 @@
  */
 
 export interface StatusReportEntryResponse {
-  operation_id: string;
-  status_code: string;
   /** @minimum 0 */
   count: number;
+  operation_id: string;
+  status_code: string;
 }

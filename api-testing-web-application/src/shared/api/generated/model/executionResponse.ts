@@ -8,14 +8,14 @@
 import type { ExecutionResponseSummary } from './executionResponseSummary';
 
 export interface ExecutionResponse {
-  execution_id: string;
-  spec_id: string;
-  run_config_id: string;
-  mode: string;
-  status: string;
-  run_name?: string | null;
-  summary: ExecutionResponseSummary;
-  created_at: string;
-  started_at?: string | null;
   completed_at?: string | null;
+  created_at: string;
+  execution_id: string;
+  mode: string;
+  run_config_id: string;
+  run_name?: string | null;
+  spec_id: string;
+  started_at?: string | null;
+  status: string;
+  summary: ExecutionResponseSummary;
 }

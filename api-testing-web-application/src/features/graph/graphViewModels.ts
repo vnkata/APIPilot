@@ -143,7 +143,7 @@ function buildAllowedNodeSet(input: BuildNavigatorInput) {
 
 function deriveRisk(operation: OperationExplorerEntryResponse | undefined, inDegree: number, outDegree: number): GraphNodeRisk {
   if (operation?.has_failures) return 'danger'
-  if ((operation?.constraint_count ?? 0) + (operation?.invariant_count ?? 0) >= 3) return 'warning'
+  if ((operation?.constraint_count ?? 0) >= 3) return 'warning'
   if (inDegree + outDegree >= 3) return 'warning'
   if ((operation?.test_case_count ?? 0) > 0 && inDegree + outDegree > 0) return 'success'
   return 'neutral'

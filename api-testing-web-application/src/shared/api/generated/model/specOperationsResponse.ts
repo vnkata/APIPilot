@@ -8,8 +8,8 @@
 import type { SpecOperationResponse } from './specOperationResponse';
 
 export interface SpecOperationsResponse {
+  operations: SpecOperationResponse[];
   spec_id: string;
   title: string;
   version?: string | null;
-  operations: SpecOperationResponse[];
 }

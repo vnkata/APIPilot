@@ -8,11 +8,11 @@
 
 export interface GraphEvidenceResponse {
   evidence_id: string;
+  from_evidence_node_id?: string | null;
+  relation_hint?: string | null;
   source: string;
   source_artifact_id: string;
+  to_evidence_node_id?: string | null;
   value1?: string | null;
   value2?: string | null;
-  relation_hint?: string | null;
-  from_evidence_node_id?: string | null;
-  to_evidence_node_id?: string | null;
 }

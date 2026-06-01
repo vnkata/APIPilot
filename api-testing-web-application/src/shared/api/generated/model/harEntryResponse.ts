@@ -11,16 +11,16 @@ import type { HarEntryResponseResponseHeaders } from './harEntryResponseResponse
 import type { JsonValue } from './jsonValue';
 
 export interface HarEntryResponse {
-  entry_id: string;
-  started_at?: string | null;
   duration_ms?: number | null;
-  request_method?: string | null;
-  request_url?: string | null;
-  request_headers: HarEntryResponseRequestHeaders;
+  entry_id: string;
   query_params: HarEntryResponseQueryParams;
   request_body?: JsonValue | null;
+  request_headers: HarEntryResponseRequestHeaders;
+  request_method?: string | null;
+  request_url?: string | null;
+  response_body?: JsonValue | null;
+  response_headers: HarEntryResponseResponseHeaders;
   response_status?: number | null;
   response_status_text?: string | null;
-  response_headers: HarEntryResponseResponseHeaders;
-  response_body?: JsonValue | null;
+  started_at?: string | null;
 }
