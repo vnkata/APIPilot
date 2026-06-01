@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
@@ -21,7 +23,7 @@ from api_testing.backend.api.routers import (
 from api_testing.backend.application.services import ArtifactQueryService
 from api_testing.backend.application.write_services import WriteFlowService
 from api_testing.backend.infrastructure.artifacts.repository import FileArtifactRepository
-from api_testing.backend.infrastructure.execution_runner import InProcessExecutionRunner
+from api_testing.backend.infrastructure.execution_runner import HybridExecutionRunner
 from api_testing.backend.infrastructure.spec_storage import FileSpecStorage
 from api_testing.backend.infrastructure.write_metadata import SQLiteWriteMetadataRepository
 from api_testing.backend.settings import BackendSettings
@@ -84,8 +86,9 @@ def create_app(settings: BackendSettings | None = None) -> FastAPI:
     repository = FileArtifactRepository(app_settings.cache_root)
     service = ArtifactQueryService(repository)
     write_repository = SQLiteWriteMetadataRepository(app_settings.metadata_db_path)
+    write_repository.reconcile_orphaned_executions(reason="worker_orphaned")
     spec_storage = FileSpecStorage(app_settings.spec_storage_root)
-    execution_runner = InProcessExecutionRunner(
+    execution_runner = HybridExecutionRunner(
         write_repository,
         spec_storage,
         app_settings,
@@ -98,6 +101,13 @@ def create_app(settings: BackendSettings | None = None) -> FastAPI:
         max_active_executions=app_settings.max_active_executions,
     )
 
+    @asynccontextmanager
+    async def lifespan(app: FastAPI):
+        try:
+            yield
+        finally:
+            execution_runner.shutdown()
+
     app = FastAPI(
         title="APIPilot Artifact Backend",
         version="0.1.0",
@@ -106,6 +116,7 @@ def create_app(settings: BackendSettings | None = None) -> FastAPI:
             "orchestration."
         ),
         openapi_tags=OPENAPI_TAGS,
+        lifespan=lifespan,
     )
     app.state.settings = app_settings
     app.state.artifact_service = service

@@ -79,6 +79,34 @@ class ConstraintFacetsQuery:
 
 
 @dataclass(frozen=True, slots=True)
+class CombinationQuery:
+    options: QueryOptions
+    operation_id: str | None = None
+    property_path: str | None = None
+    property_prefix: str | None = None
+    status: str | None = None
+    verdict: str | None = None
+    resolved: bool | None = None
+    has_counter_example: bool | None = None
+    has_runtime_evaluation: bool | None = None
+    has_validation_cases: bool | None = None
+
+
+@dataclass(frozen=True, slots=True)
+class CombinationFacetsQuery:
+    operation_id: str | None = None
+    property_path: str | None = None
+    property_prefix: str | None = None
+    status: str | None = None
+    verdict: str | None = None
+    resolved: bool | None = None
+    has_counter_example: bool | None = None
+    has_runtime_evaluation: bool | None = None
+    has_validation_cases: bool | None = None
+    q: str | None = None
+
+
+@dataclass(frozen=True, slots=True)
 class InvariantQuery:
     options: QueryOptions
     operation_id: str | None = None

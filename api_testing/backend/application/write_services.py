@@ -18,7 +18,6 @@ from api_testing.backend.domain.write_models import (
     Execution,
     ExecutionEvent,
     ExecutionMode,
-    ExecutionStatus,
     OpenAPIPreview,
     RunConfig,
     RunConfigCreate,
@@ -145,8 +144,6 @@ class WriteFlowService:
         config = self.repository.get_run_config(run_config_id)
         if config.spec_id != spec_id:
             raise InvalidArtifactRequest("run_config_id does not belong to spec_id")
-        if self.repository.count_active_executions() >= self.max_active_executions:
-            raise InvalidArtifactRequest("active execution limit reached")
         if mode == ExecutionMode.LIVE:
             guard_errors = self._live_guard_errors(config.config)
             if guard_errors:
@@ -154,19 +151,13 @@ class WriteFlowService:
 
         execution_id = str(uuid.uuid4())
         run_name = f"{_slug(spec.title)}-{execution_id[:8]}"
-        execution = self.repository.create_execution(
+        execution = self.repository.create_execution_with_capacity(
             spec_id=spec_id,
             run_config_id=run_config_id,
             mode=mode,
             run_name=run_name,
+            max_active_executions=self.max_active_executions,
             execution_id=execution_id,
-        )
-        self.repository.append_execution_event(
-            execution.execution_id,
-            event_type="queued",
-            phase="execution",
-            message="Execution queued",
-            status=ExecutionStatus.QUEUED,
         )
         self.runner.submit(execution.execution_id)
         return self.repository.get_execution(execution.execution_id)
@@ -186,6 +177,7 @@ class WriteFlowService:
             message="Cancellation requested",
             status=execution.status,
         )
+        self.runner.cancel(execution_id)
         return execution
 
     def list_execution_events(
@@ -269,4 +261,3 @@ def _is_allowed_target(value: str, allowed: tuple[str, ...]) -> bool:
 def _slug(value: str) -> str:
     slug = re.sub(r"[^A-Za-z0-9_.-]+", "-", value).strip(".-")
     return slug or "apipilot-run"
-

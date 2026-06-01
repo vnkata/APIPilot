@@ -1,19 +1,22 @@
-"""In-process execution runner for backend write-flow orchestration."""
+"""Execution runners for backend write-flow orchestration."""
 
 from __future__ import annotations
 
 import json
 import os
-import shutil
+import subprocess
+import sys
+import threading
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Protocol
 
 from api_testing.backend.application.openapi_specs import preview_openapi_operations
 from api_testing.backend.application.write_ports import (
     SpecStorageProtocol,
     WriteMetadataRepositoryProtocol,
 )
+from api_testing.backend.domain.errors import InvalidArtifactRequest
 from api_testing.backend.domain.write_models import (
     ExecutionMode,
     ExecutionStatus,
@@ -21,75 +24,99 @@ from api_testing.backend.domain.write_models import (
 from api_testing.backend.settings import BackendSettings
 
 
-class InProcessExecutionRunner:
-    """Runs APIPilot executions in bounded background threads."""
+class ProcessProtocol(Protocol):
+    returncode: int | None
+
+    def wait(self, timeout: float | None = None) -> int: ...
+
+    def terminate(self) -> None: ...
+
+    def kill(self) -> None: ...
+
+
+PopenFactory = Callable[..., ProcessProtocol]
+
+
+class HybridExecutionRunner:
+    """Runs dry executions in-process and live executions in subprocesses."""
 
     def __init__(
         self,
         repository: WriteMetadataRepositoryProtocol,
         spec_storage: SpecStorageProtocol,
         settings: BackendSettings,
+        *,
+        popen_factory: PopenFactory | None = None,
     ) -> None:
         self.repository = repository
         self.spec_storage = spec_storage
         self.settings = settings
+        self._popen_factory = popen_factory or subprocess.Popen
         self._executor = ThreadPoolExecutor(max_workers=settings.max_active_executions)
+        self._processes: dict[str, ProcessProtocol] = {}
+        self._process_lock = threading.Lock()
 
     def submit(self, execution_id: str) -> None:
         self._executor.submit(self._run, execution_id)
 
+    def cancel(self, execution_id: str) -> None:
+        process = self._process_for(execution_id)
+        if process is None:
+            return
+        self._terminate_process(process)
+        self._finalize_if_active(
+            execution_id,
+            ExecutionStatus.CANCELLED,
+            event_type="cancelled",
+            message="Execution cancelled",
+            summary={"reason": "cancelled"},
+        )
+
+    def shutdown(self) -> None:
+        with self._process_lock:
+            processes = list(self._processes.values())
+            self._processes.clear()
+        for process in processes:
+            self._terminate_process(process)
+        self._executor.shutdown(wait=False, cancel_futures=True)
+
     def _run(self, execution_id: str) -> None:
         try:
+            execution = self.repository.get_execution(execution_id)
             if self.repository.is_cancel_requested(execution_id):
-                self._cancel(execution_id)
+                self._finalize_if_active(
+                    execution_id,
+                    ExecutionStatus.CANCELLED,
+                    event_type="cancelled",
+                    message="Execution cancelled",
+                    summary={"reason": "cancelled"},
+                )
                 return
-            execution = self.repository.mark_execution_running(execution_id)
-            self.repository.append_execution_event(
-                execution_id,
-                event_type="running",
-                phase="execution",
-                message="Execution started",
-                status=ExecutionStatus.RUNNING,
-            )
             if execution.mode == ExecutionMode.LIVE:
-                summary = self._run_live(execution_id)
+                self._run_live(execution_id)
             else:
-                summary = self._run_dry(execution_id)
-
-            if self.repository.is_cancel_requested(execution_id):
-                self._cancel(execution_id)
-                return
-
-            self.repository.update_execution_status(
-                execution_id,
-                ExecutionStatus.COMPLETED,
-                summary=summary,
-            )
-            self.repository.append_execution_event(
-                execution_id,
-                event_type="completed",
-                phase="execution",
-                message="Execution completed",
-                status=ExecutionStatus.COMPLETED,
-                metadata=summary,
-            )
-        except Exception as exc:  # pragma: no cover - exercised through API failure tests
-            self.repository.update_execution_status(
+                self._run_dry(execution_id)
+        except Exception as exc:  # pragma: no cover - defensive runtime boundary
+            self._finalize_if_active(
                 execution_id,
                 ExecutionStatus.FAILED,
-                error_message=f"{type(exc).__name__}: {exc}",
-            )
-            self.repository.append_execution_event(
-                execution_id,
                 event_type="failed",
-                phase="execution",
                 message="Execution failed",
-                status=ExecutionStatus.FAILED,
-                metadata={"error": f"{type(exc).__name__}: {exc}"},
+                summary={
+                    "reason": "runner_error",
+                    "error_type": type(exc).__name__,
+                },
             )
 
-    def _run_dry(self, execution_id: str) -> dict[str, Any]:
-        execution = self.repository.get_execution(execution_id)
+    def _run_dry(self, execution_id: str) -> None:
+        execution = self.repository.mark_execution_running(execution_id)
+        self.repository.append_execution_event(
+            execution_id,
+            event_type="running",
+            phase="execution",
+            message="Execution started",
+            status=ExecutionStatus.RUNNING,
+        )
         spec = self.repository.get_spec(execution.spec_id)
         content = self.spec_storage.read_spec(spec.storage_path)
         preview = preview_openapi_operations(content)
@@ -105,79 +132,153 @@ class InProcessExecutionRunner:
             ),
             encoding="utf-8",
         )
-        return {
-            "mode": "dry_run",
-            "operation_count": len(preview.operations),
-            "generated_artifacts": 2,
-        }
-
-    def _run_live(self, execution_id: str) -> dict[str, Any]:
-        execution = self.repository.get_execution(execution_id)
-        spec = self.repository.get_spec(execution.spec_id)
-        config = self.repository.get_run_config(execution.run_config_id)
-        spec_content = self.spec_storage.read_spec(spec.storage_path)
-        spec_path = self.settings.spec_storage_root / f"{execution.execution_id}-live.json"
-        spec_path.write_text(spec_content, encoding="utf-8")
-
-        resolved_config = _resolve_secret_refs(config.config)
-        llm = _build_llm_config(resolved_config.get("llm") or {})
-        embedding = _build_embedding_config(resolved_config.get("embedding") or {})
-
-        from api_testing import APITesting
-        from api_testing.config.config_loader import build_embedder, build_llm_from_config
-        from api_testing.prompts.factory import PromptFactory
-
-        model = build_llm_from_config(llm)
-        embedder = build_embedder({"embedding": embedding})
-        prompt_factory = PromptFactory(common_llm=model)
-        tester = APITesting(
-            base_url=config.base_url,
-            base_title=str(execution.run_name),
-            spec_path=str(spec_path),
-            model=model,
-            embedder=embedder,
-            constraint_mining=bool(resolved_config.get("constraint_mining", False)),
-            prompt_factory=prompt_factory,
-        )
-        total_testcase, successful = tester.run_tests(
-            num_generations=int(resolved_config.get("num_generations") or 1),
-            num_test_cases=int(resolved_config.get("num_test_cases") or 1),
-            mutation_ratio=float(resolved_config.get("mutation_ratio") or 0.0),
-            header_mutation_ratio=float(
-                resolved_config.get("header_mutation_ratio") or 0.5
-            ),
-            async_mode=bool(resolved_config.get("async_mode", False)),
-            max_request_workers=resolved_config.get("max_request_workers"),
-            async_max_concurrent=int(
-                resolved_config.get("async_max_concurrent")
-                or self.settings.default_async_max_concurrent
-            ),
-            headers=resolved_config.get("headers") or {},
-        )
-        default_run_dir = Path.cwd() / ".cache" / str(execution.run_name)
-        configured_run_dir = self.settings.cache_root / str(execution.run_name)
-        if default_run_dir.resolve() != configured_run_dir.resolve() and default_run_dir.exists():
-            if configured_run_dir.exists():
-                shutil.rmtree(configured_run_dir)
-            shutil.copytree(default_run_dir, configured_run_dir)
-        return {
-            "mode": "live",
-            "total_test_cases": total_testcase,
-            "successful_operations": len(successful),
-        }
-
-    def _cancel(self, execution_id: str) -> None:
-        self.repository.update_execution_status(
+        if self.repository.is_cancel_requested(execution_id):
+            self._finalize_if_active(
+                execution_id,
+                ExecutionStatus.CANCELLED,
+                event_type="cancelled",
+                message="Execution cancelled",
+                summary={"reason": "cancelled"},
+            )
+            return
+        self._finalize_if_active(
             execution_id,
-            ExecutionStatus.CANCELLED,
+            ExecutionStatus.COMPLETED,
+            event_type="completed",
+            message="Execution completed",
+            summary={
+                "mode": "dry_run",
+                "operation_count": len(preview.operations),
+                "generated_artifacts": 2,
+            },
         )
+
+    def _run_live(self, execution_id: str) -> None:
+        execution = self.repository.mark_execution_running(execution_id)
         self.repository.append_execution_event(
             execution_id,
-            event_type="cancelled",
+            event_type="running",
             phase="execution",
-            message="Execution cancelled",
-            status=ExecutionStatus.CANCELLED,
+            message="Execution started",
+            status=ExecutionStatus.RUNNING,
         )
+        command = self._worker_command(execution_id)
+        process = self._popen_factory(command)
+        with self._process_lock:
+            self._processes[execution_id] = process
+        try:
+            timeout_seconds = self._execution_timeout_seconds(execution.run_config_id)
+            returncode = process.wait(timeout=timeout_seconds)
+        except subprocess.TimeoutExpired:
+            self._terminate_process(process)
+            self._finalize_if_active(
+                execution_id,
+                ExecutionStatus.FAILED,
+                event_type="failed",
+                message="Execution timed out",
+                summary={"reason": "timeout"},
+            )
+            return
+        finally:
+            with self._process_lock:
+                self._processes.pop(execution_id, None)
+
+        if self.repository.is_cancel_requested(execution_id):
+            self._finalize_if_active(
+                execution_id,
+                ExecutionStatus.CANCELLED,
+                event_type="cancelled",
+                message="Execution cancelled",
+                summary={"reason": "cancelled"},
+            )
+        elif returncode == 0:
+            self._finalize_if_active(
+                execution_id,
+                ExecutionStatus.COMPLETED,
+                event_type="completed",
+                message="Execution completed",
+                summary={"mode": "live", "worker_exit_code": returncode},
+            )
+        else:
+            self._finalize_if_active(
+                execution_id,
+                ExecutionStatus.FAILED,
+                event_type="failed",
+                message="Execution worker failed",
+                summary={"reason": "worker_exit", "worker_exit_code": returncode},
+            )
+
+    def _worker_command(self, execution_id: str) -> list[str]:
+        command = [
+            sys.executable,
+            "-m",
+            "api_testing.backend.execution_worker",
+            "--execution-id",
+            execution_id,
+            "--metadata-db-path",
+            str(self.settings.metadata_db_path),
+            "--cache-root",
+            str(self.settings.cache_root),
+            "--spec-storage-root",
+            str(self.settings.spec_storage_root),
+            "--default-async-max-concurrent",
+            str(self.settings.default_async_max_concurrent),
+        ]
+        for target in self.settings.allowed_target_base_urls:
+            command.extend(["--allowed-target-base-url", target])
+        return command
+
+    def _execution_timeout_seconds(self, run_config_id: str) -> int:
+        config = self.repository.get_run_config(run_config_id)
+        return int(config.timeout_seconds or self.settings.default_execution_timeout_seconds)
+
+    def _process_for(self, execution_id: str) -> ProcessProtocol | None:
+        with self._process_lock:
+            return self._processes.get(execution_id)
+
+    def _terminate_process(self, process: ProcessProtocol) -> None:
+        try:
+            process.terminate()
+            process.wait(timeout=self.settings.subprocess_cancel_grace_seconds)
+        except subprocess.TimeoutExpired:
+            process.kill()
+            try:
+                process.wait(timeout=1)
+            except subprocess.TimeoutExpired:
+                pass
+
+    def _finalize_if_active(
+        self,
+        execution_id: str,
+        status: ExecutionStatus,
+        *,
+        event_type: str,
+        message: str,
+        summary: dict[str, Any],
+    ) -> None:
+        self.repository.finalize_active_execution_with_event(
+            execution_id,
+            status,
+            event_type=event_type,
+            phase="execution",
+            message=message,
+            summary=summary,
+        )
+
+
+InProcessExecutionRunner = HybridExecutionRunner
+
+
+def publish_run_artifacts(source_run_dir: Path, target_run_dir: Path) -> None:
+    """Atomically publish a completed run directory into the configured cache root."""
+    source_run_dir = Path(source_run_dir)
+    target_run_dir = Path(target_run_dir)
+    if not source_run_dir.is_dir():
+        raise InvalidArtifactRequest(f"Run artifact directory not found: {source_run_dir}")
+    if target_run_dir.exists():
+        raise InvalidArtifactRequest(f"Run artifact directory already exists: {target_run_dir}")
+    target_run_dir.parent.mkdir(parents=True, exist_ok=True)
+    source_run_dir.rename(target_run_dir)
 
 
 def _resolve_secret_refs(value: Any) -> Any:

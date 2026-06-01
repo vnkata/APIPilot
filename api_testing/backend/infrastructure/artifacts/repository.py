@@ -2,12 +2,20 @@
 
 from __future__ import annotations
 
+from datetime import datetime, timezone
+import json
 from pathlib import Path
+import re
+from typing import Any
 
 from pydantic import JsonValue
 
 from api_testing.backend.domain.errors import ArtifactNotFound, InvalidArtifactRequest
-from api_testing.backend.domain.models import ArtifactMetadata, Run
+from api_testing.backend.domain.models import (
+    ArtifactMetadata,
+    ContextualMemoryContextSummary,
+    Run,
+)
 from api_testing.backend.infrastructure.artifacts.cache import FileSignatureCache
 from api_testing.backend.infrastructure.artifacts.readers import (
     load_csv_rows,
@@ -126,6 +134,77 @@ class FileArtifactRepository:
         rows = self._csv_cache.set(path, load_csv_rows(path))
         return [row.copy() for row in rows]
 
+    def read_contextual_memory_summary(
+        self,
+        run_name: str,
+        artifact_id: str,
+    ) -> list[ContextualMemoryContextSummary]:
+        path = self._path_for_artifact_id(run_name, artifact_id)
+        if path.suffix.lower() != ".db":
+            raise InvalidArtifactRequest(f"Artifact is not a contextual memory DB: {artifact_id}")
+        try:
+            import duckdb
+        except ImportError as exc:
+            raise InvalidArtifactRequest(
+                "The duckdb package is required to summarize contextual_memory.db"
+            ) from exc
+
+        try:
+            conn = duckdb.connect(str(path), read_only=True)
+        except Exception as exc:
+            raise InvalidArtifactRequest(
+                "Could not open contextual_memory.db in read-only mode"
+            ) from exc
+
+        try:
+            table_count = conn.execute(
+                """
+                SELECT COUNT(*)
+                FROM information_schema.tables
+                WHERE table_schema = 'main' AND table_name = 'contextual_memory'
+                """
+            ).fetchone()[0]
+            if table_count == 0:
+                raise InvalidArtifactRequest(
+                    "contextual_memory.db does not contain a contextual_memory table"
+                )
+            rows = conn.execute(
+                """
+                SELECT context_key, CAST(payload AS VARCHAR), updated_at
+                FROM contextual_memory
+                ORDER BY context_key
+                """
+            ).fetchall()
+        except InvalidArtifactRequest:
+            raise
+        except Exception as exc:
+            raise InvalidArtifactRequest(
+                "Could not summarize contextual_memory.db"
+            ) from exc
+        finally:
+            conn.close()
+
+        summaries: list[ContextualMemoryContextSummary] = []
+        for context_key, payload, updated_at in rows:
+            try:
+                decoded = json.loads(payload) if isinstance(payload, str) else payload
+            except json.JSONDecodeError as exc:
+                raise InvalidArtifactRequest(
+                    f"Invalid JSON payload for contextual memory key: {context_key}"
+                ) from exc
+            summaries.append(
+                ContextualMemoryContextSummary(
+                    context_key=str(context_key),
+                    context_kind=self._context_kind(str(context_key)),
+                    payload_kind=self._payload_kind(decoded),
+                    item_count=self._item_count(decoded),
+                    whitelist_count=self._list_count(decoded, "whitelist"),
+                    blacklist_count=self._list_count(decoded, "blacklist"),
+                    updated_at=self._iso_datetime(updated_at),
+                )
+            )
+        return summaries
+
     def list_har_sessions(self, run_name: str):
         run_path = self._run_path(run_name)
         if not run_path.is_dir():
@@ -217,3 +296,44 @@ class FileArtifactRepository:
     @staticmethod
     def _directory_size(path: Path) -> int:
         return sum(file.stat().st_size for file in path.rglob("*") if file.is_file())
+
+    @staticmethod
+    def _context_kind(context_key: str) -> str:
+        if re.match(r"^(get|post|put|patch|delete|head|options|trace)-/", context_key):
+            return "operation"
+        if context_key:
+            return "entity"
+        return "unknown"
+
+    @staticmethod
+    def _payload_kind(payload: Any) -> str:
+        if isinstance(payload, dict):
+            return "object"
+        if isinstance(payload, list):
+            return "array"
+        if payload is None:
+            return "null"
+        return type(payload).__name__
+
+    @staticmethod
+    def _item_count(payload: Any) -> int:
+        return len(payload) if isinstance(payload, list) else 0
+
+    @staticmethod
+    def _list_count(payload: Any, key: str) -> int:
+        if not isinstance(payload, dict):
+            return 0
+        value = payload.get(key)
+        return len(value) if isinstance(value, list) else 0
+
+    @staticmethod
+    def _iso_datetime(value: Any) -> str | None:
+        if value is None:
+            return None
+        if isinstance(value, datetime):
+            if value.tzinfo is None:
+                value = value.replace(tzinfo=timezone.utc)
+            else:
+                value = value.astimezone(timezone.utc)
+            return value.isoformat()
+        return str(value)

@@ -14,6 +14,11 @@ from api_testing.backend.api.schemas.common import (
     SanitizedBodyResponse,
 )
 from api_testing.backend.api.schemas.constraints import (
+    CombinationDetailResponse,
+    CombinationEntryPageResponse,
+    CombinationEntryResponse,
+    CombinationFacetsResponse,
+    CombinationSummaryResponse,
     ConstraintExplorerDetailResponse,
     ConstraintExplorerEntryResponse,
     ConstraintExplorerPageResponse,
@@ -89,6 +94,11 @@ __all__ = [
     "ArtifactCatalogResponse",
     "ArtifactContentResponse",
     "ArtifactMetadataResponse",
+    "CombinationDetailResponse",
+    "CombinationEntryPageResponse",
+    "CombinationEntryResponse",
+    "CombinationFacetsResponse",
+    "CombinationSummaryResponse",
     "ConstraintEntryDetailResponse",
     "ConstraintEntryPageResponse",
     "ConstraintEntryResponse",

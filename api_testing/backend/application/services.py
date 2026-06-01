@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from api_testing.backend.application.ports import ArtifactRepositoryProtocol
 from api_testing.backend.application.querying import (
+    CombinationFacetsQuery,
+    CombinationQuery,
     ConstraintEntryQuery,
     ConstraintExplorerQuery,
     ConstraintFacetsQuery,
@@ -24,6 +26,9 @@ from api_testing.backend.application.querying import (
 )
 from api_testing.backend.application.read_services.constraint_explorer import (
     ConstraintExplorerService,
+)
+from api_testing.backend.application.read_services.constraint_combination import (
+    ConstraintCombinationService,
 )
 from api_testing.backend.application.read_services.artifacts import (
     ArtifactCatalogService,
@@ -50,6 +55,10 @@ from api_testing.backend.application.read_services.test_cases import TestCaseQue
 from api_testing.backend.domain.models import (
     ArtifactContent,
     ArtifactMetadata,
+    CombinationDetail,
+    CombinationEntryPage,
+    CombinationFacets,
+    CombinationSummary,
     DependencyGraph,
     DynamicConstraints,
     GraphEdge,
@@ -94,6 +103,7 @@ class ArtifactQueryService:
         static_constraint_service = StaticConstraintQueryService(repository)
         dynamic_constraint_service = DynamicConstraintQueryService(repository)
         constraint_explorer_service = ConstraintExplorerService(repository)
+        combination_service = ConstraintCombinationService(repository)
         explorer_index_service = RunExplorerIndexService(
             repository,
             constraint_explorer_service,
@@ -129,6 +139,7 @@ class ArtifactQueryService:
         self.static_constraints = static_constraint_service
         self.dynamic_constraints = dynamic_constraint_service
         self.constraint_explorer = constraint_explorer_service
+        self.combination = combination_service
         self.invariant_explorer = invariant_explorer_service
         self.test_cases = test_case_service
         self.history = history_service
@@ -272,6 +283,30 @@ class ArtifactQueryService:
         query: ConstraintFacetsQuery,
     ) -> ConstraintFacets:
         return self.constraint_explorer.get_facets(run_name, query)
+
+    def get_combination_summary(self, run_name: str) -> CombinationSummary:
+        return self.combination.get_summary(run_name)
+
+    def list_combination_entries(
+        self,
+        run_name: str,
+        query: CombinationQuery,
+    ) -> CombinationEntryPage:
+        return self.combination.list_entries(run_name, query)
+
+    def get_combination_entry(
+        self,
+        run_name: str,
+        combination_id: str,
+    ) -> CombinationDetail:
+        return self.combination.get_entry(run_name, combination_id)
+
+    def get_combination_facets(
+        self,
+        run_name: str,
+        query: CombinationFacetsQuery,
+    ) -> CombinationFacets:
+        return self.combination.get_facets(run_name, query)
 
     def list_invariant_explorer_entries(
         self,

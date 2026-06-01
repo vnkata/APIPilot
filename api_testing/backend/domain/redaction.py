@@ -116,6 +116,13 @@ def sanitize_body(value: JsonValue | str | None) -> SanitizedBody:
     )
 
 
+def sanitize_json_value(value: JsonValue | None) -> JsonValue | None:
+    if value is None:
+        return None
+    sanitized, _ = _sanitize_json(value)
+    return sanitized
+
+
 def _sanitize_json(value: JsonValue) -> tuple[JsonValue, int]:
     if isinstance(value, dict):
         sanitized: dict[str, JsonValue] = {}

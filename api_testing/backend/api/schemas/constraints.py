@@ -10,6 +10,11 @@ from api_testing.backend.api.schemas.common import (
 from api_testing.backend.domain.models import (
     AgreementStatus,
     CombinedSource,
+    CombinationDetail,
+    CombinationEntry,
+    CombinationEntryPage,
+    CombinationFacets,
+    CombinationSummary,
     ConstraintEntry,
     ConstraintEntryDetail,
     ConstraintExplorerDetail,
@@ -236,6 +241,160 @@ class ConstraintFacetsResponse(BackendBaseModel):
                 for bucket in facets.assertion_available
             ],
             metadata=ConstraintQueryMetadataResponse.from_domain(facets.metadata),
+        )
+
+
+class CombinationEntryResponse(BackendBaseModel):
+    combination_id: str
+    operation_id: str
+    property_path: str
+    status: str
+    verdict: str | None = None
+    resolved: bool
+    static_constraint: str | None = None
+    dynamic_constraint: str | None = None
+    final_constraint: str | None = None
+    reason_preview: str | None = None
+    has_counter_example: bool
+    has_runtime_evaluation: bool
+    validation_case_count: int = Field(ge=0)
+    source_artifact: str
+
+    @classmethod
+    def from_domain(cls, entry: CombinationEntry) -> "CombinationEntryResponse":
+        return cls(
+            combination_id=entry.combination_id,
+            operation_id=entry.operation_id,
+            property_path=entry.property_path,
+            status=entry.status,
+            verdict=entry.verdict,
+            resolved=entry.resolved,
+            static_constraint=entry.static_constraint,
+            dynamic_constraint=entry.dynamic_constraint,
+            final_constraint=entry.final_constraint,
+            reason_preview=entry.reason_preview,
+            has_counter_example=entry.has_counter_example,
+            has_runtime_evaluation=entry.has_runtime_evaluation,
+            validation_case_count=entry.validation_case_count,
+            source_artifact=entry.source_artifact,
+        )
+
+
+class CombinationDetailResponse(CombinationEntryResponse):
+    reason: str | None = None
+    counter_example: JsonValue | None = None
+    runtime_evaluation: JsonValue | None = None
+    validation_cases: list[JsonValue]
+    raw_record_sanitized: dict[str, JsonValue]
+
+    @classmethod
+    def from_domain(cls, entry: CombinationDetail) -> "CombinationDetailResponse":
+        return cls(
+            **CombinationEntryResponse.from_domain(entry).model_dump(),
+            reason=entry.reason,
+            counter_example=entry.counter_example,
+            runtime_evaluation=entry.runtime_evaluation,
+            validation_cases=entry.validation_cases,
+            raw_record_sanitized=entry.raw_record_sanitized,
+        )
+
+
+class CombinationSummaryResponse(BackendBaseModel):
+    run_name: str
+    source_artifact: str
+    endpoint_count: int = Field(ge=0)
+    property_count: int = Field(ge=0)
+    resolved_count: int = Field(ge=0)
+    unresolved_count: int = Field(ge=0)
+    malformed_count: int = Field(ge=0)
+    status_counts: dict[str, int]
+    verdict_counts: dict[str, int]
+    warnings: list[str]
+
+    @classmethod
+    def from_domain(cls, summary: CombinationSummary) -> "CombinationSummaryResponse":
+        return cls(
+            run_name=summary.run_name,
+            source_artifact=summary.source_artifact,
+            endpoint_count=summary.endpoint_count,
+            property_count=summary.property_count,
+            resolved_count=summary.resolved_count,
+            unresolved_count=summary.unresolved_count,
+            malformed_count=summary.malformed_count,
+            status_counts=summary.status_counts,
+            verdict_counts=summary.verdict_counts,
+            warnings=summary.warnings,
+        )
+
+
+class CombinationEntryPageResponse(BackendBaseModel):
+    run_name: str
+    items: list[CombinationEntryResponse]
+    pagination: PaginationMetadata
+    groups: list[GroupCountResponse]
+    malformed_count: int = Field(ge=0)
+    warnings: list[str]
+
+    @classmethod
+    def from_domain(
+        cls,
+        run_name: str,
+        page: CombinationEntryPage,
+    ) -> "CombinationEntryPageResponse":
+        return cls(
+            run_name=run_name,
+            items=[CombinationEntryResponse.from_domain(item) for item in page.items],
+            pagination=PaginationMetadata.from_domain(page.pagination),
+            groups=[GroupCountResponse.from_domain(group) for group in page.groups],
+            malformed_count=page.malformed_count,
+            warnings=page.warnings,
+        )
+
+
+class CombinationFacetsResponse(BackendBaseModel):
+    status: list[ConstraintFacetBucketResponse]
+    verdict: list[ConstraintFacetBucketResponse]
+    resolved: list[ConstraintFacetBucketResponse]
+    operation_id: list[ConstraintFacetBucketResponse]
+    has_counter_example: list[ConstraintFacetBucketResponse]
+    has_runtime_evaluation: list[ConstraintFacetBucketResponse]
+    has_validation_cases: list[ConstraintFacetBucketResponse]
+    malformed_count: int = Field(ge=0)
+    warnings: list[str]
+
+    @classmethod
+    def from_domain(cls, facets: CombinationFacets) -> "CombinationFacetsResponse":
+        return cls(
+            status=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.status
+            ],
+            verdict=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.verdict
+            ],
+            resolved=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.resolved
+            ],
+            operation_id=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.operation_id
+            ],
+            has_counter_example=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.has_counter_example
+            ],
+            has_runtime_evaluation=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.has_runtime_evaluation
+            ],
+            has_validation_cases=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.has_validation_cases
+            ],
+            malformed_count=facets.malformed_count,
+            warnings=facets.warnings,
         )
 
 
@@ -485,11 +644,23 @@ class InvariantGroupResponse(BackendBaseModel):
 
 class DynamicConstraintsResponse(BackendBaseModel):
     run_name: str
-    constraints: list[ConstraintEntryResponse]
-    groups: list[InvariantGroupResponse]
-    invariants: list[InvariantRecordResponse]
-    constraint_count: int = Field(ge=0)
-    invariant_count: int = Field(ge=0)
+    constraints: list[ConstraintEntryResponse] = Field(
+        description="Mapped dynamic constraints derived from parsed and classified Daikon invariants."
+    )
+    groups: list[InvariantGroupResponse] = Field(
+        description="Grouped raw invariant records from the dynamic mining artifact."
+    )
+    invariants: list[InvariantRecordResponse] = Field(
+        description="Raw Daikon invariant rows used as provenance for mapped dynamic constraints."
+    )
+    constraint_count: int = Field(
+        ge=0,
+        description="Count of mapped dynamic constraints derived from raw Daikon invariants.",
+    )
+    invariant_count: int = Field(
+        ge=0,
+        description="Count of raw Daikon invariant rows included as dynamic constraint provenance.",
+    )
 
     @classmethod
     def from_domain(

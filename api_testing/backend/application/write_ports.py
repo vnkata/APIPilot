@@ -63,6 +63,17 @@ class WriteMetadataRepositoryProtocol(Protocol):
         execution_id: str | None = None,
     ) -> Execution: ...
 
+    def create_execution_with_capacity(
+        self,
+        *,
+        spec_id: str,
+        run_config_id: str,
+        mode: ExecutionMode,
+        run_name: str,
+        max_active_executions: int,
+        execution_id: str | None = None,
+    ) -> Execution: ...
+
     def list_executions(self) -> list[Execution]: ...
 
     def get_execution(self, execution_id: str) -> Execution: ...
@@ -72,6 +83,27 @@ class WriteMetadataRepositoryProtocol(Protocol):
         execution_id: str,
         status: ExecutionStatus,
         *,
+        summary: dict | None = None,
+        error_message: str | None = None,
+    ) -> Execution: ...
+
+    def finalize_active_execution(
+        self,
+        execution_id: str,
+        status: ExecutionStatus,
+        *,
+        summary: dict | None = None,
+        error_message: str | None = None,
+    ) -> Execution: ...
+
+    def finalize_active_execution_with_event(
+        self,
+        execution_id: str,
+        status: ExecutionStatus,
+        *,
+        event_type: str,
+        phase: str | None = None,
+        message: str | None = None,
         summary: dict | None = None,
         error_message: str | None = None,
     ) -> Execution: ...
@@ -102,7 +134,16 @@ class WriteMetadataRepositoryProtocol(Protocol):
         after_sequence: int = 0,
     ) -> list[ExecutionEvent]: ...
 
+    def reconcile_orphaned_executions(
+        self,
+        *,
+        reason: str,
+    ) -> list[Execution]: ...
+
 
 class ExecutionRunnerProtocol(Protocol):
     def submit(self, execution_id: str) -> None: ...
 
+    def cancel(self, execution_id: str) -> None: ...
+
+    def shutdown(self) -> None: ...

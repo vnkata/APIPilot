@@ -78,8 +78,14 @@ class OperationDetailResponse(OperationSummaryResponse):
 class OperationExplorerEntryResponse(OperationSummaryResponse):
     operation_key: str
     response_status_count: int = Field(ge=0)
-    constraint_count: int = Field(ge=0)
-    invariant_count: int = Field(ge=0)
+    constraint_count: int = Field(
+        ge=0,
+        description="Mapped constraint count for this operation. Dynamic rows are processed constraints, not raw Daikon rows.",
+    )
+    invariant_count: int = Field(
+        ge=0,
+        description="Raw Daikon invariant row count for this operation. These rows are provenance behind mapped dynamic constraints.",
+    )
     graph_in_degree: int = Field(ge=0)
     graph_out_degree: int = Field(ge=0)
     test_case_count: int = Field(ge=0)

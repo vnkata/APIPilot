@@ -4,6 +4,10 @@ from fastapi import APIRouter, Depends, Query
 
 from api_testing.backend.api.dependencies import get_artifact_service
 from api_testing.backend.api.schemas.constraints import (
+    CombinationDetailResponse,
+    CombinationEntryPageResponse,
+    CombinationFacetsResponse,
+    CombinationSummaryResponse,
     ConstraintExplorerDetailResponse,
     ConstraintExplorerPageResponse,
     ConstraintFacetsResponse,
@@ -16,6 +20,8 @@ from api_testing.backend.api.schemas.constraints import (
     StaticConstraintsResponse,
 )
 from api_testing.backend.application.querying import (
+    CombinationFacetsQuery,
+    CombinationQuery,
     ConstraintEntryQuery,
     ConstraintExplorerQuery,
     ConstraintFacetsQuery,
@@ -266,7 +272,130 @@ def get_constraint_explorer_facets(
     )
 
 
-@router.get("/dynamic", response_model=DynamicConstraintsResponse)
+@router.get("/combination/summary", response_model=CombinationSummaryResponse)
+def get_combination_summary(
+    run_name: str,
+    service: ArtifactQueryService = Depends(get_artifact_service),
+) -> CombinationSummaryResponse:
+    return CombinationSummaryResponse.from_domain(
+        service.get_combination_summary(run_name)
+    )
+
+
+@router.get("/combination/entries", response_model=CombinationEntryPageResponse)
+def list_combination_entries(
+    run_name: str,
+    operation_id: str | None = Query(default=None, description="Filter by operation_id."),
+    property_path: str | None = Query(default=None, description="Filter by exact property_path."),
+    property_prefix: str | None = Query(default=None, description="Filter by property_path prefix."),
+    status: str | None = Query(default=None, description="Filter by combination status."),
+    verdict: str | None = Query(default=None, description="Filter by runtime verdict."),
+    resolved: bool | None = Query(default=None, description="Filter by final_constraint presence."),
+    has_counter_example: bool | None = Query(default=None, description="Filter by counter-example availability."),
+    has_runtime_evaluation: bool | None = Query(default=None, description="Filter by runtime evaluation availability."),
+    has_validation_cases: bool | None = Query(default=None, description="Filter by validation case availability."),
+    q: str | None = Query(default=None, description="Search combination fields."),
+    sort_by: str | None = Query(
+        default=None,
+        description="Allowed values: operation_id, property_path, status, verdict, resolved, validation_case_count.",
+    ),
+    sort_order: SortOrder = Query(default=SortOrder.ASC),
+    group_by: str | None = Query(
+        default=None,
+        description=(
+            "Allowed values: operation_id, status, verdict, resolved, "
+            "has_counter_example, has_runtime_evaluation, has_validation_cases."
+        ),
+    ),
+    limit: int = Query(default=50, ge=1, le=MAX_PAGE_LIMIT),
+    offset: int = Query(default=0, ge=0),
+    service: ArtifactQueryService = Depends(get_artifact_service),
+) -> CombinationEntryPageResponse:
+    return CombinationEntryPageResponse.from_domain(
+        run_name,
+        service.list_combination_entries(
+            run_name,
+            CombinationQuery(
+                options=QueryOptions(
+                    q=q,
+                    limit=limit,
+                    offset=offset,
+                    sort_by=sort_by,
+                    sort_order=sort_order,
+                    group_by=group_by,
+                ),
+                operation_id=operation_id,
+                property_path=property_path,
+                property_prefix=property_prefix,
+                status=status,
+                verdict=verdict,
+                resolved=resolved,
+                has_counter_example=has_counter_example,
+                has_runtime_evaluation=has_runtime_evaluation,
+                has_validation_cases=has_validation_cases,
+            ),
+        ),
+    )
+
+
+@router.get(
+    "/combination/entries/{combination_id}",
+    response_model=CombinationDetailResponse,
+)
+def get_combination_entry(
+    run_name: str,
+    combination_id: str,
+    service: ArtifactQueryService = Depends(get_artifact_service),
+) -> CombinationDetailResponse:
+    return CombinationDetailResponse.from_domain(
+        service.get_combination_entry(run_name, combination_id)
+    )
+
+
+@router.get("/combination/facets", response_model=CombinationFacetsResponse)
+def get_combination_facets(
+    run_name: str,
+    operation_id: str | None = Query(default=None, description="Filter by operation_id."),
+    property_path: str | None = Query(default=None, description="Filter by exact property_path."),
+    property_prefix: str | None = Query(default=None, description="Filter by property_path prefix."),
+    status: str | None = Query(default=None, description="Filter by combination status."),
+    verdict: str | None = Query(default=None, description="Filter by runtime verdict."),
+    resolved: bool | None = Query(default=None, description="Filter by final_constraint presence."),
+    has_counter_example: bool | None = Query(default=None, description="Filter by counter-example availability."),
+    has_runtime_evaluation: bool | None = Query(default=None, description="Filter by runtime evaluation availability."),
+    has_validation_cases: bool | None = Query(default=None, description="Filter by validation case availability."),
+    q: str | None = Query(default=None, description="Search combination fields before calculating facets."),
+    service: ArtifactQueryService = Depends(get_artifact_service),
+) -> CombinationFacetsResponse:
+    return CombinationFacetsResponse.from_domain(
+        service.get_combination_facets(
+            run_name,
+            CombinationFacetsQuery(
+                operation_id=operation_id,
+                property_path=property_path,
+                property_prefix=property_prefix,
+                status=status,
+                verdict=verdict,
+                resolved=resolved,
+                has_counter_example=has_counter_example,
+                has_runtime_evaluation=has_runtime_evaluation,
+                has_validation_cases=has_validation_cases,
+                q=q,
+            ),
+        )
+    )
+
+
+@router.get(
+    "/dynamic",
+    response_model=DynamicConstraintsResponse,
+    summary="Get mapped dynamic constraints",
+    description=(
+        "Return mapped dynamic constraints derived from Daikon invariants, plus "
+        "raw invariant rows used as provenance. The raw invariant rows are not a "
+        "separate independent constraint source."
+    ),
+)
 def get_dynamic_constraints(
     run_name: str,
     service: ArtifactQueryService = Depends(get_artifact_service),
@@ -276,7 +405,15 @@ def get_dynamic_constraints(
     )
 
 
-@router.get("/invariants", response_model=InvariantExplorerPageResponse)
+@router.get(
+    "/invariants",
+    response_model=InvariantExplorerPageResponse,
+    summary="List raw invariant evidence",
+    description=(
+        "List raw Daikon invariant rows from invariants.csv. These rows are "
+        "runtime provenance behind mapped dynamic constraints."
+    ),
+)
 def list_invariant_explorer_entries(
     run_name: str,
     operation_id: str | None = Query(default=None, description="Filter by operation_id."),
@@ -436,7 +573,15 @@ def list_dynamic_constraint_entries(
     )
 
 
-@router.get("/dynamic/invariants", response_model=InvariantPageResponse)
+@router.get(
+    "/dynamic/invariants",
+    response_model=InvariantPageResponse,
+    summary="List legacy raw dynamic invariant rows",
+    description=(
+        "Legacy/debug view over raw Daikon invariant rows. Prefer "
+        "/constraints/invariants for the typed Raw Invariant explorer."
+    ),
+)
 def list_dynamic_invariants(
     run_name: str,
     operation_id: str | None = Query(

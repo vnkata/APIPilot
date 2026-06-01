@@ -22,6 +22,7 @@ class BackendSettings:
     default_execution_timeout_seconds: int = 60
     default_request_budget: int = 20
     default_async_max_concurrent: int = 20
+    subprocess_cancel_grace_seconds: int = 5
 
     def __post_init__(self) -> None:
         cache_root = Path(self.cache_root)
@@ -75,6 +76,10 @@ class BackendSettings:
             default_async_max_concurrent=_int_env(
                 "APIPILOT_BACKEND_DEFAULT_ASYNC_MAX_CONCURRENT",
                 20,
+            ),
+            subprocess_cancel_grace_seconds=_int_env(
+                "APIPILOT_BACKEND_SUBPROCESS_CANCEL_GRACE_SECONDS",
+                5,
             ),
         )
 

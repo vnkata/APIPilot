@@ -48,6 +48,14 @@ KNOWN_ARTIFACTS: tuple[ArtifactDefinition, ...] = (
         RawPolicy.RAW_JSON,
     ),
     ArtifactDefinition(
+        "contextual_memory_db",
+        "contextual_memory.db",
+        ArtifactKind.MEMORY,
+        MediaType.APPLICATION_OCTET_STREAM,
+        RawPolicy.SUMMARY_ONLY,
+        raw_supported=False,
+    ),
+    ArtifactDefinition(
         "dependency_sequences",
         "dependency_sequences.json",
         ArtifactKind.GRAPH,
@@ -85,6 +93,13 @@ KNOWN_ARTIFACTS: tuple[ArtifactDefinition, ...] = (
     ArtifactDefinition(
         "constraint_miner",
         "constraint_miner.json",
+        ArtifactKind.COMBINED_CONSTRAINTS,
+        MediaType.APPLICATION_JSON,
+        RawPolicy.RAW_JSON,
+    ),
+    ArtifactDefinition(
+        "combine_constraint_miners",
+        "combine_constraint_miners.json",
         ArtifactKind.COMBINED_CONSTRAINTS,
         MediaType.APPLICATION_JSON,
         RawPolicy.RAW_JSON,

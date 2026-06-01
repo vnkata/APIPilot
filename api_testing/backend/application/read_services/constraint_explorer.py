@@ -22,10 +22,15 @@ from api_testing.backend.application.read_services.utils import (
     operation_id_from_pptname,
     optional_str,
 )
+from api_testing.backend.application.read_services.constraint_combination import (
+    SOURCE_ARTIFACT as COMBINATION_SOURCE_ARTIFACT,
+    parse_combination_artifact,
+)
 from api_testing.backend.domain.errors import ArtifactNotFound, InvalidArtifactRequest
 from api_testing.backend.domain.models import (
     AgreementStatus,
     CombinedSource,
+    CombinationEntry,
     ConstraintExplorerDetail,
     ConstraintExplorerEntry,
     ConstraintExplorerPage,
@@ -41,8 +46,13 @@ _FALLBACK_WARNING = (
     "constraint_miner.json is missing; combined constraints were computed from static "
     "and dynamic artifacts."
 )
+_COMBINATION_FALLBACK_WARNING = (
+    "combine_constraint_miners.json could not be used; falling back to legacy "
+    "combined constraint artifacts."
+)
 _ASSERTION_PREVIEW_LIMIT = 160
 _PARTICIPATING_ARTIFACTS = (
+    "combine_constraint_miners",
     "constraint_miner",
     "static_constraint_miner",
     "static_constraint_miner_request_response",
@@ -214,20 +224,34 @@ class ConstraintExplorerService:
         dynamic_constraints = _dedupe(_dynamic_constraints(dynamic_payload))
         assertions = _assertions(run_name, dynamic_payload, self.repository)
 
-        combined_payload = _read_optional_json(
-            self.repository, run_name, "constraint_miner"
+        new_combined_payload = _read_optional_json(
+            self.repository, run_name, COMBINATION_SOURCE_ARTIFACT
         )
-        if combined_payload is None:
-            combined_source = CombinedSource.COMPUTED_FALLBACK
-            warnings = [_FALLBACK_WARNING]
-            combined_constraints = _computed_combined_constraints(
+        if new_combined_payload is not None:
+            try:
+                combination_model = parse_combination_artifact(
+                    new_combined_payload,
+                    run_name=run_name,
+                )
+                combined_source = CombinedSource.COMBINE_CONSTRAINT_MINERS
+                warnings = combination_model.summary.warnings
+                combined_constraints = _combination_constraints(combination_model.entries)
+            except InvalidArtifactRequest as exc:
+                combined_source, warnings, combined_constraints = _legacy_combined_constraints(
+                    self.repository,
+                    run_name,
+                    static_constraints,
+                    dynamic_constraints,
+                    extra_warnings=[str(exc), _COMBINATION_FALLBACK_WARNING],
+                )
+        else:
+            combined_source, warnings, combined_constraints = _legacy_combined_constraints(
+                self.repository,
+                run_name,
                 static_constraints,
                 dynamic_constraints,
+                extra_warnings=[],
             )
-        else:
-            combined_source = CombinedSource.ARTIFACT
-            warnings = []
-            combined_constraints = _combined_constraints(combined_payload)
 
         combined_constraints = _dedupe(combined_constraints)
         all_constraints = _dedupe(
@@ -354,6 +378,47 @@ def _combined_constraints(payload: JsonValue | None) -> list[_NormalizedConstrai
         source=ConstraintSource.COMBINED,
         section=None,
         source_type="constraint_miner",
+    )
+
+
+def _combination_constraints(entries: list[CombinationEntry]) -> list[_NormalizedConstraint]:
+    constraints: list[_NormalizedConstraint] = []
+    for entry in entries:
+        if entry.final_constraint is None:
+            continue
+        constraints.append(
+            _NormalizedConstraint(
+                source=ConstraintSource.COMBINED,
+                operation_id=entry.operation_id,
+                property_path=entry.property_path,
+                expression=entry.final_constraint,
+                section=None,
+                parameter=None,
+                source_type=COMBINATION_SOURCE_ARTIFACT,
+            )
+        )
+    return constraints
+
+
+def _legacy_combined_constraints(
+    repository: ArtifactRepositoryProtocol,
+    run_name: str,
+    static_constraints: list[_NormalizedConstraint],
+    dynamic_constraints: list[_NormalizedConstraint],
+    *,
+    extra_warnings: list[str],
+) -> tuple[CombinedSource, list[str], list[_NormalizedConstraint]]:
+    combined_payload = _read_optional_json(repository, run_name, "constraint_miner")
+    if combined_payload is None:
+        return (
+            CombinedSource.COMPUTED_FALLBACK,
+            [*extra_warnings, _FALLBACK_WARNING],
+            _computed_combined_constraints(static_constraints, dynamic_constraints),
+        )
+    return (
+        CombinedSource.ARTIFACT,
+        extra_warnings,
+        _combined_constraints(combined_payload),
     )
 
 

@@ -8,6 +8,7 @@ from pydantic import JsonValue
 
 from api_testing.backend.domain.models import (
     ArtifactMetadata,
+    ContextualMemoryContextSummary,
     HarSession,
     Run,
 )
@@ -31,6 +32,10 @@ class ArtifactRepositoryProtocol(Protocol):
     def read_text_artifact(self, run_name: str, artifact_id: str) -> str: ...
 
     def read_csv_rows(self, run_name: str, artifact_id: str) -> list[dict[str, str]]: ...
+
+    def read_contextual_memory_summary(
+        self, run_name: str, artifact_id: str
+    ) -> list[ContextualMemoryContextSummary]: ...
 
     def list_har_sessions(self, run_name: str) -> list[HarSession]: ...
 

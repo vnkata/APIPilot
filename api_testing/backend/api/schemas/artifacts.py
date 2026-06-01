@@ -11,6 +11,7 @@ from api_testing.backend.domain.models import (
     ArtifactKind,
     ArtifactMetadata,
     ArtifactSummaryContent,
+    ContextualMemoryContextSummary,
     MediaType,
     RawCsvContent,
     RawJsonContent,
@@ -79,6 +80,8 @@ class ArtifactSummaryContentResponse(BackendBaseModel):
     value_type: str | None = None
     session_id: str | None = None
     entry_count: int | None = Field(default=None, ge=0)
+    context_count: int | None = Field(default=None, ge=0)
+    contexts: list["ContextualMemoryContextSummaryResponse"] = []
 
     @classmethod
     def from_domain(
@@ -94,6 +97,35 @@ class ArtifactSummaryContentResponse(BackendBaseModel):
             value_type=content.value_type,
             session_id=content.session_id,
             entry_count=content.entry_count,
+            context_count=content.context_count,
+            contexts=[
+                ContextualMemoryContextSummaryResponse.from_domain(item)
+                for item in content.contexts
+            ],
+        )
+
+
+class ContextualMemoryContextSummaryResponse(BackendBaseModel):
+    context_key: str
+    context_kind: str
+    payload_kind: str
+    item_count: int = Field(ge=0)
+    whitelist_count: int = Field(ge=0)
+    blacklist_count: int = Field(ge=0)
+    updated_at: str | None = None
+
+    @classmethod
+    def from_domain(
+        cls, content: ContextualMemoryContextSummary
+    ) -> "ContextualMemoryContextSummaryResponse":
+        return cls(
+            context_key=content.context_key,
+            context_kind=content.context_kind,
+            payload_kind=content.payload_kind,
+            item_count=content.item_count,
+            whitelist_count=content.whitelist_count,
+            blacklist_count=content.blacklist_count,
+            updated_at=content.updated_at,
         )
 
 

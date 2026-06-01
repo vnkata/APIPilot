@@ -24,6 +24,7 @@ from api_testing.backend.domain.models import (
     SanitizedTestCasesContent,
     SanitizedTestCase,
 )
+from api_testing.backend.domain.errors import InvalidArtifactRequest
 from api_testing.backend.domain.redaction import sanitize_body
 
 
@@ -51,6 +52,8 @@ class ArtifactContentService:
         raw: bool,
     ) -> ArtifactContent:
         metadata = self.repository.get_artifact(run_name, artifact_id)
+        if raw and not metadata.raw_supported:
+            raise InvalidArtifactRequest(f"Raw content is not supported for artifact: {artifact_id}")
         content = (
             self._raw_artifact_content(run_name, artifact_id, metadata.raw_policy)
             if raw
@@ -77,6 +80,13 @@ class ArtifactContentService:
                 kind=kind,
                 row_count=len(rows),
                 columns=columns,
+            )
+        if artifact_id == "contextual_memory_db":
+            contexts = self.repository.read_contextual_memory_summary(run_name, artifact_id)
+            return ArtifactSummaryContent(
+                kind=kind,
+                context_count=len(contexts),
+                contexts=contexts,
             )
         if kind == ArtifactKind.HAR_SESSION:
             session_id = artifact_id.removeprefix("history_")
@@ -122,6 +132,8 @@ class ArtifactContentService:
             return RawCsvContent(rows=self.repository.read_csv_rows(run_name, artifact_id))
         if raw_policy == RawPolicy.RAW_TEXT:
             return RawTextContent(text=self.repository.read_text_artifact(run_name, artifact_id))
+        if raw_policy == RawPolicy.SUMMARY_ONLY:
+            raise InvalidArtifactRequest(f"Raw content is not supported for artifact: {artifact_id}")
         return RawJsonContent(value=self.repository.read_json_artifact(run_name, artifact_id))
 
     def _sanitized_test_case(self, record: dict[str, JsonValue]) -> SanitizedTestCase:

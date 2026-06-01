@@ -27,6 +27,7 @@ class ArtifactKind(StrEnum):
 
 class MediaType(StrEnum):
     APPLICATION_JSON = "application/json"
+    APPLICATION_OCTET_STREAM = "application/octet-stream"
     TEXT_CSV = "text/csv"
     TEXT_PLAIN = "text/plain"
 
@@ -35,6 +36,7 @@ class RawPolicy(StrEnum):
     RAW_JSON = "raw_json"
     RAW_TEXT = "raw_text"
     RAW_CSV = "raw_csv"
+    SUMMARY_ONLY = "summary_only"
     SANITIZED_TEST_CASES = "sanitized_test_cases"
     SANITIZED_HAR_SESSION = "sanitized_har_session"
 
@@ -222,6 +224,7 @@ class AgreementStatus(StrEnum):
 
 class CombinedSource(StrEnum):
     ARTIFACT = "artifact"
+    COMBINE_CONSTRAINT_MINERS = "combine_constraint_miners"
     COMPUTED_FALLBACK = "computed_fallback"
 
 
@@ -281,6 +284,69 @@ class ConstraintFacets:
     agreement_status: list[ConstraintFacetBucket]
     assertion_available: list[ConstraintFacetBucket]
     metadata: ConstraintQueryMetadata
+
+
+@dataclass(frozen=True, slots=True)
+class CombinationEntry:
+    combination_id: str
+    operation_id: str
+    property_path: str
+    status: str
+    verdict: str | None
+    resolved: bool
+    static_constraint: str | None
+    dynamic_constraint: str | None
+    final_constraint: str | None
+    reason_preview: str | None
+    has_counter_example: bool
+    has_runtime_evaluation: bool
+    validation_case_count: int
+    source_artifact: str
+
+
+@dataclass(frozen=True, slots=True)
+class CombinationDetail(CombinationEntry):
+    reason: str | None
+    counter_example: JsonValue | None
+    runtime_evaluation: JsonValue | None
+    validation_cases: list[JsonValue]
+    raw_record_sanitized: dict[str, JsonValue]
+
+
+@dataclass(frozen=True, slots=True)
+class CombinationSummary:
+    run_name: str
+    source_artifact: str
+    endpoint_count: int
+    property_count: int
+    resolved_count: int
+    unresolved_count: int
+    malformed_count: int
+    status_counts: dict[str, int]
+    verdict_counts: dict[str, int]
+    warnings: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class CombinationEntryPage:
+    items: list[CombinationEntry]
+    pagination: Pagination
+    groups: list[GroupCount]
+    malformed_count: int
+    warnings: list[str]
+
+
+@dataclass(frozen=True, slots=True)
+class CombinationFacets:
+    status: list[ConstraintFacetBucket]
+    verdict: list[ConstraintFacetBucket]
+    resolved: list[ConstraintFacetBucket]
+    operation_id: list[ConstraintFacetBucket]
+    has_counter_example: list[ConstraintFacetBucket]
+    has_runtime_evaluation: list[ConstraintFacetBucket]
+    has_validation_cases: list[ConstraintFacetBucket]
+    malformed_count: int
+    warnings: list[str]
 
 
 @dataclass(frozen=True, slots=True)
@@ -632,6 +698,17 @@ class HarSession:
 
 
 @dataclass(frozen=True, slots=True)
+class ContextualMemoryContextSummary:
+    context_key: str
+    context_kind: str
+    payload_kind: str
+    item_count: int
+    whitelist_count: int
+    blacklist_count: int
+    updated_at: str | None
+
+
+@dataclass(frozen=True, slots=True)
 class ArtifactSummaryContent:
     kind: ArtifactKind
     top_level_keys: list[str] = field(default_factory=list)
@@ -642,6 +719,8 @@ class ArtifactSummaryContent:
     value_type: str | None = None
     session_id: str | None = None
     entry_count: int | None = None
+    context_count: int | None = None
+    contexts: list[ContextualMemoryContextSummary] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
