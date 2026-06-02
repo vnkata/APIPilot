@@ -242,6 +242,26 @@
             "title": "Content Kind",
             "type": "string"
           },
+          "context_count": {
+            "anyOf": [
+              {
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Context Count"
+          },
+          "contexts": {
+            "default": [],
+            "items": {
+              "$ref": "#/components/schemas/ContextualMemoryContextSummaryResponse"
+            },
+            "title": "Contexts",
+            "type": "array"
+          },
           "entry_count": {
             "anyOf": [
               {
@@ -330,9 +350,515 @@
         "title": "ArtifactSummaryContentResponse",
         "type": "object"
       },
+      "CombinationDetailResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "combination_id": {
+            "title": "Combination Id",
+            "type": "string"
+          },
+          "counter_example": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "dynamic_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dynamic Constraint"
+          },
+          "final_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Constraint"
+          },
+          "has_counter_example": {
+            "title": "Has Counter Example",
+            "type": "boolean"
+          },
+          "has_runtime_evaluation": {
+            "title": "Has Runtime Evaluation",
+            "type": "boolean"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "property_path": {
+            "title": "Property Path",
+            "type": "string"
+          },
+          "raw_record_sanitized": {
+            "additionalProperties": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Raw Record Sanitized",
+            "type": "object"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "reason_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Preview"
+          },
+          "relation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relation"
+          },
+          "resolved": {
+            "title": "Resolved",
+            "type": "boolean"
+          },
+          "runtime_evaluation": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "runtime_verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime Verdict"
+          },
+          "source_artifact": {
+            "title": "Source Artifact",
+            "type": "string"
+          },
+          "static_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Static Constraint"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "validation_case_count": {
+            "minimum": 0.0,
+            "title": "Validation Case Count",
+            "type": "integer"
+          },
+          "validation_cases": {
+            "items": {
+              "$ref": "#/components/schemas/JsonValue"
+            },
+            "title": "Validation Cases",
+            "type": "array"
+          }
+        },
+        "required": [
+          "combination_id",
+          "operation_id",
+          "property_path",
+          "status",
+          "resolved",
+          "has_counter_example",
+          "has_runtime_evaluation",
+          "validation_case_count",
+          "source_artifact",
+          "validation_cases",
+          "raw_record_sanitized"
+        ],
+        "title": "CombinationDetailResponse",
+        "type": "object"
+      },
+      "CombinationEntryPageResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "groups": {
+            "items": {
+              "$ref": "#/components/schemas/GroupCountResponse"
+            },
+            "title": "Groups",
+            "type": "array"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CombinationEntryResponse"
+            },
+            "title": "Items",
+            "type": "array"
+          },
+          "malformed_count": {
+            "minimum": 0.0,
+            "title": "Malformed Count",
+            "type": "integer"
+          },
+          "pagination": {
+            "$ref": "#/components/schemas/PaginationMetadata"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_name",
+          "items",
+          "pagination",
+          "groups",
+          "malformed_count",
+          "warnings"
+        ],
+        "title": "CombinationEntryPageResponse",
+        "type": "object"
+      },
+      "CombinationEntryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "combination_id": {
+            "title": "Combination Id",
+            "type": "string"
+          },
+          "dynamic_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Dynamic Constraint"
+          },
+          "final_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Final Constraint"
+          },
+          "has_counter_example": {
+            "title": "Has Counter Example",
+            "type": "boolean"
+          },
+          "has_runtime_evaluation": {
+            "title": "Has Runtime Evaluation",
+            "type": "boolean"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "property_path": {
+            "title": "Property Path",
+            "type": "string"
+          },
+          "reason_preview": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason Preview"
+          },
+          "relation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Relation"
+          },
+          "resolved": {
+            "title": "Resolved",
+            "type": "boolean"
+          },
+          "runtime_verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime Verdict"
+          },
+          "source_artifact": {
+            "title": "Source Artifact",
+            "type": "string"
+          },
+          "static_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Static Constraint"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "validation_case_count": {
+            "minimum": 0.0,
+            "title": "Validation Case Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "combination_id",
+          "operation_id",
+          "property_path",
+          "status",
+          "resolved",
+          "has_counter_example",
+          "has_runtime_evaluation",
+          "validation_case_count",
+          "source_artifact"
+        ],
+        "title": "CombinationEntryResponse",
+        "type": "object"
+      },
+      "CombinationFacetsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "has_counter_example": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Has Counter Example",
+            "type": "array"
+          },
+          "has_runtime_evaluation": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Has Runtime Evaluation",
+            "type": "array"
+          },
+          "has_validation_cases": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Has Validation Cases",
+            "type": "array"
+          },
+          "malformed_count": {
+            "minimum": 0.0,
+            "title": "Malformed Count",
+            "type": "integer"
+          },
+          "operation_id": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Operation Id",
+            "type": "array"
+          },
+          "relation": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Relation",
+            "type": "array"
+          },
+          "resolved": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Resolved",
+            "type": "array"
+          },
+          "runtime_verdict": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Runtime Verdict",
+            "type": "array"
+          },
+          "status": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Status",
+            "type": "array"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "status",
+          "relation",
+          "runtime_verdict",
+          "resolved",
+          "operation_id",
+          "has_counter_example",
+          "has_runtime_evaluation",
+          "has_validation_cases",
+          "malformed_count",
+          "warnings"
+        ],
+        "title": "CombinationFacetsResponse",
+        "type": "object"
+      },
+      "CombinationSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "endpoint_count": {
+            "minimum": 0.0,
+            "title": "Endpoint Count",
+            "type": "integer"
+          },
+          "malformed_count": {
+            "minimum": 0.0,
+            "title": "Malformed Count",
+            "type": "integer"
+          },
+          "property_count": {
+            "minimum": 0.0,
+            "title": "Property Count",
+            "type": "integer"
+          },
+          "relation_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Relation Counts",
+            "type": "object"
+          },
+          "resolved_count": {
+            "minimum": 0.0,
+            "title": "Resolved Count",
+            "type": "integer"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "runtime_verdict_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Runtime Verdict Counts",
+            "type": "object"
+          },
+          "source_artifact": {
+            "title": "Source Artifact",
+            "type": "string"
+          },
+          "status_counts": {
+            "additionalProperties": {
+              "type": "integer"
+            },
+            "title": "Status Counts",
+            "type": "object"
+          },
+          "unresolved_count": {
+            "minimum": 0.0,
+            "title": "Unresolved Count",
+            "type": "integer"
+          },
+          "warnings": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_name",
+          "source_artifact",
+          "endpoint_count",
+          "property_count",
+          "resolved_count",
+          "unresolved_count",
+          "malformed_count",
+          "status_counts",
+          "relation_counts",
+          "runtime_verdict_counts",
+          "warnings"
+        ],
+        "title": "CombinationSummaryResponse",
+        "type": "object"
+      },
       "CombinedSource": {
         "enum": [
           "artifact",
+          "combine_constraint_miners",
           "computed_fallback"
         ],
         "title": "CombinedSource",
@@ -903,6 +1429,59 @@
         "title": "ConstraintSource",
         "type": "string"
       },
+      "ContextualMemoryContextSummaryResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "blacklist_count": {
+            "minimum": 0.0,
+            "title": "Blacklist Count",
+            "type": "integer"
+          },
+          "context_key": {
+            "title": "Context Key",
+            "type": "string"
+          },
+          "context_kind": {
+            "title": "Context Kind",
+            "type": "string"
+          },
+          "item_count": {
+            "minimum": 0.0,
+            "title": "Item Count",
+            "type": "integer"
+          },
+          "payload_kind": {
+            "title": "Payload Kind",
+            "type": "string"
+          },
+          "updated_at": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Updated At"
+          },
+          "whitelist_count": {
+            "minimum": 0.0,
+            "title": "Whitelist Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "context_key",
+          "context_kind",
+          "payload_kind",
+          "item_count",
+          "whitelist_count",
+          "blacklist_count"
+        ],
+        "title": "ContextualMemoryContextSummaryResponse",
+        "type": "object"
+      },
       "CorrelationConfidence": {
         "enum": [
           "exact",
@@ -947,11 +1526,13 @@
         "additionalProperties": false,
         "properties": {
           "constraint_count": {
+            "description": "Count of mapped dynamic constraints derived from raw Daikon invariants.",
             "minimum": 0.0,
             "title": "Constraint Count",
             "type": "integer"
           },
           "constraints": {
+            "description": "Mapped dynamic constraints derived from parsed and classified Daikon invariants.",
             "items": {
               "$ref": "#/components/schemas/ConstraintEntryResponse"
             },
@@ -959,6 +1540,7 @@
             "type": "array"
           },
           "groups": {
+            "description": "Grouped raw invariant records from the dynamic mining artifact.",
             "items": {
               "$ref": "#/components/schemas/InvariantGroupResponse"
             },
@@ -966,11 +1548,13 @@
             "type": "array"
           },
           "invariant_count": {
+            "description": "Count of raw Daikon invariant rows included as dynamic constraint provenance.",
             "minimum": 0.0,
             "title": "Invariant Count",
             "type": "integer"
           },
           "invariants": {
+            "description": "Raw Daikon invariant rows used as provenance for mapped dynamic constraints.",
             "items": {
               "$ref": "#/components/schemas/InvariantRecordResponse"
             },
@@ -991,6 +1575,288 @@
           "invariant_count"
         ],
         "title": "DynamicConstraintsResponse",
+        "type": "object"
+      },
+      "EmbeddingConfigRequest": {
+        "additionalProperties": true,
+        "properties": {
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "model": {
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "provider": {
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "use_half": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Use Half"
+          }
+        },
+        "required": [
+          "provider",
+          "model"
+        ],
+        "title": "EmbeddingConfigRequest",
+        "type": "object"
+      },
+      "ExecutionCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "mode": {
+            "default": "dry_run",
+            "enum": [
+              "dry_run",
+              "live"
+            ],
+            "title": "Mode",
+            "type": "string"
+          },
+          "run_config_id": {
+            "minLength": 1,
+            "title": "Run Config Id",
+            "type": "string"
+          },
+          "spec_id": {
+            "minLength": 1,
+            "title": "Spec Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "spec_id",
+          "run_config_id"
+        ],
+        "title": "ExecutionCreateRequest",
+        "type": "object"
+      },
+      "ExecutionEventListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/ExecutionEventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          }
+        },
+        "required": [
+          "events"
+        ],
+        "title": "ExecutionEventListResponse",
+        "type": "object"
+      },
+      "ExecutionEventResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "event_id": {
+            "title": "Event Id",
+            "type": "string"
+          },
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "execution_id": {
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "metadata": {
+            "additionalProperties": true,
+            "title": "Metadata",
+            "type": "object"
+          },
+          "phase": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Phase"
+          },
+          "sequence": {
+            "minimum": 1.0,
+            "title": "Sequence",
+            "type": "integer"
+          },
+          "status": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Status"
+          }
+        },
+        "required": [
+          "event_id",
+          "execution_id",
+          "sequence",
+          "event_type",
+          "metadata",
+          "created_at"
+        ],
+        "title": "ExecutionEventResponse",
+        "type": "object"
+      },
+      "ExecutionListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "executions": {
+            "items": {
+              "$ref": "#/components/schemas/ExecutionResponse"
+            },
+            "title": "Executions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "executions"
+        ],
+        "title": "ExecutionListResponse",
+        "type": "object"
+      },
+      "ExecutionResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Completed At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "execution_id": {
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "mode": {
+            "title": "Mode",
+            "type": "string"
+          },
+          "run_config_id": {
+            "title": "Run Config Id",
+            "type": "string"
+          },
+          "run_name": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Run Name"
+          },
+          "spec_id": {
+            "title": "Spec Id",
+            "type": "string"
+          },
+          "started_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Started At"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "summary": {
+            "additionalProperties": true,
+            "title": "Summary",
+            "type": "object"
+          }
+        },
+        "required": [
+          "execution_id",
+          "spec_id",
+          "run_config_id",
+          "mode",
+          "status",
+          "summary",
+          "created_at"
+        ],
+        "title": "ExecutionResponse",
+        "type": "object"
+      },
+      "ExecutionRunResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "execution_id": {
+            "title": "Execution Id",
+            "type": "string"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          }
+        },
+        "required": [
+          "execution_id",
+          "run_name"
+        ],
+        "title": "ExecutionRunResponse",
         "type": "object"
       },
       "GraphEdgeDetailResponse": {
@@ -2560,9 +3426,107 @@
         "type": "object"
       },
       "JsonValue": {},
+      "LlmConfigRequest": {
+        "additionalProperties": true,
+        "properties": {
+          "api_key": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/SecretRefRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "api_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Api Version"
+          },
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "endpoint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Endpoint"
+          },
+          "location": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Location"
+          },
+          "model": {
+            "minLength": 1,
+            "title": "Model",
+            "type": "string"
+          },
+          "project": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Project"
+          },
+          "provider": {
+            "minLength": 1,
+            "title": "Provider",
+            "type": "string"
+          },
+          "temperature": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Temperature"
+          }
+        },
+        "required": [
+          "provider",
+          "model"
+        ],
+        "title": "LlmConfigRequest",
+        "type": "object"
+      },
       "MediaType": {
         "enum": [
           "application/json",
+          "application/octet-stream",
           "text/csv",
           "text/plain"
         ],
@@ -2683,6 +3647,7 @@
         "additionalProperties": false,
         "properties": {
           "constraint_count": {
+            "description": "Mapped constraint count for this operation. Dynamic rows are processed constraints, not raw Daikon rows.",
             "minimum": 0.0,
             "title": "Constraint Count",
             "type": "integer"
@@ -2737,6 +3702,7 @@
             "type": "array"
           },
           "invariant_count": {
+            "description": "Raw Daikon invariant row count for this operation. These rows are provenance behind mapped dynamic constraints.",
             "minimum": 0.0,
             "title": "Invariant Count",
             "type": "integer"
@@ -2876,6 +3842,7 @@
         "additionalProperties": false,
         "properties": {
           "constraint_count": {
+            "description": "Mapped constraint count for this operation. Dynamic rows are processed constraints, not raw Daikon rows.",
             "minimum": 0.0,
             "title": "Constraint Count",
             "type": "integer"
@@ -2917,6 +3884,7 @@
             "title": "Http Method"
           },
           "invariant_count": {
+            "description": "Raw Daikon invariant row count for this operation. These rows are provenance behind mapped dynamic constraints.",
             "minimum": 0.0,
             "title": "Invariant Count",
             "type": "integer"
@@ -3302,6 +4270,7 @@
           "raw_json",
           "raw_text",
           "raw_csv",
+          "summary_only",
           "sanitized_test_cases",
           "sanitized_har_session"
         ],
@@ -3407,6 +4376,288 @@
           "runs"
         ],
         "title": "RunCatalogResponse",
+        "type": "object"
+      },
+      "RunConfigListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "run_configs": {
+            "items": {
+              "$ref": "#/components/schemas/RunConfigResponse"
+            },
+            "title": "Run Configs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_configs"
+        ],
+        "title": "RunConfigListResponse",
+        "type": "object"
+      },
+      "RunConfigRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "async_max_concurrent": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Async Max Concurrent"
+          },
+          "async_mode": {
+            "default": false,
+            "title": "Async Mode",
+            "type": "boolean"
+          },
+          "base_url": {
+            "minLength": 1,
+            "title": "Base Url",
+            "type": "string"
+          },
+          "constraint_mining": {
+            "default": false,
+            "title": "Constraint Mining",
+            "type": "boolean"
+          },
+          "embedding": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EmbeddingConfigRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "header_mutation_ratio": {
+            "default": 0.5,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Header Mutation Ratio",
+            "type": "number"
+          },
+          "headers": {
+            "additionalProperties": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "$ref": "#/components/schemas/SecretRefRequest"
+                }
+              ]
+            },
+            "title": "Headers",
+            "type": "object"
+          },
+          "live_api": {
+            "default": false,
+            "title": "Live Api",
+            "type": "boolean"
+          },
+          "llm": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/LlmConfigRequest"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "max_request_workers": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Request Workers"
+          },
+          "mutation_ratio": {
+            "default": 0.0,
+            "maximum": 1.0,
+            "minimum": 0.0,
+            "title": "Mutation Ratio",
+            "type": "number"
+          },
+          "name": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "num_generations": {
+            "default": 1,
+            "minimum": 1.0,
+            "title": "Num Generations",
+            "type": "integer"
+          },
+          "num_test_cases": {
+            "default": 20,
+            "minimum": 1.0,
+            "title": "Num Test Cases",
+            "type": "integer"
+          },
+          "request_budget": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Budget"
+          },
+          "spec_id": {
+            "minLength": 1,
+            "title": "Spec Id",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Seconds"
+          }
+        },
+        "required": [
+          "name",
+          "spec_id",
+          "base_url"
+        ],
+        "title": "RunConfigRequest",
+        "type": "object"
+      },
+      "RunConfigResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "base_url": {
+            "title": "Base Url",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "embedding": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Embedding"
+          },
+          "headers": {
+            "additionalProperties": true,
+            "title": "Headers",
+            "type": "object"
+          },
+          "live_api": {
+            "title": "Live Api",
+            "type": "boolean"
+          },
+          "llm": {
+            "anyOf": [
+              {
+                "additionalProperties": true,
+                "type": "object"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Llm"
+          },
+          "name": {
+            "title": "Name",
+            "type": "string"
+          },
+          "request_budget": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Request Budget"
+          },
+          "run_config_id": {
+            "title": "Run Config Id",
+            "type": "string"
+          },
+          "spec_id": {
+            "title": "Spec Id",
+            "type": "string"
+          },
+          "timeout_seconds": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Timeout Seconds"
+          }
+        },
+        "required": [
+          "run_config_id",
+          "name",
+          "spec_id",
+          "base_url",
+          "live_api",
+          "created_at",
+          "headers"
+        ],
+        "title": "RunConfigResponse",
+        "type": "object"
+      },
+      "RunConfigValidationResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "errors": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "valid": {
+            "title": "Valid",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "valid",
+          "errors"
+        ],
+        "title": "RunConfigValidationResponse",
         "type": "object"
       },
       "RunMetadataResponse": {
@@ -3799,6 +5050,27 @@
         "title": "SanitizedTestCasesContentResponse",
         "type": "object"
       },
+      "SecretRefRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "minLength": 1,
+            "title": "Name",
+            "type": "string"
+          },
+          "type": {
+            "const": "env",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "name"
+        ],
+        "title": "SecretRefRequest",
+        "type": "object"
+      },
       "SortOrder": {
         "enum": [
           "asc",
@@ -3806,6 +5078,199 @@
         ],
         "title": "SortOrder",
         "type": "string"
+      },
+      "SpecCreateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "minLength": 1,
+            "title": "Content",
+            "type": "string"
+          },
+          "filename": {
+            "maxLength": 255,
+            "minLength": 1,
+            "title": "Filename",
+            "type": "string"
+          },
+          "title": {
+            "anyOf": [
+              {
+                "maxLength": 255,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Title"
+          }
+        },
+        "required": [
+          "filename",
+          "content"
+        ],
+        "title": "SpecCreateRequest",
+        "type": "object"
+      },
+      "SpecListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "specs": {
+            "items": {
+              "$ref": "#/components/schemas/SpecMetadataResponse"
+            },
+            "title": "Specs",
+            "type": "array"
+          }
+        },
+        "required": [
+          "specs"
+        ],
+        "title": "SpecListResponse",
+        "type": "object"
+      },
+      "SpecMetadataResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "content": {
+            "title": "Content",
+            "type": "null"
+          },
+          "content_hash": {
+            "title": "Content Hash",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "filename": {
+            "title": "Filename",
+            "type": "string"
+          },
+          "operation_count": {
+            "minimum": 0.0,
+            "title": "Operation Count",
+            "type": "integer"
+          },
+          "spec_id": {
+            "title": "Spec Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          }
+        },
+        "required": [
+          "spec_id",
+          "filename",
+          "title",
+          "content_hash",
+          "operation_count",
+          "created_at"
+        ],
+        "title": "SpecMetadataResponse",
+        "type": "object"
+      },
+      "SpecOperationResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "display_operation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Display Operation Id"
+          },
+          "has_request_body": {
+            "title": "Has Request Body",
+            "type": "boolean"
+          },
+          "method": {
+            "title": "Method",
+            "type": "string"
+          },
+          "operation_id": {
+            "title": "Operation Id",
+            "type": "string"
+          },
+          "path": {
+            "title": "Path",
+            "type": "string"
+          },
+          "response_statuses": {
+            "items": {
+              "type": "string"
+            },
+            "title": "Response Statuses",
+            "type": "array"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          }
+        },
+        "required": [
+          "operation_id",
+          "method",
+          "path",
+          "has_request_body",
+          "response_statuses"
+        ],
+        "title": "SpecOperationResponse",
+        "type": "object"
+      },
+      "SpecOperationsResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "operations": {
+            "items": {
+              "$ref": "#/components/schemas/SpecOperationResponse"
+            },
+            "title": "Operations",
+            "type": "array"
+          },
+          "spec_id": {
+            "title": "Spec Id",
+            "type": "string"
+          },
+          "title": {
+            "title": "Title",
+            "type": "string"
+          },
+          "version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Version"
+          }
+        },
+        "required": [
+          "spec_id",
+          "title",
+          "operations"
+        ],
+        "title": "SpecOperationsResponse",
+        "type": "object"
       },
       "StaticConstraintsResponse": {
         "additionalProperties": false,
@@ -4011,12 +5476,394 @@
     }
   },
   "info": {
-    "description": "Read-only HTTP API for APIPilot local cache artifacts.",
+    "description": "HTTP API for APIPilot local cache artifacts and local write-flow orchestration.",
     "title": "APIPilot Artifact Backend",
     "version": "0.1.0"
   },
   "openapi": "3.1.0",
   "paths": {
+    "/api/v1/executions": {
+      "get": {
+        "operationId": "list_executions_api_v1_executions_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Executions",
+        "tags": [
+          "executions"
+        ]
+      },
+      "post": {
+        "operationId": "create_execution_api_v1_executions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecutionCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "202": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Execution",
+        "tags": [
+          "executions"
+        ]
+      }
+    },
+    "/api/v1/executions/{execution_id}": {
+      "get": {
+        "operationId": "get_execution_api_v1_executions__execution_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "title": "Execution Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Execution",
+        "tags": [
+          "executions"
+        ]
+      }
+    },
+    "/api/v1/executions/{execution_id}/cancel": {
+      "post": {
+        "operationId": "cancel_execution_api_v1_executions__execution_id__cancel_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "title": "Execution Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Cancel Execution",
+        "tags": [
+          "executions"
+        ]
+      }
+    },
+    "/api/v1/executions/{execution_id}/events": {
+      "get": {
+        "operationId": "list_execution_events_api_v1_executions__execution_id__events_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "title": "Execution Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "after_sequence",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "After Sequence",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionEventListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Execution Events",
+        "tags": [
+          "executions"
+        ]
+      }
+    },
+    "/api/v1/executions/{execution_id}/run": {
+      "get": {
+        "operationId": "get_execution_run_api_v1_executions__execution_id__run_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "execution_id",
+            "required": true,
+            "schema": {
+              "title": "Execution Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExecutionRunResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Execution Run",
+        "tags": [
+          "executions"
+        ]
+      }
+    },
+    "/api/v1/run-configs": {
+      "get": {
+        "operationId": "list_run_configs_api_v1_run_configs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunConfigListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Run Configs",
+        "tags": [
+          "run-configs"
+        ]
+      },
+      "post": {
+        "operationId": "create_run_config_api_v1_run_configs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunConfigResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Run Config",
+        "tags": [
+          "run-configs"
+        ]
+      }
+    },
+    "/api/v1/run-configs/validate": {
+      "post": {
+        "operationId": "validate_run_config_api_v1_run_configs_validate_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RunConfigRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunConfigValidationResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Validate Run Config",
+        "tags": [
+          "run-configs"
+        ]
+      }
+    },
+    "/api/v1/run-configs/{run_config_id}": {
+      "get": {
+        "operationId": "get_run_config_api_v1_run_configs__run_config_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_config_id",
+            "required": true,
+            "schema": {
+              "title": "Run Config Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RunConfigResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Run Config",
+        "tags": [
+          "run-configs"
+        ]
+      }
+    },
     "/api/v1/runs": {
       "get": {
         "operationId": "list_runs_api_v1_runs_get",
@@ -4183,8 +6030,650 @@
         ]
       }
     },
+    "/api/v1/runs/{run_name}/constraints/combination/entries": {
+      "get": {
+        "operationId": "list_combination_entries_api_v1_runs__run_name__constraints_combination_entries_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by exact property_path.",
+            "in": "query",
+            "name": "property_path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exact property_path.",
+              "title": "Property Path"
+            }
+          },
+          {
+            "description": "Filter by property_path prefix.",
+            "in": "query",
+            "name": "property_prefix",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by property_path prefix.",
+              "title": "Property Prefix"
+            }
+          },
+          {
+            "description": "Filter by combination status.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by combination status.",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Filter by LLM set-relation classification.",
+            "in": "query",
+            "name": "relation",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by LLM set-relation classification.",
+              "title": "Relation"
+            }
+          },
+          {
+            "description": "Filter by runtime support verdict.",
+            "in": "query",
+            "name": "runtime_verdict",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by runtime support verdict.",
+              "title": "Runtime Verdict"
+            }
+          },
+          {
+            "description": "Filter by final_constraint presence.",
+            "in": "query",
+            "name": "resolved",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by final_constraint presence.",
+              "title": "Resolved"
+            }
+          },
+          {
+            "description": "Filter by counter-example availability.",
+            "in": "query",
+            "name": "has_counter_example",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by counter-example availability.",
+              "title": "Has Counter Example"
+            }
+          },
+          {
+            "description": "Filter by runtime evaluation availability.",
+            "in": "query",
+            "name": "has_runtime_evaluation",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by runtime evaluation availability.",
+              "title": "Has Runtime Evaluation"
+            }
+          },
+          {
+            "description": "Filter by validation case availability.",
+            "in": "query",
+            "name": "has_validation_cases",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by validation case availability.",
+              "title": "Has Validation Cases"
+            }
+          },
+          {
+            "description": "Search combination fields.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search combination fields.",
+              "title": "Q"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count.",
+            "in": "query",
+            "name": "sort_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count.",
+              "title": "Sort By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sort_order",
+            "required": false,
+            "schema": {
+              "$ref": "#/components/schemas/SortOrder",
+              "default": "asc"
+            }
+          },
+          {
+            "description": "Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases.",
+            "in": "query",
+            "name": "group_by",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases.",
+              "title": "Group By"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 50,
+              "maximum": 200,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          },
+          {
+            "in": "query",
+            "name": "offset",
+            "required": false,
+            "schema": {
+              "default": 0,
+              "minimum": 0,
+              "title": "Offset",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationEntryPageResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "List Combination Entries",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/entries/{combination_id}": {
+      "get": {
+        "operationId": "get_combination_entry_api_v1_runs__run_name__constraints_combination_entries__combination_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "combination_id",
+            "required": true,
+            "schema": {
+              "title": "Combination Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationDetailResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Combination Entry",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/facets": {
+      "get": {
+        "operationId": "get_combination_facets_api_v1_runs__run_name__constraints_combination_facets_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "description": "Filter by operation_id.",
+            "in": "query",
+            "name": "operation_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by operation_id.",
+              "title": "Operation Id"
+            }
+          },
+          {
+            "description": "Filter by exact property_path.",
+            "in": "query",
+            "name": "property_path",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by exact property_path.",
+              "title": "Property Path"
+            }
+          },
+          {
+            "description": "Filter by property_path prefix.",
+            "in": "query",
+            "name": "property_prefix",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by property_path prefix.",
+              "title": "Property Prefix"
+            }
+          },
+          {
+            "description": "Filter by combination status.",
+            "in": "query",
+            "name": "status",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by combination status.",
+              "title": "Status"
+            }
+          },
+          {
+            "description": "Filter by LLM set-relation classification.",
+            "in": "query",
+            "name": "relation",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by LLM set-relation classification.",
+              "title": "Relation"
+            }
+          },
+          {
+            "description": "Filter by runtime support verdict.",
+            "in": "query",
+            "name": "runtime_verdict",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by runtime support verdict.",
+              "title": "Runtime Verdict"
+            }
+          },
+          {
+            "description": "Filter by final_constraint presence.",
+            "in": "query",
+            "name": "resolved",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by final_constraint presence.",
+              "title": "Resolved"
+            }
+          },
+          {
+            "description": "Filter by counter-example availability.",
+            "in": "query",
+            "name": "has_counter_example",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by counter-example availability.",
+              "title": "Has Counter Example"
+            }
+          },
+          {
+            "description": "Filter by runtime evaluation availability.",
+            "in": "query",
+            "name": "has_runtime_evaluation",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by runtime evaluation availability.",
+              "title": "Has Runtime Evaluation"
+            }
+          },
+          {
+            "description": "Filter by validation case availability.",
+            "in": "query",
+            "name": "has_validation_cases",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by validation case availability.",
+              "title": "Has Validation Cases"
+            }
+          },
+          {
+            "description": "Search combination fields before calculating facets.",
+            "in": "query",
+            "name": "q",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Search combination fields before calculating facets.",
+              "title": "Q"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationFacetsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Combination Facets",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/summary": {
+      "get": {
+        "operationId": "get_combination_summary_api_v1_runs__run_name__constraints_combination_summary_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationSummaryResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Combination Summary",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
     "/api/v1/runs/{run_name}/constraints/dynamic": {
       "get": {
+        "description": "Return mapped dynamic constraints derived from Daikon invariants, plus raw invariant rows used as provenance. The raw invariant rows are not a separate independent constraint source.",
         "operationId": "get_dynamic_constraints_api_v1_runs__run_name__constraints_dynamic_get",
         "parameters": [
           {
@@ -4219,7 +6708,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "Get Dynamic Constraints",
+        "summary": "Get mapped dynamic constraints",
         "tags": [
           "constraints"
         ]
@@ -4393,6 +6882,7 @@
     },
     "/api/v1/runs/{run_name}/constraints/dynamic/invariants": {
       "get": {
+        "description": "Legacy/debug view over raw Daikon invariant rows. Prefer /constraints/invariants for the typed Raw Invariant explorer.",
         "operationId": "list_dynamic_invariants_api_v1_runs__run_name__constraints_dynamic_invariants_get",
         "parameters": [
           {
@@ -4551,7 +7041,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List Dynamic Invariants",
+        "summary": "List legacy raw dynamic invariant rows",
         "tags": [
           "constraints"
         ]
@@ -5124,6 +7614,7 @@
     },
     "/api/v1/runs/{run_name}/constraints/invariants": {
       "get": {
+        "description": "List raw Daikon invariant rows from invariants.csv. These rows are runtime provenance behind mapped dynamic constraints.",
         "operationId": "list_invariant_explorer_entries_api_v1_runs__run_name__constraints_invariants_get",
         "parameters": [
           {
@@ -5388,7 +7879,7 @@
             "description": "Validation Error"
           }
         },
-        "summary": "List Invariant Explorer Entries",
+        "summary": "List raw invariant evidence",
         "tags": [
           "constraints"
         ]
@@ -7077,7 +9568,7 @@
             }
           },
           {
-            "description": "Filter by constraint availability.",
+            "description": "Filter by mapped constraint availability.",
             "in": "query",
             "name": "has_constraints",
             "required": false,
@@ -7090,12 +9581,12 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by constraint availability.",
+              "description": "Filter by mapped constraint availability.",
               "title": "Has Constraints"
             }
           },
           {
-            "description": "Filter by invariant availability.",
+            "description": "Filter by raw invariant row availability.",
             "in": "query",
             "name": "has_invariants",
             "required": false,
@@ -7108,7 +9599,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by invariant availability.",
+              "description": "Filter by raw invariant row availability.",
               "title": "Has Invariants"
             }
           },
@@ -7167,7 +9658,7 @@
             }
           },
           {
-            "description": "Allowed values: operation_key, operation_id, http_method, path_template, constraint_count, invariant_count, graph_in_degree, graph_out_degree, test_case_count.",
+            "description": "Allowed values: operation_key, operation_id, http_method, path_template, constraint_count, invariant_count, graph_in_degree, graph_out_degree, test_case_count. invariant_count sorts by raw Daikon invariant row count.",
             "in": "query",
             "name": "sort_by",
             "required": false,
@@ -7180,7 +9671,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Allowed values: operation_key, operation_id, http_method, path_template, constraint_count, invariant_count, graph_in_degree, graph_out_degree, test_case_count.",
+              "description": "Allowed values: operation_key, operation_id, http_method, path_template, constraint_count, invariant_count, graph_in_degree, graph_out_degree, test_case_count. invariant_count sorts by raw Daikon invariant row count.",
               "title": "Sort By"
             }
           },
@@ -7194,7 +9685,7 @@
             }
           },
           {
-            "description": "Allowed values: http_method, has_request_body, has_constraints, has_invariants, has_graph_edges, has_failures.",
+            "description": "Allowed values: http_method, has_request_body, has_constraints, has_invariants, has_graph_edges, has_failures. has_invariants groups raw invariant row availability.",
             "in": "query",
             "name": "group_by",
             "required": false,
@@ -7207,7 +9698,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Allowed values: http_method, has_request_body, has_constraints, has_invariants, has_graph_edges, has_failures.",
+              "description": "Allowed values: http_method, has_request_body, has_constraints, has_invariants, has_graph_edges, has_failures. has_invariants groups raw invariant row availability.",
               "title": "Group By"
             }
           },
@@ -7400,7 +9891,7 @@
             }
           },
           {
-            "description": "Filter by constraint availability.",
+            "description": "Filter by mapped constraint availability.",
             "in": "query",
             "name": "has_constraints",
             "required": false,
@@ -7413,12 +9904,12 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by constraint availability.",
+              "description": "Filter by mapped constraint availability.",
               "title": "Has Constraints"
             }
           },
           {
-            "description": "Filter by invariant availability.",
+            "description": "Filter by raw invariant row availability.",
             "in": "query",
             "name": "has_invariants",
             "required": false,
@@ -7431,7 +9922,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Filter by invariant availability.",
+              "description": "Filter by raw invariant row availability.",
               "title": "Has Invariants"
             }
           },
@@ -7877,6 +10368,150 @@
         ]
       }
     },
+    "/api/v1/specs": {
+      "get": {
+        "operationId": "list_specs_api_v1_specs_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "List Specs",
+        "tags": [
+          "specs"
+        ]
+      },
+      "post": {
+        "operationId": "create_spec_api_v1_specs_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SpecCreateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecMetadataResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Create Spec",
+        "tags": [
+          "specs"
+        ]
+      }
+    },
+    "/api/v1/specs/{spec_id}": {
+      "get": {
+        "operationId": "get_spec_api_v1_specs__spec_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "spec_id",
+            "required": true,
+            "schema": {
+              "title": "Spec Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecMetadataResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Spec",
+        "tags": [
+          "specs"
+        ]
+      }
+    },
+    "/api/v1/specs/{spec_id}/operations": {
+      "get": {
+        "operationId": "preview_spec_operations_api_v1_specs__spec_id__operations_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "spec_id",
+            "required": true,
+            "schema": {
+              "title": "Spec Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SpecOperationsResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Preview Spec Operations",
+        "tags": [
+          "specs"
+        ]
+      }
+    },
     "/health": {
       "get": {
         "operationId": "health_health_get",
@@ -7935,6 +10570,18 @@
     {
       "description": "HAR session summaries and sanitized execution history entries.",
       "name": "history"
+    },
+    {
+      "description": "Uploaded OpenAPI specifications and operation previews.",
+      "name": "specs"
+    },
+    {
+      "description": "Validated APIPilot run configurations with redacted secrets.",
+      "name": "run-configs"
+    },
+    {
+      "description": "Write-flow execution lifecycle, events, and run mapping.",
+      "name": "executions"
     }
   ]
 }

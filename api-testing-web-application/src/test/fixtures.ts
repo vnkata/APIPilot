@@ -550,15 +550,16 @@ export const combinationEntries: CombinationEntryPageResponse = {
       operation_id: 'get-/items',
       property_path: 'input.limit',
       reason_preview: 'Static and dynamic evidence agree.',
+      relation: 'EQUIVALENT',
       resolved: true,
       source_artifact: 'combine_constraint_miners',
       static_constraint: 'input.limit >= 1',
-      status: 'COMBINED_EQUIVALENT',
+      status: 'RESOLVED',
       validation_case_count: 1,
-      verdict: 'BOTH_TRUE',
+      runtime_verdict: 'BOTH_TRUE',
     },
   ],
-  groups: [{ key: 'COMBINED_EQUIVALENT', count: 1 }],
+  groups: [{ key: 'EQUIVALENT', count: 1 }],
   malformed_count: 0,
   pagination: { limit: 25, offset: 0, total: 1 },
   warnings: [],
@@ -570,11 +571,12 @@ export const combinationDetail: CombinationDetailResponse = {
   raw_record_sanitized: {
     counter_example: { authorization: '<REDACTED>' },
     final_constraint: 'input.limit >= 1',
+    relation: 'EQUIVALENT',
     secret: '<REDACTED>',
-    status: 'COMBINED_EQUIVALENT',
+    status: 'RESOLVED',
   },
   reason: 'Static and dynamic evidence agree across validation cases.',
-  runtime_evaluation: { passed: true, verdict: 'BOTH_TRUE' },
+  runtime_evaluation: { passed: true, runtime_verdict: 'BOTH_TRUE' },
   validation_cases: [{ case_id: 'case-1', observed: true }],
 }
 
@@ -584,9 +586,10 @@ export const combinationFacets: CombinationFacetsResponse = {
   has_validation_cases: [{ key: 'true', count: 1 }],
   malformed_count: 0,
   operation_id: [{ key: 'get-/items', count: 1 }],
+  relation: [{ key: 'EQUIVALENT', count: 1 }],
   resolved: [{ key: 'true', count: 1 }],
-  status: [{ key: 'COMBINED_EQUIVALENT', count: 1 }],
-  verdict: [{ key: 'BOTH_TRUE', count: 1 }],
+  status: [{ key: 'RESOLVED', count: 1 }],
+  runtime_verdict: [{ key: 'BOTH_TRUE', count: 1 }],
   warnings: [],
 }
 
@@ -597,9 +600,10 @@ export const combinationSummary: CombinationSummaryResponse = {
   resolved_count: 1,
   run_name: 'Run A',
   source_artifact: 'combine_constraint_miners',
-  status_counts: { COMBINED_EQUIVALENT: 1 },
+  relation_counts: { EQUIVALENT: 1 },
+  status_counts: { RESOLVED: 1 },
   unresolved_count: 0,
-  verdict_counts: { BOTH_TRUE: 1 },
+  runtime_verdict_counts: { BOTH_TRUE: 1 },
   warnings: [],
 }
 
@@ -759,7 +763,9 @@ export const combineArtifactContent: ArtifactContentResponse = {
       'get-/items': {
         'input.limit': {
           final_constraint: 'input.limit >= 1',
-          status: 'COMBINED_EQUIVALENT',
+          relation: 'EQUIVALENT',
+          runtime_verdict: null,
+          status: 'RESOLVED',
         },
       },
     },

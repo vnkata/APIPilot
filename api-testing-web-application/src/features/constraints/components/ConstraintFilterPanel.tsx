@@ -251,10 +251,16 @@ export function ConstraintFilterPanel({
                   selectedValue={search.status}
                 />
                 <FacetPreviewGroup
-                  buckets={combinationFacets?.verdict}
-                  label="Verdict"
-                  onSelect={(value) => replaceSearchParams({ offset: 0, verdict: value })}
-                  selectedValue={search.verdict}
+                  buckets={combinationFacets?.relation}
+                  label="Relation"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, relation: value })}
+                  selectedValue={search.relation}
+                />
+                <FacetPreviewGroup
+                  buckets={combinationFacets?.runtime_verdict}
+                  label="Runtime verdict"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, runtimeVerdict: value })}
+                  selectedValue={search.runtimeVerdict}
                 />
               </>
             ) : null}

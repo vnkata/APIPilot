@@ -25,9 +25,13 @@ property_prefix?: string | null;
  */
 status?: string | null;
 /**
- * Filter by runtime verdict.
+ * Filter by LLM set-relation classification.
  */
-verdict?: string | null;
+relation?: string | null;
+/**
+ * Filter by runtime support verdict.
+ */
+runtime_verdict?: string | null;
 /**
  * Filter by final_constraint presence.
  */
@@ -49,12 +53,12 @@ has_validation_cases?: boolean | null;
  */
 q?: string | null;
 /**
- * Allowed values: operation_id, property_path, status, verdict, resolved, validation_case_count.
+ * Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count.
  */
 sort_by?: string | null;
 sort_order?: SortOrder;
 /**
- * Allowed values: operation_id, status, verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases.
+ * Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases.
  */
 group_by?: string | null;
 /**

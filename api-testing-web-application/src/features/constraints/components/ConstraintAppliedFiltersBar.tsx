@@ -32,12 +32,13 @@ const clearableKeys: Array<keyof ConstraintsPageSearch> = [
   'propertyPath',
   'propertyPrefix',
   'q',
+  'relation',
   'resolved',
   'section',
   'source',
   'sourceType',
   'status',
-  'verdict',
+  'runtimeVerdict',
 ]
 
 function readableValue(value: boolean | number | string | undefined) {
@@ -56,7 +57,8 @@ function activeFilters(search: ConstraintsPageSearch): AppliedFilter[] {
     { key: 'agreementStatus', label: 'Agreement', value: search.agreementStatus },
     { key: 'assertionAvailable', label: 'Assertion', value: search.assertionAvailable },
     { key: 'status', label: 'Status', value: search.status },
-    { key: 'verdict', label: 'Verdict', value: search.verdict },
+    { key: 'relation', label: 'Relation', value: search.relation },
+    { key: 'runtimeVerdict', label: 'Runtime verdict', value: search.runtimeVerdict },
     { key: 'resolved', label: 'Resolved', value: search.resolved },
     { key: 'hasCounterExample', label: 'Counter-example', value: search.hasCounterExample },
     { key: 'hasRuntimeEvaluation', label: 'Runtime evidence', value: search.hasRuntimeEvaluation },

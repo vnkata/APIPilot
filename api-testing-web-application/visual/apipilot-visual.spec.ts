@@ -1,6 +1,37 @@
 import { expect, test } from '@playwright/test'
 
 const runPath = (runName: string) => `/runs/${encodeURIComponent(runName)}`
+const completedProductTourState = {
+  dismissedPromptByTourId: {
+    'app-shell': 2,
+    artifacts: 2,
+    'builder-execution-detail': 2,
+    'builder-executions': 2,
+    'builder-run-config': 2,
+    'builder-specs': 2,
+    compare: 2,
+    'constraints-explorer': 2,
+    'constraints-fundamentals': 2,
+    'constraints-workbench': 2,
+    graph: 2,
+    history: 2,
+    onboarding: 1,
+    operations: 2,
+    overview: 2,
+    reports: 2,
+    runs: 2,
+    'test-cases': 2,
+    workspace: 2,
+  },
+  progressByTourId: {},
+  role: 'qa-qc',
+}
+
+test.beforeEach(async ({ page }) => {
+  await page.addInitScript((state) => {
+    window.localStorage.setItem('apipilot.productTour.v1', JSON.stringify(state))
+  }, completedProductTourState)
+})
 
 test.describe('desktop visual smoke', () => {
   test.use({ viewport: { width: 1440, height: 1000 } })

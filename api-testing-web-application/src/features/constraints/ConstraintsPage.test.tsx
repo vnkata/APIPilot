@@ -128,21 +128,24 @@ describe('ConstraintsPage', () => {
           hasRuntimeEvaluation: true,
           limit: 25,
           offset: 0,
+          relation: 'EQUIVALENT',
           resolved: true,
-          status: 'COMBINED_EQUIVALENT',
-          verdict: 'BOTH_TRUE',
+          runtimeVerdict: 'BOTH_TRUE',
+          status: 'RESOLVED',
         }}
       />,
     )
 
     expect(await screen.findByRole('grid', { name: /combination constraint entries/i })).toBeInTheDocument()
-    expect(requestedUrl?.searchParams.get('status')).toBe('COMBINED_EQUIVALENT')
+    expect(requestedUrl?.searchParams.get('relation')).toBe('EQUIVALENT')
+    expect(requestedUrl?.searchParams.get('status')).toBe('RESOLVED')
+    expect(requestedUrl?.searchParams.get('runtime_verdict')).toBe('BOTH_TRUE')
     expect(requestedUrl?.searchParams.get('resolved')).toBe('true')
     expect(requestedUrl?.searchParams.get('has_runtime_evaluation')).toBe('true')
     expect(screen.getByRole('button', { name: /^combination$/i })).toHaveAttribute('aria-pressed', 'true')
     expect(await screen.findByRole('complementary', { name: /combination detail/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /constraint resolution/i })).toBeInTheDocument()
-    expect(screen.getAllByText(/COMBINED_EQUIVALENT/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/EQUIVALENT/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/Static and dynamic evidence agree/i)).toBeInTheDocument()
   })
 

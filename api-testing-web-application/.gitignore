@@ -8,8 +8,13 @@ pnpm-debug.log*
 lerna-debug.log*
 
 node_modules
+coverage
 dist
 dist-ssr
+playwright-report
+storybook-static
+test-results
+public/mockServiceWorker.js
 *.local
 
 # Editor directories and files

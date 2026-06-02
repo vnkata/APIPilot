@@ -10,12 +10,21 @@ import type { InvariantGroupResponse } from './invariantGroupResponse';
 import type { InvariantRecordResponse } from './invariantRecordResponse';
 
 export interface DynamicConstraintsResponse {
-  /** @minimum 0 */
+  /**
+     * Count of mapped dynamic constraints derived from raw Daikon invariants.
+     * @minimum 0
+     */
   constraint_count: number;
+  /** Mapped dynamic constraints derived from parsed and classified Daikon invariants. */
   constraints: ConstraintEntryResponse[];
+  /** Grouped raw invariant records from the dynamic mining artifact. */
   groups: InvariantGroupResponse[];
-  /** @minimum 0 */
+  /**
+     * Count of raw Daikon invariant rows included as dynamic constraint provenance.
+     * @minimum 0
+     */
   invariant_count: number;
+  /** Raw Daikon invariant rows used as provenance for mapped dynamic constraints. */
   invariants: InvariantRecordResponse[];
   run_name: string;
 }

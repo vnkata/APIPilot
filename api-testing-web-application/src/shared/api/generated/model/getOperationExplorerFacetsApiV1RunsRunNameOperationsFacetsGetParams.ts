@@ -24,11 +24,11 @@ response_status?: string | null;
  */
 has_request_body?: boolean | null;
 /**
- * Filter by constraint availability.
+ * Filter by mapped constraint availability.
  */
 has_constraints?: boolean | null;
 /**
- * Filter by invariant availability.
+ * Filter by raw invariant row availability.
  */
 has_invariants?: boolean | null;
 /**

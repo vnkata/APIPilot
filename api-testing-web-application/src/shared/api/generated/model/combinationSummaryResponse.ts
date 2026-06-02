@@ -5,8 +5,9 @@
  * HTTP API for APIPilot local cache artifacts and local write-flow orchestration.
  * OpenAPI spec version: 0.1.0
  */
+import type { CombinationSummaryResponseRelationCounts } from './combinationSummaryResponseRelationCounts';
+import type { CombinationSummaryResponseRuntimeVerdictCounts } from './combinationSummaryResponseRuntimeVerdictCounts';
 import type { CombinationSummaryResponseStatusCounts } from './combinationSummaryResponseStatusCounts';
-import type { CombinationSummaryResponseVerdictCounts } from './combinationSummaryResponseVerdictCounts';
 
 export interface CombinationSummaryResponse {
   /** @minimum 0 */
@@ -15,13 +16,14 @@ export interface CombinationSummaryResponse {
   malformed_count: number;
   /** @minimum 0 */
   property_count: number;
+  relation_counts: CombinationSummaryResponseRelationCounts;
   /** @minimum 0 */
   resolved_count: number;
   run_name: string;
+  runtime_verdict_counts: CombinationSummaryResponseRuntimeVerdictCounts;
   source_artifact: string;
   status_counts: CombinationSummaryResponseStatusCounts;
   /** @minimum 0 */
   unresolved_count: number;
-  verdict_counts: CombinationSummaryResponseVerdictCounts;
   warnings: string[];
 }

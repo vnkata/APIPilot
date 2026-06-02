@@ -108,17 +108,19 @@ describe('route search params', () => {
         combinationId: 'cmb-limit',
         constraintTab: 'combination',
         hasRuntimeEvaluation: 'true',
+        relation: 'EQUIVALENT',
         resolved: 'true',
-        status: 'COMBINED_EQUIVALENT',
-        verdict: 'BOTH_TRUE',
+        runtimeVerdict: 'BOTH_TRUE',
+        status: 'RESOLVED',
       }),
     ).toMatchObject({
       combinationId: 'cmb-limit',
       constraintTab: 'combination',
       hasRuntimeEvaluation: true,
+      relation: 'EQUIVALENT',
       resolved: true,
-      status: 'COMBINED_EQUIVALENT',
-      verdict: 'BOTH_TRUE',
+      runtimeVerdict: 'BOTH_TRUE',
+      status: 'RESOLVED',
     })
   })
 

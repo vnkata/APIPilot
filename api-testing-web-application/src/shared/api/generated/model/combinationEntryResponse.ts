@@ -15,11 +15,12 @@ export interface CombinationEntryResponse {
   operation_id: string;
   property_path: string;
   reason_preview?: string | null;
+  relation?: string | null;
   resolved: boolean;
+  runtime_verdict?: string | null;
   source_artifact: string;
   static_constraint?: string | null;
   status: string;
   /** @minimum 0 */
   validation_case_count: number;
-  verdict?: string | null;
 }

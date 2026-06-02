@@ -43,6 +43,7 @@ export type ConstraintExplorerFilters = {
   propertyPath?: string
   propertyPrefix?: string
   q?: string
+  relation?: string
   resolved?: boolean
   section?: string
   sortBy?: string
@@ -50,7 +51,7 @@ export type ConstraintExplorerFilters = {
   source?: string
   sourceType?: string
   status?: string
-  verdict?: string
+  runtimeVerdict?: string
 }
 
 export function toConstraintExplorerParams(
@@ -144,10 +145,11 @@ export function toCombinationParams(
     property_prefix: filters.propertyPrefix,
     q: filters.q,
     resolved: filters.resolved,
+    relation: filters.relation,
+    runtime_verdict: filters.runtimeVerdict,
     sort_by: filters.sortBy,
     sort_order: filters.sortOrder,
     status: filters.status,
-    verdict: filters.verdict,
   }
 }
 
@@ -163,8 +165,9 @@ export function toCombinationFacetParams(
     property_prefix: filters.propertyPrefix,
     q: filters.q,
     resolved: filters.resolved,
+    relation: filters.relation,
+    runtime_verdict: filters.runtimeVerdict,
     status: filters.status,
-    verdict: filters.verdict,
   }
 }
 

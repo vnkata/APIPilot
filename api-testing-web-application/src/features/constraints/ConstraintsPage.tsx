@@ -78,6 +78,7 @@ export type ConstraintsPageSearch = {
   propertyPath?: string
   propertyPrefix?: string
   q?: string
+  relation?: string
   resolved?: boolean
   section?: string
   sortBy?: string
@@ -85,7 +86,7 @@ export type ConstraintsPageSearch = {
   source?: string
   sourceType?: string
   status?: string
-  verdict?: string
+  runtimeVerdict?: string
 }
 
 type ConstraintsPageProps = {
@@ -208,8 +209,9 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
           </Button>
         ),
       },
-      { field: 'status', headerName: 'Status', minWidth: 180 },
-      { field: 'verdict', headerName: 'Verdict', minWidth: 160 },
+      { field: 'relation', headerName: 'Relation', minWidth: 180 },
+      { field: 'status', headerName: 'Status', minWidth: 160 },
+      { field: 'runtime_verdict', headerName: 'Runtime verdict', minWidth: 180 },
       {
         field: 'resolved',
         headerName: 'Resolved',
@@ -342,7 +344,8 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     if (search.groupBy === 'constraint_kind') replaceSearchParams({ constraintKind: key, offset: 0 })
     if (search.groupBy === 'agreement_status') replaceSearchParams({ agreementStatus: key, offset: 0 })
     if (search.groupBy === 'status') replaceSearchParams({ offset: 0, status: key })
-    if (search.groupBy === 'verdict') replaceSearchParams({ offset: 0, verdict: key })
+    if (search.groupBy === 'relation') replaceSearchParams({ offset: 0, relation: key })
+    if (search.groupBy === 'runtime_verdict') replaceSearchParams({ offset: 0, runtimeVerdict: key })
     if (search.groupBy === 'resolved') replaceSearchParams({ offset: 0, resolved: key })
     if (search.groupBy === 'has_counter_example') replaceSearchParams({ hasCounterExample: key, offset: 0 })
     if (search.groupBy === 'has_runtime_evaluation') replaceSearchParams({ hasRuntimeEvaluation: key, offset: 0 })

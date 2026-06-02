@@ -7,7 +7,10 @@
  */
 
 export interface OperationExplorerEntryResponse {
-  /** @minimum 0 */
+  /**
+     * Mapped constraint count for this operation. Dynamic rows are processed constraints, not raw Daikon rows.
+     * @minimum 0
+     */
   constraint_count: number;
   display_operation_id?: string | null;
   /** @minimum 0 */
@@ -16,7 +19,10 @@ export interface OperationExplorerEntryResponse {
   graph_out_degree: number;
   has_failures: boolean;
   http_method?: string | null;
-  /** @minimum 0 */
+  /**
+     * Raw Daikon invariant row count for this operation. These rows are provenance behind mapped dynamic constraints.
+     * @minimum 0
+     */
   invariant_count: number;
   operation_id: string;
   operation_key: string;

@@ -14,8 +14,9 @@ export interface CombinationFacetsResponse {
   /** @minimum 0 */
   malformed_count: number;
   operation_id: ConstraintFacetBucketResponse[];
+  relation: ConstraintFacetBucketResponse[];
   resolved: ConstraintFacetBucketResponse[];
+  runtime_verdict: ConstraintFacetBucketResponse[];
   status: ConstraintFacetBucketResponse[];
-  verdict: ConstraintFacetBucketResponse[];
   warnings: string[];
 }

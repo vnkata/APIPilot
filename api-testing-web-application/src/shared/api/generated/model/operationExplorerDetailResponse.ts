@@ -14,7 +14,10 @@ import type { OperationExplorerDetailResponseTestCaseStatusCounts } from './oper
 import type { OperationGraphSummaryResponse } from './operationGraphSummaryResponse';
 
 export interface OperationExplorerDetailResponse {
-  /** @minimum 0 */
+  /**
+     * Mapped constraint count for this operation. Dynamic rows are processed constraints, not raw Daikon rows.
+     * @minimum 0
+     */
   constraint_count: number;
   constraint_summary: OperationCountSummaryResponse;
   display_operation_id?: string | null;
@@ -26,7 +29,10 @@ export interface OperationExplorerDetailResponse {
   has_failures: boolean;
   http_method?: string | null;
   incoming_edge_ids: string[];
-  /** @minimum 0 */
+  /**
+     * Raw Daikon invariant row count for this operation. These rows are provenance behind mapped dynamic constraints.
+     * @minimum 0
+     */
   invariant_count: number;
   invariant_summary: OperationCountSummaryResponse;
   operation_id: string;

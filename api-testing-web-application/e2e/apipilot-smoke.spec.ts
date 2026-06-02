@@ -96,6 +96,43 @@ test('desktop QA can use command palette and compare run artifacts', async ({ pa
   await expect(page.getByLabel('Run A artifact content').first()).toContainText('content_kind')
 })
 
+test('desktop QA can launch guided onboarding and contextual page tours', async ({ page }) => {
+  await page.addInitScript(() => {
+    window.localStorage.setItem('apipilot.productTour.v1', JSON.stringify({
+      dismissedPromptByTourId: {
+        runs: 2,
+      },
+      progressByTourId: {},
+      role: 'qa-qc',
+    }))
+  })
+
+  await page.goto('/runs')
+  await expect(page.getByRole('region', { name: 'New to APIPilot' })).toBeVisible()
+  await page.getByRole('button', { name: /Build a new run/ }).click()
+  await expect(page).toHaveURL(/\/builder\/specs/)
+  await expect(page.getByRole('dialog', { name: /Start Builder with a spec/ })).toBeVisible()
+  await page.getByRole('button', { name: /Close tour/ }).click()
+
+  await page.goto('/runs/Run%20A/constraints')
+  await page.evaluate(() => {
+    window.localStorage.setItem('apipilot.productTour.v1', JSON.stringify({
+      dismissedPromptByTourId: {
+        'constraints-fundamentals': 2,
+      },
+      progressByTourId: {},
+      role: 'qa-qc',
+    }))
+  })
+  await page.reload()
+  await page.getByLabel('Open guided tours').click()
+  await page.getByRole('menuitem', { name: /Start Constraints fundamentals/ }).click()
+  await expect(page.getByRole('dialog', { name: /Read constraints as oracle candidates/ })).toBeVisible()
+  await expect(page.getByText(/Why this matters/)).toBeVisible()
+  await page.getByRole('button', { name: /^Next$/ }).click()
+  await expect(page.getByRole('dialog', { name: /Source is your first trust signal/ })).toBeVisible()
+})
+
 test('desktop QA can upload a spec and launch a dry-run execution', async ({ page }) => {
   await new BuilderPage(page).runDryRunWriteFlow()
 })

@@ -20,13 +20,14 @@ export interface CombinationDetailResponse {
   raw_record_sanitized: CombinationDetailResponseRawRecordSanitized;
   reason?: string | null;
   reason_preview?: string | null;
+  relation?: string | null;
   resolved: boolean;
   runtime_evaluation?: JsonValue | null;
+  runtime_verdict?: string | null;
   source_artifact: string;
   static_constraint?: string | null;
   status: string;
   /** @minimum 0 */
   validation_case_count: number;
   validation_cases: JsonValue[];
-  verdict?: string | null;
 }

@@ -114,8 +114,9 @@ export function CombinationDetailComposer({
       <ConstraintMetadataPanel
         badges={
           <>
+            {detail.relation ? <Chip label={detail.relation} size="small" variant="outlined" /> : null}
             <Chip label={detail.status} size="small" />
-            {detail.verdict ? <Chip label={detail.verdict} size="small" variant="outlined" /> : null}
+            {detail.runtime_verdict ? <Chip label={detail.runtime_verdict} size="small" variant="outlined" /> : null}
             <Chip
               color={detail.resolved ? 'success' : 'default'}
               label={detail.resolved ? 'Resolved' : 'Unresolved'}

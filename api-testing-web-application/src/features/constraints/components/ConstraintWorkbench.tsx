@@ -221,8 +221,9 @@ function CombinationSignalRow({
     >
       <Stack spacing={1}>
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+          {combination.relation ? <Chip label={combination.relation} size="small" variant="outlined" /> : null}
           <Chip label={combination.status} size="small" />
-          {combination.verdict ? <Chip label={combination.verdict} size="small" variant="outlined" /> : null}
+          {combination.runtime_verdict ? <Chip label={combination.runtime_verdict} size="small" variant="outlined" /> : null}
           <Chip
             color={combination.resolved ? 'success' : 'default'}
             label={combination.resolved ? 'Resolved' : 'Unresolved'}

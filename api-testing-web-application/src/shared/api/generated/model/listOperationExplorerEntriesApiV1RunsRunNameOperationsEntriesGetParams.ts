@@ -29,11 +29,11 @@ response_status?: string | null;
  */
 has_request_body?: boolean | null;
 /**
- * Filter by constraint availability.
+ * Filter by mapped constraint availability.
  */
 has_constraints?: boolean | null;
 /**
- * Filter by invariant availability.
+ * Filter by raw invariant row availability.
  */
 has_invariants?: boolean | null;
 /**
@@ -49,12 +49,12 @@ has_failures?: boolean | null;
  */
 q?: string | null;
 /**
- * Allowed values: operation_key, operation_id, http_method, path_template, constraint_count, invariant_count, graph_in_degree, graph_out_degree, test_case_count.
+ * Allowed values: operation_key, operation_id, http_method, path_template, constraint_count, invariant_count, graph_in_degree, graph_out_degree, test_case_count. invariant_count sorts by raw Daikon invariant row count.
  */
 sort_by?: string | null;
 sort_order?: SortOrder;
 /**
- * Allowed values: http_method, has_request_body, has_constraints, has_invariants, has_graph_edges, has_failures.
+ * Allowed values: http_method, has_request_body, has_constraints, has_invariants, has_graph_edges, has_failures. has_invariants groups raw invariant row availability.
  */
 group_by?: string | null;
 /**

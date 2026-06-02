@@ -24,9 +24,13 @@ property_prefix?: string | null;
  */
 status?: string | null;
 /**
- * Filter by runtime verdict.
+ * Filter by LLM set-relation classification.
  */
-verdict?: string | null;
+relation?: string | null;
+/**
+ * Filter by runtime support verdict.
+ */
+runtime_verdict?: string | null;
 /**
  * Filter by final_constraint presence.
  */

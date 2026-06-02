@@ -447,7 +447,8 @@ export function useGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSu
 
 
 /**
- * @summary Get Dynamic Constraints
+ * Return mapped dynamic constraints derived from Daikon invariants, plus raw invariant rows used as provenance. The raw invariant rows are not a separate independent constraint source.
+ * @summary Get mapped dynamic constraints
  */
 export const getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet = (
     runName: string,
@@ -518,7 +519,7 @@ export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TD
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary Get Dynamic Constraints
+ * @summary Get mapped dynamic constraints
  */
 
 export function useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet<TData = Awaited<ReturnType<typeof getDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet>>, TError = ErrorType<HTTPValidationError>>(
@@ -639,7 +640,8 @@ export function useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynami
 
 
 /**
- * @summary List Dynamic Invariants
+ * Legacy/debug view over raw Daikon invariant rows. Prefer /constraints/invariants for the typed Raw Invariant explorer.
+ * @summary List legacy raw dynamic invariant rows
  */
 export const listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet = (
     runName: string,
@@ -717,7 +719,7 @@ export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvari
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary List Dynamic Invariants
+ * @summary List legacy raw dynamic invariant rows
  */
 
 export function useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet<TData = Awaited<ReturnType<typeof listDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(
@@ -1038,7 +1040,8 @@ export function useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsG
 
 
 /**
- * @summary List Invariant Explorer Entries
+ * List raw Daikon invariant rows from invariants.csv. These rows are runtime provenance behind mapped dynamic constraints.
+ * @summary List raw invariant evidence
  */
 export const listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet = (
     runName: string,
@@ -1116,7 +1119,7 @@ export function useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvari
  , queryClient?: QueryClient
   ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
 /**
- * @summary List Invariant Explorer Entries
+ * @summary List raw invariant evidence
  */
 
 export function useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet<TData = Awaited<ReturnType<typeof listInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet>>, TError = ErrorType<HTTPValidationError>>(

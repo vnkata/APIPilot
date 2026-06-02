@@ -170,10 +170,16 @@ export function ConstraintAdvancedFiltersDrawer({
                   value={search.status ?? ''}
                 />
                 <DebouncedTextField
-                  label="Verdict"
-                  onDebouncedChange={(value) => replaceSearchParams({ offset: 0, verdict: value })}
+                  label="Relation"
+                  onDebouncedChange={(value) => replaceSearchParams({ offset: 0, relation: value })}
                   size="small"
-                  value={search.verdict ?? ''}
+                  value={search.relation ?? ''}
+                />
+                <DebouncedTextField
+                  label="Runtime verdict"
+                  onDebouncedChange={(value) => replaceSearchParams({ offset: 0, runtimeVerdict: value })}
+                  size="small"
+                  value={search.runtimeVerdict ?? ''}
                 />
               </>
             ) : !isInvariantTab ? (
@@ -285,7 +291,8 @@ export function ConstraintAdvancedFiltersDrawer({
               <MenuItem value="agreement_status">Agreement</MenuItem>
               <MenuItem value="assertion_available">Assertion</MenuItem>
               <MenuItem value="status">Combination status</MenuItem>
-              <MenuItem value="verdict">Verdict</MenuItem>
+              <MenuItem value="relation">Relation</MenuItem>
+              <MenuItem value="runtime_verdict">Runtime verdict</MenuItem>
               <MenuItem value="resolved">Resolved</MenuItem>
               <MenuItem value="has_counter_example">Counter-example</MenuItem>
               <MenuItem value="has_runtime_evaluation">Runtime evaluation</MenuItem>
@@ -323,10 +330,16 @@ export function ConstraintAdvancedFiltersDrawer({
                   selectedValue={search.status}
                 />
                 <FacetGroup
-                  buckets={combinationFacets?.verdict}
-                  label="Verdict"
-                  onSelect={(value) => replaceSearchParams({ offset: 0, verdict: value })}
-                  selectedValue={search.verdict}
+                  buckets={combinationFacets?.relation}
+                  label="Relation"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, relation: value })}
+                  selectedValue={search.relation}
+                />
+                <FacetGroup
+                  buckets={combinationFacets?.runtime_verdict}
+                  label="Runtime verdict"
+                  onSelect={(value) => replaceSearchParams({ offset: 0, runtimeVerdict: value })}
+                  selectedValue={search.runtimeVerdict}
                 />
                 <FacetGroup
                   buckets={combinationFacets?.resolved}
