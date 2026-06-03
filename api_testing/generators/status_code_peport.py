@@ -18,6 +18,7 @@ from collections import defaultdict
 class StatusCodeReport:
     _save_lock = threading.Lock()
     _instance = None
+    _instances = {}
 
     def __init__(self, report_file: str, _global=False):
         self.report_file = report_file
@@ -27,9 +28,16 @@ class StatusCodeReport:
 
     @staticmethod
     def make_shared(report_file: str) -> 'StatusCodeReport':
-        if StatusCodeReport._instance is None:
-            StatusCodeReport._instance = StatusCodeReport(report_file, _global=True)
-        return StatusCodeReport._instance
+        key = os.path.abspath(report_file)
+        if key not in StatusCodeReport._instances:
+            StatusCodeReport._instances[key] = StatusCodeReport(report_file, _global=True)
+        StatusCodeReport._instance = StatusCodeReport._instances[key]
+        return StatusCodeReport._instances[key]
+
+    @staticmethod
+    def reset_shared() -> None:
+        StatusCodeReport._instance = None
+        StatusCodeReport._instances = {}
 
     def add(self, endpoint: str, status_code: int):
         endpoint = endpoint.strip("/")

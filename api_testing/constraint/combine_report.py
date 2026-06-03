@@ -22,15 +22,24 @@ def _records(data: Dict[str, Dict[str, Dict[str, Any]]]) -> list[Dict[str, Any]]
 def render_combination_report(data: Dict[str, Any], source_name: str) -> str:
     records = _records(data)
     statuses = Counter(str(record.get("status") or "UNKNOWN") for record in records)
-    verdicts = Counter(str(record.get("verdict")) for record in records if record.get("verdict"))
+    relations = Counter(str(record.get("relation")) for record in records if record.get("relation"))
+    runtime_verdicts = Counter(
+        str(record.get("runtime_verdict"))
+        for record in records
+        if record.get("runtime_verdict")
+    )
     embedded_json = json.dumps(data, ensure_ascii=False).replace("<", "\\u003c")
     status_options = "".join(
         f'<option value="{html.escape(status)}">{html.escape(status)} ({count})</option>'
         for status, count in sorted(statuses.items())
     )
-    verdict_options = "".join(
-        f'<option value="{html.escape(verdict)}">{html.escape(verdict)} ({count})</option>'
-        for verdict, count in sorted(verdicts.items())
+    relation_options = "".join(
+        f'<option value="{html.escape(relation)}">{html.escape(relation)} ({count})</option>'
+        for relation, count in sorted(relations.items())
+    )
+    runtime_verdict_options = "".join(
+        f'<option value="{html.escape(runtime_verdict)}">{html.escape(runtime_verdict)} ({count})</option>'
+        for runtime_verdict, count in sorted(runtime_verdicts.items())
     )
     return f"""<!doctype html>
 <html lang="en">
@@ -103,7 +112,8 @@ pre {{ margin: 0; padding: 9px 10px; white-space: pre-wrap; overflow-wrap: anywh
   <section class="controls">
     <input id="search" type="search" placeholder="Search endpoint, property, constraint or reason...">
     <select id="status"><option value="">All statuses</option>{status_options}</select>
-    <select id="verdict"><option value="">All verdicts</option>{verdict_options}</select>
+    <select id="relation"><option value="">All relations</option>{relation_options}</select>
+    <select id="runtime-verdict"><option value="">All runtime verdicts</option>{runtime_verdict_options}</select>
     <span class="visible-count" id="count"></span>
   </section>
   <section id="results"></section>
@@ -114,15 +124,16 @@ const endpointEntries = Object.entries(data);
 const all = endpointEntries.flatMap(([endpoint, properties]) =>
   Object.values(properties).map(record => ({{ ...record, endpoint }})));
 const statusCounts = {json.dumps(dict(statuses), ensure_ascii=False)};
-const verdictCounts = {json.dumps(dict(verdicts), ensure_ascii=False)};
+const relationCounts = {json.dumps(dict(relations), ensure_ascii=False)};
+const runtimeVerdictCounts = {json.dumps(dict(runtime_verdicts), ensure_ascii=False)};
 const esc = value => String(value ?? '').replace(/[&<>"']/g, c => ({{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}}[c]));
 const text = value => value === null || value === undefined ? 'null' :
   typeof value === 'string' ? value : JSON.stringify(value, null, 2);
 function badgeClass(value) {{
-  if (value === 'COMBINED_EQUIVALENT') return 'equiv';
+  if (value === 'EQUIVALENT' || value === 'RESOLVED' || value === 'VERIFIED') return 'equiv';
   if (value === 'UNIQUE_STATIC' || value === 'UNIQUE_DYNAMIC') return 'unique';
-  if (value === 'STATIC_WIN' || value === 'DYNAMIC_WIN' || value === 'BOTH_TRUE' || value === 'COMBINED_UNION') return 'good';
-  if (value === 'CONFLICT_BOTH_FALSE') return 'bad';
+  if (value === 'STATIC_STRONGER' || value === 'DYNAMIC_STRONGER' || value === 'STATIC_WIN' || value === 'DYNAMIC_WIN' || value === 'BOTH_TRUE') return 'good';
+  if (value === 'DISJOINT' || value === 'CONFLICT' || value === 'CONFLICT_BOTH_FALSE') return 'bad';
   return 'pending';
 }}
 function badge(value) {{ return value ? `<span class="badge ${{badgeClass(value)}}">${{esc(value)}}</span>` : ''; }}
@@ -130,7 +141,8 @@ function metric(label, value) {{ return `<div class="metric"><strong>${{value}}<
 document.getElementById('metrics').innerHTML =
   metric('Endpoints', endpointEntries.length) + metric('Properties', all.length) +
   Object.entries(statusCounts).map(([k,v]) => metric(k, v)).join('') +
-  Object.entries(verdictCounts).map(([k,v]) => metric(k, v)).join('');
+  Object.entries(relationCounts).map(([k,v]) => metric(k, v)).join('') +
+  Object.entries(runtimeVerdictCounts).map(([k,v]) => metric(k, v)).join('');
 function renderRecord(record) {{
   const cases = (record.validation_cases || []).map(renderCase).join('');
   const expressions = record.runtime_evaluation ? `<div class="cols field">
@@ -139,7 +151,7 @@ function renderRecord(record) {{
     </div>` : '';
   const staged = record.counter_example && !record.validation_cases ? `<div class="field"><span class="label">Counter-example seed</span><pre>${{esc(text(record.counter_example.staged_payload || record.counter_example))}}</pre></div>` : '';
   return `<details class="record">
-    <summary><div class="record-head"><span class="property">${{esc(record.property)}}</span>${{badge(record.status)}}${{badge(record.verdict)}}</div></summary>
+    <summary><div class="record-head"><span class="property">${{esc(record.property)}}</span>${{badge(record.relation)}}${{badge(record.status)}}${{badge(record.runtime_verdict)}}</div></summary>
     <div class="record-body">
     <div class="cols">
       <div><span class="label">Static</span><pre>${{esc(text(record.static_constraint))}}</pre></div>
@@ -153,7 +165,7 @@ function renderRecord(record) {{
   </details>`;
 }}
 function renderCase(item) {{
-  const status = item.verdict || 'UNKNOWN';
+  const status = item.runtime_verdict || 'UNKNOWN';
   const response = item.response_payload === undefined ? null : item.response_payload;
   return `<details class="case">
     <summary><span class="case-title">Case #${{esc(item.case_number)}}</span>${{badge(status)}} <span>${{esc(text(item.response_summary && item.response_summary.status_code))}}</span></summary>
@@ -171,14 +183,16 @@ function renderCase(item) {{
 function render() {{
   const query = document.getElementById('search').value.trim().toLowerCase();
   const status = document.getElementById('status').value;
-  const verdict = document.getElementById('verdict').value;
+  const relation = document.getElementById('relation').value;
+  const runtimeVerdict = document.getElementById('runtime-verdict').value;
   let matched = 0;
   const groups = endpointEntries.map(([endpoint, properties]) => {{
     const records = Object.values(properties).filter(record => {{
       const haystack = JSON.stringify(record).toLowerCase() + ' ' + endpoint.toLowerCase();
       return (!query || haystack.includes(query)) &&
         (!status || record.status === status) &&
-        (!verdict || record.verdict === verdict);
+        (!relation || record.relation === relation) &&
+        (!runtimeVerdict || record.runtime_verdict === runtimeVerdict);
     }});
     if (!records.length) return '';
     matched += records.length;
@@ -192,7 +206,8 @@ function render() {{
 }}
 document.getElementById('search').addEventListener('input', render);
 document.getElementById('status').addEventListener('change', render);
-document.getElementById('verdict').addEventListener('change', render);
+document.getElementById('relation').addEventListener('change', render);
+document.getElementById('runtime-verdict').addEventListener('change', render);
 render();
 </script>
 </body>

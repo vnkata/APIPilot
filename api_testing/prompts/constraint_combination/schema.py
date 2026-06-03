@@ -1,18 +1,17 @@
-from typing import Any, Dict, List, Literal, Optional
+from typing import Literal
 
-from pydantic import BaseModel, Field
-
-
-class CounterExamplePlan(BaseModel):
-    target_side: Literal["STATIC_TRUE_DYNAMIC_FALSE", "DYNAMIC_TRUE_STATIC_FALSE"]
-    concrete_property_value: Optional[Any] = None
-    staged_payload: Dict[str, Any] = Field(default_factory=dict)
-    staged_payloads: List[Dict[str, Any]] = Field(default_factory=list)
-    server_actual_response: Optional[Dict[str, Any]] = None
+from pydantic import BaseModel, ConfigDict
 
 
 class ConstraintCombinationVerdict(BaseModel):
-    status: Literal["COMBINED_EQUIVALENT", "NOT_COMBINED"]
-    final_constraint: Optional[str] = None
+    model_config = ConfigDict(extra="forbid")
+
+    relation: Literal[
+        "EQUIVALENT",
+        "STATIC_STRONGER",
+        "DYNAMIC_STRONGER",
+        "PARTIAL_OVERLAP",
+        "DISJOINT",
+        "UNKNOWN",
+    ]
     reason: str
-    counter_example: Optional[CounterExamplePlan] = None

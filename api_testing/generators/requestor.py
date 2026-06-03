@@ -1,5 +1,5 @@
 import base64
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import json
 import logging
@@ -77,6 +77,20 @@ def to_placeholder(obj: Any) -> Union[str, Dict[str, Any]]:
     return str(obj)
 
 
+def _get_header(headers: Dict[str, Any], name: str, default: str = "") -> str:
+    """Return a header value using case-insensitive lookup."""
+    if not headers:
+        return default
+    value = headers.get(name)
+    if value is not None:
+        return value
+    wanted = name.lower()
+    for key, value in headers.items():
+        if str(key).lower() == wanted:
+            return value
+    return default
+
+
 def unflatten_dict(
     flat_dict: Union[Dict[str, Any], list],
     sep: str = RequestConfig.DEFAULT_SEPARATOR
@@ -92,6 +106,7 @@ def unflatten_dict(
         return [unflatten_dict(item, sep) for item in flat_dict]
     
     if isinstance(flat_dict, dict):
+        nested: Dict[str, Any] = {}
         for path, value in flat_dict.items():
             parts = path.split(sep)
             current = nested
@@ -323,6 +338,112 @@ class Requestor:
                     return {"data": body.encode()}
         
         return {"data": bytes(body) if not isinstance(body, bytes) else body}
+
+    def _record_har_entry(
+        self,
+        method: str,
+        url: str,
+        headers: Dict[str, Any],
+        path_parameters: Dict[str, Any],
+        params: Dict[str, Any],
+        body: Any,
+        response: ResponseData,
+        duration_ms: float,
+        expected_code: str,
+        base_path: str,
+        ruuid: str,
+    ) -> None:
+        entry_id = str(uuid.uuid4())
+        query_string = [
+            {"name": str(key), "value": str(value)}
+            for key, value in (params or {}).items()
+        ]
+        mime_type = _get_header(response.headers, "Content-Type")
+        normalized_mime_type = mime_type.lower()
+        if (
+            "json" in normalized_mime_type
+            or "text" in normalized_mime_type
+            or mime_type == ""
+        ):
+            if not response.encoding:
+                response.encoding = "utf-8"
+            response_body = response.body
+        else:
+            response_body = "<<binary data>>"
+
+        post_data_text = json.dumps(body, default=to_placeholder) if body else ""
+        entry = {
+            "_id": entry_id,
+            "startedDateTime": datetime.now(timezone.utc)
+            .isoformat()
+            .replace("+00:00", "Z"),
+            "time": duration_ms,
+            "expected_code": expected_code,
+            "is_expected_status": str(response.status_code)[0] == expected_code[0],
+            "request": {
+                "_uuid": ruuid,
+                "path_template": base_path,
+                "method": method,
+                "url": url,
+                "headers": [{"name": k, "value": v} for k, v in headers.items()],
+                "bodySize": len(post_data_text),
+                "postData": {"text": post_data_text},
+                "path_params": path_parameters,
+                "queryString": query_string,
+            },
+            "response": {
+                "status": response.status_code,
+                "statusText": "",
+                "headers": [
+                    {"name": k, "value": v} for k, v in response.headers.items()
+                ],
+                "content": {
+                    "mimeType": mime_type,
+                    "size": len(response.body) if response.body else 0,
+                    "text": response_body,
+                },
+            },
+        }
+
+        with self._report_lock:
+            self.report.add(ruuid, response.status_code)
+
+        with self._entries_lock:
+            self.entries.append(entry)
+            self._dirty = True
+
+    def flush(self) -> None:
+        """Persist aggregated report and HAR once after request batch completes."""
+        with self._entries_lock:
+            if not self._dirty:
+                self.logger.debug("flush: nothing dirty, skipping")
+                return
+            self.logger.debug("flush: %s total entries to save", len(self.entries))
+        with self._report_lock:
+            self.report.save()
+        self._save_har()
+        with self._entries_lock:
+            self._dirty = False
+
+    def _save_har(self) -> None:
+        with self._entries_lock:
+            entries = list(self.entries)
+        data = {
+            "log": {
+                "version": "1.2",
+                "creator": {"name": "Executor", "version": "1.0"},
+                "sessionId": self.session_id,
+                "entries": entries,
+            }
+        }
+        with open(self.cache_file, "w", encoding="utf-8") as file:
+            json.dump(
+                data,
+                file,
+                ensure_ascii=False,
+                default=to_placeholder,
+                separators=(",", ":"),
+            )
 
 
 # ==================== URL Builder ====================

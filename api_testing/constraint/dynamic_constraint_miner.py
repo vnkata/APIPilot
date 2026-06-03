@@ -141,7 +141,7 @@ class DynamicConstraintMiner:
         testcase = TestCaseFileManager(cache_dir=self.cache_dir)
         test_cases = testcase.parse_test_cases_from_history()
         testcase.save_test_cases()
-        test_cases = random.sample(test_cases, 50)
+        test_cases = random.sample(test_cases, min(50, len(test_cases)))
         self.generate_dtrace_file(test_cases, self._cache_path(self.DTRACE_FILENAME))
 
     @staticmethod

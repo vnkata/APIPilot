@@ -6,6 +6,7 @@ from typing import Any, Dict, Optional
 
 import requests
 
+from api_testing.constraint.counter_examples.reducer import reduce_runtime_evidence
 from api_testing.constraint.evaluation import DSLEngine
 from api_testing.memory.contextual_memory import ContextualMemory
 from api_testing.models.http_data import RequestData, ResponseData
@@ -129,7 +130,7 @@ class ConstraintRuleEvaluator:
 
 
 class ConstraintConflictResolver:
-    """Execute staged conflict requests and assign evidence-backed verdicts."""
+    """Execute staged requests and attach runtime support to relation records."""
 
     MAIN_CACHE = "combine_constraint_miners.json"
 
@@ -342,13 +343,13 @@ class ConstraintConflictResolver:
             },
         }
         if response.status_code >= 500:
-            case["verdict"] = "CONFLICT_BOTH_FALSE"
+            case["runtime_verdict"] = "CONFLICT_BOTH_FALSE"
             return case
         if not response.ok:
-            case["verdict"] = "INCONCLUSIVE_HTTP_STATUS"
+            case["runtime_verdict"] = "INCONCLUSIVE_HTTP_STATUS"
             return case
         if not self.evaluator.has_target(record["property"], response.parsed):
-            case["verdict"] = "PROPERTY_NOT_PRESENT"
+            case["runtime_verdict"] = "PROPERTY_NOT_PRESENT"
             return case
 
         parameters = request.parameters or {}
@@ -367,22 +368,32 @@ class ConstraintConflictResolver:
         case["static_evaluation"]["result"] = static_true
         case["dynamic_evaluation"]["result"] = dynamic_true
         if static_true is None or dynamic_true is None:
-            case["verdict"] = "INCONCLUSIVE_EVALUATION"
+            case["runtime_verdict"] = "INCONCLUSIVE_EVALUATION"
         elif static_true and not dynamic_true:
-            case["verdict"] = "STATIC_WIN"
+            case["runtime_verdict"] = "STATIC_WIN"
         elif dynamic_true and not static_true:
-            case["verdict"] = "DYNAMIC_WIN"
+            case["runtime_verdict"] = "DYNAMIC_WIN"
         elif static_true and dynamic_true:
-            case["verdict"] = "BOTH_TRUE"
+            case["runtime_verdict"] = "BOTH_TRUE"
         else:
-            case["verdict"] = "CONFLICT_BOTH_FALSE"
+            case["runtime_verdict"] = "CONFLICT_BOTH_FALSE"
         return case
+
+    def evaluate_case(
+        self, record: Dict[str, Any], request: RequestData, response: ResponseData, index: int
+    ) -> Dict[str, Any]:
+        """Evaluate one approved counter-example request/response pair.
+
+        This public wrapper keeps backend HITL review code off private resolver
+        methods while preserving the existing conflict-resolution semantics.
+        """
+        return self._evaluate_case(record, request, response, index)
 
     def _apply_aggregate_verdict(self, record: Dict[str, Any], cases: list[Dict[str, Any]]) -> None:
         evaluated_cases = [
-            case for case in cases if case["verdict"] != "PROPERTY_NOT_PRESENT"
+            case for case in cases if case["runtime_verdict"] != "PROPERTY_NOT_PRESENT"
         ]
-        verdicts = {case["verdict"] for case in evaluated_cases}
+        verdicts = {case["runtime_verdict"] for case in evaluated_cases}
         record["runtime_evaluation"] = {
             "cases_executed": len(cases),
             "cases_evaluated": len(evaluated_cases),
@@ -392,62 +403,26 @@ class ConstraintConflictResolver:
             "dynamic_expression": self.evaluator.executable_rule(
                 record["dynamic_constraint"], record["property"], dynamic=True
             ),
-            "case_verdicts": [case["verdict"] for case in cases],
+            "case_runtime_verdicts": [case["runtime_verdict"] for case in cases],
         }
-        if not verdicts:
-            record["verdict"] = "INCONCLUSIVE_EVALUATION"
-            record["reason"] = "INCONCLUSIVE: Executed responses did not contain the target property."
-        elif "STATIC_WIN" in verdicts and "DYNAMIC_WIN" in verdicts:
-            record["verdict"] = "INCONCLUSIVE_MIXED_EVIDENCE"
-            record["reason"] = (
-                "INCONCLUSIVE: Separate runtime cases supported opposite source constraints."
-            )
-        elif "STATIC_WIN" in verdicts:
-            record["verdict"] = "STATIC_WIN"
-            record["final_constraint"] = record["static_constraint"]
-            record["reason"] = "STATIC_WIN: At least one runtime case satisfied only the static constraint."
-        elif "DYNAMIC_WIN" in verdicts:
-            record["verdict"] = "DYNAMIC_WIN"
-            record["final_constraint"] = record["dynamic_constraint"]
-            record["reason"] = "DYNAMIC_WIN: At least one runtime case satisfied only the dynamic constraint."
-        elif "CONFLICT_BOTH_FALSE" in verdicts:
-            record["verdict"] = "CONFLICT_BOTH_FALSE"
-            record["reason"] = "CONFLICT_BOTH_FALSE: At least one runtime case violated both constraints or failed server-side."
-        elif verdicts == {"BOTH_TRUE"}:
-            record["verdict"] = "BOTH_TRUE"
-            record["status"] = "COMBINED_UNION"
-            record["final_constraint"] = (
-                f"and({record['static_constraint']},{record['dynamic_constraint']})"
-            )
-            record["reason"] = (
-                f"UNION: All {len(evaluated_cases)} evaluable runtime case(s) satisfied both constraints."
-            )
-        elif "BOTH_TRUE" in verdicts:
-            record["verdict"] = "INCONCLUSIVE_PARTIAL_EVIDENCE"
-            record["reason"] = (
-                "INCONCLUSIVE: Valid cases satisfied both constraints, but other cases "
-                "could not be evaluated conclusively."
-            )
-        elif "INCONCLUSIVE_HTTP_STATUS" in verdicts:
-            record["verdict"] = "INCONCLUSIVE_HTTP_STATUS"
-            record["reason"] = "INCONCLUSIVE: Counter-example requests returned no evaluable 2xx response."
-        else:
-            record["verdict"] = "INCONCLUSIVE_EVALUATION"
-            record["reason"] = "INCONCLUSIVE: Runtime responses could not be evaluated by the rule engine."
+        reduction = reduce_runtime_evidence(
+            relation=record.get("relation"),
+            cases=cases,
+        )
+        record["runtime_verdict"] = reduction.runtime_verdict
+        record["runtime_recommendation"] = reduction.runtime_recommendation
+        record["reason"] = reduction.reason
 
     def _resolve_record(
         self, record: Dict[str, Any], progress_callback: Optional[Any] = None
     ) -> Dict[str, Any]:
-        if record.get("status") not in {"NOT_COMBINED", "COMBINED_UNION"}:
+        if record.get("status") not in {"UNRESOLVED", "CONFLICT"}:
             return record
         if not record.get("static_constraint") or not record.get("dynamic_constraint"):
             return record
-        if record.get("status") == "COMBINED_UNION":
-            record["status"] = "NOT_COMBINED"
-            record["final_constraint"] = None
         request = self._request_from_record(record)
         if request is None:
-            record["verdict"] = "PENDING_PATH_PARAMETERS"
+            record["runtime_verdict"] = "PENDING_PATH_PARAMETERS"
             record["reason"] = (
                 f"{record['reason']} {record.get('verification_error', 'No executable request is available.')}"
             )
@@ -475,7 +450,7 @@ class ConstraintConflictResolver:
         output = copy.deepcopy(combined_constraints)
         for properties in output.values():
             for property_name, record in properties.items():
-                if record.get("status") in {"NOT_COMBINED", "COMBINED_UNION"}:
+                if record.get("status") in {"UNRESOLVED", "CONFLICT"}:
                     properties[property_name] = self._resolve_record(
                         record, progress_callback=lambda: self._save(output)
                     )

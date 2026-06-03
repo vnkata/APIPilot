@@ -8,6 +8,17 @@ from api_testing.prompts.constraint_combination import ConstraintCombination
 from api_testing.utils.log import getLogger
 
 
+_RESOLVED_RELATIONS = {"EQUIVALENT", "STATIC_STRONGER"}
+_VALID_RELATIONS = {
+    "EQUIVALENT",
+    "STATIC_STRONGER",
+    "DYNAMIC_STRONGER",
+    "PARTIAL_OVERLAP",
+    "DISJOINT",
+    "UNKNOWN",
+}
+
+
 class ConstraintCombiner:
     """Combine static and dynamic constraints by normalized endpoint property."""
 
@@ -69,18 +80,6 @@ class ConstraintCombiner:
         static_constraint: str,
         dynamic_constraint: str,
     ) -> Dict[str, Any]:
-        if self._normalize_expression(static_constraint) == self._normalize_expression(
-            dynamic_constraint
-        ):
-            return {
-                "status": "COMBINED_EQUIVALENT",
-                "final_constraint": static_constraint,
-                "reason": (
-                    "EQUIVALENT: Static and dynamic constraints are identical after "
-                    "normalizing array-path notation and whitespace."
-                ),
-            }
-
         if self.combination_prompt:
             try:
                 verdict = self.combination_prompt.exec(
@@ -90,48 +89,66 @@ class ConstraintCombiner:
                     dynamic_constraint=dynamic_constraint,
                     test_case_count=self.max_test_cases,
                 )
-                if verdict.status == "COMBINED_EQUIVALENT":
-                    return {
-                        "status": "COMBINED_EQUIVALENT",
-                        "final_constraint": static_constraint,
-                        "reason": verdict.reason,
-                        "counter_example": None,
-                    }
+                relation = verdict.relation
+                status, final_constraint = self._resolution_for_relation(
+                    relation,
+                    static_constraint,
+                    dynamic_constraint,
+                )
                 return {
-                    "status": "NOT_COMBINED",
-                    "final_constraint": None,
+                    "status": status,
+                    "relation": relation,
+                    "final_constraint": final_constraint,
                     "reason": verdict.reason,
-                    "counter_example": (
-                        verdict.counter_example.model_dump()
-                        if verdict.counter_example is not None
-                        else None
-                    ),
+                    "runtime_verdict": None,
+                    "counter_example": None,
                 }
             except Exception as exc:
                 self.prompt_failure = str(exc)
-                self.combination_prompt = None
                 self.logger.warning(
-                    "LLM constraint combination failed for %s %s; remaining conflicts "
-                    "will be retained as pending without additional LLM calls: %s",
+                    "LLM constraint combination failed for %s %s; row will be "
+                    "retained as UNKNOWN without disabling later classifications: %s",
                     endpoint,
                     property_name,
                     exc,
                 )
 
         staging_detail = (
-            f" Counter-example staging failed: {self.prompt_failure}"
+            f" Relation classification failed: {self.prompt_failure}"
             if self.prompt_failure
             else ""
         )
         return {
-            "status": "NOT_COMBINED",
+            "status": "UNRESOLVED",
+            "relation": "UNKNOWN",
             "final_constraint": None,
             "reason": (
-                "CONFLICT_PENDING: Rules differ and require counter-example staging "
-                f"and runtime verification before they can be resolved.{staging_detail}"
+                "UNKNOWN: Static and dynamic constraints require successful LLM "
+                f"relation classification before they can be combined.{staging_detail}"
             ),
+            "runtime_verdict": None,
             "counter_example": None,
         }
+
+    @staticmethod
+    def _resolution_for_relation(
+        relation: str,
+        static_constraint: str,
+        dynamic_constraint: str,
+    ) -> tuple[str, Optional[str]]:
+        if relation in _RESOLVED_RELATIONS:
+            return "RESOLVED", static_constraint
+        if relation == "DYNAMIC_STRONGER":
+            return "UNRESOLVED", None
+        if relation == "PARTIAL_OVERLAP":
+            return "UNRESOLVED", None
+        if relation == "DISJOINT":
+            return "CONFLICT", None
+        if relation == "UNKNOWN":
+            return "UNRESOLVED", None
+        if relation not in _VALID_RELATIONS:
+            return "UNRESOLVED", None
+        return "UNRESOLVED", None
 
     def combine(
         self,
@@ -159,14 +176,17 @@ class ConstraintCombiner:
                     "static_constraint": static_rule,
                     "dynamic_constraint": dynamic_rule,
                     "status": "",
+                    "relation": None,
                     "final_constraint": None,
                     "reason": "",
+                    "runtime_verdict": None,
                     "counter_example": None,
                 }
                 if static_rule is None:
                     record.update(
                         {
                             "status": "UNIQUE_DYNAMIC",
+                            "relation": None,
                             "final_constraint": dynamic_rule,
                             "reason": "UNIQUE: Constraint exists exclusively in dynamic mining output.",
                         }
@@ -175,6 +195,7 @@ class ConstraintCombiner:
                     record.update(
                         {
                             "status": "UNIQUE_STATIC",
+                            "relation": None,
                             "final_constraint": static_rule,
                             "reason": "UNIQUE: Constraint exists exclusively in static mining output.",
                         }

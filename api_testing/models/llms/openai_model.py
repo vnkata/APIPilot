@@ -1,6 +1,6 @@
 import logging
 import json
-from typing import Optional, List, Union
+from typing import Iterable, Optional, List, Union
 from dotenv.main import os
 from pydantic import BaseModel
 from openai import OpenAI, AsyncOpenAI
@@ -28,6 +28,69 @@ def log_retry_error(retry_state: RetryCallState):
 
 
 default_model = "gpt-4.1-mini"
+
+
+def _strip_json_fence(text: str) -> str:
+    stripped = text.strip()
+    if not stripped.startswith("```"):
+        return stripped
+
+    lines = stripped.splitlines()
+    if lines and lines[0].strip().startswith("```"):
+        lines = lines[1:]
+    if lines and lines[-1].strip() == "```":
+        lines = lines[:-1]
+    return "\n".join(lines).strip()
+
+
+def _json_candidates(text: str) -> Iterable[str]:
+    seen: set[str] = set()
+    for candidate in (text.strip(), _strip_json_fence(text)):
+        if candidate and candidate not in seen:
+            seen.add(candidate)
+            yield candidate
+
+    source = _strip_json_fence(text)
+    decoder = json.JSONDecoder()
+    start_index = source.find("{")
+    if start_index >= 0:
+        try:
+            _, end_index = decoder.raw_decode(source[start_index:])
+        except json.JSONDecodeError:
+            return
+        candidate = source[start_index:start_index + end_index].strip()
+        if candidate and candidate not in seen:
+            seen.add(candidate)
+            yield candidate
+
+
+def _validate_schema_json(text: str, schema: BaseModel):
+    last_error: Exception | None = None
+    for candidate in _json_candidates(text):
+        try:
+            return schema.model_validate_json(candidate)
+        except Exception as exc:
+            last_error = exc
+
+    if last_error:
+        raise last_error
+    raise ValueError("No JSON object or array found in model response")
+
+
+def _build_system_message(
+    system_prompt: Optional[str],
+    schema: Optional[type[BaseModel]],
+) -> Optional[str]:
+    system_parts = [system_prompt] if system_prompt else []
+    if schema:
+        schema_definition = json.dumps(schema.model_json_schema(), ensure_ascii=False)
+        system_parts.append(
+            "Return only one valid JSON object matching this JSON Schema exactly. "
+            f"JSON Schema: {schema_definition}"
+        )
+    if not system_parts:
+        return None
+    return "\n\n".join(system_parts)
 
 
 class OpenAIModel(APITestingBaseLLMModel):
@@ -88,20 +151,24 @@ class OpenAIModel(APITestingBaseLLMModel):
     ):
         messages = []
 
-        if system_prompt:
-            schema_instruction = """Think step by step and strictly follow all requirements in the user prompt. Return only valid JSON that exactly matches the specified structure, without any extra text or fields, and ensure it is fully syntactically correct. """
-            messages.append({"role": "system", "content": schema_instruction})
+        system_message = _build_system_message(system_prompt, schema)
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
 
         if isinstance(prompt, str):
-            messages.append({"role": "user", "content": system_prompt + "\n" + prompt})
+            messages.append({"role": "user", "content": prompt})
         else:
             messages.extend(prompt)
 
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=messages,
-            temperature=self.temperature,
-        )
+        request_kwargs = {
+            "model": self.model_name,
+            "messages": messages,
+            "temperature": self.temperature,
+        }
+        if schema:
+            request_kwargs["response_format"] = {"type": "json_object"}
+
+        response = self.client.chat.completions.create(**request_kwargs)
 
         # ===== usage tracking =====
         usage = getattr(response, "usage", None)
@@ -113,19 +180,11 @@ class OpenAIModel(APITestingBaseLLMModel):
         # ===== structured output =====
         if schema:
             try:
-                # print(text)
-                parsed = schema.model_validate_json(text)
+                parsed = _validate_schema_json(text, schema)
                 add_usage(prompt_tokens, completion_tokens)
-
                 return parsed, 0
-            except Exception:
-                try:
-                    cleaned = text.strip("```json").strip("```").strip()
-                    parsed = schema.model_validate_json(cleaned)
-                    add_usage(prompt_tokens, completion_tokens)
-                    return parsed, 0
-                except Exception as e:
-                    raise Exception(f"JSON parse failed: {e}")
+            except Exception as e:
+                raise Exception(f"JSON parse failed: {e}")
 
         return text, 0
 
@@ -145,19 +204,24 @@ class OpenAIModel(APITestingBaseLLMModel):
     ):
         messages = []
 
-        if system_prompt:
-            messages.append({"role": "system", "content": system_prompt})
+        system_message = _build_system_message(system_prompt, schema)
+        if system_message:
+            messages.append({"role": "system", "content": system_message})
 
         if isinstance(prompt, str):
             messages.append({"role": "user", "content": prompt})
         else:
             messages.extend(prompt)
 
-        response = await self.async_client.chat.completions.create(
-            model=self.model_name,
-            messages=messages,
-            temperature=self.temperature,
-        )
+        request_kwargs = {
+            "model": self.model_name,
+            "messages": messages,
+            "temperature": self.temperature,
+        }
+        if schema:
+            request_kwargs["response_format"] = {"type": "json_object"}
+
+        response = await self.async_client.chat.completions.create(**request_kwargs)
 
         usage = getattr(response, "usage", None)
         prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
@@ -169,11 +233,11 @@ class OpenAIModel(APITestingBaseLLMModel):
 
         if schema:
             try:
-                parsed = schema.model_validate_json(text)
+                parsed = _validate_schema_json(text, schema)
                 return parsed, 0
-            except Exception:
-                logging.error("Async JSON parse failed")
-                return text, 0
+            except Exception as e:
+                logging.error(f"Async JSON parse failed: {e}\nResponse: {text[:500]}")
+                raise
 
         return text, 0
 

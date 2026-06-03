@@ -19,12 +19,12 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--config",
         default="configurations.toml",
-        help="LLM configuration used to stage counter-examples.",
+        help="LLM configuration used to classify static/dynamic relation pairs.",
     )
     parser.add_argument(
         "--without-llm",
         action="store_true",
-        help="Match properties only; differing pairs remain pending without staged payloads.",
+        help="Match properties only; paired rows are marked UNKNOWN without LLM classification.",
     )
     parser.add_argument(
         "--verify",
@@ -53,12 +53,39 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
+def resolve_cache_dir(raw_cache_dir: str) -> Path:
+    cache_dir = Path(raw_cache_dir)
+    if cache_dir.exists():
+        return cache_dir
+
+    if "\\ " in raw_cache_dir:
+        unescaped_cache_dir = Path(raw_cache_dir.replace("\\ ", " "))
+        if unescaped_cache_dir.exists():
+            return unescaped_cache_dir
+
+    return cache_dir
+
+
+def require_cache_file(cache_dir: Path, filename: str) -> Path:
+    path = cache_dir / filename
+    if path.exists():
+        return path
+    raise FileNotFoundError(
+        f"Required miner artifact is missing: {path}. "
+        "Run static/dynamic constraint mining first or pass the correct --cache-dir."
+    )
+
+
 def load_constraints(cache_dir: Path) -> tuple[dict, dict]:
     static_data = json.loads(
-        (cache_dir / "static_constraint_miner.json").read_text(encoding="utf-8")
+        require_cache_file(cache_dir, "static_constraint_miner.json").read_text(
+            encoding="utf-8"
+        )
     )
     dynamic_data = json.loads(
-        (cache_dir / "dynamic_constraint_miner.json").read_text(encoding="utf-8")
+        require_cache_file(cache_dir, "dynamic_constraint_miner.json").read_text(
+            encoding="utf-8"
+        )
     )
     return static_data["common"], dynamic_data["constraints"]
 
@@ -81,7 +108,7 @@ def resolve_base_url(cache_dir: Path, supplied_base_url: str | None) -> str:
 def main() -> None:
     load_dotenv()
     args = parse_args()
-    cache_dir = Path(args.cache_dir)
+    cache_dir = resolve_cache_dir(args.cache_dir)
     json_path = cache_dir / ConstraintCombiner.MAIN_CACHE
     if args.verify_existing:
         result = json.loads(json_path.read_text(encoding="utf-8"))
@@ -105,7 +132,7 @@ def main() -> None:
     records = [record for properties in result.values() for record in properties.values()]
     counts: dict[str, int] = {}
     for record in records:
-        key = record.get("verdict") or record["status"]
+        key = record.get("runtime_verdict") or record["status"]
         counts[key] = counts.get(key, 0) + 1
     report_path = generate_combination_report(json_path)
     print(f"Wrote {json_path}")
