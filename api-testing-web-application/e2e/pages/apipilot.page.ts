@@ -138,7 +138,7 @@ export class ConstraintsPage {
   }
 
   async expectFilteredConstraint() {
-    await expect(this.page.getByRole('heading', { name: /Constraints and invariants/ })).toBeVisible()
+    await expect(this.page.getByRole('heading', { name: /Constraints and raw invariants/ })).toBeVisible()
     await expect(this.page.getByRole('heading', { name: 'Constraint Workbench' })).toBeVisible()
     await expect(this.page.getByRole('button', { name: 'Workbench' })).toHaveAttribute('aria-pressed', 'true')
     await expect(this.page.getByText(/input\.limit/).first()).toBeVisible()
@@ -158,9 +158,11 @@ export class ConstraintsPage {
     await expect(this.page).toHaveURL(/constraintTab=dynamic/)
     await expect(this.page.getByRole('button', { exact: true, name: 'Dynamic' })).toHaveAttribute('aria-pressed', 'true')
 
-    await this.page.getByRole('button', { exact: true, name: 'Invariants' }).click()
+    const rawInvariantsTab = this.page.getByRole('button', { exact: true, name: 'Raw invariants' })
+    await rawInvariantsTab.focus()
+    await this.page.keyboard.press('Enter')
     await expect(this.page).toHaveURL(/constraintTab=invariants/)
-    await expect(this.page.getByRole('button', { exact: true, name: 'Invariants' })).toHaveAttribute('aria-pressed', 'true')
+    await expect(rawInvariantsTab).toHaveAttribute('aria-pressed', 'true')
   }
 
   async expectMatrixMode(runName: string) {
@@ -168,6 +170,33 @@ export class ConstraintsPage {
     await expect(this.page).toHaveURL(/constraintsView=matrix/)
     await expect(this.page.getByRole('heading', { name: 'Readiness matrix' })).toBeVisible()
     await expect(this.page.getByText(/both_present/).first()).toBeVisible()
+  }
+
+  async completeHumanReviewWorkflow(runName: string) {
+    await this.page.goto(`${runPath(runName)}/constraints?constraintsView=table&constraintTab=combination`)
+    await expect(this.page.getByRole('grid', { name: 'combination constraint entries' })).toBeVisible()
+    await this.page.getByText('Conflict needs decision').click()
+    await expect(this.page.getByRole('heading', { name: 'Human review preview' })).toBeVisible()
+    await this.page.getByRole('link', { name: /Open review workspace/ }).click()
+    await expect(this.page.getByRole('heading', { name: 'Combination review workspace' })).toBeVisible()
+    await expect(this.page.getByRole('region', { name: 'Human review workflow' })).toBeVisible()
+
+    await this.page.getByRole('button', { name: /^Generate draft$/ }).click()
+    await expect(this.page.getByText(/The fake target returns a small item collection/)).toBeVisible()
+
+    await this.page.getByRole('button', { name: /^Approve draft$/ }).click()
+
+    await this.page.getByRole('button', { name: /Use https:\/\/example\.test/ }).click()
+    await this.page.getByLabel('Confirm unsafe HTTP methods for this approved run').check()
+    await expect(this.page.getByRole('button', { name: /^Run approved cases$/ })).toBeEnabled()
+    await this.page.getByRole('button', { name: /^Run approved cases$/ }).click()
+    await expect(this.page.getByText('Run Completed').first()).toBeVisible()
+    await expect(this.page.getByText(/CONFLICT_BOTH_FALSE/)).toBeVisible()
+
+    await this.page.getByRole('button', { name: /^Finalize$/ }).click()
+    await expect(this.page.getByText(/Human: Accept Static/).first()).toBeVisible()
+    await this.page.getByRole('button', { name: /^Reopen$/ }).click()
+    await expect(this.page.getByText('Reopened').first()).toBeVisible()
   }
 }
 

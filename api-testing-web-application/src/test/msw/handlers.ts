@@ -6,6 +6,7 @@ import {
   combinationDetail,
   combinationEntries,
   combinationFacets,
+  combinationReview,
   combinationSummary,
   combineArtifactContent,
   constraintExplorerDetail,
@@ -129,6 +130,59 @@ export const handlers = [
   http.get(api('/runs/:runName/constraints/combination/entries'), () => HttpResponse.json(combinationEntries)),
   http.get(api('/runs/:runName/constraints/combination/entries/:combinationId'), () =>
     HttpResponse.json(combinationDetail),
+  ),
+  http.get(api('/runs/:runName/constraints/combination/entries/:combinationId/review'), () =>
+    HttpResponse.json(combinationReview),
+  ),
+  http.post(api('/runs/:runName/constraints/combination/entries/:combinationId/counter-examples/generate'), () =>
+    HttpResponse.json(combinationReview),
+  ),
+  http.put(api('/runs/:runName/constraints/combination/entries/:combinationId/counter-examples/:caseId'), () =>
+    HttpResponse.json({
+      ...combinationReview,
+      cases: combinationReview.cases.map((item) => ({ ...item, case_state: 'APPROVED' })),
+      review_state: 'APPROVED',
+    }),
+  ),
+  http.post(api('/runs/:runName/constraints/combination/entries/:combinationId/counter-examples/run'), () =>
+    HttpResponse.json({
+      ...combinationReview,
+      cases: combinationReview.cases.map((item) => ({
+        ...item,
+        case_state: 'EXECUTED',
+        runtime_result: { response_status: 200 },
+        runtime_verdict: 'BOTH_TRUE',
+      })),
+      review_state: 'RUN_COMPLETED',
+      runtime_recommendation: 'INCONCLUSIVE',
+    }),
+  ),
+  http.post(api('/runs/:runName/constraints/combination/entries/:combinationId/review/finalize'), () =>
+    HttpResponse.json({
+      ...combinationReview,
+      decision_source: 'manual',
+      has_manual_decision: true,
+      manual_decision: 'ACCEPT_STATIC',
+      rationale: 'Business owner accepted the static constraint.',
+      review_state: 'FINAL_CONFIRMED',
+    }),
+  ),
+  http.post(api('/runs/:runName/constraints/combination/entries/:combinationId/review/reopen'), () =>
+    HttpResponse.json({ ...combinationReview, review_state: 'REOPENED' }),
+  ),
+  http.post(api('/runs/:runName/constraints/combination/counter-examples/batch-generate'), () =>
+    HttpResponse.json({
+      results: [
+        {
+          case_count: 1,
+          combination_id: 'cmb-limit',
+          message: 'Draft generated',
+          new_case_count: 1,
+          status: 'generated',
+          total_case_count: 1,
+        },
+      ],
+    }),
   ),
   http.get(api('/runs/:runName/constraints/combination/facets'), () => HttpResponse.json(combinationFacets)),
   http.get(api('/runs/:runName/constraints/entries'), () => HttpResponse.json(constraintExplorerEntries)),

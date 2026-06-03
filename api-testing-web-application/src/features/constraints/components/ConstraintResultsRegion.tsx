@@ -1,3 +1,4 @@
+import { Button, Stack, Typography } from '@mui/material'
 import type {
   GridPaginationModel,
   GridSortModel,
@@ -28,6 +29,8 @@ type GridState = {
 }
 
 type ConstraintResultsRegionProps = {
+  batchGenerateMessage?: string | null
+  batchGeneratePending?: boolean
   columns: ConstraintGridColumns
   combinationQuery: ConstraintQueryState
   combinationRowCount: number
@@ -45,14 +48,20 @@ type ConstraintResultsRegionProps = {
   legacyRows: LegacyConstraintRow[]
   matrixBy: MatrixBy
   onApplyMatrixFilter: (filter: Record<string, string | undefined>) => void
+  onBatchGenerateCounterExamples: () => void
   onSelectCombination: (combinationId: string) => void
   onMatrixByChange: (value: MatrixBy) => void
   onSelectConstraint: (constraintId: string) => void
   onSelectInvariant: (invariantId: string) => void
+  selectedCombinationCount: number
+  selectedEligibleCombinationCount: number
+  selectedSkippedCombinationCount: number
   tab: ConstraintTab
 }
 
 export function ConstraintResultsRegion({
+  batchGenerateMessage,
+  batchGeneratePending = false,
   columns,
   combinationQuery,
   combinationRowCount,
@@ -70,10 +79,14 @@ export function ConstraintResultsRegion({
   legacyRows,
   matrixBy,
   onApplyMatrixFilter,
+  onBatchGenerateCounterExamples,
   onSelectCombination,
   onMatrixByChange,
   onSelectConstraint,
   onSelectInvariant,
+  selectedCombinationCount,
+  selectedEligibleCombinationCount,
+  selectedSkippedCombinationCount,
   tab,
 }: ConstraintResultsRegionProps) {
   if (constraintsView === 'workbench') {
@@ -90,11 +103,14 @@ export function ConstraintResultsRegion({
         }}
       >
         <ConstraintWorkbench
+          batchGenerateMessage={batchGenerateMessage}
+          batchGeneratePending={batchGeneratePending}
           combinations={combinationRows}
           constraints={explorerRows}
           invariants={invariantRows}
           matrixBy={matrixBy}
           onApplyFilter={onApplyMatrixFilter}
+          onBatchGenerateCounterExamples={onBatchGenerateCounterExamples}
           onMatrixByChange={onMatrixByChange}
           onSelectCombination={onSelectCombination}
           onSelectConstraint={onSelectConstraint}
@@ -113,19 +129,37 @@ export function ConstraintResultsRegion({
         isLoading={combinationQuery.isLoading}
         onRetry={() => void combinationQuery.refetch()}
       >
-        <ServerDataGridPanel
-          ariaLabel="combination constraint entries"
-          columns={columns.combination}
-          getRowId={(row) => row.combination_id}
-          loading={combinationQuery.isFetching}
-          onPaginationModelChange={gridState.handlePaginationModelChange}
-          onRowClick={(params) => onSelectCombination(params.row.combination_id)}
-          onSortModelChange={gridState.handleSortModelChange}
-          paginationModel={gridState.paginationModel}
-          rowCount={combinationRowCount}
-          rows={combinationRows}
-          sortModel={gridState.sortModel}
-        />
+        <Stack spacing={1}>
+          <ServerDataGridPanel
+            ariaLabel="combination constraint entries"
+            columns={columns.combination}
+            getRowId={(row) => row.combination_id}
+            loading={combinationQuery.isFetching}
+            onPaginationModelChange={gridState.handlePaginationModelChange}
+            onRowClick={(params) => onSelectCombination(params.row.combination_id)}
+            onSortModelChange={gridState.handleSortModelChange}
+            paginationModel={gridState.paginationModel}
+            rowCount={combinationRowCount}
+            rows={combinationRows}
+            sortModel={gridState.sortModel}
+          />
+          <Stack direction="row" spacing={1} sx={{ alignItems: 'center', flexWrap: 'wrap' }}>
+            <Button
+              disabled={selectedEligibleCombinationCount === 0 || batchGeneratePending}
+              onClick={onBatchGenerateCounterExamples}
+              size="small"
+              variant="outlined"
+            >
+              Batch generate drafts
+            </Button>
+            <Typography color="text.secondary" variant="body2">
+              {selectedEligibleCombinationCount === 0
+                ? 'Select eligible rows to generate drafts.'
+                : `${selectedCombinationCount} selected · ${selectedEligibleCombinationCount} eligible · ${selectedSkippedCombinationCount} skipped`}
+            </Typography>
+            {batchGenerateMessage ? <Typography color="text.secondary" variant="body2">{batchGenerateMessage}</Typography> : null}
+          </Stack>
+        </Stack>
       </QueryState>
     )
   }

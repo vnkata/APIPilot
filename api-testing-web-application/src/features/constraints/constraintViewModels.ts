@@ -27,6 +27,29 @@ export type ConstraintLineage = {
 
 export type MatrixBy = 'kind' | 'readiness' | 'source'
 
+export type CombinationReviewPriority = 'conflict' | 'human_decision' | 'needs_review' | 'resolved' | 'unique' | 'watch'
+
+export type CombinationTone = 'danger' | 'info' | 'neutral' | 'success' | 'warning'
+
+export type CombinationReviewSignal = {
+  description: string
+  label: string
+  priority: CombinationReviewPriority
+  rawValues: string[]
+  recommendedNextAction: string
+  tone: CombinationTone
+}
+
+export type CombinationReviewFields = {
+  decision_source?: string | null
+  has_manual_decision?: boolean | null
+  manual_decision?: string | null
+  relation?: string | null
+  resolved?: boolean
+  review_state?: string | null
+  status?: string | null
+}
+
 export type MatrixCell = {
   count: number
   filter: Record<string, string | undefined>
@@ -177,6 +200,93 @@ function countBy(items: string[]) {
   return Array.from(counts.entries())
     .sort(([left], [right]) => left.localeCompare(right))
     .map(([label, count]) => ({ count, label }))
+}
+
+const COUNTER_EXAMPLE_RELATIONS = new Set(['DYNAMIC_STRONGER', 'PARTIAL_OVERLAP', 'DISJOINT', 'UNKNOWN'])
+
+function hasHumanDecision(row: CombinationReviewFields) {
+  return Boolean(row.has_manual_decision || row.manual_decision || row.decision_source || row.review_state === 'FINAL_CONFIRMED')
+}
+
+export function isCombinationEligibleForCounterExample(
+  row: CombinationReviewFields,
+) {
+  return Boolean(row.relation && COUNTER_EXAMPLE_RELATIONS.has(row.relation) && !hasHumanDecision(row))
+}
+
+export function deriveCombinationReviewSignal(
+  row: CombinationReviewFields,
+): CombinationReviewSignal {
+  const rawValues = [row.relation, row.status, row.review_state, row.manual_decision, row.decision_source].filter(Boolean) as string[]
+
+  if (hasHumanDecision(row)) {
+    return {
+      description: 'A reviewer has recorded a decision for this combination.',
+      label: 'Human decision',
+      priority: 'human_decision',
+      rawValues,
+      recommendedNextAction: 'Review the human decision or reopen if more evidence is needed.',
+      tone: 'success',
+    }
+  }
+
+  if (row.relation === 'DISJOINT' || row.status === 'CONFLICT') {
+    return {
+      description: 'Static and dynamic constraints appear incompatible.',
+      label: 'Conflict needs decision',
+      priority: 'conflict',
+      rawValues,
+      recommendedNextAction: 'Open review workspace and decide whether to reject the relation or keep no final constraint.',
+      tone: 'danger',
+    }
+  }
+
+  if (
+    row.relation === 'DYNAMIC_STRONGER'
+    || row.relation === 'PARTIAL_OVERLAP'
+    || row.relation === 'UNKNOWN'
+    || row.status === 'UNRESOLVED'
+  ) {
+    return {
+      description: 'This combination needs human review before it should become a final constraint.',
+      label: 'Needs review',
+      priority: 'needs_review',
+      rawValues,
+      recommendedNextAction: 'Generate or inspect draft cases, then approve evidence and finalize a human decision.',
+      tone: 'warning',
+    }
+  }
+
+  if (row.status === 'UNIQUE_STATIC' || row.status === 'UNIQUE_DYNAMIC') {
+    return {
+      description: 'Only one side produced a constraint for this property.',
+      label: 'Unique constraint',
+      priority: 'unique',
+      rawValues,
+      recommendedNextAction: 'Inspect the source constraint if this property matters to the test oracle.',
+      tone: 'info',
+    }
+  }
+
+  if (row.resolved || row.relation === 'EQUIVALENT' || row.relation === 'STATIC_STRONGER' || row.status === 'RESOLVED') {
+    return {
+      description: 'This relation has a final constraint from the combiner.',
+      label: 'Resolved',
+      priority: 'resolved',
+      rawValues,
+      recommendedNextAction: 'Inspect the final constraint or leave it as-is.',
+      tone: 'success',
+    }
+  }
+
+  return {
+    description: 'This combination has no urgent review signal.',
+    label: 'Watch',
+    priority: 'watch',
+    rawValues,
+    recommendedNextAction: 'Open detail if the operation or property is important.',
+    tone: 'neutral',
+  }
 }
 
 export function buildCurrentPageConstraintMatrix({

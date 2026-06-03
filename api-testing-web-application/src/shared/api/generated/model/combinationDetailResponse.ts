@@ -11,9 +11,11 @@ import type { JsonValue } from './jsonValue';
 export interface CombinationDetailResponse {
   combination_id: string;
   counter_example?: JsonValue | null;
+  decision_source?: string | null;
   dynamic_constraint?: string | null;
   final_constraint?: string | null;
   has_counter_example: boolean;
+  has_manual_decision?: boolean;
   has_runtime_evaluation: boolean;
   operation_id: string;
   property_path: string;
@@ -22,6 +24,7 @@ export interface CombinationDetailResponse {
   reason_preview?: string | null;
   relation?: string | null;
   resolved: boolean;
+  review_state?: string;
   runtime_evaluation?: JsonValue | null;
   runtime_verdict?: string | null;
   source_artifact: string;

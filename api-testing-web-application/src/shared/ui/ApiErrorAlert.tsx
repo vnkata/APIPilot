@@ -9,6 +9,9 @@ type ApiErrorAlertProps = {
 
 export function ApiErrorAlert({ error, onRetry }: ApiErrorAlertProps) {
   const normalized = normalizeApiError(error)
+  const regenerateRequired =
+    normalized.code === 'invalid_request'
+    && /old-format|regenerate required|combine_constraint_miners/i.test(normalized.message)
 
   return (
     <Alert
@@ -22,8 +25,13 @@ export function ApiErrorAlert({ error, onRetry }: ApiErrorAlertProps) {
         ) : null
       }
     >
-      <AlertTitle>{normalized.title}</AlertTitle>
+      <AlertTitle>{regenerateRequired ? 'Regenerate required' : normalized.title}</AlertTitle>
       <Stack spacing={0.5}>
+        {regenerateRequired ? (
+          <Typography variant="body2">
+            This run uses an old-format combination artifact. Regenerate the run with the current combiner before using typed Combination or HITL review APIs.
+          </Typography>
+        ) : null}
         <Typography variant="body2">{normalized.message}</Typography>
         {normalized.status ? (
           <Typography variant="caption" color="text.secondary">

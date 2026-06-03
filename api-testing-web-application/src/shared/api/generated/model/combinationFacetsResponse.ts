@@ -8,7 +8,9 @@
 import type { ConstraintFacetBucketResponse } from './constraintFacetBucketResponse';
 
 export interface CombinationFacetsResponse {
+  decision_source: ConstraintFacetBucketResponse[];
   has_counter_example: ConstraintFacetBucketResponse[];
+  has_manual_decision: ConstraintFacetBucketResponse[];
   has_runtime_evaluation: ConstraintFacetBucketResponse[];
   has_validation_cases: ConstraintFacetBucketResponse[];
   /** @minimum 0 */
@@ -16,6 +18,7 @@ export interface CombinationFacetsResponse {
   operation_id: ConstraintFacetBucketResponse[];
   relation: ConstraintFacetBucketResponse[];
   resolved: ConstraintFacetBucketResponse[];
+  review_state: ConstraintFacetBucketResponse[];
   runtime_verdict: ConstraintFacetBucketResponse[];
   status: ConstraintFacetBucketResponse[];
   warnings: string[];

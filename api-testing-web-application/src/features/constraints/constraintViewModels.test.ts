@@ -1,6 +1,8 @@
-import { constraintExplorerEntries, invariantExplorerEntries } from '../../test/fixtures'
+import { combinationEntries, constraintExplorerEntries, invariantExplorerEntries } from '../../test/fixtures'
 import {
   buildCurrentPageConstraintMatrix,
+  deriveCombinationReviewSignal,
+  isCombinationEligibleForCounterExample,
   deriveConstraintLineage,
   parseAssertionSummary,
 } from './constraintViewModels'
@@ -68,5 +70,76 @@ describe('constraint view models', () => {
         matrixBy: 'readiness',
       }).cells,
     ).toEqual(expect.arrayContaining([expect.objectContaining({ count: 1, label: 'verified_runtime_oracle' })]))
+  })
+
+  it('derives combination review priority from relation, status, and manual decisions', () => {
+    expect(deriveCombinationReviewSignal({
+      ...combinationEntries.items[0],
+      relation: 'DISJOINT',
+      status: 'CONFLICT',
+    })).toMatchObject({
+      label: 'Conflict needs decision',
+      priority: 'conflict',
+      recommendedNextAction: 'Open review workspace and decide whether to reject the relation or keep no final constraint.',
+      tone: 'danger',
+    })
+
+    expect(deriveCombinationReviewSignal({
+      ...combinationEntries.items[0],
+      relation: 'DYNAMIC_STRONGER',
+      resolved: false,
+      status: 'UNRESOLVED',
+    })).toMatchObject({
+      label: 'Needs review',
+      priority: 'needs_review',
+      tone: 'warning',
+    })
+
+    expect(deriveCombinationReviewSignal({
+      ...combinationEntries.items[0],
+      has_manual_decision: true,
+      manual_decision: 'ACCEPT_STATIC',
+      review_state: 'FINAL_CONFIRMED',
+    })).toMatchObject({
+      label: 'Human decision',
+      priority: 'human_decision',
+      tone: 'success',
+    })
+
+    expect(deriveCombinationReviewSignal({
+      ...combinationEntries.items[0],
+      relation: null,
+      status: 'UNIQUE_STATIC',
+    })).toMatchObject({
+      label: 'Unique constraint',
+      priority: 'unique',
+      tone: 'info',
+    })
+  })
+
+  it('limits counter-example generation eligibility to unresolved paired relations', () => {
+    expect(isCombinationEligibleForCounterExample({
+      ...combinationEntries.items[0],
+      relation: 'PARTIAL_OVERLAP',
+      resolved: false,
+      status: 'UNRESOLVED',
+    })).toBe(true)
+
+    expect(isCombinationEligibleForCounterExample({
+      ...combinationEntries.items[0],
+      relation: 'EQUIVALENT',
+      resolved: true,
+      status: 'RESOLVED',
+    })).toBe(false)
+
+    expect(isCombinationEligibleForCounterExample({
+      ...combinationEntries.items[0],
+      has_manual_decision: true,
+      manual_decision: 'ACCEPT_STATIC',
+      relation: 'UNKNOWN',
+      review_state: 'FINAL_CONFIRMED',
+      resolved: false,
+      status: 'UNRESOLVED',
+    })).toBe(false)
   })
 })

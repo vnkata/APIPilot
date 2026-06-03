@@ -84,7 +84,7 @@ test('desktop QA can use command palette and compare run artifacts', async ({ pa
   await expect(page.getByLabel('Open command palette')).toBeVisible()
   await page.keyboard.press('Control+K')
   await expect(page.getByRole('dialog', { name: 'Command palette' })).toBeVisible()
-  await page.getByRole('textbox', { name: 'Search commands' }).fill('compare')
+  await page.getByRole('textbox', { name: 'Search commands' }).fill('compare runs')
   await page.getByRole('button', { name: /Compare runs/ }).click()
   await expect(page).toHaveURL(/\/compare/)
   await expect(page.getByRole('heading', { name: 'Compare runs' })).toBeVisible()
@@ -135,4 +135,8 @@ test('desktop QA can launch guided onboarding and contextual page tours', async 
 
 test('desktop QA can upload a spec and launch a dry-run execution', async ({ page }) => {
   await new BuilderPage(page).runDryRunWriteFlow()
+})
+
+test('desktop QA can complete a counter-example HITL review workflow', async ({ page }) => {
+  await new ConstraintsPage(page).completeHumanReviewWorkflow('Run A')
 })

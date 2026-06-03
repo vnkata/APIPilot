@@ -350,6 +350,126 @@
         "title": "ArtifactSummaryContentResponse",
         "type": "object"
       },
+      "BatchCounterExampleGenerateItemResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "case_count": {
+            "minimum": 0.0,
+            "title": "Case Count",
+            "type": "integer"
+          },
+          "combination_id": {
+            "title": "Combination Id",
+            "type": "string"
+          },
+          "message": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Message"
+          },
+          "new_case_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "New Case Count",
+            "type": "integer"
+          },
+          "status": {
+            "title": "Status",
+            "type": "string"
+          },
+          "total_case_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Total Case Count",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "combination_id",
+          "status",
+          "case_count"
+        ],
+        "title": "BatchCounterExampleGenerateItemResponse",
+        "type": "object"
+      },
+      "BatchCounterExampleGenerateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "combination_ids": {
+            "items": {
+              "type": "string"
+            },
+            "minItems": 1,
+            "title": "Combination Ids",
+            "type": "array"
+          },
+          "idempotency_key": {
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "live_llm": {
+            "default": false,
+            "title": "Live Llm",
+            "type": "boolean"
+          },
+          "max_cases_per_item": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Cases Per Item"
+          },
+          "max_items": {
+            "anyOf": [
+              {
+                "maximum": 100.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Items"
+          }
+        },
+        "required": [
+          "combination_ids",
+          "idempotency_key"
+        ],
+        "title": "BatchCounterExampleGenerateRequest",
+        "type": "object"
+      },
+      "BatchCounterExampleGenerateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "results": {
+            "items": {
+              "$ref": "#/components/schemas/BatchCounterExampleGenerateItemResponse"
+            },
+            "title": "Results",
+            "type": "array"
+          }
+        },
+        "required": [
+          "results"
+        ],
+        "title": "BatchCounterExampleGenerateResponse",
+        "type": "object"
+      },
       "CombinationDetailResponse": {
         "additionalProperties": false,
         "properties": {
@@ -366,6 +486,17 @@
                 "type": "null"
               }
             ]
+          },
+          "decision_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Source"
           },
           "dynamic_constraint": {
             "anyOf": [
@@ -391,6 +522,11 @@
           },
           "has_counter_example": {
             "title": "Has Counter Example",
+            "type": "boolean"
+          },
+          "has_manual_decision": {
+            "default": false,
+            "title": "Has Manual Decision",
             "type": "boolean"
           },
           "has_runtime_evaluation": {
@@ -448,6 +584,11 @@
           "resolved": {
             "title": "Resolved",
             "type": "boolean"
+          },
+          "review_state": {
+            "default": "PENDING_REVIEW",
+            "title": "Review State",
+            "type": "string"
           },
           "runtime_evaluation": {
             "anyOf": [
@@ -573,6 +714,17 @@
             "title": "Combination Id",
             "type": "string"
           },
+          "decision_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Source"
+          },
           "dynamic_constraint": {
             "anyOf": [
               {
@@ -597,6 +749,11 @@
           },
           "has_counter_example": {
             "title": "Has Counter Example",
+            "type": "boolean"
+          },
+          "has_manual_decision": {
+            "default": false,
+            "title": "Has Manual Decision",
             "type": "boolean"
           },
           "has_runtime_evaluation": {
@@ -636,6 +793,11 @@
           "resolved": {
             "title": "Resolved",
             "type": "boolean"
+          },
+          "review_state": {
+            "default": "PENDING_REVIEW",
+            "title": "Review State",
+            "type": "string"
           },
           "runtime_verdict": {
             "anyOf": [
@@ -690,11 +852,25 @@
       "CombinationFacetsResponse": {
         "additionalProperties": false,
         "properties": {
+          "decision_source": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Decision Source",
+            "type": "array"
+          },
           "has_counter_example": {
             "items": {
               "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
             },
             "title": "Has Counter Example",
+            "type": "array"
+          },
+          "has_manual_decision": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Has Manual Decision",
             "type": "array"
           },
           "has_runtime_evaluation": {
@@ -737,6 +913,13 @@
             "title": "Resolved",
             "type": "array"
           },
+          "review_state": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Review State",
+            "type": "array"
+          },
           "runtime_verdict": {
             "items": {
               "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
@@ -768,10 +951,206 @@
           "has_counter_example",
           "has_runtime_evaluation",
           "has_validation_cases",
+          "review_state",
+          "decision_source",
+          "has_manual_decision",
           "malformed_count",
           "warnings"
         ],
         "title": "CombinationFacetsResponse",
+        "type": "object"
+      },
+      "CombinationReviewEventResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "event_type": {
+            "title": "Event Type",
+            "type": "string"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "sequence": {
+            "minimum": 1.0,
+            "title": "Sequence",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "sequence",
+          "event_type",
+          "metadata"
+        ],
+        "title": "CombinationReviewEventResponse",
+        "type": "object"
+      },
+      "CombinationReviewFinalizeRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "custom_final_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Final Constraint"
+          },
+          "idempotency_key": {
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "manual_decision": {
+            "title": "Manual Decision",
+            "type": "string"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          }
+        },
+        "required": [
+          "manual_decision",
+          "idempotency_key"
+        ],
+        "title": "CombinationReviewFinalizeRequest",
+        "type": "object"
+      },
+      "CombinationReviewReopenRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "rationale": {
+            "title": "Rationale",
+            "type": "string"
+          }
+        },
+        "required": [
+          "rationale"
+        ],
+        "title": "CombinationReviewReopenRequest",
+        "type": "object"
+      },
+      "CombinationReviewResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/CounterExampleCaseResponse"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "combination_id": {
+            "title": "Combination Id",
+            "type": "string"
+          },
+          "custom_final_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Final Constraint"
+          },
+          "decision_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Source"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CombinationReviewEventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "has_manual_decision": {
+            "title": "Has Manual Decision",
+            "type": "boolean"
+          },
+          "manual_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Decision"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "review_key": {
+            "title": "Review Key",
+            "type": "string"
+          },
+          "review_state": {
+            "title": "Review State",
+            "type": "string"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "runtime_recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime Recommendation"
+          },
+          "target_base_url_suggestions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Target Base Url Suggestions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_name",
+          "combination_id",
+          "review_key",
+          "review_state",
+          "has_manual_decision",
+          "cases",
+          "events"
+        ],
+        "title": "CombinationReviewResponse",
         "type": "object"
       },
       "CombinationSummaryResponse": {
@@ -989,6 +1368,17 @@
             ],
             "title": "Assertion Preview"
           },
+          "combination_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combination Id"
+          },
           "combined_expression": {
             "anyOf": [
               {
@@ -1006,6 +1396,17 @@
           },
           "constraint_kind": {
             "$ref": "#/components/schemas/ConstraintKind"
+          },
+          "decision_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Source"
           },
           "dynamic_expression": {
             "anyOf": [
@@ -1026,9 +1427,36 @@
             "title": "Has Dynamic",
             "type": "boolean"
           },
+          "has_manual_decision": {
+            "default": false,
+            "title": "Has Manual Decision",
+            "type": "boolean"
+          },
           "has_static": {
             "title": "Has Static",
             "type": "boolean"
+          },
+          "manual_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Decision"
+          },
+          "manual_final_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Final Constraint"
           },
           "operation_id": {
             "title": "Operation Id",
@@ -1048,6 +1476,17 @@
           "property_path": {
             "title": "Property Path",
             "type": "string"
+          },
+          "review_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review State"
           },
           "section": {
             "anyOf": [
@@ -1122,6 +1561,17 @@
             ],
             "title": "Assertion Preview"
           },
+          "combination_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Combination Id"
+          },
           "combined_expression": {
             "anyOf": [
               {
@@ -1139,6 +1589,17 @@
           },
           "constraint_kind": {
             "$ref": "#/components/schemas/ConstraintKind"
+          },
+          "decision_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Source"
           },
           "dynamic_expression": {
             "anyOf": [
@@ -1159,9 +1620,36 @@
             "title": "Has Dynamic",
             "type": "boolean"
           },
+          "has_manual_decision": {
+            "default": false,
+            "title": "Has Manual Decision",
+            "type": "boolean"
+          },
           "has_static": {
             "title": "Has Static",
             "type": "boolean"
+          },
+          "manual_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Decision"
+          },
+          "manual_final_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Final Constraint"
           },
           "operation_id": {
             "title": "Operation Id",
@@ -1181,6 +1669,17 @@
           "property_path": {
             "title": "Property Path",
             "type": "string"
+          },
+          "review_state": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Review State"
           },
           "section": {
             "anyOf": [
@@ -1316,6 +1815,27 @@
             "title": "Constraint Kind",
             "type": "array"
           },
+          "decision_source": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Decision Source",
+            "type": "array"
+          },
+          "has_manual_decision": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Has Manual Decision",
+            "type": "array"
+          },
+          "manual_decision": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Manual Decision",
+            "type": "array"
+          },
           "metadata": {
             "$ref": "#/components/schemas/ConstraintQueryMetadataResponse"
           },
@@ -1324,6 +1844,13 @@
               "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
             },
             "title": "Operation Id",
+            "type": "array"
+          },
+          "review_state": {
+            "items": {
+              "$ref": "#/components/schemas/ConstraintFacetBucketResponse"
+            },
+            "title": "Review State",
             "type": "array"
           },
           "section": {
@@ -1356,6 +1883,10 @@
           "source_type",
           "agreement_status",
           "assertion_available",
+          "review_state",
+          "decision_source",
+          "has_manual_decision",
+          "manual_decision",
           "metadata"
         ],
         "title": "ConstraintFacetsResponse",
@@ -1491,6 +2022,379 @@
         ],
         "title": "CorrelationConfidence",
         "type": "string"
+      },
+      "CounterExampleCaseResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "case_id": {
+            "title": "Case Id",
+            "type": "string"
+          },
+          "case_state": {
+            "title": "Case State",
+            "type": "string"
+          },
+          "expected_observation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Expected Observation"
+          },
+          "generation_id": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Generation Id"
+          },
+          "planner_version": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Planner Version"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "request": {
+            "$ref": "#/components/schemas/JsonValue"
+          },
+          "request_display": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "risk": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Risk"
+          },
+          "runtime_result": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "runtime_verdict": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime Verdict"
+          },
+          "source": {
+            "title": "Source",
+            "type": "string"
+          },
+          "source_metadata": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "target_truth_vector": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "validation_error": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "case_id",
+          "case_state",
+          "request",
+          "source"
+        ],
+        "title": "CounterExampleCaseResponse",
+        "type": "object"
+      },
+      "CounterExampleCaseUpdateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "case_state": {
+            "title": "Case State",
+            "type": "string"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "request": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/JsonValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "case_state"
+        ],
+        "title": "CounterExampleCaseUpdateRequest",
+        "type": "object"
+      },
+      "CounterExampleGenerateRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "idempotency_key": {
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "live_llm": {
+            "default": false,
+            "title": "Live Llm",
+            "type": "boolean"
+          },
+          "max_cases": {
+            "anyOf": [
+              {
+                "maximum": 10.0,
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Max Cases"
+          }
+        },
+        "required": [
+          "idempotency_key"
+        ],
+        "title": "CounterExampleGenerateRequest",
+        "type": "object"
+      },
+      "CounterExampleGenerateResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "cases": {
+            "items": {
+              "$ref": "#/components/schemas/CounterExampleCaseResponse"
+            },
+            "title": "Cases",
+            "type": "array"
+          },
+          "combination_id": {
+            "title": "Combination Id",
+            "type": "string"
+          },
+          "custom_final_constraint": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Custom Final Constraint"
+          },
+          "decision_source": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Decision Source"
+          },
+          "events": {
+            "items": {
+              "$ref": "#/components/schemas/CombinationReviewEventResponse"
+            },
+            "title": "Events",
+            "type": "array"
+          },
+          "has_manual_decision": {
+            "title": "Has Manual Decision",
+            "type": "boolean"
+          },
+          "manual_decision": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Manual Decision"
+          },
+          "rationale": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rationale"
+          },
+          "review_key": {
+            "title": "Review Key",
+            "type": "string"
+          },
+          "review_state": {
+            "title": "Review State",
+            "type": "string"
+          },
+          "run_name": {
+            "title": "Run Name",
+            "type": "string"
+          },
+          "runtime_recommendation": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Runtime Recommendation"
+          },
+          "target_base_url_suggestions": {
+            "default": [],
+            "items": {
+              "type": "string"
+            },
+            "title": "Target Base Url Suggestions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "run_name",
+          "combination_id",
+          "review_key",
+          "review_state",
+          "has_manual_decision",
+          "cases",
+          "events"
+        ],
+        "title": "CounterExampleGenerateResponse",
+        "type": "object"
+      },
+      "CounterExampleRunRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "base_url": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Base Url"
+          },
+          "idempotency_key": {
+            "minLength": 1,
+            "title": "Idempotency Key",
+            "type": "string"
+          },
+          "live_api": {
+            "title": "Live Api",
+            "type": "boolean"
+          },
+          "request_budget": {
+            "exclusiveMinimum": 0.0,
+            "title": "Request Budget",
+            "type": "integer"
+          },
+          "timeout_seconds": {
+            "exclusiveMinimum": 0.0,
+            "title": "Timeout Seconds",
+            "type": "integer"
+          },
+          "unsafe_method_confirmed": {
+            "default": false,
+            "title": "Unsafe Method Confirmed",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "live_api",
+          "request_budget",
+          "timeout_seconds",
+          "idempotency_key"
+        ],
+        "title": "CounterExampleRunRequest",
+        "type": "object"
       },
       "DependencyGraphResponse": {
         "additionalProperties": false,
@@ -6030,6 +6934,58 @@
         ]
       }
     },
+    "/api/v1/runs/{run_name}/constraints/combination/counter-examples/batch-generate": {
+      "post": {
+        "operationId": "batch_generate_counter_examples_api_v1_runs__run_name__constraints_combination_counter_examples_batch_generate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/BatchCounterExampleGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/BatchCounterExampleGenerateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Batch Generate Counter Examples",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
     "/api/v1/runs/{run_name}/constraints/combination/entries": {
       "get": {
         "operationId": "list_combination_entries_api_v1_runs__run_name__constraints_combination_entries_get",
@@ -6224,6 +7180,60 @@
             }
           },
           {
+            "description": "Filter by HITL review state.",
+            "in": "query",
+            "name": "review_state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HITL review state.",
+              "title": "Review State"
+            }
+          },
+          {
+            "description": "Filter by final decision source.",
+            "in": "query",
+            "name": "decision_source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by final decision source.",
+              "title": "Decision Source"
+            }
+          },
+          {
+            "description": "Filter by manual decision availability.",
+            "in": "query",
+            "name": "has_manual_decision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by manual decision availability.",
+              "title": "Has Manual Decision"
+            }
+          },
+          {
             "description": "Search combination fields.",
             "in": "query",
             "name": "q",
@@ -6242,7 +7252,7 @@
             }
           },
           {
-            "description": "Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count.",
+            "description": "Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count, review_state, decision_source.",
             "in": "query",
             "name": "sort_by",
             "required": false,
@@ -6255,7 +7265,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count.",
+              "description": "Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count, review_state, decision_source.",
               "title": "Sort By"
             }
           },
@@ -6269,7 +7279,7 @@
             }
           },
           {
-            "description": "Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases.",
+            "description": "Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases, review_state, decision_source, has_manual_decision.",
             "in": "query",
             "name": "group_by",
             "required": false,
@@ -6282,7 +7292,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases.",
+              "description": "Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases, review_state, decision_source, has_manual_decision.",
               "title": "Group By"
             }
           },
@@ -6384,6 +7394,371 @@
           }
         },
         "summary": "Get Combination Entry",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/entries/{combination_id}/counter-examples/generate": {
+      "post": {
+        "operationId": "generate_counter_examples_api_v1_runs__run_name__constraints_combination_entries__combination_id__counter_examples_generate_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "combination_id",
+            "required": true,
+            "schema": {
+              "title": "Combination Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CounterExampleGenerateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CounterExampleGenerateResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Generate Counter Examples",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/entries/{combination_id}/counter-examples/run": {
+      "post": {
+        "operationId": "run_counter_examples_api_v1_runs__run_name__constraints_combination_entries__combination_id__counter_examples_run_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "combination_id",
+            "required": true,
+            "schema": {
+              "title": "Combination Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CounterExampleRunRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Run Counter Examples",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/entries/{combination_id}/counter-examples/{case_id}": {
+      "put": {
+        "operationId": "update_counter_example_case_api_v1_runs__run_name__constraints_combination_entries__combination_id__counter_examples__case_id__put",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "combination_id",
+            "required": true,
+            "schema": {
+              "title": "Combination Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "case_id",
+            "required": true,
+            "schema": {
+              "title": "Case Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CounterExampleCaseUpdateRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Update Counter Example Case",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/entries/{combination_id}/review": {
+      "get": {
+        "operationId": "get_combination_review_api_v1_runs__run_name__constraints_combination_entries__combination_id__review_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "combination_id",
+            "required": true,
+            "schema": {
+              "title": "Combination Id",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Get Combination Review",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/entries/{combination_id}/review/finalize": {
+      "post": {
+        "operationId": "finalize_combination_review_api_v1_runs__run_name__constraints_combination_entries__combination_id__review_finalize_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "combination_id",
+            "required": true,
+            "schema": {
+              "title": "Combination Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CombinationReviewFinalizeRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Finalize Combination Review",
+        "tags": [
+          "constraints"
+        ]
+      }
+    },
+    "/api/v1/runs/{run_name}/constraints/combination/entries/{combination_id}/review/reopen": {
+      "post": {
+        "operationId": "reopen_combination_review_api_v1_runs__run_name__constraints_combination_entries__combination_id__review_reopen_post",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "run_name",
+            "required": true,
+            "schema": {
+              "title": "Run Name",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "combination_id",
+            "required": true,
+            "schema": {
+              "title": "Combination Id",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CombinationReviewReopenRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CombinationReviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            },
+            "description": "Validation Error"
+          }
+        },
+        "summary": "Reopen Combination Review",
         "tags": [
           "constraints"
         ]
@@ -6580,6 +7955,60 @@
               ],
               "description": "Filter by validation case availability.",
               "title": "Has Validation Cases"
+            }
+          },
+          {
+            "description": "Filter by HITL review state.",
+            "in": "query",
+            "name": "review_state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HITL review state.",
+              "title": "Review State"
+            }
+          },
+          {
+            "description": "Filter by final decision source.",
+            "in": "query",
+            "name": "decision_source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by final decision source.",
+              "title": "Decision Source"
+            }
+          },
+          {
+            "description": "Filter by manual decision availability.",
+            "in": "query",
+            "name": "has_manual_decision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by manual decision availability.",
+              "title": "Has Manual Decision"
             }
           },
           {
@@ -7223,6 +8652,78 @@
             }
           },
           {
+            "description": "Filter by HITL review state overlaid from Combination review state.",
+            "in": "query",
+            "name": "review_state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HITL review state overlaid from Combination review state.",
+              "title": "Review State"
+            }
+          },
+          {
+            "description": "Filter by HITL decision source, such as human.",
+            "in": "query",
+            "name": "decision_source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HITL decision source, such as human.",
+              "title": "Decision Source"
+            }
+          },
+          {
+            "description": "Filter by whether a human review decision exists.",
+            "in": "query",
+            "name": "has_manual_decision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by whether a human review decision exists.",
+              "title": "Has Manual Decision"
+            }
+          },
+          {
+            "description": "Filter by human review decision value.",
+            "in": "query",
+            "name": "manual_decision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by human review decision value.",
+              "title": "Manual Decision"
+            }
+          },
+          {
             "description": "Search safe string fields across IDs, paths, expressions, provenance, and assertion preview.",
             "in": "query",
             "name": "q",
@@ -7241,7 +8742,7 @@
             }
           },
           {
-            "description": "Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status.",
+            "description": "Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status, review_state, decision_source, manual_decision.",
             "in": "query",
             "name": "sort_by",
             "required": false,
@@ -7254,7 +8755,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status.",
+              "description": "Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status, review_state, decision_source, manual_decision.",
               "title": "Sort By"
             }
           },
@@ -7270,7 +8771,7 @@
             }
           },
           {
-            "description": "Allowed values: source, operation_id, section, constraint_kind, source_type, agreement_status, assertion_available.",
+            "description": "Allowed values: source, operation_id, section, constraint_kind, source_type, agreement_status, assertion_available, review_state, decision_source, has_manual_decision, manual_decision.",
             "in": "query",
             "name": "group_by",
             "required": false,
@@ -7283,7 +8784,7 @@
                   "type": "null"
                 }
               ],
-              "description": "Allowed values: source, operation_id, section, constraint_kind, source_type, agreement_status, assertion_available.",
+              "description": "Allowed values: source, operation_id, section, constraint_kind, source_type, agreement_status, assertion_available, review_state, decision_source, has_manual_decision, manual_decision.",
               "title": "Group By"
             }
           },
@@ -7563,6 +9064,78 @@
               ],
               "description": "Filter by whether a full assertion is available.",
               "title": "Assertion Available"
+            }
+          },
+          {
+            "description": "Filter by HITL review state.",
+            "in": "query",
+            "name": "review_state",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HITL review state.",
+              "title": "Review State"
+            }
+          },
+          {
+            "description": "Filter by HITL decision source.",
+            "in": "query",
+            "name": "decision_source",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by HITL decision source.",
+              "title": "Decision Source"
+            }
+          },
+          {
+            "description": "Filter by whether a human review decision exists.",
+            "in": "query",
+            "name": "has_manual_decision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "boolean"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by whether a human review decision exists.",
+              "title": "Has Manual Decision"
+            }
+          },
+          {
+            "description": "Filter by human review decision value.",
+            "in": "query",
+            "name": "manual_decision",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "description": "Filter by human review decision value.",
+              "title": "Manual Decision"
             }
           },
           {

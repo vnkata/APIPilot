@@ -1,11 +1,12 @@
-import { screen, waitFor } from '@testing-library/react'
+import { fireEvent, screen, waitFor, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import { axe } from 'jest-axe'
 import { http, HttpResponse } from 'msw'
 
 import { renderWithProviders } from '../../test/renderWithProviders'
-import { combinationEntries, constraintExplorerEntries, invariantExplorerEntries } from '../../test/fixtures'
+import { combinationEntries, combinationReview, constraintExplorerEntries, invariantExplorerEntries } from '../../test/fixtures'
 import { server } from '../../test/msw/server'
+import App from '../../App'
 import { ConstraintsPage } from './ConstraintsPage'
 
 describe('ConstraintsPage', () => {
@@ -129,9 +130,11 @@ describe('ConstraintsPage', () => {
           limit: 25,
           offset: 0,
           relation: 'EQUIVALENT',
+          reviewState: 'PENDING_REVIEW',
           resolved: true,
           runtimeVerdict: 'BOTH_TRUE',
           status: 'RESOLVED',
+          hasManualDecision: false,
         }}
       />,
     )
@@ -142,11 +145,251 @@ describe('ConstraintsPage', () => {
     expect(requestedUrl?.searchParams.get('runtime_verdict')).toBe('BOTH_TRUE')
     expect(requestedUrl?.searchParams.get('resolved')).toBe('true')
     expect(requestedUrl?.searchParams.get('has_runtime_evaluation')).toBe('true')
+    expect(requestedUrl?.searchParams.get('review_state')).toBe('PENDING_REVIEW')
+    expect(requestedUrl?.searchParams.get('has_manual_decision')).toBe('false')
     expect(screen.getByRole('button', { name: /^combination$/i })).toHaveAttribute('aria-pressed', 'true')
     expect(await screen.findByRole('complementary', { name: /combination detail/i })).toBeInTheDocument()
     expect(screen.getByRole('heading', { name: /constraint resolution/i })).toBeInTheDocument()
-    expect(screen.getAllByText(/EQUIVALENT/i).length).toBeGreaterThan(0)
+    expect(screen.getAllByText(/Equivalent/i).length).toBeGreaterThan(0)
     expect(screen.getByText(/Static and dynamic evidence agree/i)).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /human review preview/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /open review workspace/i })).toHaveAttribute(
+      'href',
+      '/runs/Run%20A/constraints/combination/cmb-limit/review',
+    )
+  })
+
+  it('renders the dedicated combination review workspace route', async () => {
+    server.use(
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId', () =>
+        HttpResponse.json(combinationEntries.items[0]),
+      ),
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId/review', () =>
+        HttpResponse.json(combinationReview),
+      ),
+    )
+    window.history.pushState({}, '', '/runs/Run%20A/constraints/combination/cmb-limit/review')
+
+    renderWithProviders(<App />)
+
+    expect(await screen.findByRole('heading', { name: /combination review workspace/i })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: /understand relation/i })).toBeInTheDocument()
+    expect((await screen.findAllByText(/edit and approve draft cases/i)).length).toBeGreaterThan(0)
+    expect(screen.getByRole('region', { name: /relation guide/i })).toBeInTheDocument()
+    expect(await screen.findByRole('textbox', { name: /request json ce-case-1/i })).toBeInTheDocument()
+  })
+
+  it('shows regenerate-required guidance for unsupported combination artifacts', async () => {
+    server.use(
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries', () =>
+        HttpResponse.json(
+          {
+            error: {
+              code: 'invalid_request',
+              message: 'Unsupported old-format combine_constraint_miners artifact. Regenerate required.',
+            },
+          },
+          { status: 400 },
+        ),
+      ),
+    )
+
+    renderWithProviders(
+      <ConstraintsPage
+        runName="Run A"
+        search={{
+          constraintTab: 'combination',
+          constraintsView: 'table',
+          limit: 25,
+          offset: 0,
+        }}
+      />,
+    )
+
+    expect(await screen.findByRole('alert', {}, { timeout: 5_000 })).toHaveTextContent(/regenerate required/i)
+    expect(screen.getByText(/old-format combination artifact/i)).toBeInTheDocument()
+  })
+
+  it('sends HITL review mutation bodies with idempotency keys and edited draft request', async () => {
+    const user = userEvent.setup()
+    const requests: Record<string, unknown> = {}
+    server.use(
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId', () =>
+        HttpResponse.json(combinationEntries.items[0]),
+      ),
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId/review', () =>
+        HttpResponse.json(combinationReview),
+      ),
+      http.post('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId/counter-examples/generate', async ({ request }) => {
+        requests.generate = await request.json()
+        return HttpResponse.json(combinationReview)
+      }),
+      http.put('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId/counter-examples/:caseId', async ({ request }) => {
+        requests.update = await request.json()
+        return HttpResponse.json({
+          ...combinationReview,
+          cases: combinationReview.cases.map((item) => ({ ...item, case_state: 'APPROVED' })),
+          review_state: 'APPROVED',
+        })
+      }),
+      http.post('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId/review/finalize', async ({ request }) => {
+        requests.finalize = await request.json()
+        return HttpResponse.json({ ...combinationReview, review_state: 'FINAL_CONFIRMED' })
+      }),
+    )
+
+    window.history.pushState({}, '', '/runs/Run%20A/constraints/combination/cmb-limit/review')
+    renderWithProviders(<App />)
+
+    await screen.findByRole('heading', { name: /combination review workspace/i })
+    expect(await screen.findByRole('button', { name: /use https:\/\/example\.test/i })).toBeInTheDocument()
+    await user.click(await screen.findByRole('button', { name: /^generate draft$/i }))
+    await waitFor(() => expect(requests.generate).toMatchObject({ live_llm: true }))
+    expect((requests.generate as { idempotency_key: string }).idempotency_key).toMatch(/^generate-/)
+
+    const editor = await screen.findByRole('textbox', { name: /request json ce-case-1/i })
+    await user.clear(editor)
+    fireEvent.change(editor, {
+      target: { value: JSON.stringify({ method: 'GET', path: '/items', query: { limit: 7 } }) },
+    })
+    await user.click(screen.getByRole('button', { name: /approve draft/i }))
+    await waitFor(() => expect(requests.update).toMatchObject({
+      case_state: 'APPROVED',
+      request: { method: 'GET', path: '/items', query: { limit: 7 } },
+    }))
+
+    await user.click(screen.getByRole('button', { name: /^finalize$/i }))
+    await waitFor(() => expect(requests.finalize).toMatchObject({ manual_decision: 'ACCEPT_STATIC' }))
+    expect((requests.finalize as { idempotency_key: string }).idempotency_key).toMatch(/^finalize-/)
+  }, 30_000)
+
+  it('blocks approving draft requests that contain redacted executable values', async () => {
+    const user = userEvent.setup()
+    let updateCalled = false
+    server.use(
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId', () =>
+        HttpResponse.json(combinationEntries.items[0]),
+      ),
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId/review', () =>
+        HttpResponse.json(combinationReview),
+      ),
+      http.put('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId/counter-examples/:caseId', async () => {
+        updateCalled = true
+        return HttpResponse.json(combinationReview)
+      }),
+    )
+
+    window.history.pushState({}, '', '/runs/Run%20A/constraints/combination/cmb-limit/review')
+    renderWithProviders(<App />)
+
+    await screen.findByRole('heading', { name: /combination review workspace/i })
+    const editor = await screen.findByRole('textbox', { name: /request json ce-case-1/i })
+    await user.clear(editor)
+    fireEvent.change(editor, {
+      target: {
+        value: JSON.stringify({
+          method: 'GET',
+          path: '/items',
+          query: { Session: '<REDACTED>' },
+        }),
+      },
+    })
+    await user.click(screen.getByRole('button', { name: /approve draft/i }))
+
+    expect(await screen.findByText(/redacted executable values/i)).toBeInTheDocument()
+    expect(updateCalled).toBe(false)
+
+    await user.clear(editor)
+    fireEvent.change(editor, {
+      target: {
+        value: JSON.stringify({
+          method: 'GET',
+          path: '/items',
+          headers: { Authorization: { type: 'redacted', reason: 'sensitive_header' } },
+        }),
+      },
+    })
+    await user.click(screen.getByRole('button', { name: /approve draft/i }))
+
+    expect(await screen.findByText(/redacted executable values/i)).toBeInTheDocument()
+    expect(updateCalled).toBe(false)
+  }, 30_000)
+
+  it('batch-generates counter-example drafts for selected eligible combination rows', async () => {
+    const user = userEvent.setup()
+    let requestBody: unknown
+    server.use(
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries', () =>
+        HttpResponse.json({
+          ...combinationEntries,
+          items: [
+            {
+              ...combinationEntries.items[0],
+              combination_id: 'cmb-needs-review',
+              relation: 'UNKNOWN',
+              resolved: false,
+              status: 'UNRESOLVED',
+            },
+            {
+              ...combinationEntries.items[0],
+              combination_id: 'cmb-resolved',
+              relation: 'EQUIVALENT',
+              resolved: true,
+              status: 'RESOLVED',
+            },
+          ],
+          pagination: { limit: 25, offset: 0, total: 2 },
+        }),
+      ),
+      http.post('*/api/v1/runs/:runName/constraints/combination/counter-examples/batch-generate', async ({ request }) => {
+        requestBody = await request.json()
+        return HttpResponse.json({
+          results: [
+            {
+              case_count: 1,
+              combination_id: 'cmb-limit',
+              message: 'Draft generated',
+              new_case_count: 1,
+              status: 'generated',
+              total_case_count: 2,
+            },
+          ],
+        })
+      }),
+    )
+
+    renderWithProviders(
+      <ConstraintsPage
+        runName="Run A"
+        search={{
+          constraintTab: 'combination',
+          constraintsView: 'table',
+          limit: 25,
+          offset: 0,
+        }}
+      />,
+    )
+
+    await screen.findByRole('grid', { name: /combination constraint entries/i })
+    const batchButton = screen.getByRole('button', { name: /batch generate drafts/i })
+    expect(batchButton).toBeDisabled()
+    expect(screen.getByText(/select eligible rows to generate drafts/i)).toBeInTheDocument()
+
+    await user.click(screen.getByRole('checkbox', { name: /select cmb-needs-review for batch generation/i }))
+    await waitFor(() => expect(batchButton).toBeEnabled())
+    await user.click(batchButton)
+    const confirmDialog = await screen.findByRole('dialog', { name: /confirm live draft generation/i })
+    expect(confirmDialog).toBeInTheDocument()
+    expect(within(confirmDialog).getByText(/1 selected row/i)).toBeInTheDocument()
+    expect(within(confirmDialog).getByText(/1 eligible/i)).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /confirm live generation/i }))
+    await waitFor(() => expect(requestBody).toMatchObject({
+      combination_ids: ['cmb-needs-review'],
+      live_llm: true,
+      max_cases_per_item: 3,
+    }))
+    expect((requestBody as { idempotency_key: string }).idempotency_key).toMatch(/^batch-generate-/)
+    expect(screen.getByText(/generated 1 new draft for 1 row \(2 total\)/i)).toBeInTheDocument()
   })
 
   it('renders static, dynamic, and invariant query results with groups', async () => {

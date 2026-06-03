@@ -39,6 +39,9 @@ const LazyWorkspacePage = lazy(() =>
 const LazyConstraintsPage = lazy(() =>
   import('../features/constraints/ConstraintsPage').then((module) => ({ default: module.ConstraintsPage })),
 )
+const LazyCombinationReviewWorkspacePage = lazy(() =>
+  import('../features/constraints/CombinationReviewWorkspacePage').then((module) => ({ default: module.CombinationReviewWorkspacePage })),
+)
 const LazyArtifactsPage = lazy(() =>
   import('../features/artifacts/ArtifactsPage').then((module) => ({ default: module.ArtifactsPage })),
 )
@@ -247,6 +250,19 @@ const constraintsRoute = createRoute({
   },
 })
 
+const combinationReviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/runs/$runName/constraints/combination/$combinationId/review',
+  component: function CombinationReviewRoute() {
+    const { combinationId, runName } = combinationReviewRoute.useParams()
+    return (
+      <RouteFallback>
+        <LazyCombinationReviewWorkspacePage combinationId={combinationId} runName={runName} />
+      </RouteFallback>
+    )
+  },
+})
+
 const artifactsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/runs/$runName/artifacts',
@@ -322,6 +338,7 @@ const routeTree = rootRoute.addChildren([
   operationsRoute,
   graphRoute,
   constraintsRoute,
+  combinationReviewRoute,
   artifactsRoute,
   reportsRoute,
   testCasesRoute,

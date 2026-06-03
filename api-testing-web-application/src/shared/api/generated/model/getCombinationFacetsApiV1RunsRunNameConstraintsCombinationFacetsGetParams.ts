@@ -48,6 +48,18 @@ has_runtime_evaluation?: boolean | null;
  */
 has_validation_cases?: boolean | null;
 /**
+ * Filter by HITL review state.
+ */
+review_state?: string | null;
+/**
+ * Filter by final decision source.
+ */
+decision_source?: string | null;
+/**
+ * Filter by manual decision availability.
+ */
+has_manual_decision?: boolean | null;
+/**
  * Search combination fields before calculating facets.
  */
 q?: string | null;

@@ -12,8 +12,12 @@ export interface ConstraintFacetsResponse {
   agreement_status: ConstraintFacetBucketResponse[];
   assertion_available: ConstraintFacetBucketResponse[];
   constraint_kind: ConstraintFacetBucketResponse[];
+  decision_source: ConstraintFacetBucketResponse[];
+  has_manual_decision: ConstraintFacetBucketResponse[];
+  manual_decision: ConstraintFacetBucketResponse[];
   metadata: ConstraintQueryMetadataResponse;
   operation_id: ConstraintFacetBucketResponse[];
+  review_state: ConstraintFacetBucketResponse[];
   section: ConstraintFacetBucketResponse[];
   source: ConstraintFacetBucketResponse[];
   source_type: ConstraintFacetBucketResponse[];

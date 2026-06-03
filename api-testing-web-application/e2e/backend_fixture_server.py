@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import tempfile
 import os
 import sys
@@ -22,7 +23,11 @@ from fastapi.testclient import TestClient
 
 from api_testing.backend.app import create_app
 from api_testing.backend.settings import BackendSettings
-from tests.backend_artifact_fixtures import build_artifact_cache
+from tests.backend_artifact_fixtures import (
+    add_combination_artifacts,
+    build_artifact_cache,
+    write_json,
+)
 
 
 class FixtureBackendHandler(BaseHTTPRequestHandler):
@@ -33,6 +38,9 @@ class FixtureBackendHandler(BaseHTTPRequestHandler):
 
     def do_POST(self) -> None:
         self._proxy("POST")
+
+    def do_PUT(self) -> None:
+        self._proxy("PUT")
 
     def do_OPTIONS(self) -> None:
         self._proxy("OPTIONS")
@@ -72,6 +80,11 @@ def main() -> None:
     fixture_parent = tempfile.TemporaryDirectory(prefix="apipilot-e2e-")
     fixture_root = Path(fixture_parent.name)
     cache_root = build_artifact_cache(fixture_root)
+    add_combination_artifacts(cache_root)
+    write_json(
+        cache_root / "Run A" / "configuration.json",
+        {"base_url": "https://example.test"},
+    )
     app = create_app(
         BackendSettings(
             cache_root=cache_root,
@@ -83,6 +96,8 @@ def main() -> None:
             default_execution_timeout_seconds=10,
         )
     )
+    app.state.combination_review_service.planner_factory = lambda: FakePlanner()
+    _install_fake_target_request()
     FixtureBackendHandler.client = TestClient(app)
     server = ThreadingHTTPServer(("127.0.0.1", backend_port), FixtureBackendHandler)
     print(
@@ -90,6 +105,55 @@ def main() -> None:
         flush=True,
     )
     server.serve_forever()
+
+
+class FakePlanner:
+    prompt_version = "e2e-fake-planner-v1"
+    last_error = None
+
+    def generate(self, context):
+        return [
+            {
+                "case_id": "e2e-post-case",
+                "request": {
+                    "method": "POST",
+                    "path": "/items",
+                    "query": {"limit": 1},
+                    "headers": {},
+                    "body": {"safe": "visible"},
+                },
+                "target_truth_vector": {
+                    "static_constraint": "true",
+                    "dynamic_constraint": "false",
+                },
+                "rationale": "Deterministic E2E POST draft.",
+                "risk": "low",
+                "expected_observation": "The fake target returns a small item collection.",
+            }
+        ]
+
+
+def _install_fake_target_request() -> None:
+    import requests
+
+    class FakeResponse:
+        status_code = 200
+        headers = {"Content-Type": "application/json"}
+        text = json.dumps({"item_count": 1, "items": [{"id": 1, "status": "ACTIVE"}]})
+        encoding = "utf-8"
+        cookies = type("Cookies", (), {"get_dict": lambda self: {}})()
+
+        def json(self):
+            return {"item_count": 1, "items": [{"id": 1, "status": "ACTIVE"}]}
+
+    original_request = requests.request
+
+    def fake_request(method, url, **kwargs):
+        if str(url).startswith("https://example.test"):
+            return FakeResponse()
+        return original_request(method, url, **kwargs)
+
+    requests.request = fake_request
 
 
 if __name__ == "__main__":

@@ -45,11 +45,27 @@ agreement_status?: string | null;
  */
 assertion_available?: boolean | null;
 /**
+ * Filter by HITL review state overlaid from Combination review state.
+ */
+review_state?: string | null;
+/**
+ * Filter by HITL decision source, such as human.
+ */
+decision_source?: string | null;
+/**
+ * Filter by whether a human review decision exists.
+ */
+has_manual_decision?: boolean | null;
+/**
+ * Filter by human review decision value.
+ */
+manual_decision?: string | null;
+/**
  * Search safe string fields across IDs, paths, expressions, provenance, and assertion preview.
  */
 q?: string | null;
 /**
- * Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status.
+ * Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status, review_state, decision_source, manual_decision.
  */
 sort_by?: string | null;
 /**
@@ -57,7 +73,7 @@ sort_by?: string | null;
  */
 sort_order?: SortOrder;
 /**
- * Allowed values: source, operation_id, section, constraint_kind, source_type, agreement_status, assertion_available.
+ * Allowed values: source, operation_id, section, constraint_kind, source_type, agreement_status, assertion_available, review_state, decision_source, has_manual_decision, manual_decision.
  */
 group_by?: string | null;
 /**

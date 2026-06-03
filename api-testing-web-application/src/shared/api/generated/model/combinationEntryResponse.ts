@@ -8,15 +8,18 @@
 
 export interface CombinationEntryResponse {
   combination_id: string;
+  decision_source?: string | null;
   dynamic_constraint?: string | null;
   final_constraint?: string | null;
   has_counter_example: boolean;
+  has_manual_decision?: boolean;
   has_runtime_evaluation: boolean;
   operation_id: string;
   property_path: string;
   reason_preview?: string | null;
   relation?: string | null;
   resolved: boolean;
+  review_state?: string;
   runtime_verdict?: string | null;
   source_artifact: string;
   static_constraint?: string | null;

@@ -1,6 +1,9 @@
 import {
+  useBatchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost,
+  useFinalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost,
   useGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet,
   useGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet,
+  useGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet,
   useGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet,
   useGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet,
   useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet,
@@ -14,6 +17,10 @@ import {
   useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet,
   useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet,
   useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet,
+  useGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost,
+  useReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost,
+  useRunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost,
+  useUpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut,
 } from '../../shared/api/generated/constraints/constraints'
 import type {
   GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams,
@@ -30,13 +37,16 @@ export type ConstraintExplorerFilters = {
   assertionAvailable?: boolean
   constraintKind?: string
   correlationConfidence?: string
+  decisionSource?: string
   groupBy?: string
   hasCounterExample?: boolean
+  hasManualDecision?: boolean
   hasRuntimeEvaluation?: boolean
   hasValidationCases?: boolean
   invariantKind?: string
   invariantType?: string
   limit?: number
+  manualDecision?: string
   offset?: number
   operationId?: string
   oracleReadiness?: string
@@ -44,6 +54,7 @@ export type ConstraintExplorerFilters = {
   propertyPrefix?: string
   q?: string
   relation?: string
+  reviewState?: string
   resolved?: boolean
   section?: string
   sortBy?: string
@@ -61,8 +72,11 @@ export function toConstraintExplorerParams(
     agreement_status: filters.agreementStatus,
     assertion_available: filters.assertionAvailable,
     constraint_kind: filters.constraintKind,
+    decision_source: filters.decisionSource,
     group_by: filters.groupBy,
+    has_manual_decision: filters.hasManualDecision,
     limit: filters.limit,
+    manual_decision: filters.manualDecision,
     offset: filters.offset,
     operation_id: filters.operationId,
     property_path: filters.propertyPath,
@@ -73,6 +87,7 @@ export function toConstraintExplorerParams(
     sort_order: filters.sortOrder,
     source: filters.source,
     source_type: filters.sourceType,
+    review_state: filters.reviewState,
   }
 }
 
@@ -83,6 +98,9 @@ export function toConstraintFacetParams(
     agreement_status: filters.agreementStatus,
     assertion_available: filters.assertionAvailable,
     constraint_kind: filters.constraintKind,
+    decision_source: filters.decisionSource,
+    has_manual_decision: filters.hasManualDecision,
+    manual_decision: filters.manualDecision,
     operation_id: filters.operationId,
     property_path: filters.propertyPath,
     property_prefix: filters.propertyPrefix,
@@ -90,6 +108,7 @@ export function toConstraintFacetParams(
     section: filters.section,
     source: filters.source,
     source_type: filters.sourceType,
+    review_state: filters.reviewState,
   }
 }
 
@@ -146,7 +165,10 @@ export function toCombinationParams(
     q: filters.q,
     resolved: filters.resolved,
     relation: filters.relation,
+    review_state: filters.reviewState,
     runtime_verdict: filters.runtimeVerdict,
+    decision_source: filters.decisionSource,
+    has_manual_decision: filters.hasManualDecision,
     sort_by: filters.sortBy,
     sort_order: filters.sortOrder,
     status: filters.status,
@@ -166,7 +188,10 @@ export function toCombinationFacetParams(
     q: filters.q,
     resolved: filters.resolved,
     relation: filters.relation,
+    review_state: filters.reviewState,
     runtime_verdict: filters.runtimeVerdict,
+    decision_source: filters.decisionSource,
+    has_manual_decision: filters.hasManualDecision,
     status: filters.status,
   }
 }
@@ -179,7 +204,14 @@ export const useDynamicInvariants = useListDynamicInvariantsApiV1RunsRunNameCons
 export const useCombinationEntries = useListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet
 export const useCombinationDetail = useGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdGet
 export const useCombinationFacets = useGetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet
+export const useCombinationReview = useGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet
 export const useCombinationSummary = useGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet
+export const useBatchGenerateCounterExamples = useBatchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost
+export const useFinalizeCombinationReview = useFinalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost
+export const useGenerateCounterExamples = useGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost
+export const useReopenCombinationReview = useReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost
+export const useRunCounterExamples = useRunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost
+export const useUpdateCounterExampleCase = useUpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut
 export const useConstraintExplorerEntries = useListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet
 export const useConstraintExplorerDetail = useGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet
 export const useConstraintExplorerFacets = useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet

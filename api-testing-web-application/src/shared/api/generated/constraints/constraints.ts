@@ -6,29 +6,42 @@
  * OpenAPI spec version: 0.1.0
  */
 import {
+  useMutation,
   useQuery
 } from '@tanstack/react-query';
 import type {
   DataTag,
   DefinedInitialDataOptions,
   DefinedUseQueryResult,
+  MutationFunction,
   QueryClient,
   QueryFunction,
   QueryKey,
   UndefinedInitialDataOptions,
+  UseMutationOptions,
+  UseMutationResult,
   UseQueryOptions,
   UseQueryResult
 } from '@tanstack/react-query';
 
 import type {
+  BatchCounterExampleGenerateRequest,
+  BatchCounterExampleGenerateResponse,
   CombinationDetailResponse,
   CombinationEntryPageResponse,
   CombinationFacetsResponse,
+  CombinationReviewFinalizeRequest,
+  CombinationReviewReopenRequest,
+  CombinationReviewResponse,
   CombinationSummaryResponse,
   ConstraintEntryPageResponse,
   ConstraintExplorerDetailResponse,
   ConstraintExplorerPageResponse,
   ConstraintFacetsResponse,
+  CounterExampleCaseUpdateRequest,
+  CounterExampleGenerateRequest,
+  CounterExampleGenerateResponse,
+  CounterExampleRunRequest,
   DynamicConstraintsResponse,
   GetCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGetParams,
   GetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGetParams,
@@ -48,7 +61,7 @@ import type {
 } from '../model';
 
 import { customInstance } from '../../httpClient';
-import type { ErrorType } from '../../httpClient';
+import type { ErrorType , BodyType } from '../../httpClient';
 
 
 type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
@@ -56,6 +69,70 @@ type SecondParameter<T extends (...args: never) => unknown> = Parameters<T>[1];
 
 
 /**
+ * @summary Batch Generate Counter Examples
+ */
+export const batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost = (
+    runName: string,
+    batchCounterExampleGenerateRequest: BodyType<BatchCounterExampleGenerateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<BatchCounterExampleGenerateResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/counter-examples/batch-generate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: batchCounterExampleGenerateRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getBatchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost>>, TError,{runName: string;data: BodyType<BatchCounterExampleGenerateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost>>, TError,{runName: string;data: BodyType<BatchCounterExampleGenerateRequest>}, TContext> => {
+
+const mutationKey = ['batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost>>, {runName: string;data: BodyType<BatchCounterExampleGenerateRequest>}> = (props) => {
+          const {runName,data} = props ?? {};
+
+          return  batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost(runName,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type BatchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePostMutationResult = NonNullable<Awaited<ReturnType<typeof batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost>>>
+    export type BatchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePostMutationBody = BodyType<BatchCounterExampleGenerateRequest>
+    export type BatchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Batch Generate Counter Examples
+ */
+export const useBatchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost>>, TError,{runName: string;data: BodyType<BatchCounterExampleGenerateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof batchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePost>>,
+        TError,
+        {runName: string;data: BodyType<BatchCounterExampleGenerateRequest>},
+        TContext
+      > => {
+      return useMutation(getBatchGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationCounterExamplesBatchGeneratePostMutationOptions(options), queryClient);
+    }
+    /**
  * @summary List Combination Entries
  */
 export const listCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet = (
@@ -255,6 +332,431 @@ export function useGetCombinationEntryApiV1RunsRunNameConstraintsCombinationEntr
 
 
 /**
+ * @summary Generate Counter Examples
+ */
+export const generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost = (
+    runName: string,
+    combinationId: string,
+    counterExampleGenerateRequest: BodyType<CounterExampleGenerateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CounterExampleGenerateResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}/counter-examples/generate`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: counterExampleGenerateRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost>>, TError,{runName: string;combinationId: string;data: BodyType<CounterExampleGenerateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost>>, TError,{runName: string;combinationId: string;data: BodyType<CounterExampleGenerateRequest>}, TContext> => {
+
+const mutationKey = ['generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost>>, {runName: string;combinationId: string;data: BodyType<CounterExampleGenerateRequest>}> = (props) => {
+          const {runName,combinationId,data} = props ?? {};
+
+          return  generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost(runName,combinationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type GenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePostMutationResult = NonNullable<Awaited<ReturnType<typeof generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost>>>
+    export type GenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePostMutationBody = BodyType<CounterExampleGenerateRequest>
+    export type GenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Generate Counter Examples
+ */
+export const useGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost>>, TError,{runName: string;combinationId: string;data: BodyType<CounterExampleGenerateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof generateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost>>,
+        TError,
+        {runName: string;combinationId: string;data: BodyType<CounterExampleGenerateRequest>},
+        TContext
+      > => {
+      return useMutation(getGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePostMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Run Counter Examples
+ */
+export const runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost = (
+    runName: string,
+    combinationId: string,
+    counterExampleRunRequest: BodyType<CounterExampleRunRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CombinationReviewResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}/counter-examples/run`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: counterExampleRunRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getRunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost>>, TError,{runName: string;combinationId: string;data: BodyType<CounterExampleRunRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost>>, TError,{runName: string;combinationId: string;data: BodyType<CounterExampleRunRequest>}, TContext> => {
+
+const mutationKey = ['runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost>>, {runName: string;combinationId: string;data: BodyType<CounterExampleRunRequest>}> = (props) => {
+          const {runName,combinationId,data} = props ?? {};
+
+          return  runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost(runName,combinationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type RunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPostMutationResult = NonNullable<Awaited<ReturnType<typeof runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost>>>
+    export type RunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPostMutationBody = BodyType<CounterExampleRunRequest>
+    export type RunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Run Counter Examples
+ */
+export const useRunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost>>, TError,{runName: string;combinationId: string;data: BodyType<CounterExampleRunRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof runCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost>>,
+        TError,
+        {runName: string;combinationId: string;data: BodyType<CounterExampleRunRequest>},
+        TContext
+      > => {
+      return useMutation(getRunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPostMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Update Counter Example Case
+ */
+export const updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut = (
+    runName: string,
+    combinationId: string,
+    caseId: string,
+    counterExampleCaseUpdateRequest: BodyType<CounterExampleCaseUpdateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CombinationReviewResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}/counter-examples/${caseId}`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: counterExampleCaseUpdateRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut>>, TError,{runName: string;combinationId: string;caseId: string;data: BodyType<CounterExampleCaseUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut>>, TError,{runName: string;combinationId: string;caseId: string;data: BodyType<CounterExampleCaseUpdateRequest>}, TContext> => {
+
+const mutationKey = ['updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut>>, {runName: string;combinationId: string;caseId: string;data: BodyType<CounterExampleCaseUpdateRequest>}> = (props) => {
+          const {runName,combinationId,caseId,data} = props ?? {};
+
+          return  updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut(runName,combinationId,caseId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut>>>
+    export type UpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPutMutationBody = BodyType<CounterExampleCaseUpdateRequest>
+    export type UpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPutMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Counter Example Case
+ */
+export const useUpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut>>, TError,{runName: string;combinationId: string;caseId: string;data: BodyType<CounterExampleCaseUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut>>,
+        TError,
+        {runName: string;combinationId: string;caseId: string;data: BodyType<CounterExampleCaseUpdateRequest>},
+        TContext
+      > => {
+      return useMutation(getUpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPutMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Get Combination Review
+ */
+export const getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet = (
+    runName: string,
+    combinationId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CombinationReviewResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}/review`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGetQueryKey = (runName: string,
+    combinationId: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}/review`
+    ] as const;
+    }
+
+
+export const getGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGetQueryOptions = <TData = Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGetQueryKey(runName,combinationId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>> = ({ signal }) => getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet(runName,combinationId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined && combinationId !== null && combinationId !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGetQueryResult = NonNullable<Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>>
+export type GetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet<TData = Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>,
+          TError,
+          Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet<TData = Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>,
+          TError,
+          Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet<TData = Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Combination Review
+ */
+
+export function useGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet<TData = Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewGetQueryOptions(runName,combinationId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Finalize Combination Review
+ */
+export const finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost = (
+    runName: string,
+    combinationId: string,
+    combinationReviewFinalizeRequest: BodyType<CombinationReviewFinalizeRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CombinationReviewResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}/review/finalize`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: combinationReviewFinalizeRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getFinalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost>>, TError,{runName: string;combinationId: string;data: BodyType<CombinationReviewFinalizeRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost>>, TError,{runName: string;combinationId: string;data: BodyType<CombinationReviewFinalizeRequest>}, TContext> => {
+
+const mutationKey = ['finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost>>, {runName: string;combinationId: string;data: BodyType<CombinationReviewFinalizeRequest>}> = (props) => {
+          const {runName,combinationId,data} = props ?? {};
+
+          return  finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost(runName,combinationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type FinalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePostMutationResult = NonNullable<Awaited<ReturnType<typeof finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost>>>
+    export type FinalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePostMutationBody = BodyType<CombinationReviewFinalizeRequest>
+    export type FinalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Finalize Combination Review
+ */
+export const useFinalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost>>, TError,{runName: string;combinationId: string;data: BodyType<CombinationReviewFinalizeRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof finalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePost>>,
+        TError,
+        {runName: string;combinationId: string;data: BodyType<CombinationReviewFinalizeRequest>},
+        TContext
+      > => {
+      return useMutation(getFinalizeCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewFinalizePostMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Reopen Combination Review
+ */
+export const reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost = (
+    runName: string,
+    combinationId: string,
+    combinationReviewReopenRequest: BodyType<CombinationReviewReopenRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<CombinationReviewResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/combination/entries/${combinationId}/review/reopen`, method: 'POST',
+      headers: {'Content-Type': 'application/json', },
+      data: combinationReviewReopenRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPostMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost>>, TError,{runName: string;combinationId: string;data: BodyType<CombinationReviewReopenRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost>>, TError,{runName: string;combinationId: string;data: BodyType<CombinationReviewReopenRequest>}, TContext> => {
+
+const mutationKey = ['reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost>>, {runName: string;combinationId: string;data: BodyType<CombinationReviewReopenRequest>}> = (props) => {
+          const {runName,combinationId,data} = props ?? {};
+
+          return  reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost(runName,combinationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type ReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPostMutationResult = NonNullable<Awaited<ReturnType<typeof reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost>>>
+    export type ReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPostMutationBody = BodyType<CombinationReviewReopenRequest>
+    export type ReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPostMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Reopen Combination Review
+ */
+export const useReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost>>, TError,{runName: string;combinationId: string;data: BodyType<CombinationReviewReopenRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof reopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost>>,
+        TError,
+        {runName: string;combinationId: string;data: BodyType<CombinationReviewReopenRequest>},
+        TContext
+      > => {
+      return useMutation(getReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPostMutationOptions(options), queryClient);
+    }
+    /**
  * @summary Get Combination Facets
  */
 export const getCombinationFacetsApiV1RunsRunNameConstraintsCombinationFacetsGet = (

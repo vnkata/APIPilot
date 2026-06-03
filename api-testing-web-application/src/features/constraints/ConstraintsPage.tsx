@@ -1,11 +1,24 @@
-import { Button, Stack } from '@mui/material'
-import type { GridColDef } from '@mui/x-data-grid'
-import { useMemo, useState } from 'react'
+import {
+  Button,
+  Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
+  Stack,
+  Typography,
+} from '@mui/material'
+import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid'
+import { useCallback, useMemo, useState } from 'react'
 
 import type {
+  CombinationReviewFinalizeRequest,
+  CounterExampleGenerateRequest,
+  CounterExampleRunRequest,
   CombinationEntryResponse,
   ConstraintEntryDetailResponse,
   ConstraintExplorerEntryResponse,
+  JsonValue,
   InvariantExplorerEntryResponse,
   SortOrder,
 } from '../../shared/api/generated/model'
@@ -27,17 +40,24 @@ import {
   useCombinationDetail,
   useCombinationEntries,
   useCombinationFacets,
+  useCombinationReview,
   useCombinationSummary,
+  useBatchGenerateCounterExamples,
   useConstraintExplorerDetail,
   useConstraintExplorerEntries,
   useConstraintExplorerFacets,
   useDynamicConstraintEntries,
   useDynamicConstraintsSummary,
+  useFinalizeCombinationReview,
+  useGenerateCounterExamples,
   useInvariantExplorerDetail,
   useInvariantExplorerEntries,
   useInvariantExplorerFacets,
+  useReopenCombinationReview,
+  useRunCounterExamples,
   useStaticConstraintEntries,
   useStaticConstraintsSummary,
+  useUpdateCounterExampleCase,
 } from './api'
 import { ConstraintAdvancedFiltersDrawer } from './components/ConstraintAdvancedFiltersDrawer'
 import { ConstraintAppliedFiltersBar } from './components/ConstraintAppliedFiltersBar'
@@ -48,8 +68,19 @@ import { ConstraintPageHeader } from './components/ConstraintPageHeader'
 import { ConstraintResultsRegion } from './components/ConstraintResultsRegion'
 import { InvariantDetailComposer } from './components/InvariantDetailComposer'
 import { LegacyConstraintDetailComposer } from './components/LegacyConstraintDetailComposer'
-import type { MatrixBy } from './constraintViewModels'
+import {
+  deriveCombinationReviewSignal,
+  isCombinationEligibleForCounterExample,
+  type MatrixBy,
+} from './constraintViewModels'
 import type { ConstraintGridColumns, ConstraintQueryState, LegacyConstraintRow } from './types'
+import {
+  CombinationPriorityBadge,
+  CombinationRelationBadge,
+  CombinationStatusBadge,
+  ReviewStateBadge,
+  RuntimeVerdictBadge,
+} from './components/CombinationBadges'
 
 export type ConstraintTab = 'combination' | 'dynamic' | 'explorer' | 'invariants' | 'static'
 
@@ -63,8 +94,10 @@ export type ConstraintsPageSearch = {
   constraintTab: ConstraintTab
   constraintsView?: 'matrix' | 'table' | 'workbench'
   correlationConfidence?: string
+  decisionSource?: string
   groupBy?: string
   hasCounterExample?: boolean
+  hasManualDecision?: boolean
   hasRuntimeEvaluation?: boolean
   hasValidationCases?: boolean
   invariantId?: string
@@ -79,6 +112,7 @@ export type ConstraintsPageSearch = {
   propertyPrefix?: string
   q?: string
   relation?: string
+  reviewState?: string
   resolved?: boolean
   section?: string
   sortBy?: string
@@ -104,6 +138,9 @@ function constraintRows(items: ConstraintEntryDetailResponse[]) {
 export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const [legacyDetail, setLegacyDetail] = useState<LegacyConstraintRow | null>(null)
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
+  const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
+  const [batchGenerateMessage, setBatchGenerateMessage] = useState<string | null>(null)
+  const [combinationSelectionModel, setCombinationSelectionModel] = useState<GridRowSelectionModel>({ ids: new Set(), type: 'include' })
   const [exportOpen, setExportOpen] = useState(false)
   const encodedRunName = encodeRoutePart(runName)
   const gridState = useUrlBackedGridState(search)
@@ -130,6 +167,11 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const combinationFacetsQuery = useCombinationFacets(runName, combinationFacetParams, { query: { enabled: needsCombination } })
   const combinationDetailOpen = Boolean(search.combinationId)
   const combinationDetailQuery = useCombinationDetail(
+    runName,
+    search.combinationId ?? '',
+    { query: { enabled: combinationDetailOpen } },
+  )
+  const combinationReviewQuery = useCombinationReview(
     runName,
     search.combinationId ?? '',
     { query: { enabled: combinationDetailOpen } },
@@ -171,11 +213,94 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     sort_order: search.sortOrder,
   }, { query: { enabled: needsDynamic } })
 
+  function refetchCombinationReviewSurface() {
+    void combinationQuery.refetch()
+    void combinationFacetsQuery.refetch()
+    void combinationDetailQuery.refetch()
+    void combinationReviewQuery.refetch()
+    void explorerQuery.refetch()
+    void explorerFacetsQuery.refetch()
+  }
+
+  const generateCounterExamplesMutation = useGenerateCounterExamples({
+    mutation: {
+      onSuccess: refetchCombinationReviewSurface,
+    },
+  })
+  const updateCounterExampleCaseMutation = useUpdateCounterExampleCase({
+    mutation: {
+      onSuccess: refetchCombinationReviewSurface,
+    },
+  })
+  const runCounterExamplesMutation = useRunCounterExamples({
+    mutation: {
+      onSuccess: refetchCombinationReviewSurface,
+    },
+  })
+  const finalizeReviewMutation = useFinalizeCombinationReview({
+    mutation: {
+      onSuccess: refetchCombinationReviewSurface,
+    },
+  })
+  const reopenReviewMutation = useReopenCombinationReview({
+    mutation: {
+      onSuccess: refetchCombinationReviewSurface,
+    },
+  })
+  const batchGenerateCounterExamplesMutation = useBatchGenerateCounterExamples({
+    mutation: {
+      onSuccess: (response) => {
+        const generated = response.results.filter((item) => item.status === 'generated').length
+        const newCaseCount = response.results.reduce((total, item) => total + (item.new_case_count ?? item.case_count), 0)
+        const totalCaseCount = response.results.reduce((total, item) => total + (item.total_case_count ?? item.case_count), 0)
+        setBatchGenerateMessage(
+          `Generated ${newCaseCount} new draft${newCaseCount === 1 ? '' : 's'} for ${generated} row${generated === 1 ? '' : 's'} (${totalCaseCount} total).`,
+        )
+        void combinationQuery.refetch()
+        void combinationFacetsQuery.refetch()
+        void explorerQuery.refetch()
+        void explorerFacetsQuery.refetch()
+      },
+    },
+  })
+
   const legacyConstraintRows = useMemo(
     () => constraintRows((tab === 'dynamic' ? dynamicEntriesQuery.data?.items : staticEntriesQuery.data?.items) ?? []),
     [dynamicEntriesQuery.data?.items, staticEntriesQuery.data?.items, tab],
   )
-  const combinationRows = combinationQuery.data?.items ?? []
+  const combinationRows = useMemo(() => combinationQuery.data?.items ?? [], [combinationQuery.data?.items])
+  const selectedCombinationRows = useMemo(() => {
+    if (combinationSelectionModel.type === 'exclude') {
+      return combinationRows.filter((row) => !combinationSelectionModel.ids.has(row.combination_id))
+    }
+    return combinationRows.filter((row) => combinationSelectionModel.ids.has(row.combination_id))
+  }, [combinationRows, combinationSelectionModel])
+  const selectedEligibleCombinationRows = useMemo(
+    () => selectedCombinationRows.filter((row) => isCombinationEligibleForCounterExample(row)),
+    [selectedCombinationRows],
+  )
+  const selectedCombinationCount = selectedCombinationRows.length
+  const selectedEligibleCombinationCount = selectedEligibleCombinationRows.length
+  const selectedSkippedCombinationCount = Math.max(0, selectedCombinationCount - selectedEligibleCombinationCount)
+  const isCombinationSelected = useCallback((combinationId: string) => {
+    if (combinationSelectionModel.type === 'exclude') return !combinationSelectionModel.ids.has(combinationId)
+    return combinationSelectionModel.ids.has(combinationId)
+  }, [combinationSelectionModel])
+
+  const toggleCombinationSelection = useCallback((combinationId: string, checked: boolean) => {
+    setCombinationSelectionModel((current) => {
+      const nextIds = new Set(current.ids)
+      if (current.type === 'exclude') {
+        if (checked) nextIds.delete(combinationId)
+        else nextIds.add(combinationId)
+        return { ids: nextIds, type: 'exclude' }
+      }
+      if (checked) nextIds.add(combinationId)
+      else nextIds.delete(combinationId)
+      return { ids: nextIds, type: 'include' }
+    })
+  }, [])
+
   const explorerRows = explorerQuery.data?.items ?? []
   const invariantRowsNew = invariantExplorerQuery.data?.items ?? []
   const legacyQuery = tab === 'dynamic' ? dynamicEntriesQuery : staticEntriesQuery
@@ -199,6 +324,25 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const combinationColumns = useMemo<GridColDef<CombinationEntryResponse>[]>(
     () => [
       {
+        field: 'select_for_batch',
+        headerName: '',
+        minWidth: 64,
+        sortable: false,
+        renderCell: (params) => {
+          const eligible = isCombinationEligibleForCounterExample(params.row)
+          return (
+            <Checkbox
+              checked={isCombinationSelected(params.row.combination_id)}
+              disabled={!eligible}
+              onChange={(event) => toggleCombinationSelection(params.row.combination_id, event.target.checked)}
+              onClick={(event) => event.stopPropagation()}
+              size="small"
+              slotProps={{ input: { 'aria-label': `Select ${params.row.combination_id} for batch generation` } }}
+            />
+          )
+        },
+      },
+      {
         field: 'operation_id',
         flex: 1,
         headerName: 'Operation',
@@ -209,9 +353,41 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
           </Button>
         ),
       },
-      { field: 'relation', headerName: 'Relation', minWidth: 180 },
-      { field: 'status', headerName: 'Status', minWidth: 160 },
-      { field: 'runtime_verdict', headerName: 'Runtime verdict', minWidth: 180 },
+      {
+        field: 'review_priority',
+        headerName: 'Review priority',
+        minWidth: 210,
+        sortable: false,
+        renderCell: (params) => <CombinationPriorityBadge row={params.row} />,
+        valueGetter: (_value, row) => deriveCombinationReviewSignal(row).label,
+      },
+      {
+        field: 'relation_badge',
+        headerName: 'Relation',
+        minWidth: 190,
+        renderCell: (params) => <CombinationRelationBadge relation={params.row.relation} />,
+        valueGetter: (_value, row) => row.relation,
+      },
+      {
+        field: 'status_badge',
+        headerName: 'Status',
+        minWidth: 170,
+        renderCell: (params) => <CombinationStatusBadge status={params.row.status} />,
+        valueGetter: (_value, row) => row.status,
+      },
+      {
+        field: 'runtime_verdict_badge',
+        headerName: 'Runtime support',
+        minWidth: 190,
+        renderCell: (params) => <RuntimeVerdictBadge runtimeVerdict={params.row.runtime_verdict} />,
+        valueGetter: (_value, row) => row.runtime_verdict,
+      },
+      {
+        field: 'review_state',
+        headerName: 'Review',
+        minWidth: 190,
+        renderCell: (params) => <ReviewStateBadge row={params.row} />,
+      },
       {
         field: 'resolved',
         headerName: 'Resolved',
@@ -232,7 +408,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       },
       { field: 'validation_case_count', headerName: 'Cases', minWidth: 100 },
     ],
-    [],
+    [isCombinationSelected, toggleCombinationSelection],
   )
   const explorerColumns = useMemo<GridColDef<ConstraintExplorerEntryResponse>[]>(
     () => [
@@ -250,6 +426,21 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       { field: 'source', headerName: 'Source', minWidth: 120 },
       { field: 'constraint_kind', headerName: 'Kind', minWidth: 160 },
       { field: 'agreement_status', headerName: 'Agreement', minWidth: 160 },
+      {
+        field: 'manual_decision',
+        headerName: 'Review',
+        minWidth: 180,
+        renderCell: (params) => (
+          <ReviewStateBadge
+            row={{
+              decision_source: params.row.decision_source,
+              has_manual_decision: params.row.has_manual_decision,
+              manual_decision: params.row.manual_decision,
+              review_state: params.row.review_state,
+            }}
+          />
+        ),
+      },
       { field: 'property_path', flex: 1, headerName: 'Property path', minWidth: 180 },
       {
         field: 'expression',
@@ -335,6 +526,62 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     }),
     [combinationColumns, explorerColumns, invariantColumns, legacyConstraintColumns],
   )
+
+  function handleBatchGenerateCounterExamples() {
+    if (selectedEligibleCombinationRows.length === 0) return
+    setBatchConfirmOpen(true)
+  }
+
+  function handleConfirmBatchGenerateCounterExamples() {
+    const combinationIds = selectedEligibleCombinationRows.map((row) => row.combination_id)
+    if (combinationIds.length === 0) return
+    batchGenerateCounterExamplesMutation.mutate({
+      runName,
+      data: {
+        combination_ids: combinationIds,
+        idempotency_key: createIdempotencyKey('batch-generate'),
+        live_llm: true,
+        max_cases_per_item: 3,
+        max_items: combinationIds.length,
+      },
+    })
+    setBatchConfirmOpen(false)
+  }
+
+  function handleGenerateCounterExamples(data: CounterExampleGenerateRequest) {
+    if (!search.combinationId) return
+    generateCounterExamplesMutation.mutate({ runName, combinationId: search.combinationId, data })
+  }
+
+  function handleUpdateCounterExampleCase(
+    caseId: string,
+    caseState: string,
+    rationale: string,
+    request?: JsonValue | null,
+  ) {
+    if (!search.combinationId) return
+    updateCounterExampleCaseMutation.mutate({
+      runName,
+      combinationId: search.combinationId,
+      caseId,
+      data: { case_state: caseState, rationale, request },
+    })
+  }
+
+  function handleRunApprovedCounterExamples(data: CounterExampleRunRequest) {
+    if (!search.combinationId) return
+    runCounterExamplesMutation.mutate({ runName, combinationId: search.combinationId, data })
+  }
+
+  function handleFinalizeReview(data: CombinationReviewFinalizeRequest) {
+    if (!search.combinationId) return
+    finalizeReviewMutation.mutate({ runName, combinationId: search.combinationId, data })
+  }
+
+  function handleReopenReview(rationale: string) {
+    if (!search.combinationId) return
+    reopenReviewMutation.mutate({ runName, combinationId: search.combinationId, data: { rationale } })
+  }
 
   function applyGroupFilter(key: string | null | undefined) {
     if (!key) return
@@ -455,6 +702,8 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       <ConstraintResultsRegion
         columns={columns}
         combinationQuery={combinationState}
+        batchGenerateMessage={batchGenerateMessage}
+        batchGeneratePending={batchGenerateCounterExamplesMutation.isPending}
         combinationRowCount={combinationQuery.data?.pagination.total ?? 0}
         combinationRows={combinationRows}
         constraintsView={constraintsView}
@@ -470,10 +719,14 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         legacyRows={legacyConstraintRows}
         matrixBy={matrixBy}
         onApplyMatrixFilter={applyMatrixFilter}
+        onBatchGenerateCounterExamples={handleBatchGenerateCounterExamples}
         onMatrixByChange={(value) => replaceSearchParams({ matrixBy: value })}
         onSelectCombination={(combinationId) => replaceSearchParams({ combinationId })}
         onSelectConstraint={(constraintId) => replaceSearchParams({ constraintId })}
         onSelectInvariant={(invariantId) => replaceSearchParams({ invariantId })}
+        selectedEligibleCombinationCount={selectedEligibleCombinationCount}
+        selectedSkippedCombinationCount={selectedSkippedCombinationCount}
+        selectedCombinationCount={selectedCombinationCount}
         tab={tab}
       />
 
@@ -506,7 +759,31 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
             detail={combinationDetailQuery.data}
             detailView={constraintDetailView}
             evidenceLinks={evidenceLinks}
+            mode="preview"
+            onApproveCase={(caseId, request) => handleUpdateCounterExampleCase(caseId, 'APPROVED', 'Approved for targeted HITL execution.', request)}
             onDetailViewChange={(value) => replaceSearchParams({ constraintDetailView: value })}
+            onFinalize={handleFinalizeReview}
+            onGenerateDraft={handleGenerateCounterExamples}
+            onRejectCase={(caseId) => handleUpdateCounterExampleCase(caseId, 'REJECTED', 'Rejected during HITL review.')}
+            onReopen={handleReopenReview}
+            onRunApproved={handleRunApprovedCounterExamples}
+            review={combinationReviewQuery.data}
+            reviewHref={`/runs/${encodedRunName}/constraints/combination/${encodeURIComponent(combinationDetailQuery.data.combination_id)}/review`}
+            reviewActionError={
+              generateCounterExamplesMutation.error ||
+              updateCounterExampleCaseMutation.error ||
+              runCounterExamplesMutation.error ||
+              finalizeReviewMutation.error ||
+              reopenReviewMutation.error
+            }
+            reviewActionPending={
+              generateCounterExamplesMutation.isPending ||
+              updateCounterExampleCaseMutation.isPending ||
+              runCounterExamplesMutation.isPending ||
+              finalizeReviewMutation.isPending ||
+              reopenReviewMutation.isPending
+            }
+            reviewLoading={combinationReviewQuery.isLoading}
           />
         ) : null}
       </InvestigationDrawer>
@@ -568,6 +845,37 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
 
       <OperationDetailDrawer operationId={search.operationId} runName={runName} />
 
+      <Dialog
+        aria-labelledby="batch-generate-confirm-title"
+        onClose={() => setBatchConfirmOpen(false)}
+        open={batchConfirmOpen}
+      >
+        <DialogTitle id="batch-generate-confirm-title">Confirm live draft generation</DialogTitle>
+        <DialogContent>
+          <Stack spacing={1}>
+            <Typography variant="body2">
+              {selectedCombinationCount} selected row{selectedCombinationCount === 1 ? '' : 's'}.
+            </Typography>
+            <Typography variant="body2">
+              {selectedEligibleCombinationCount} eligible; {selectedSkippedCombinationCount} skipped.
+            </Typography>
+            <Typography color="text.secondary" variant="body2">
+              This action uses live LLM draft generation with up to 3 cases per eligible row.
+            </Typography>
+          </Stack>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setBatchConfirmOpen(false)}>Cancel</Button>
+          <Button
+            disabled={batchGenerateCounterExamplesMutation.isPending || selectedEligibleCombinationCount === 0}
+            onClick={handleConfirmBatchGenerateCounterExamples}
+            variant="contained"
+          >
+            Confirm live generation
+          </Button>
+        </DialogActions>
+      </Dialog>
+
       <ExportSnapshotDialog
         data={activeRows}
         filters={search}
@@ -579,4 +887,9 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       />
     </Stack>
   )
+}
+
+function createIdempotencyKey(action: string) {
+  const randomValue = globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2)
+  return `${action}-${Date.now()}-${randomValue}`
 }

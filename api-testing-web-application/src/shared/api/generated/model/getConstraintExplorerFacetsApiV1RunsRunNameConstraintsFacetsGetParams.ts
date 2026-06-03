@@ -44,6 +44,22 @@ agreement_status?: string | null;
  */
 assertion_available?: boolean | null;
 /**
+ * Filter by HITL review state.
+ */
+review_state?: string | null;
+/**
+ * Filter by HITL decision source.
+ */
+decision_source?: string | null;
+/**
+ * Filter by whether a human review decision exists.
+ */
+has_manual_decision?: boolean | null;
+/**
+ * Filter by human review decision value.
+ */
+manual_decision?: string | null;
+/**
  * Search safe string fields before calculating facets.
  */
 q?: string | null;

@@ -1,4 +1,4 @@
-import { Box, Button, Chip, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material'
+import { Box, Button, Grid, MenuItem, Stack, TextField, Typography } from '@mui/material'
 
 import type {
   CombinationEntryResponse,
@@ -9,7 +9,7 @@ import { Panel } from '../../../shared/ui/Panel'
 import { monoFontFamily } from '../../../theme/typography'
 import { TOUR_ANCHORS, tourAnchor } from '../../product-tour/tourAnchors'
 import type { MatrixBy } from '../constraintViewModels'
-import { parseAssertionSummary, readableIdentifier } from '../constraintViewModels'
+import { deriveCombinationReviewSignal, parseAssertionSummary, readableIdentifier } from '../constraintViewModels'
 import {
   AgreementBadge,
   AssertionBadge,
@@ -18,14 +18,24 @@ import {
   CorrelationBadge,
   OracleReadinessBadge,
 } from './ConstraintBadges'
+import {
+  CombinationPriorityBadge,
+  CombinationRelationBadge,
+  CombinationStatusBadge,
+  ReviewStateBadge,
+  RuntimeVerdictBadge,
+} from './CombinationBadges'
 import { CurrentPageConstraintMatrix } from './CurrentPageConstraintMatrix'
 
 type ConstraintWorkbenchProps = {
+  batchGenerateMessage?: string | null
+  batchGeneratePending?: boolean
   combinations: CombinationEntryResponse[]
   constraints: ConstraintExplorerEntryResponse[]
   invariants: InvariantExplorerEntryResponse[]
   matrixBy: MatrixBy
   onApplyFilter: (filter: Record<string, string | undefined>) => void
+  onBatchGenerateCounterExamples: () => void
   onMatrixByChange: (matrixBy: MatrixBy) => void
   onSelectCombination: (combinationId: string) => void
   onSelectConstraint: (constraintId: string) => void
@@ -221,15 +231,11 @@ function CombinationSignalRow({
     >
       <Stack spacing={1}>
         <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-          {combination.relation ? <Chip label={combination.relation} size="small" variant="outlined" /> : null}
-          <Chip label={combination.status} size="small" />
-          {combination.runtime_verdict ? <Chip label={combination.runtime_verdict} size="small" variant="outlined" /> : null}
-          <Chip
-            color={combination.resolved ? 'success' : 'default'}
-            label={combination.resolved ? 'Resolved' : 'Unresolved'}
-            size="small"
-            variant={combination.resolved ? 'filled' : 'outlined'}
-          />
+          <CombinationPriorityBadge row={combination} />
+          <CombinationRelationBadge relation={combination.relation} />
+          <CombinationStatusBadge status={combination.status} />
+          <RuntimeVerdictBadge runtimeVerdict={combination.runtime_verdict} />
+          <ReviewStateBadge row={combination} />
         </Stack>
         <Typography
           component="p"
@@ -281,12 +287,25 @@ function invariantRank(row: InvariantExplorerEntryResponse) {
   )
 }
 
+function combinationRank(row: CombinationEntryResponse) {
+  const priority = deriveCombinationReviewSignal(row).priority
+  if (priority === 'conflict') return 500
+  if (priority === 'needs_review') return 400
+  if (priority === 'human_decision') return 300
+  if (priority === 'unique') return 200
+  if (priority === 'resolved') return 100
+  return 0
+}
+
 export function ConstraintWorkbench({
+  batchGenerateMessage,
+  batchGeneratePending = false,
   combinations,
   constraints,
   invariants,
   matrixBy,
   onApplyFilter,
+  onBatchGenerateCounterExamples,
   onMatrixByChange,
   onSelectCombination,
   onSelectConstraint,
@@ -298,7 +317,7 @@ export function ConstraintWorkbench({
   const readyInvariants = invariants.filter((row) => row.oracle_readiness === 'verified_runtime_oracle' || row.oracle_readiness === 'schema_supported').length
   const topConstraints = [...constraints].sort((left, right) => constraintRank(right) - constraintRank(left)).slice(0, 5)
   const topCombinations = [...combinations]
-    .sort((left, right) => Number(right.resolved) - Number(left.resolved) || right.validation_case_count - left.validation_case_count)
+    .sort((left, right) => combinationRank(right) - combinationRank(left) || right.validation_case_count - left.validation_case_count)
     .slice(0, 3)
   const topInvariants = [...invariants].sort((left, right) => invariantRank(right) - invariantRank(left)).slice(0, 3)
 
@@ -390,10 +409,25 @@ export function ConstraintWorkbench({
         </Grid>
         <Grid size={{ xs: 12, lg: 6 }}>
           <Panel
-            subtitle="Resolved static/dynamic combinations with runtime evidence when available."
+            actions={
+              <Button
+                disabled={combinations.length === 0 || batchGeneratePending}
+                onClick={onBatchGenerateCounterExamples}
+                size="small"
+                variant="outlined"
+              >
+                Batch generate drafts
+              </Button>
+            }
+            subtitle="Prioritized static/dynamic combinations that need review, conflict resolution, or final inspection."
             title="Combination evidence"
           >
             <Stack spacing={1}>
+              {batchGenerateMessage ? (
+                <Typography color="text.secondary" variant="body2">
+                  {batchGenerateMessage}
+                </Typography>
+              ) : null}
               {topCombinations.length > 0 ? (
                 topCombinations.map((combination) => (
                   <CombinationSignalRow

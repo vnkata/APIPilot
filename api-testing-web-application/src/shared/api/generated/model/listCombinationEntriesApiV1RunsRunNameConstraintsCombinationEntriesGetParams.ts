@@ -49,16 +49,28 @@ has_runtime_evaluation?: boolean | null;
  */
 has_validation_cases?: boolean | null;
 /**
+ * Filter by HITL review state.
+ */
+review_state?: string | null;
+/**
+ * Filter by final decision source.
+ */
+decision_source?: string | null;
+/**
+ * Filter by manual decision availability.
+ */
+has_manual_decision?: boolean | null;
+/**
  * Search combination fields.
  */
 q?: string | null;
 /**
- * Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count.
+ * Allowed values: operation_id, property_path, status, relation, runtime_verdict, resolved, validation_case_count, review_state, decision_source.
  */
 sort_by?: string | null;
 sort_order?: SortOrder;
 /**
- * Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases.
+ * Allowed values: operation_id, status, relation, runtime_verdict, resolved, has_counter_example, has_runtime_evaluation, has_validation_cases, review_state, decision_source, has_manual_decision.
  */
 group_by?: string | null;
 /**

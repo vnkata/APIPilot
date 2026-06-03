@@ -105,6 +105,8 @@ export const constraintsSearchSchema = z.object({
   propertyPrefix: nullableString,
   q: nullableString,
   relation: nullableString,
+  reviewState: nullableString,
+  manualDecision: nullableString,
   resolved: optionalBooleanFlag,
   section: nullableString,
   sortBy: nullableString,
@@ -113,6 +115,8 @@ export const constraintsSearchSchema = z.object({
   sourceType: nullableString,
   status: nullableString,
   runtimeVerdict: nullableString,
+  decisionSource: nullableString,
+  hasManualDecision: optionalBooleanFlag,
 })
 
 export const artifactsSearchSchema = z
