@@ -2,6 +2,9 @@ from __future__ import annotations
 
 from fastapi import Request
 
+from api_testing.backend.application.review_services.combination_review import (
+    CombinationReviewService,
+)
 from api_testing.backend.application.services import ArtifactQueryService
 from api_testing.backend.application.write_services import WriteFlowService
 
@@ -17,4 +20,11 @@ def get_write_flow_service(request: Request) -> WriteFlowService:
     service = getattr(request.app.state, "write_flow_service", None)
     if service is None:
         raise RuntimeError("WriteFlowService dependency was not initialized")
+    return service
+
+
+def get_combination_review_service(request: Request) -> CombinationReviewService:
+    service = getattr(request.app.state, "combination_review_service", None)
+    if service is None:
+        raise RuntimeError("CombinationReviewService dependency was not initialized")
     return service

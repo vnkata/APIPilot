@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from pydantic import Field, JsonValue
+from pydantic import Field, JsonValue, model_validator
 
 from api_testing.backend.api.schemas.common import (
     BackendBaseModel,
@@ -40,6 +40,11 @@ from api_testing.backend.domain.models import (
     OracleReadiness,
     CorrelationConfidence,
     StaticConstraints,
+)
+from api_testing.backend.domain.review_models import (
+    CombinationReviewDetail,
+    CombinationReviewEvent,
+    CounterExampleCase,
 )
 
 
@@ -124,6 +129,12 @@ class ConstraintExplorerEntryResponse(BackendBaseModel):
     agreement_status: AgreementStatus
     assertion_available: bool
     assertion_preview: str | None = None
+    combination_id: str | None = None
+    review_state: str | None = None
+    decision_source: str | None = None
+    has_manual_decision: bool = False
+    manual_decision: str | None = None
+    manual_final_constraint: str | None = None
 
     @classmethod
     def from_domain(
@@ -147,6 +158,12 @@ class ConstraintExplorerEntryResponse(BackendBaseModel):
             agreement_status=entry.agreement_status,
             assertion_available=entry.assertion_available,
             assertion_preview=entry.assertion_preview,
+            combination_id=entry.combination_id,
+            review_state=entry.review_state,
+            decision_source=entry.decision_source,
+            has_manual_decision=entry.has_manual_decision,
+            manual_decision=entry.manual_decision,
+            manual_final_constraint=entry.manual_final_constraint,
         )
 
 
@@ -207,6 +224,10 @@ class ConstraintFacetsResponse(BackendBaseModel):
     source_type: list[ConstraintFacetBucketResponse]
     agreement_status: list[ConstraintFacetBucketResponse]
     assertion_available: list[ConstraintFacetBucketResponse]
+    review_state: list[ConstraintFacetBucketResponse]
+    decision_source: list[ConstraintFacetBucketResponse]
+    has_manual_decision: list[ConstraintFacetBucketResponse]
+    manual_decision: list[ConstraintFacetBucketResponse]
     metadata: ConstraintQueryMetadataResponse
 
     @classmethod
@@ -240,6 +261,22 @@ class ConstraintFacetsResponse(BackendBaseModel):
                 ConstraintFacetBucketResponse.from_domain(bucket)
                 for bucket in facets.assertion_available
             ],
+            review_state=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.review_state
+            ],
+            decision_source=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.decision_source
+            ],
+            has_manual_decision=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.has_manual_decision
+            ],
+            manual_decision=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.manual_decision
+            ],
             metadata=ConstraintQueryMetadataResponse.from_domain(facets.metadata),
         )
 
@@ -249,7 +286,8 @@ class CombinationEntryResponse(BackendBaseModel):
     operation_id: str
     property_path: str
     status: str
-    verdict: str | None = None
+    relation: str | None = None
+    runtime_verdict: str | None = None
     resolved: bool
     static_constraint: str | None = None
     dynamic_constraint: str | None = None
@@ -259,6 +297,9 @@ class CombinationEntryResponse(BackendBaseModel):
     has_runtime_evaluation: bool
     validation_case_count: int = Field(ge=0)
     source_artifact: str
+    review_state: str = "PENDING_REVIEW"
+    decision_source: str | None = None
+    has_manual_decision: bool = False
 
     @classmethod
     def from_domain(cls, entry: CombinationEntry) -> "CombinationEntryResponse":
@@ -267,7 +308,8 @@ class CombinationEntryResponse(BackendBaseModel):
             operation_id=entry.operation_id,
             property_path=entry.property_path,
             status=entry.status,
-            verdict=entry.verdict,
+            relation=entry.relation,
+            runtime_verdict=entry.runtime_verdict,
             resolved=entry.resolved,
             static_constraint=entry.static_constraint,
             dynamic_constraint=entry.dynamic_constraint,
@@ -277,6 +319,9 @@ class CombinationEntryResponse(BackendBaseModel):
             has_runtime_evaluation=entry.has_runtime_evaluation,
             validation_case_count=entry.validation_case_count,
             source_artifact=entry.source_artifact,
+            review_state=entry.review_state,
+            decision_source=entry.decision_source,
+            has_manual_decision=entry.has_manual_decision,
         )
 
 
@@ -308,7 +353,8 @@ class CombinationSummaryResponse(BackendBaseModel):
     unresolved_count: int = Field(ge=0)
     malformed_count: int = Field(ge=0)
     status_counts: dict[str, int]
-    verdict_counts: dict[str, int]
+    relation_counts: dict[str, int]
+    runtime_verdict_counts: dict[str, int]
     warnings: list[str]
 
     @classmethod
@@ -322,7 +368,8 @@ class CombinationSummaryResponse(BackendBaseModel):
             unresolved_count=summary.unresolved_count,
             malformed_count=summary.malformed_count,
             status_counts=summary.status_counts,
-            verdict_counts=summary.verdict_counts,
+            relation_counts=summary.relation_counts,
+            runtime_verdict_counts=summary.runtime_verdict_counts,
             warnings=summary.warnings,
         )
 
@@ -353,12 +400,16 @@ class CombinationEntryPageResponse(BackendBaseModel):
 
 class CombinationFacetsResponse(BackendBaseModel):
     status: list[ConstraintFacetBucketResponse]
-    verdict: list[ConstraintFacetBucketResponse]
+    relation: list[ConstraintFacetBucketResponse]
+    runtime_verdict: list[ConstraintFacetBucketResponse]
     resolved: list[ConstraintFacetBucketResponse]
     operation_id: list[ConstraintFacetBucketResponse]
     has_counter_example: list[ConstraintFacetBucketResponse]
     has_runtime_evaluation: list[ConstraintFacetBucketResponse]
     has_validation_cases: list[ConstraintFacetBucketResponse]
+    review_state: list[ConstraintFacetBucketResponse]
+    decision_source: list[ConstraintFacetBucketResponse]
+    has_manual_decision: list[ConstraintFacetBucketResponse]
     malformed_count: int = Field(ge=0)
     warnings: list[str]
 
@@ -369,9 +420,13 @@ class CombinationFacetsResponse(BackendBaseModel):
                 ConstraintFacetBucketResponse.from_domain(bucket)
                 for bucket in facets.status
             ],
-            verdict=[
+            relation=[
                 ConstraintFacetBucketResponse.from_domain(bucket)
-                for bucket in facets.verdict
+                for bucket in facets.relation
+            ],
+            runtime_verdict=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.runtime_verdict
             ],
             resolved=[
                 ConstraintFacetBucketResponse.from_domain(bucket)
@@ -393,9 +448,193 @@ class CombinationFacetsResponse(BackendBaseModel):
                 ConstraintFacetBucketResponse.from_domain(bucket)
                 for bucket in facets.has_validation_cases
             ],
+            review_state=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.review_state
+            ],
+            decision_source=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.decision_source
+            ],
+            has_manual_decision=[
+                ConstraintFacetBucketResponse.from_domain(bucket)
+                for bucket in facets.has_manual_decision
+            ],
             malformed_count=facets.malformed_count,
             warnings=facets.warnings,
         )
+
+
+class CounterExampleCaseResponse(BackendBaseModel):
+    case_id: str
+    case_state: str
+    request: JsonValue
+    request_display: JsonValue | None = None
+    source: str
+    rationale: str | None = None
+    generation_id: str | None = None
+    target_truth_vector: JsonValue | None = None
+    risk: str | None = None
+    expected_observation: str | None = None
+    validation_error: JsonValue | None = None
+    planner_version: str | None = None
+    source_metadata: JsonValue | None = None
+    runtime_verdict: str | None = None
+    runtime_result: JsonValue | None = None
+
+    @classmethod
+    def from_domain(cls, case: CounterExampleCase) -> "CounterExampleCaseResponse":
+        return cls(
+            case_id=case.case_id,
+            case_state=case.case_state,
+            request=case.request,
+            request_display=case.request_display,
+            source=case.source,
+            rationale=case.rationale,
+            generation_id=case.generation_id,
+            target_truth_vector=case.target_truth_vector,
+            risk=case.risk,
+            expected_observation=case.expected_observation,
+            validation_error=case.validation_error,
+            planner_version=case.planner_version,
+            source_metadata=case.source_metadata,
+            runtime_verdict=case.runtime_verdict,
+            runtime_result=case.runtime_result,
+        )
+
+
+class CombinationReviewEventResponse(BackendBaseModel):
+    sequence: int = Field(ge=1)
+    event_type: str
+    metadata: JsonValue
+
+    @classmethod
+    def from_domain(
+        cls, event: CombinationReviewEvent
+    ) -> "CombinationReviewEventResponse":
+        return cls(
+            sequence=event.sequence,
+            event_type=event.event_type,
+            metadata=event.metadata,
+        )
+
+
+class CombinationReviewResponse(BackendBaseModel):
+    run_name: str
+    combination_id: str
+    review_key: str
+    review_state: str
+    decision_source: str | None = None
+    manual_decision: str | None = None
+    rationale: str | None = None
+    custom_final_constraint: str | None = None
+    runtime_recommendation: str | None = None
+    has_manual_decision: bool
+    target_base_url_suggestions: list[str] = []
+    cases: list[CounterExampleCaseResponse]
+    events: list[CombinationReviewEventResponse]
+
+    @classmethod
+    def from_domain(
+        cls, detail: CombinationReviewDetail
+    ) -> "CombinationReviewResponse":
+        review = detail.review
+        return cls(
+            run_name=review.run_name,
+            combination_id=review.combination_id,
+            review_key=review.review_key,
+            review_state=review.review_state,
+            decision_source=review.decision_source,
+            manual_decision=review.manual_decision,
+            rationale=review.rationale,
+            custom_final_constraint=review.custom_final_constraint,
+            runtime_recommendation=review.runtime_recommendation,
+            has_manual_decision=review.manual_decision is not None,
+            target_base_url_suggestions=detail.target_base_url_suggestions,
+            cases=[CounterExampleCaseResponse.from_domain(case) for case in detail.cases],
+            events=[
+                CombinationReviewEventResponse.from_domain(event)
+                for event in detail.events
+            ],
+        )
+
+
+class CounterExampleGenerateResponse(CombinationReviewResponse):
+    pass
+
+
+class CounterExampleGenerateRequest(BackendBaseModel):
+    live_llm: bool = False
+    idempotency_key: str = Field(min_length=1)
+    max_cases: int | None = Field(default=None, ge=1, le=10)
+
+
+class CounterExampleCaseUpdateRequest(BackendBaseModel):
+    case_state: str
+    rationale: str | None = None
+    request: JsonValue | None = None
+
+
+class CounterExampleRunRequest(BackendBaseModel):
+    live_api: bool
+    base_url: str | None = None
+    request_budget: int = Field(gt=0)
+    timeout_seconds: int = Field(gt=0)
+    unsafe_method_confirmed: bool = False
+    idempotency_key: str = Field(min_length=1)
+
+
+class CombinationReviewFinalizeRequest(BackendBaseModel):
+    manual_decision: str
+    idempotency_key: str = Field(min_length=1)
+    rationale: str | None = None
+    custom_final_constraint: str | None = None
+
+    @model_validator(mode="after")
+    def validate_decision(self) -> "CombinationReviewFinalizeRequest":
+        allowed = {
+            "ACCEPT_STATIC",
+            "ACCEPT_DYNAMIC",
+            "CUSTOM_FINAL",
+            "NO_FINAL",
+            "NEEDS_BUSINESS_REVIEW",
+            "REJECT_RELATION",
+        }
+        if self.manual_decision not in allowed:
+            raise ValueError(f"Unsupported manual_decision: {self.manual_decision}")
+        if not self.rationale or not self.rationale.strip():
+            raise ValueError("rationale is required")
+        if self.manual_decision == "CUSTOM_FINAL" and (
+            not self.custom_final_constraint
+            or not self.custom_final_constraint.strip()
+        ):
+            raise ValueError("custom_final_constraint is required for CUSTOM_FINAL")
+        return self
+
+
+class CombinationReviewReopenRequest(BackendBaseModel):
+    rationale: str
+
+
+class BatchCounterExampleGenerateRequest(BackendBaseModel):
+    combination_ids: list[str] = Field(min_length=1)
+    live_llm: bool = False
+    idempotency_key: str = Field(min_length=1)
+    max_items: int | None = Field(default=None, ge=1, le=100)
+    max_cases_per_item: int | None = Field(default=None, ge=1, le=10)
+
+
+class BatchCounterExampleGenerateItemResponse(BackendBaseModel):
+    combination_id: str
+    status: str
+    case_count: int = Field(ge=0)
+    new_case_count: int = Field(default=0, ge=0)
+    total_case_count: int = Field(default=0, ge=0)
+    message: str | None = None
+
+
+class BatchCounterExampleGenerateResponse(BackendBaseModel):
+    results: list[BatchCounterExampleGenerateItemResponse]
 
 
 class ConstraintSectionResponse(BackendBaseModel):

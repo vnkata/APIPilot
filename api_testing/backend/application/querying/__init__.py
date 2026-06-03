@@ -62,6 +62,10 @@ class ConstraintExplorerQuery:
     source_type: str | None = None
     agreement_status: str | None = None
     assertion_available: bool | None = None
+    review_state: str | None = None
+    decision_source: str | None = None
+    has_manual_decision: bool | None = None
+    manual_decision: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -75,6 +79,10 @@ class ConstraintFacetsQuery:
     source_type: str | None = None
     agreement_status: str | None = None
     assertion_available: bool | None = None
+    review_state: str | None = None
+    decision_source: str | None = None
+    has_manual_decision: bool | None = None
+    manual_decision: str | None = None
     q: str | None = None
 
 
@@ -85,11 +93,15 @@ class CombinationQuery:
     property_path: str | None = None
     property_prefix: str | None = None
     status: str | None = None
-    verdict: str | None = None
+    relation: str | None = None
+    runtime_verdict: str | None = None
     resolved: bool | None = None
     has_counter_example: bool | None = None
     has_runtime_evaluation: bool | None = None
     has_validation_cases: bool | None = None
+    review_state: str | None = None
+    decision_source: str | None = None
+    has_manual_decision: bool | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -98,11 +110,15 @@ class CombinationFacetsQuery:
     property_path: str | None = None
     property_prefix: str | None = None
     status: str | None = None
-    verdict: str | None = None
+    relation: str | None = None
+    runtime_verdict: str | None = None
     resolved: bool | None = None
     has_counter_example: bool | None = None
     has_runtime_evaluation: bool | None = None
     has_validation_cases: bool | None = None
+    review_state: str | None = None
+    decision_source: str | None = None
+    has_manual_decision: bool | None = None
     q: str | None = None
 
 

@@ -5,7 +5,11 @@ from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
 from api_testing.backend.api.schemas.common import ErrorDetail, ErrorResponse
-from api_testing.backend.domain.errors import ArtifactNotFound, InvalidArtifactRequest
+from api_testing.backend.domain.errors import (
+    ArtifactConflict,
+    ArtifactNotFound,
+    InvalidArtifactRequest,
+)
 
 
 def register_exception_handlers(app: FastAPI) -> None:
@@ -18,6 +22,10 @@ def register_exception_handlers(app: FastAPI) -> None:
         _, exc: InvalidArtifactRequest
     ) -> JSONResponse:
         return error_response(400, "invalid_request", str(exc))
+
+    @app.exception_handler(ArtifactConflict)
+    async def artifact_conflict_handler(_, exc: ArtifactConflict) -> JSONResponse:
+        return error_response(409, "conflict", str(exc))
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(_, exc: RequestValidationError) -> JSONResponse:

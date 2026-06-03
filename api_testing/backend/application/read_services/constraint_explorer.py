@@ -76,6 +76,12 @@ class _NormalizedConstraint:
     section: str | None
     parameter: str | None
     source_type: str | None
+    combination_id: str | None = None
+    review_state: str | None = None
+    decision_source: str | None = None
+    has_manual_decision: bool = False
+    manual_decision: str | None = None
+    manual_final_constraint: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -89,6 +95,10 @@ class _ConstraintFilters:
     source_type: str | None
     agreement_status: AgreementStatus | None
     assertion_available: bool | None
+    review_state: str | None
+    decision_source: str | None
+    has_manual_decision: bool | None
+    manual_decision: str | None
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,6 +106,16 @@ class _ReadModel:
     entries: list[ConstraintExplorerEntry]
     details_by_id: dict[str, ConstraintExplorerDetail]
     metadata: ConstraintQueryMetadata
+
+
+@dataclass(frozen=True, slots=True)
+class _ReviewOverlay:
+    combination_id: str
+    review_state: str | None
+    decision_source: str | None
+    has_manual_decision: bool
+    manual_decision: str | None
+    manual_final_constraint: str | None
 
 
 class _ConstraintExplorerReadModelCache:
@@ -121,6 +141,9 @@ class ConstraintExplorerService:
             "section": lambda item: item.section,
             "constraint_kind": lambda item: item.constraint_kind.value,
             "agreement_status": lambda item: item.agreement_status.value,
+            "review_state": lambda item: item.review_state,
+            "decision_source": lambda item: item.decision_source,
+            "manual_decision": lambda item: item.manual_decision,
         },
         group_fields={
             "source": lambda item: item.source.value,
@@ -130,6 +153,10 @@ class ConstraintExplorerService:
             "source_type": lambda item: item.source_type,
             "agreement_status": lambda item: item.agreement_status.value,
             "assertion_available": lambda item: _bool_key(item.assertion_available),
+            "review_state": lambda item: item.review_state,
+            "decision_source": lambda item: item.decision_source,
+            "has_manual_decision": lambda item: _bool_key(item.has_manual_decision),
+            "manual_decision": lambda item: item.manual_decision,
         },
         search_fields=[
             lambda item: item.constraint_id,
@@ -145,12 +172,17 @@ class ConstraintExplorerService:
             lambda item: item.dynamic_expression,
             lambda item: item.combined_expression,
             lambda item: item.assertion_preview,
+            lambda item: item.review_state,
+            lambda item: item.decision_source,
+            lambda item: item.manual_decision,
+            lambda item: item.manual_final_constraint,
         ],
         default_sort=("operation_id", "property_path", "source", "section"),
     )
 
-    def __init__(self, repository: ArtifactRepositoryProtocol) -> None:
+    def __init__(self, repository: ArtifactRepositoryProtocol, review_repository=None) -> None:
         self.repository = repository
+        self.review_repository = review_repository
         self._cache = _ConstraintExplorerReadModelCache()
 
     def list_entries(
@@ -198,12 +230,20 @@ class ConstraintExplorerService:
             assertion_available=_facet(
                 records, lambda item: _bool_key(item.assertion_available)
             ),
+            review_state=_facet(records, lambda item: item.review_state),
+            decision_source=_facet(records, lambda item: item.decision_source),
+            has_manual_decision=_facet(
+                records, lambda item: _bool_key(item.has_manual_decision)
+            ),
+            manual_decision=_facet(records, lambda item: item.manual_decision),
             metadata=read_model.metadata,
         )
 
     def _read_model(self, run_name: str) -> _ReadModel:
         self.repository.get_run(run_name)
         key = self._cache_key(run_name)
+        if self.review_repository is not None:
+            return self._build_read_model(run_name)
         cached = self._cache.get(key)
         if cached is not None:
             return cached
@@ -227,15 +267,24 @@ class ConstraintExplorerService:
         new_combined_payload = _read_optional_json(
             self.repository, run_name, COMBINATION_SOURCE_ARTIFACT
         )
+        review_overlays: dict[_ConstraintKey, _ReviewOverlay] = {}
         if new_combined_payload is not None:
             try:
                 combination_model = parse_combination_artifact(
                     new_combined_payload,
                     run_name=run_name,
                 )
+                review_overlays = _review_overlays(
+                    run_name,
+                    combination_model.details_by_id.values(),
+                    self.review_repository,
+                )
                 combined_source = CombinedSource.COMBINE_CONSTRAINT_MINERS
                 warnings = combination_model.summary.warnings
-                combined_constraints = _combination_constraints(combination_model.entries)
+                combined_constraints = _combination_constraints(
+                    combination_model.details_by_id.values(),
+                    review_overlays=review_overlays,
+                )
             except InvalidArtifactRequest as exc:
                 combined_source, warnings, combined_constraints = _legacy_combined_constraints(
                     self.repository,
@@ -273,6 +322,7 @@ class ConstraintExplorerService:
                 dynamic_expression=dynamic_expressions.get(key),
                 combined_expression=combined_expressions.get(key),
                 assertion=assertion,
+                review_overlay=review_overlays.get(key),
             )
             entries.append(entry)
             details_by_id[entry.constraint_id] = _detail_from_entry(entry, assertion)
@@ -381,23 +431,78 @@ def _combined_constraints(payload: JsonValue | None) -> list[_NormalizedConstrai
     )
 
 
-def _combination_constraints(entries: list[CombinationEntry]) -> list[_NormalizedConstraint]:
+def _combination_constraints(
+    entries,
+    *,
+    review_overlays: dict[_ConstraintKey, _ReviewOverlay],
+) -> list[_NormalizedConstraint]:
     constraints: list[_NormalizedConstraint] = []
     for entry in entries:
-        if entry.final_constraint is None:
+        key = (entry.operation_id, entry.property_path)
+        overlay = review_overlays.get(key)
+        final_constraint = (
+            overlay.manual_final_constraint
+            if overlay is not None and overlay.has_manual_decision
+            else entry.final_constraint
+        )
+        if final_constraint is None:
+            continue
+        if overlay is None and entry.status not in {"RESOLVED", "VERIFIED", "UNIQUE_STATIC", "UNIQUE_DYNAMIC"}:
             continue
         constraints.append(
             _NormalizedConstraint(
                 source=ConstraintSource.COMBINED,
                 operation_id=entry.operation_id,
                 property_path=entry.property_path,
-                expression=entry.final_constraint,
+                expression=final_constraint,
                 section=None,
                 parameter=None,
                 source_type=COMBINATION_SOURCE_ARTIFACT,
+                combination_id=entry.combination_id,
+                review_state=overlay.review_state if overlay else None,
+                decision_source=overlay.decision_source if overlay else None,
+                has_manual_decision=overlay.has_manual_decision if overlay else False,
+                manual_decision=overlay.manual_decision if overlay else None,
+                manual_final_constraint=overlay.manual_final_constraint if overlay else None,
             )
         )
     return constraints
+
+
+def _review_overlays(
+    run_name: str,
+    details,
+    review_repository,
+) -> dict[_ConstraintKey, _ReviewOverlay]:
+    if review_repository is None:
+        return {}
+    reviews = review_repository.list_reviews_for_run(run_name)
+    overlays: dict[_ConstraintKey, _ReviewOverlay] = {}
+    for detail in details:
+        review_key = review_repository.review_key_for_detail(run_name, detail)
+        review = reviews.get(review_key)
+        if review is None:
+            continue
+        manual_final_constraint = _manual_final_constraint(review, detail)
+        overlays[(detail.operation_id, detail.property_path)] = _ReviewOverlay(
+            combination_id=detail.combination_id,
+            review_state=review.review_state,
+            decision_source=review.decision_source,
+            has_manual_decision=review.manual_decision is not None,
+            manual_decision=review.manual_decision,
+            manual_final_constraint=manual_final_constraint,
+        )
+    return overlays
+
+
+def _manual_final_constraint(review, detail) -> str | None:
+    if review.manual_decision == "ACCEPT_STATIC":
+        return detail.static_constraint
+    if review.manual_decision == "ACCEPT_DYNAMIC":
+        return detail.dynamic_constraint
+    if review.manual_decision == "CUSTOM_FINAL":
+        return review.custom_final_constraint
+    return None
 
 
 def _legacy_combined_constraints(
@@ -515,9 +620,11 @@ def _explorer_entry(
     dynamic_expression: str | None,
     combined_expression: str | None,
     assertion: str | None,
+    review_overlay: _ReviewOverlay | None,
 ) -> ConstraintExplorerEntry:
     has_static = static_expression is not None
     has_dynamic = dynamic_expression is not None
+    overlay = review_overlay
     return ConstraintExplorerEntry(
         constraint_id=_constraint_id(constraint),
         source=constraint.source,
@@ -536,6 +643,18 @@ def _explorer_entry(
         agreement_status=_agreement_status(has_static, has_dynamic),
         assertion_available=assertion is not None,
         assertion_preview=_preview(assertion),
+        combination_id=constraint.combination_id
+        or (overlay.combination_id if overlay else None),
+        review_state=constraint.review_state
+        or (overlay.review_state if overlay else None),
+        decision_source=constraint.decision_source
+        or (overlay.decision_source if overlay else None),
+        has_manual_decision=constraint.has_manual_decision
+        or (overlay.has_manual_decision if overlay else False),
+        manual_decision=constraint.manual_decision
+        or (overlay.manual_decision if overlay else None),
+        manual_final_constraint=constraint.manual_final_constraint
+        or (overlay.manual_final_constraint if overlay else None),
     )
 
 
@@ -561,6 +680,12 @@ def _detail_from_entry(
         agreement_status=entry.agreement_status,
         assertion_available=entry.assertion_available,
         assertion_preview=entry.assertion_preview,
+        combination_id=entry.combination_id,
+        review_state=entry.review_state,
+        decision_source=entry.decision_source,
+        has_manual_decision=entry.has_manual_decision,
+        manual_decision=entry.manual_decision,
+        manual_final_constraint=entry.manual_final_constraint,
         assertion=assertion,
     )
 
@@ -631,6 +756,10 @@ def _filters_from_query(query: ConstraintExplorerQuery) -> _ConstraintFilters:
             AgreementStatus, query.agreement_status, "agreement_status"
         ),
         assertion_available=query.assertion_available,
+        review_state=query.review_state,
+        decision_source=query.decision_source,
+        has_manual_decision=query.has_manual_decision,
+        manual_decision=query.manual_decision,
     )
 
 
@@ -649,6 +778,10 @@ def _filters_from_facets_query(query: ConstraintFacetsQuery) -> _ConstraintFilte
             AgreementStatus, query.agreement_status, "agreement_status"
         ),
         assertion_available=query.assertion_available,
+        review_state=query.review_state,
+        decision_source=query.decision_source,
+        has_manual_decision=query.has_manual_decision,
+        manual_decision=query.manual_decision,
     )
 
 
@@ -699,6 +832,22 @@ def _filter_entries(
             filters.assertion_available is None
             or entry.assertion_available == filters.assertion_available
         )
+        and (
+            filters.review_state is None
+            or entry.review_state == filters.review_state
+        )
+        and (
+            filters.decision_source is None
+            or entry.decision_source == filters.decision_source
+        )
+        and (
+            filters.has_manual_decision is None
+            or entry.has_manual_decision == filters.has_manual_decision
+        )
+        and (
+            filters.manual_decision is None
+            or entry.manual_decision == filters.manual_decision
+        )
     ]
 
 
@@ -728,6 +877,10 @@ def _search_entries(
                 entry.dynamic_expression,
                 entry.combined_expression,
                 entry.assertion_preview,
+                entry.review_state,
+                entry.decision_source,
+                entry.manual_decision,
+                entry.manual_final_constraint,
             )
             if value is not None
         )

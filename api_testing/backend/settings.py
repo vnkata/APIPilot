@@ -23,6 +23,8 @@ class BackendSettings:
     default_request_budget: int = 20
     default_async_max_concurrent: int = 20
     subprocess_cancel_grace_seconds: int = 5
+    counter_example_planner_config_path: Path = Path("configurations.toml")
+    max_counter_example_batch_items: int = 25
 
     def __post_init__(self) -> None:
         cache_root = Path(self.cache_root)
@@ -40,6 +42,11 @@ class BackendSettings:
             Path(self.spec_storage_root)
             if self.spec_storage_root is not None
             else cache_root / "_backend" / "specs",
+        )
+        object.__setattr__(
+            self,
+            "counter_example_planner_config_path",
+            Path(self.counter_example_planner_config_path),
         )
 
     @classmethod
@@ -80,6 +87,16 @@ class BackendSettings:
             subprocess_cancel_grace_seconds=_int_env(
                 "APIPILOT_BACKEND_SUBPROCESS_CANCEL_GRACE_SECONDS",
                 5,
+            ),
+            counter_example_planner_config_path=Path(
+                os.getenv(
+                    "APIPILOT_BACKEND_COUNTER_EXAMPLE_PLANNER_CONFIG",
+                    "configurations.toml",
+                )
+            ),
+            max_counter_example_batch_items=_int_env(
+                "APIPILOT_BACKEND_MAX_COUNTER_EXAMPLE_BATCH_ITEMS",
+                25,
             ),
         )
 

@@ -96,14 +96,17 @@ from api_testing.backend.domain.models import (
 class ArtifactQueryService:
     """Compatibility facade that delegates each read capability to focused services."""
 
-    def __init__(self, repository: ArtifactRepositoryProtocol) -> None:
+    def __init__(self, repository: ArtifactRepositoryProtocol, review_repository=None) -> None:
         artifact_catalog_service = ArtifactCatalogService(repository)
         artifact_content_service = ArtifactContentService(repository)
         report_service = ReportQueryService(repository)
         static_constraint_service = StaticConstraintQueryService(repository)
         dynamic_constraint_service = DynamicConstraintQueryService(repository)
-        constraint_explorer_service = ConstraintExplorerService(repository)
-        combination_service = ConstraintCombinationService(repository)
+        constraint_explorer_service = ConstraintExplorerService(
+            repository,
+            review_repository,
+        )
+        combination_service = ConstraintCombinationService(repository, review_repository)
         explorer_index_service = RunExplorerIndexService(
             repository,
             constraint_explorer_service,

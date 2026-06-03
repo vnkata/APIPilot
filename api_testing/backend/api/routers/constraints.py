@@ -1,13 +1,26 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query
+from fastapi import APIRouter, Depends, Query, status
 
-from api_testing.backend.api.dependencies import get_artifact_service
+from api_testing.backend.api.dependencies import (
+    get_artifact_service,
+    get_combination_review_service,
+)
 from api_testing.backend.api.schemas.constraints import (
+    BatchCounterExampleGenerateRequest,
+    BatchCounterExampleGenerateResponse,
+    BatchCounterExampleGenerateItemResponse,
     CombinationDetailResponse,
     CombinationEntryPageResponse,
     CombinationFacetsResponse,
+    CombinationReviewFinalizeRequest,
+    CombinationReviewReopenRequest,
+    CombinationReviewResponse,
     CombinationSummaryResponse,
+    CounterExampleCaseUpdateRequest,
+    CounterExampleGenerateRequest,
+    CounterExampleGenerateResponse,
+    CounterExampleRunRequest,
     ConstraintExplorerDetailResponse,
     ConstraintExplorerPageResponse,
     ConstraintFacetsResponse,
@@ -18,6 +31,9 @@ from api_testing.backend.api.schemas.constraints import (
     InvariantExplorerPageResponse,
     InvariantPageResponse,
     StaticConstraintsResponse,
+)
+from api_testing.backend.application.review_services.combination_review import (
+    CombinationReviewService,
 )
 from api_testing.backend.application.querying import (
     CombinationFacetsQuery,
@@ -144,13 +160,33 @@ def list_constraint_explorer_entries(
         default=None,
         description="Filter by whether a full assertion is available in the detail endpoint.",
     ),
+    review_state: str | None = Query(
+        default=None,
+        description="Filter by HITL review state overlaid from Combination review state.",
+    ),
+    decision_source: str | None = Query(
+        default=None,
+        description="Filter by HITL decision source, such as human.",
+    ),
+    has_manual_decision: bool | None = Query(
+        default=None,
+        description="Filter by whether a human review decision exists.",
+    ),
+    manual_decision: str | None = Query(
+        default=None,
+        description="Filter by human review decision value.",
+    ),
     q: str | None = Query(
         default=None,
         description="Search safe string fields across IDs, paths, expressions, provenance, and assertion preview.",
     ),
     sort_by: str | None = Query(
         default=None,
-        description="Allowed values: operation_id, property_path, source, section, constraint_kind, agreement_status.",
+        description=(
+            "Allowed values: operation_id, property_path, source, section, "
+            "constraint_kind, agreement_status, review_state, decision_source, "
+            "manual_decision."
+        ),
     ),
     sort_order: SortOrder = Query(
         default=SortOrder.ASC,
@@ -160,7 +196,8 @@ def list_constraint_explorer_entries(
         default=None,
         description=(
             "Allowed values: source, operation_id, section, constraint_kind, "
-            "source_type, agreement_status, assertion_available."
+            "source_type, agreement_status, assertion_available, review_state, "
+            "decision_source, has_manual_decision, manual_decision."
         ),
     ),
     limit: int = Query(default=50, ge=1, le=MAX_PAGE_LIMIT),
@@ -189,6 +226,10 @@ def list_constraint_explorer_entries(
                 source_type=source_type,
                 agreement_status=agreement_status,
                 assertion_available=assertion_available,
+                review_state=review_state,
+                decision_source=decision_source,
+                has_manual_decision=has_manual_decision,
+                manual_decision=manual_decision,
             ),
         ),
     )
@@ -247,6 +288,22 @@ def get_constraint_explorer_facets(
         default=None,
         description="Filter by whether a full assertion is available.",
     ),
+    review_state: str | None = Query(
+        default=None,
+        description="Filter by HITL review state.",
+    ),
+    decision_source: str | None = Query(
+        default=None,
+        description="Filter by HITL decision source.",
+    ),
+    has_manual_decision: bool | None = Query(
+        default=None,
+        description="Filter by whether a human review decision exists.",
+    ),
+    manual_decision: str | None = Query(
+        default=None,
+        description="Filter by human review decision value.",
+    ),
     q: str | None = Query(
         default=None,
         description="Search safe string fields before calculating facets.",
@@ -266,6 +323,10 @@ def get_constraint_explorer_facets(
                 source_type=source_type,
                 agreement_status=agreement_status,
                 assertion_available=assertion_available,
+                review_state=review_state,
+                decision_source=decision_source,
+                has_manual_decision=has_manual_decision,
+                manual_decision=manual_decision,
                 q=q,
             ),
         )
@@ -289,22 +350,30 @@ def list_combination_entries(
     property_path: str | None = Query(default=None, description="Filter by exact property_path."),
     property_prefix: str | None = Query(default=None, description="Filter by property_path prefix."),
     status: str | None = Query(default=None, description="Filter by combination status."),
-    verdict: str | None = Query(default=None, description="Filter by runtime verdict."),
+    relation: str | None = Query(default=None, description="Filter by LLM set-relation classification."),
+    runtime_verdict: str | None = Query(default=None, description="Filter by runtime support verdict."),
     resolved: bool | None = Query(default=None, description="Filter by final_constraint presence."),
     has_counter_example: bool | None = Query(default=None, description="Filter by counter-example availability."),
     has_runtime_evaluation: bool | None = Query(default=None, description="Filter by runtime evaluation availability."),
     has_validation_cases: bool | None = Query(default=None, description="Filter by validation case availability."),
+    review_state: str | None = Query(default=None, description="Filter by HITL review state."),
+    decision_source: str | None = Query(default=None, description="Filter by final decision source."),
+    has_manual_decision: bool | None = Query(default=None, description="Filter by manual decision availability."),
     q: str | None = Query(default=None, description="Search combination fields."),
     sort_by: str | None = Query(
         default=None,
-        description="Allowed values: operation_id, property_path, status, verdict, resolved, validation_case_count.",
+        description=(
+            "Allowed values: operation_id, property_path, status, relation, "
+            "runtime_verdict, resolved, validation_case_count, review_state, decision_source."
+        ),
     ),
     sort_order: SortOrder = Query(default=SortOrder.ASC),
     group_by: str | None = Query(
         default=None,
         description=(
-            "Allowed values: operation_id, status, verdict, resolved, "
-            "has_counter_example, has_runtime_evaluation, has_validation_cases."
+            "Allowed values: operation_id, status, relation, runtime_verdict, resolved, "
+            "has_counter_example, has_runtime_evaluation, has_validation_cases, "
+            "review_state, decision_source, has_manual_decision."
         ),
     ),
     limit: int = Query(default=50, ge=1, le=MAX_PAGE_LIMIT),
@@ -328,11 +397,15 @@ def list_combination_entries(
                 property_path=property_path,
                 property_prefix=property_prefix,
                 status=status,
-                verdict=verdict,
+                relation=relation,
+                runtime_verdict=runtime_verdict,
                 resolved=resolved,
                 has_counter_example=has_counter_example,
                 has_runtime_evaluation=has_runtime_evaluation,
                 has_validation_cases=has_validation_cases,
+                review_state=review_state,
+                decision_source=decision_source,
+                has_manual_decision=has_manual_decision,
             ),
         ),
     )
@@ -352,6 +425,154 @@ def get_combination_entry(
     )
 
 
+@router.get(
+    "/combination/entries/{combination_id}/review",
+    response_model=CombinationReviewResponse,
+)
+def get_combination_review(
+    run_name: str,
+    combination_id: str,
+    service: CombinationReviewService = Depends(get_combination_review_service),
+) -> CombinationReviewResponse:
+    return CombinationReviewResponse.from_domain(
+        service.get_review(run_name, combination_id)
+    )
+
+
+@router.post(
+    "/combination/entries/{combination_id}/counter-examples/generate",
+    response_model=CounterExampleGenerateResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+def generate_counter_examples(
+    run_name: str,
+    combination_id: str,
+    payload: CounterExampleGenerateRequest,
+    service: CombinationReviewService = Depends(get_combination_review_service),
+) -> CounterExampleGenerateResponse:
+    return CounterExampleGenerateResponse.from_domain(
+        service.generate_counter_examples(
+            run_name,
+            combination_id,
+            live_llm=payload.live_llm,
+            idempotency_key=payload.idempotency_key,
+            max_cases=payload.max_cases,
+        )
+    )
+
+
+@router.put(
+    "/combination/entries/{combination_id}/counter-examples/{case_id}",
+    response_model=CombinationReviewResponse,
+)
+def update_counter_example_case(
+    run_name: str,
+    combination_id: str,
+    case_id: str,
+    payload: CounterExampleCaseUpdateRequest,
+    service: CombinationReviewService = Depends(get_combination_review_service),
+) -> CombinationReviewResponse:
+    return CombinationReviewResponse.from_domain(
+        service.update_counter_example_case(
+            run_name,
+            combination_id,
+            case_id,
+            case_state=payload.case_state,
+            rationale=payload.rationale,
+            request=payload.request,
+        )
+    )
+
+
+@router.post(
+    "/combination/entries/{combination_id}/counter-examples/run",
+    response_model=CombinationReviewResponse,
+)
+def run_counter_examples(
+    run_name: str,
+    combination_id: str,
+    payload: CounterExampleRunRequest,
+    service: CombinationReviewService = Depends(get_combination_review_service),
+) -> CombinationReviewResponse:
+    return CombinationReviewResponse.from_domain(
+        service.run_approved_counter_examples(
+            run_name,
+            combination_id,
+            live_api=payload.live_api,
+            base_url=payload.base_url,
+            request_budget=payload.request_budget,
+            timeout_seconds=payload.timeout_seconds,
+            unsafe_method_confirmed=payload.unsafe_method_confirmed,
+            idempotency_key=payload.idempotency_key,
+        )
+    )
+
+
+@router.post(
+    "/combination/entries/{combination_id}/review/finalize",
+    response_model=CombinationReviewResponse,
+)
+def finalize_combination_review(
+    run_name: str,
+    combination_id: str,
+    payload: CombinationReviewFinalizeRequest,
+    service: CombinationReviewService = Depends(get_combination_review_service),
+) -> CombinationReviewResponse:
+    return CombinationReviewResponse.from_domain(
+        service.finalize_review(
+            run_name,
+            combination_id,
+            manual_decision=payload.manual_decision,
+            idempotency_key=payload.idempotency_key,
+            rationale=payload.rationale or "",
+            custom_final_constraint=payload.custom_final_constraint,
+        )
+    )
+
+
+@router.post(
+    "/combination/entries/{combination_id}/review/reopen",
+    response_model=CombinationReviewResponse,
+)
+def reopen_combination_review(
+    run_name: str,
+    combination_id: str,
+    payload: CombinationReviewReopenRequest,
+    service: CombinationReviewService = Depends(get_combination_review_service),
+) -> CombinationReviewResponse:
+    return CombinationReviewResponse.from_domain(
+        service.reopen_review(
+            run_name,
+            combination_id,
+            rationale=payload.rationale,
+        )
+    )
+
+
+@router.post(
+    "/combination/counter-examples/batch-generate",
+    response_model=BatchCounterExampleGenerateResponse,
+)
+def batch_generate_counter_examples(
+    run_name: str,
+    payload: BatchCounterExampleGenerateRequest,
+    service: CombinationReviewService = Depends(get_combination_review_service),
+) -> BatchCounterExampleGenerateResponse:
+    return BatchCounterExampleGenerateResponse(
+        results=[
+            BatchCounterExampleGenerateItemResponse(**item)
+            for item in service.batch_generate_counter_examples(
+                run_name,
+                payload.combination_ids,
+                live_llm=payload.live_llm,
+                idempotency_key=payload.idempotency_key,
+                max_items=payload.max_items,
+                max_cases_per_item=payload.max_cases_per_item,
+            )
+        ]
+    )
+
+
 @router.get("/combination/facets", response_model=CombinationFacetsResponse)
 def get_combination_facets(
     run_name: str,
@@ -359,11 +580,15 @@ def get_combination_facets(
     property_path: str | None = Query(default=None, description="Filter by exact property_path."),
     property_prefix: str | None = Query(default=None, description="Filter by property_path prefix."),
     status: str | None = Query(default=None, description="Filter by combination status."),
-    verdict: str | None = Query(default=None, description="Filter by runtime verdict."),
+    relation: str | None = Query(default=None, description="Filter by LLM set-relation classification."),
+    runtime_verdict: str | None = Query(default=None, description="Filter by runtime support verdict."),
     resolved: bool | None = Query(default=None, description="Filter by final_constraint presence."),
     has_counter_example: bool | None = Query(default=None, description="Filter by counter-example availability."),
     has_runtime_evaluation: bool | None = Query(default=None, description="Filter by runtime evaluation availability."),
     has_validation_cases: bool | None = Query(default=None, description="Filter by validation case availability."),
+    review_state: str | None = Query(default=None, description="Filter by HITL review state."),
+    decision_source: str | None = Query(default=None, description="Filter by final decision source."),
+    has_manual_decision: bool | None = Query(default=None, description="Filter by manual decision availability."),
     q: str | None = Query(default=None, description="Search combination fields before calculating facets."),
     service: ArtifactQueryService = Depends(get_artifact_service),
 ) -> CombinationFacetsResponse:
@@ -375,11 +600,15 @@ def get_combination_facets(
                 property_path=property_path,
                 property_prefix=property_prefix,
                 status=status,
-                verdict=verdict,
+                relation=relation,
+                runtime_verdict=runtime_verdict,
                 resolved=resolved,
                 has_counter_example=has_counter_example,
                 has_runtime_evaluation=has_runtime_evaluation,
                 has_validation_cases=has_validation_cases,
+                review_state=review_state,
+                decision_source=decision_source,
+                has_manual_decision=has_manual_decision,
                 q=q,
             ),
         )

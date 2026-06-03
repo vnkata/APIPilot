@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 import hashlib
 
 from pydantic import JsonValue
@@ -32,6 +32,8 @@ from api_testing.backend.domain.redaction import sanitize_json_value
 
 SOURCE_ARTIFACT = "combine_constraint_miners"
 _PREVIEW_LIMIT = 160
+_LEGACY_STATUSES = {"COMBINED_EQUIVALENT", "NOT_COMBINED", "COMBINED_UNION"}
+_FINAL_STATUS_VALUES = {"RESOLVED", "VERIFIED", "UNIQUE_STATIC", "UNIQUE_DYNAMIC"}
 
 
 @dataclass(frozen=True, slots=True)
@@ -47,11 +49,15 @@ class _CombinationFilters:
     property_path: str | None
     property_prefix: str | None
     status: str | None
-    verdict: str | None
+    relation: str | None
+    runtime_verdict: str | None
     resolved: bool | None
     has_counter_example: bool | None
     has_runtime_evaluation: bool | None
     has_validation_cases: bool | None
+    review_state: str | None
+    decision_source: str | None
+    has_manual_decision: bool | None
 
 
 class ConstraintCombinationService:
@@ -62,35 +68,46 @@ class ConstraintCombinationService:
             "operation_id": lambda item: item.operation_id,
             "property_path": lambda item: item.property_path,
             "status": lambda item: item.status,
-            "verdict": lambda item: item.verdict,
+            "relation": lambda item: item.relation,
+            "runtime_verdict": lambda item: item.runtime_verdict,
             "resolved": lambda item: _bool_key(item.resolved),
             "validation_case_count": lambda item: item.validation_case_count,
+            "review_state": lambda item: item.review_state,
+            "decision_source": lambda item: item.decision_source,
         },
         group_fields={
             "operation_id": lambda item: item.operation_id,
             "status": lambda item: item.status,
-            "verdict": lambda item: item.verdict,
+            "relation": lambda item: item.relation,
+            "runtime_verdict": lambda item: item.runtime_verdict,
             "resolved": lambda item: _bool_key(item.resolved),
             "has_counter_example": lambda item: _bool_key(item.has_counter_example),
             "has_runtime_evaluation": lambda item: _bool_key(item.has_runtime_evaluation),
             "has_validation_cases": lambda item: _bool_key(item.validation_case_count > 0),
+            "review_state": lambda item: item.review_state,
+            "decision_source": lambda item: item.decision_source,
+            "has_manual_decision": lambda item: _bool_key(item.has_manual_decision),
         },
         search_fields=[
             lambda item: item.combination_id,
             lambda item: item.operation_id,
             lambda item: item.property_path,
             lambda item: item.status,
-            lambda item: item.verdict,
+            lambda item: item.relation,
+            lambda item: item.runtime_verdict,
             lambda item: item.static_constraint,
             lambda item: item.dynamic_constraint,
             lambda item: item.final_constraint,
             lambda item: item.reason_preview,
+            lambda item: item.review_state,
+            lambda item: item.decision_source,
         ],
         default_sort=("operation_id", "property_path", "status"),
     )
 
-    def __init__(self, repository: ArtifactRepositoryProtocol) -> None:
+    def __init__(self, repository: ArtifactRepositoryProtocol, review_repository=None) -> None:
         self.repository = repository
+        self.review_repository = review_repository
 
     def get_summary(self, run_name: str) -> CombinationSummary:
         return self._read_model(run_name).summary
@@ -127,7 +144,8 @@ class ConstraintCombinationService:
         records = _search_entries(records, query.q)
         return CombinationFacets(
             status=_facet(records, lambda item: item.status),
-            verdict=_facet(records, lambda item: item.verdict),
+            relation=_facet(records, lambda item: item.relation),
+            runtime_verdict=_facet(records, lambda item: item.runtime_verdict),
             resolved=_facet(records, lambda item: _bool_key(item.resolved)),
             operation_id=_facet(records, lambda item: item.operation_id),
             has_counter_example=_facet(
@@ -139,6 +157,11 @@ class ConstraintCombinationService:
             has_validation_cases=_facet(
                 records, lambda item: _bool_key(item.validation_case_count > 0)
             ),
+            review_state=_facet(records, lambda item: item.review_state),
+            decision_source=_facet(records, lambda item: item.decision_source),
+            has_manual_decision=_facet(
+                records, lambda item: _bool_key(item.has_manual_decision)
+            ),
             malformed_count=read_model.summary.malformed_count,
             warnings=read_model.summary.warnings,
         )
@@ -146,7 +169,38 @@ class ConstraintCombinationService:
     def _read_model(self, run_name: str) -> CombinationReadModel:
         self.repository.get_run(run_name)
         payload = self.repository.read_json_artifact(run_name, SOURCE_ARTIFACT)
-        return parse_combination_artifact(payload, run_name=run_name)
+        read_model = parse_combination_artifact(payload, run_name=run_name)
+        return self._overlay_review_state(run_name, read_model)
+
+    def _overlay_review_state(
+        self,
+        run_name: str,
+        read_model: CombinationReadModel,
+    ) -> CombinationReadModel:
+        if self.review_repository is None:
+            return read_model
+        reviews = self.review_repository.list_reviews_for_run(run_name)
+        details: list[CombinationDetail] = []
+        for detail in read_model.details_by_id.values():
+            review_key = self.review_repository.review_key_for_detail(run_name, detail)
+            review = reviews.get(review_key)
+            if review is None:
+                details.append(detail)
+                continue
+            details.append(
+                replace(
+                    detail,
+                    review_state=review.review_state,
+                    decision_source=review.decision_source,
+                    has_manual_decision=review.manual_decision is not None,
+                )
+            )
+        entries = [_entry_from_detail(detail) for detail in details]
+        return CombinationReadModel(
+            entries=entries,
+            details_by_id={detail.combination_id: detail for detail in details},
+            summary=read_model.summary,
+        )
 
 
 def parse_combination_artifact(
@@ -186,7 +240,7 @@ def parse_combination_artifact(
 
     if not details:
         raise InvalidArtifactRequest(
-            "combine_constraint_miners.json contains no valid combination records"
+            "combine_constraint_miners.json contains no valid relation-format combination records; regenerate required"
         )
 
     details = sorted(
@@ -207,8 +261,15 @@ def parse_combination_artifact(
             unresolved_count=sum(1 for detail in details if not detail.resolved),
             malformed_count=malformed_count,
             status_counts=dict(Counter(detail.status for detail in details)),
-            verdict_counts=dict(
-                Counter(detail.verdict for detail in details if detail.verdict)
+            relation_counts=dict(
+                Counter(detail.relation for detail in details if detail.relation)
+            ),
+            runtime_verdict_counts=dict(
+                Counter(
+                    detail.runtime_verdict
+                    for detail in details
+                    if detail.runtime_verdict
+                )
             ),
             warnings=warnings,
         ),
@@ -231,7 +292,12 @@ def _detail_from_record(
     static_constraint = optional_str(record.get("static_constraint"))
     dynamic_constraint = optional_str(record.get("dynamic_constraint"))
     final_constraint = optional_str(record.get("final_constraint"))
-    verdict = optional_str(record.get("verdict"))
+    relation = optional_str(record.get("relation"))
+    runtime_verdict = optional_str(record.get("runtime_verdict"))
+    if status in _LEGACY_STATUSES:
+        return None
+    if record.get("verdict") is not None:
+        return None
     reason = optional_str(record.get("reason"))
     counter_example = _sanitize(record.get("counter_example"))
     runtime_evaluation = _sanitize(record.get("runtime_evaluation"))
@@ -244,12 +310,13 @@ def _detail_from_record(
     sanitized_record = _sanitize(record)
     if not isinstance(sanitized_record, dict):
         return None
-    resolved = record.get("final_constraint") is not None
+    resolved = record.get("final_constraint") is not None and status in _FINAL_STATUS_VALUES
     detail = CombinationDetail(
         combination_id=_combination_id(
             operation_id,
             property_path,
             status,
+            relation,
             static_constraint,
             dynamic_constraint,
             final_constraint,
@@ -257,7 +324,8 @@ def _detail_from_record(
         operation_id=operation_id,
         property_path=property_path,
         status=status,
-        verdict=verdict,
+        relation=relation,
+        runtime_verdict=runtime_verdict,
         resolved=resolved,
         static_constraint=static_constraint,
         dynamic_constraint=dynamic_constraint,
@@ -267,6 +335,9 @@ def _detail_from_record(
         has_runtime_evaluation=record.get("runtime_evaluation") is not None,
         validation_case_count=len(validation_cases) if isinstance(validation_cases, list) else 0,
         source_artifact=source_artifact,
+        review_state="PENDING_REVIEW",
+        decision_source=None,
+        has_manual_decision=False,
         reason=reason,
         counter_example=counter_example,
         runtime_evaluation=runtime_evaluation,
@@ -282,7 +353,8 @@ def _entry_from_detail(detail: CombinationDetail) -> CombinationEntry:
         operation_id=detail.operation_id,
         property_path=detail.property_path,
         status=detail.status,
-        verdict=detail.verdict,
+        relation=detail.relation,
+        runtime_verdict=detail.runtime_verdict,
         resolved=detail.resolved,
         static_constraint=detail.static_constraint,
         dynamic_constraint=detail.dynamic_constraint,
@@ -292,6 +364,9 @@ def _entry_from_detail(detail: CombinationDetail) -> CombinationEntry:
         has_runtime_evaluation=detail.has_runtime_evaluation,
         validation_case_count=detail.validation_case_count,
         source_artifact=detail.source_artifact,
+        review_state=detail.review_state,
+        decision_source=detail.decision_source,
+        has_manual_decision=detail.has_manual_decision,
     )
 
 
@@ -301,11 +376,15 @@ def _filters_from_query(query: CombinationQuery) -> _CombinationFilters:
         property_path=query.property_path,
         property_prefix=query.property_prefix,
         status=query.status,
-        verdict=query.verdict,
+        relation=query.relation,
+        runtime_verdict=query.runtime_verdict,
         resolved=query.resolved,
         has_counter_example=query.has_counter_example,
         has_runtime_evaluation=query.has_runtime_evaluation,
         has_validation_cases=query.has_validation_cases,
+        review_state=query.review_state,
+        decision_source=query.decision_source,
+        has_manual_decision=query.has_manual_decision,
     )
 
 
@@ -315,11 +394,15 @@ def _filters_from_facets_query(query: CombinationFacetsQuery) -> _CombinationFil
         property_path=query.property_path,
         property_prefix=query.property_prefix,
         status=query.status,
-        verdict=query.verdict,
+        relation=query.relation,
+        runtime_verdict=query.runtime_verdict,
         resolved=query.resolved,
         has_counter_example=query.has_counter_example,
         has_runtime_evaluation=query.has_runtime_evaluation,
         has_validation_cases=query.has_validation_cases,
+        review_state=query.review_state,
+        decision_source=query.decision_source,
+        has_manual_decision=query.has_manual_decision,
     )
 
 
@@ -340,7 +423,11 @@ def _filter_entries(
             or entry.property_path.startswith(filters.property_prefix)
         )
         and (filters.status is None or entry.status == filters.status)
-        and (filters.verdict is None or entry.verdict == filters.verdict)
+        and (filters.relation is None or entry.relation == filters.relation)
+        and (
+            filters.runtime_verdict is None
+            or entry.runtime_verdict == filters.runtime_verdict
+        )
         and (filters.resolved is None or entry.resolved == filters.resolved)
         and (
             filters.has_counter_example is None
@@ -353,6 +440,15 @@ def _filter_entries(
         and (
             filters.has_validation_cases is None
             or (entry.validation_case_count > 0) == filters.has_validation_cases
+        )
+        and (filters.review_state is None or entry.review_state == filters.review_state)
+        and (
+            filters.decision_source is None
+            or entry.decision_source == filters.decision_source
+        )
+        and (
+            filters.has_manual_decision is None
+            or entry.has_manual_decision == filters.has_manual_decision
         )
     ]
 
@@ -374,11 +470,14 @@ def _search_entries(
                 entry.operation_id,
                 entry.property_path,
                 entry.status,
-                entry.verdict,
+                entry.relation,
+                entry.runtime_verdict,
                 entry.static_constraint,
                 entry.dynamic_constraint,
                 entry.final_constraint,
                 entry.reason_preview,
+                entry.review_state,
+                entry.decision_source,
             )
             if value is not None
         )
@@ -404,6 +503,7 @@ def _combination_id(
     operation_id: str,
     property_path: str,
     status: str,
+    relation: str | None,
     static_constraint: str | None,
     dynamic_constraint: str | None,
     final_constraint: str | None,
@@ -413,6 +513,7 @@ def _combination_id(
             operation_id,
             property_path,
             status,
+            relation or "",
             static_constraint or "",
             dynamic_constraint or "",
             final_constraint or "",

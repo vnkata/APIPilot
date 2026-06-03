@@ -14,3 +14,6 @@ class ArtifactNotFound(ArtifactBackendError):
 class InvalidArtifactRequest(ArtifactBackendError):
     """Raised when a request is unsafe or cannot be fulfilled."""
 
+
+class ArtifactConflict(ArtifactBackendError):
+    """Raised when a write request conflicts with existing idempotent state."""

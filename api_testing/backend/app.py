@@ -21,8 +21,14 @@ from api_testing.backend.api.routers import (
     test_cases,
 )
 from api_testing.backend.application.services import ArtifactQueryService
+from api_testing.backend.application.review_services.combination_review import (
+    CombinationReviewService,
+)
 from api_testing.backend.application.write_services import WriteFlowService
 from api_testing.backend.infrastructure.artifacts.repository import FileArtifactRepository
+from api_testing.backend.infrastructure.combination_review_metadata import (
+    SQLiteCombinationReviewRepository,
+)
 from api_testing.backend.infrastructure.execution_runner import HybridExecutionRunner
 from api_testing.backend.infrastructure.spec_storage import FileSpecStorage
 from api_testing.backend.infrastructure.write_metadata import SQLiteWriteMetadataRepository
@@ -84,8 +90,9 @@ OPENAPI_TAGS = [
 def create_app(settings: BackendSettings | None = None) -> FastAPI:
     app_settings = settings or BackendSettings.from_env()
     repository = FileArtifactRepository(app_settings.cache_root)
-    service = ArtifactQueryService(repository)
     write_repository = SQLiteWriteMetadataRepository(app_settings.metadata_db_path)
+    review_repository = SQLiteCombinationReviewRepository(app_settings.metadata_db_path)
+    service = ArtifactQueryService(repository, review_repository)
     write_repository.reconcile_orphaned_executions(reason="worker_orphaned")
     spec_storage = FileSpecStorage(app_settings.spec_storage_root)
     execution_runner = HybridExecutionRunner(
@@ -99,6 +106,11 @@ def create_app(settings: BackendSettings | None = None) -> FastAPI:
         execution_runner,
         allowed_target_base_urls=app_settings.allowed_target_base_urls,
         max_active_executions=app_settings.max_active_executions,
+    )
+    combination_review_service = CombinationReviewService(
+        service,
+        review_repository,
+        app_settings,
     )
 
     @asynccontextmanager
@@ -121,13 +133,14 @@ def create_app(settings: BackendSettings | None = None) -> FastAPI:
     app.state.settings = app_settings
     app.state.artifact_service = service
     app.state.write_flow_service = write_service
+    app.state.combination_review_service = combination_review_service
 
     if app_settings.allowed_origins:
         app.add_middleware(
             CORSMiddleware,
             allow_origins=list(app_settings.allowed_origins),
             allow_credentials=False,
-            allow_methods=["GET", "POST"],
+            allow_methods=["GET", "POST", "PUT"],
             allow_headers=["*"],
         )
 

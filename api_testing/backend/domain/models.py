@@ -253,11 +253,17 @@ class ConstraintExplorerEntry:
     agreement_status: AgreementStatus
     assertion_available: bool
     assertion_preview: str | None
+    combination_id: str | None = None
+    review_state: str | None = None
+    decision_source: str | None = None
+    has_manual_decision: bool = False
+    manual_decision: str | None = None
+    manual_final_constraint: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
 class ConstraintExplorerDetail(ConstraintExplorerEntry):
-    assertion: str | None
+    assertion: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -284,6 +290,10 @@ class ConstraintFacets:
     agreement_status: list[ConstraintFacetBucket]
     assertion_available: list[ConstraintFacetBucket]
     metadata: ConstraintQueryMetadata
+    review_state: list[ConstraintFacetBucket] = field(default_factory=list)
+    decision_source: list[ConstraintFacetBucket] = field(default_factory=list)
+    has_manual_decision: list[ConstraintFacetBucket] = field(default_factory=list)
+    manual_decision: list[ConstraintFacetBucket] = field(default_factory=list)
 
 
 @dataclass(frozen=True, slots=True)
@@ -292,7 +302,8 @@ class CombinationEntry:
     operation_id: str
     property_path: str
     status: str
-    verdict: str | None
+    relation: str | None
+    runtime_verdict: str | None
     resolved: bool
     static_constraint: str | None
     dynamic_constraint: str | None
@@ -302,6 +313,9 @@ class CombinationEntry:
     has_runtime_evaluation: bool
     validation_case_count: int
     source_artifact: str
+    review_state: str
+    decision_source: str | None
+    has_manual_decision: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -323,7 +337,8 @@ class CombinationSummary:
     unresolved_count: int
     malformed_count: int
     status_counts: dict[str, int]
-    verdict_counts: dict[str, int]
+    relation_counts: dict[str, int]
+    runtime_verdict_counts: dict[str, int]
     warnings: list[str]
 
 
@@ -339,12 +354,16 @@ class CombinationEntryPage:
 @dataclass(frozen=True, slots=True)
 class CombinationFacets:
     status: list[ConstraintFacetBucket]
-    verdict: list[ConstraintFacetBucket]
+    relation: list[ConstraintFacetBucket]
+    runtime_verdict: list[ConstraintFacetBucket]
     resolved: list[ConstraintFacetBucket]
     operation_id: list[ConstraintFacetBucket]
     has_counter_example: list[ConstraintFacetBucket]
     has_runtime_evaluation: list[ConstraintFacetBucket]
     has_validation_cases: list[ConstraintFacetBucket]
+    review_state: list[ConstraintFacetBucket]
+    decision_source: list[ConstraintFacetBucket]
+    has_manual_decision: list[ConstraintFacetBucket]
     malformed_count: int
     warnings: list[str]
 
