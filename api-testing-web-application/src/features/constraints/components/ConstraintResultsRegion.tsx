@@ -157,6 +157,11 @@ export function ConstraintResultsRegion({
                 ? 'Select eligible rows to generate drafts.'
                 : `${selectedCombinationCount} selected · ${selectedEligibleCombinationCount} eligible · ${selectedSkippedCombinationCount} skipped`}
             </Typography>
+            {selectedSkippedCombinationCount > 0 ? (
+              <Typography color="text.secondary" variant="body2">
+                Skipped rows are resolved, unique, or already have a human decision.
+              </Typography>
+            ) : null}
             {batchGenerateMessage ? <Typography color="text.secondary" variant="body2">{batchGenerateMessage}</Typography> : null}
           </Stack>
         </Stack>

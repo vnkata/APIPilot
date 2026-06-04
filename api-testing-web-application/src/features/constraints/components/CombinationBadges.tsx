@@ -1,4 +1,5 @@
-import { Box, Chip, Stack, Tooltip, Typography } from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import { Accordion, AccordionDetails, AccordionSummary, Chip, Stack, Tooltip, Typography } from '@mui/material'
 import { useTheme } from '@mui/material/styles'
 
 import type { CombinationReviewResponse } from '../../../shared/api/generated/model'
@@ -179,83 +180,74 @@ export function ReviewStateBadge({
   )
 }
 
-export function RelationVisual({ relation }: { relation: string | null | undefined }) {
+export function CaseStateBadge({
+  size,
+  state,
+}: {
+  size?: BadgeSize
+  state: string
+}) {
   const theme = useTheme()
-  const isEquivalent = relation === 'EQUIVALENT'
-  const isStaticStronger = relation === 'STATIC_STRONGER'
-  const isDynamicStronger = relation === 'DYNAMIC_STRONGER'
-  const isDisjoint = relation === 'DISJOINT'
+  const tone: AppTone =
+    state === 'APPROVED' ? 'success'
+      : state === 'EXECUTED' ? 'info'
+        : state === 'REJECTED' ? 'neutral'
+          : state === 'DRAFT' ? 'warning'
+            : 'neutral'
 
   return (
-    <Box
-      aria-label={`Relation visual ${relation ?? 'unique'}`}
-      role="img"
-      sx={{
-        height: 104,
-        position: 'relative',
-        width: '100%',
-      }}
-    >
-      <RelationCircle
-        color={theme.apiTesting.status.info}
-        label="Static"
-        sx={{
-          left: isDisjoint ? '17%' : isDynamicStronger ? '22%' : isEquivalent ? '30%' : '24%',
-          width: isStaticStronger ? 76 : isDynamicStronger ? 54 : 66,
-          zIndex: isDynamicStronger ? 2 : 1,
-        }}
-      />
-      <RelationCircle
-        color={theme.apiTesting.status.warning}
-        label="Dynamic"
-        sx={{
-          left: isDisjoint ? '58%' : isStaticStronger ? '42%' : isEquivalent ? '32%' : '43%',
-          width: isDynamicStronger ? 76 : isStaticStronger ? 54 : 66,
-          zIndex: isStaticStronger ? 2 : 1,
-        }}
-      />
-      <Typography
-        color="text.secondary"
-        sx={{ bottom: 0, left: 0, position: 'absolute', right: 0, textAlign: 'center' }}
-        variant="caption"
-      >
-        {relationDescription(relation)}
-      </Typography>
-    </Box>
+    <ThemedCombinationBadge
+      label={pretty(state)}
+      size={size}
+      token={theme.apiTesting.status[tone]}
+      tooltip={`Counter-example case state: ${state}.`}
+      variant={state === 'APPROVED' ? 'filled' : 'outlined'}
+    />
   )
 }
 
-function RelationCircle({
-  color,
-  label,
-  sx,
+export function CaseRiskBadge({
+  risk,
+  size,
 }: {
-  color: AppToneToken
-  label: string
-  sx: object
+  risk: string
+  size?: BadgeSize
 }) {
+  const theme = useTheme()
+  const normalized = risk.toLowerCase()
+  const tone: AppTone = normalized.includes('high') ? 'danger'
+    : normalized.includes('medium') ? 'warning'
+      : normalized.includes('low') ? 'success'
+        : 'neutral'
+
   return (
-    <Box
-      sx={{
-        alignItems: 'center',
-        aspectRatio: '1 / 1',
-        bgcolor: color.bg,
-        border: '2px solid',
-        borderColor: color.border,
-        borderRadius: '50%',
-        color: color.fg,
-        display: 'flex',
-        fontSize: 12,
-        fontWeight: 900,
-        justifyContent: 'center',
-        position: 'absolute',
-        top: 8,
-        transition: (theme) => theme.apiTesting.motion.transition,
-        ...sx,
-      }}
-    >
-      {label}
-    </Box>
+    <ThemedCombinationBadge
+      label={`Risk: ${risk}`}
+      size={size}
+      token={theme.apiTesting.status[tone]}
+      tooltip={`Counter-example execution risk: ${risk}.`}
+      variant="outlined"
+    />
+  )
+}
+
+export function GenerationBadge({
+  generationId,
+  size,
+}: {
+  generationId: string
+  size?: BadgeSize
+}) {
+  const theme = useTheme()
+
+  return (
+    <ThemedCombinationBadge
+      label={generationId}
+      size={size}
+      token={theme.apiTesting.status.neutral}
+      tooltip={`Generation batch: ${generationId}.`}
+      variant="outlined"
+    />
   )
 }
 
@@ -263,30 +255,30 @@ export function RelationGuide() {
   const relations = ['EQUIVALENT', 'STATIC_STRONGER', 'DYNAMIC_STRONGER', 'PARTIAL_OVERLAP', 'DISJOINT', 'UNKNOWN']
 
   return (
-    <Box
+    <Stack
       aria-label="Relation guide"
       role="region"
-      sx={(theme) => ({
-        border: '1px solid',
-        borderColor: theme.apiTesting.border.default,
-        borderRadius: 1,
-        p: 1.5,
-      })}
     >
-      <Stack spacing={1}>
-        <Typography component="h3" variant="h3">
-          Relation guide
-        </Typography>
-        <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-          {relations.map((relation) => (
-            <CombinationRelationBadge key={relation} relation={relation} />
-          ))}
-        </Stack>
-        <Typography color="text.secondary" variant="body2">
-          Relation describes the set relationship between static and dynamic constraints. Status describes lifecycle; runtime verdict is only supporting evidence.
-        </Typography>
-      </Stack>
-    </Box>
+      <Accordion disableGutters slotProps={{ transition: { unmountOnExit: true } }} variant="outlined">
+        <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
+          <Typography component="h3" variant="h3">
+            Relation guide
+          </Typography>
+        </AccordionSummary>
+        <AccordionDetails>
+          <Stack spacing={1}>
+            <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+              {relations.map((relation) => (
+                <CombinationRelationBadge key={relation} relation={relation} />
+              ))}
+            </Stack>
+            <Typography color="text.secondary" variant="body2">
+              Relation describes the set relationship between static and dynamic constraints. Status describes lifecycle; runtime verdict is only supporting evidence.
+            </Typography>
+          </Stack>
+        </AccordionDetails>
+      </Accordion>
+    </Stack>
   )
 }
 

@@ -5,7 +5,9 @@ import {
   DialogActions,
   DialogContent,
   DialogTitle,
+  FormControlLabel,
   Stack,
+  Tooltip,
   Typography,
 } from '@mui/material'
 import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid'
@@ -140,6 +142,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
   const [batchGenerateMessage, setBatchGenerateMessage] = useState<string | null>(null)
+  const [batchGenerateLiveLlm, setBatchGenerateLiveLlm] = useState(true)
   const [combinationSelectionModel, setCombinationSelectionModel] = useState<GridRowSelectionModel>({ ids: new Set(), type: 'include' })
   const [exportOpen, setExportOpen] = useState(false)
   const encodedRunName = encodeRoutePart(runName)
@@ -299,6 +302,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       else nextIds.delete(combinationId)
       return { ids: nextIds, type: 'include' }
     })
+    setBatchGenerateMessage(null)
   }, [])
 
   const explorerRows = explorerQuery.data?.items ?? []
@@ -331,14 +335,20 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         renderCell: (params) => {
           const eligible = isCombinationEligibleForCounterExample(params.row)
           return (
-            <Checkbox
-              checked={isCombinationSelected(params.row.combination_id)}
-              disabled={!eligible}
-              onChange={(event) => toggleCombinationSelection(params.row.combination_id, event.target.checked)}
-              onClick={(event) => event.stopPropagation()}
-              size="small"
-              slotProps={{ input: { 'aria-label': `Select ${params.row.combination_id} for batch generation` } }}
-            />
+            <Tooltip
+              arrow
+              title={eligible ? 'Select this row for draft generation.' : 'This row can be selected for review context, but batch generation will skip it because it is resolved, unique, or manually decided.'}
+            >
+              <span>
+                <Checkbox
+                  checked={isCombinationSelected(params.row.combination_id)}
+                  onChange={(event) => toggleCombinationSelection(params.row.combination_id, event.target.checked)}
+                  onClick={(event) => event.stopPropagation()}
+                  size="small"
+                  slotProps={{ input: { 'aria-label': `Select ${params.row.combination_id} for batch generation` } }}
+                />
+              </span>
+            </Tooltip>
           )
         },
       },
@@ -431,14 +441,29 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         headerName: 'Review',
         minWidth: 180,
         renderCell: (params) => (
-          <ReviewStateBadge
-            row={{
-              decision_source: params.row.decision_source,
-              has_manual_decision: params.row.has_manual_decision,
-              manual_decision: params.row.manual_decision,
-              review_state: params.row.review_state,
-            }}
-          />
+          <Stack spacing={0.5}>
+            <ReviewStateBadge
+              row={{
+                decision_source: params.row.decision_source,
+                has_manual_decision: params.row.has_manual_decision,
+                manual_decision: params.row.manual_decision,
+                review_state: params.row.review_state,
+              }}
+            />
+            {params.row.manual_final_constraint ? (
+              <Typography color="text.secondary" sx={{ overflowWrap: 'anywhere' }} variant="caption">
+                Effective final: {params.row.manual_final_constraint}
+              </Typography>
+            ) : params.row.has_manual_decision && ['NO_FINAL', 'NEEDS_BUSINESS_REVIEW', 'REJECT_RELATION'].includes(params.row.manual_decision ?? '') ? (
+              <Typography color="text.secondary" variant="caption">
+                No effective final
+              </Typography>
+            ) : params.row.has_manual_decision ? (
+              <Typography color="text.secondary" variant="caption">
+                Effective final decided by reviewer
+              </Typography>
+            ) : null}
+          </Stack>
         ),
       },
       { field: 'property_path', flex: 1, headerName: 'Property path', minWidth: 180 },
@@ -540,7 +565,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       data: {
         combination_ids: combinationIds,
         idempotency_key: createIdempotencyKey('batch-generate'),
-        live_llm: true,
+        live_llm: batchGenerateLiveLlm,
         max_cases_per_item: 3,
         max_items: combinationIds.length,
       },
@@ -859,8 +884,17 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
             <Typography variant="body2">
               {selectedEligibleCombinationCount} eligible; {selectedSkippedCombinationCount} skipped.
             </Typography>
+            {selectedSkippedCombinationCount > 0 ? (
+              <Typography color="text.secondary" variant="body2">
+                Skipped rows are resolved, unique, or manually decided and will not be sent to the backend batch request.
+              </Typography>
+            ) : null}
+            <FormControlLabel
+              control={<Checkbox checked={batchGenerateLiveLlm} onChange={(event) => setBatchGenerateLiveLlm(event.target.checked)} />}
+              label="Use live LLM for selected rows"
+            />
             <Typography color="text.secondary" variant="body2">
-              This action uses live LLM draft generation with up to 3 cases per eligible row.
+              Live LLM draft generation can add latency and provider cost. This action generates up to 3 cases per eligible row.
             </Typography>
           </Stack>
         </DialogContent>

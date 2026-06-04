@@ -9,9 +9,12 @@ import {
   Card,
   CardContent,
   Checkbox,
+  Dialog,
+  DialogActions,
+  DialogContent,
+  DialogTitle,
   FormControlLabel,
   Grid,
-  MenuItem,
   Stack,
   Step,
   StepLabel,
@@ -25,6 +28,7 @@ import type {
   CombinationDetailResponse,
   CombinationReviewFinalizeRequest,
   CombinationReviewResponse,
+  CounterExampleCaseResponse,
   CounterExampleGenerateRequest,
   CounterExampleRunRequest,
   JsonValue,
@@ -41,7 +45,10 @@ import {
   CombinationPriorityBadge,
   CombinationRelationBadge,
   CombinationStatusBadge,
-  RelationVisual,
+  CaseRiskBadge,
+  CaseStateBadge,
+  GenerationBadge,
+  RelationGuide,
   ReviewStateBadge,
   RuntimeVerdictBadge,
 } from './CombinationBadges'
@@ -130,6 +137,19 @@ function containsRedactedExecutableValue(value: unknown): boolean {
   return false
 }
 
+function validateExecutableRequest(value: unknown): string | null {
+  const request = asPlainRecord(value)
+  if (!request) return 'Request draft must be a JSON object before approval.'
+  const method = request.method
+  const path = request.path
+  if (typeof method !== 'string' || !method.trim()) return 'Request draft must include a non-empty method.'
+  if (typeof path !== 'string' || !path.trim()) return 'Request draft must include a non-empty path.'
+  if (containsRedactedExecutableValue(value)) {
+    return 'Request draft contains redacted executable values. Regenerate or replace them before approval.'
+  }
+  return null
+}
+
 function mutationErrorMessage(error: unknown): string | null {
   if (!error) return null
   if (typeof error === 'object' && error !== null && 'response' in error) {
@@ -161,6 +181,72 @@ function ReviewProgressRail({ review }: { review?: CombinationReviewResponse }) 
   )
 }
 
+function asPlainRecord(value: unknown): Record<string, unknown> | null {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) return null
+  return value as Record<string, unknown>
+}
+
+function requestMethod(request: unknown) {
+  const method = asPlainRecord(request)?.method
+  return typeof method === 'string' && method.trim() ? method.trim().toUpperCase() : 'UNKNOWN'
+}
+
+function requestPath(request: unknown) {
+  const path = asPlainRecord(request)?.path
+  return typeof path === 'string' && path.trim() ? path.trim() : 'Path unavailable'
+}
+
+function requestSection(request: unknown, key: string) {
+  return asPlainRecord(request)?.[key] ?? null
+}
+
+function isUnsafeHttpMethod(method: string) {
+  return !['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())
+}
+
+function methodRiskText(method: string) {
+  const normalized = method.toUpperCase()
+  if (normalized === 'DELETE') return 'DELETE has the highest mutation risk. Confirm this target is safe before execution.'
+  if (isUnsafeHttpMethod(normalized)) return `${normalized} can mutate the target API. Confirm unsafe methods before execution.`
+  if (normalized === 'GET') return 'GET is a read-style method and usually low risk.'
+  if (normalized === 'HEAD' || normalized === 'OPTIONS') return `${normalized} is a read-style discovery method and usually low risk.`
+  return 'Unknown method risk. Review this request before execution.'
+}
+
+function hasRuntimeEvidence(review?: CombinationReviewResponse) {
+  return Boolean(
+    review?.runtime_recommendation && review.runtime_recommendation !== 'NO_RECOMMENDATION',
+  ) || Boolean(review?.cases.some((item) => item.runtime_result || item.runtime_verdict))
+}
+
+function hasCaseRuntimeEvidence(item: CounterExampleCaseResponse) {
+  return Boolean(item.runtime_result || item.runtime_verdict || item.case_state === 'EXECUTED')
+}
+
+function validPositiveNumber(value: string) {
+  const parsed = Number(value)
+  return Number.isFinite(parsed) && parsed > 0
+}
+
+function relationRisk(detail: CombinationDetailResponse) {
+  if (detail.relation === 'DISJOINT' || detail.status === 'CONFLICT') return 'High: static and dynamic evidence appear incompatible.'
+  if (detail.relation === 'DYNAMIC_STRONGER' || detail.relation === 'PARTIAL_OVERLAP' || detail.relation === 'UNKNOWN') {
+    return 'Medium: this row needs human review before it should become final.'
+  }
+  if (detail.status === 'UNIQUE_STATIC' || detail.status === 'UNIQUE_DYNAMIC') return 'Low: only one source produced this constraint.'
+  return 'Low: the combiner already has a resolved recommendation.'
+}
+
+function relationDescription(relation: string | null | undefined) {
+  if (relation === 'EQUIVALENT') return 'Static and dynamic constraints describe the same valid cases.'
+  if (relation === 'STATIC_STRONGER') return 'Static constraint is more restrictive than dynamic evidence.'
+  if (relation === 'DYNAMIC_STRONGER') return 'Dynamic constraint is more restrictive and needs review before finalization.'
+  if (relation === 'PARTIAL_OVERLAP') return 'Static and dynamic constraints overlap but neither fully implies the other.'
+  if (relation === 'DISJOINT') return 'Static and dynamic constraints appear incompatible.'
+  if (relation === 'UNKNOWN') return 'The relation cannot be determined from available context.'
+  return 'Unique rows have only one available constraint side.'
+}
+
 function RelationSummaryPanel({
   detail,
   review,
@@ -169,32 +255,60 @@ function RelationSummaryPanel({
   review?: CombinationReviewResponse
 }) {
   const signal = deriveCombinationReviewSignal(detail)
+  const semanticRows = [
+    { label: 'Meaning', value: relationDescription(detail.relation) },
+    { label: 'Risk', value: relationRisk(detail) },
+    { label: 'Recommended next action', value: signal.recommendedNextAction },
+    { label: 'Raw enum', value: detail.relation ?? detail.status ?? 'null' },
+  ]
 
   return (
     <Card variant="outlined">
       <CardContent>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, md: 5 }}>
-            <Stack spacing={1}>
-              <Typography component="h2" variant="h2">
-                Understand relation
-              </Typography>
-              <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
-                <CombinationPriorityBadge row={detail} />
-                <CombinationRelationBadge relation={detail.relation} />
-                <CombinationStatusBadge status={detail.status} />
-                <RuntimeVerdictBadge runtimeVerdict={detail.runtime_verdict} />
-                <ReviewStateBadge review={review} row={detail} />
-              </Stack>
-              <Typography color="text.secondary" variant="body2">
-                {signal.description} Next action: {signal.recommendedNextAction}
-              </Typography>
-            </Stack>
-          </Grid>
-          <Grid size={{ xs: 12, md: 7 }}>
-            <RelationVisual relation={detail.relation} />
-          </Grid>
-        </Grid>
+        <Stack spacing={1.25}>
+          <Typography component="h2" variant="h2">
+            Understand relation
+          </Typography>
+          <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 0.75 }}>
+            <CombinationPriorityBadge row={detail} />
+            <CombinationRelationBadge relation={detail.relation} />
+            <CombinationStatusBadge status={detail.status} />
+            <RuntimeVerdictBadge runtimeVerdict={detail.runtime_verdict} />
+            <ReviewStateBadge review={review} row={detail} />
+          </Stack>
+          <Typography color="text.secondary" variant="body2">
+            {signal.description}
+          </Typography>
+          <Box aria-label="Relation semantics" role="region">
+            <Typography component="h3" variant="h3">
+              Relation semantics
+            </Typography>
+            <Grid container spacing={1} sx={{ mt: 0.25 }}>
+              {semanticRows.map((row) => (
+                <Grid key={row.label} size={{ xs: 12, md: 6 }}>
+                  <Stack
+                    spacing={0.25}
+                    sx={(theme) => ({
+                      border: '1px solid',
+                      borderColor: theme.apiTesting.border.default,
+                      borderRadius: 1,
+                      height: '100%',
+                      p: 1,
+                    })}
+                  >
+                    <Typography color="text.secondary" variant="caption">
+                      {row.label}
+                    </Typography>
+                    <Typography variant="body2">
+                      {row.value}
+                    </Typography>
+                  </Stack>
+                </Grid>
+              ))}
+            </Grid>
+          </Box>
+          <RelationGuide />
+        </Stack>
       </CardContent>
     </Card>
   )
@@ -218,10 +332,11 @@ function DraftCaseList({
     const raw = draftRequestText[caseId] ?? JSON.stringify(fallbackRequest, null, 2)
     try {
       const request = JSON.parse(raw) as JsonValue | null
-      if (containsRedactedExecutableValue(request)) {
+      const validationError = validateExecutableRequest(request)
+      if (validationError) {
         setDraftRequestErrors((current) => ({
           ...current,
-          [caseId]: 'Request draft contains redacted executable values. Regenerate or replace them before approval.',
+          [caseId]: validationError,
         }))
         return
       }
@@ -250,9 +365,9 @@ function DraftCaseList({
               <Accordion key={item.case_id} defaultExpanded disableGutters variant="outlined">
                 <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
                   <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
-                    <ReviewCaseBadge state={item.case_state} />
-                    {item.risk ? <ReviewCaseBadge state={`Risk: ${item.risk}`} /> : null}
-                    {item.generation_id ? <ReviewCaseBadge state={item.generation_id} /> : null}
+                    <CaseStateBadge state={item.case_state} />
+                    {item.risk ? <CaseRiskBadge risk={item.risk} /> : null}
+                    {item.generation_id ? <GenerationBadge generationId={item.generation_id} /> : null}
                     <Typography color="text.secondary" variant="caption">
                       {item.case_id}
                     </Typography>
@@ -309,11 +424,7 @@ function DraftCaseList({
   )
 }
 
-function ReviewCaseBadge({ state }: { state: string }) {
-  return <ReviewStateBadge row={{ review_state: state } as CombinationDetailResponse} />
-}
-
-function ApprovedRunPanel({
+function RunEvidencePanel({
   onGenerateDraft,
   onRunApproved,
   pending,
@@ -329,8 +440,18 @@ function ApprovedRunPanel({
   const [requestBudget, setRequestBudget] = useState('1')
   const [timeoutSeconds, setTimeoutSeconds] = useState('10')
   const [unsafeMethodConfirmed, setUnsafeMethodConfirmed] = useState(false)
-  const approvedCaseCount = review?.cases.filter((item) => item.case_state === 'APPROVED').length ?? 0
+  const runnableCases = review?.cases.filter((item) => item.case_state === 'APPROVED') ?? []
+  const evidenceCases = review?.cases.filter(hasCaseRuntimeEvidence) ?? []
+  const runnableCaseCount = runnableCases.length
+  const hasUnsafeRunnableCase = runnableCases.some((item) => isUnsafeHttpMethod(requestMethod(item.request)))
   const baseUrlSuggestions = review?.target_base_url_suggestions ?? []
+  const runtimeCaseCount = evidenceCases.length
+  const runReady =
+    runnableCaseCount > 0
+    && Boolean(baseUrl.trim())
+    && validPositiveNumber(requestBudget)
+    && validPositiveNumber(timeoutSeconds)
+    && (!hasUnsafeRunnableCase || unsafeMethodConfirmed)
 
   function handleRunApproved() {
     onRunApproved({
@@ -356,8 +477,11 @@ function ApprovedRunPanel({
       <CardContent>
         <Stack spacing={1.25}>
           <Typography component="h2" variant="h2">
-            Generate and run evidence
+            Run evidence readiness
           </Typography>
+          <Alert severity="info" variant="outlined">
+            Runtime evidence is support, not proof. Use it to inform the manual decision, not to auto-finalize constraints.
+          </Alert>
           <Stack direction="row" sx={{ flexWrap: 'wrap', gap: 1 }}>
             <Button disabled={pending} onClick={handleGenerateDraft} size="small" variant="outlined">
               Generate draft
@@ -366,6 +490,100 @@ function ApprovedRunPanel({
               control={<Checkbox checked={liveLlm} onChange={(event) => setLiveLlm(event.target.checked)} size="small" />}
               label="Use live LLM"
             />
+          </Stack>
+          {liveLlm ? (
+            <Alert severity="warning" variant="outlined">
+              Live LLM draft generation can add latency and provider cost. Use deterministic generation when you only need a UI rehearsal.
+            </Alert>
+          ) : null}
+
+          <Stack aria-label="Runnable cases" role="region" spacing={0.75}>
+            <Typography component="h3" variant="h3">
+              Runnable cases
+            </Typography>
+            <Typography color="text.secondary" variant="body2">
+              Only approved cases can be executed. Executed cases move to Evidence history and are not rerunnable in this MVP.
+            </Typography>
+            {runnableCases.length ? (
+              runnableCases.map((item) => {
+                const method = requestMethod(item.request)
+                return (
+                  <Accordion key={item.case_id} disableGutters variant="outlined">
+                    <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
+                      <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
+                        <CaseStateBadge state={item.case_state} />
+                        <CaseRiskBadge risk={isUnsafeHttpMethod(method) ? `${method} mutable` : `${method} low risk`} />
+                        <Typography color="text.secondary" variant="caption">
+                          {item.case_id} · {requestPath(item.request)}
+                        </Typography>
+                        <Typography color="text.secondary" variant="caption">
+                          {methodRiskText(method)}
+                        </Typography>
+                      </Stack>
+                    </AccordionSummary>
+                    <AccordionDetails>
+                      <Stack spacing={1}>
+                        <Alert severity={method === 'DELETE' ? 'warning' : isUnsafeHttpMethod(method) ? 'warning' : 'success'} variant="outlined">
+                          {methodRiskText(method)}
+                        </Alert>
+                        <Grid container spacing={1}>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <Typography color="text.secondary" variant="caption">
+                              Method and path
+                            </Typography>
+                            <Typography sx={{ fontFamily: monoFontFamily, overflowWrap: 'anywhere' }} variant="body2">
+                              {method} {requestPath(item.request)}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            <Typography color="text.secondary" variant="caption">
+                              Expected observation
+                            </Typography>
+                            <Typography color={item.expected_observation ? 'text.primary' : 'text.secondary'} variant="body2">
+                              {item.expected_observation ?? 'Not provided'}
+                            </Typography>
+                          </Grid>
+                          <Grid size={{ xs: 12, md: 4 }}>
+                            {item.target_truth_vector ? (
+                              <JsonBlock ariaLabel={`target truth vector ${item.case_id}`} value={item.target_truth_vector} />
+                            ) : (
+                              <Typography color="text.secondary" variant="body2">
+                                No target truth vector.
+                              </Typography>
+                            )}
+                          </Grid>
+                          {requestSection(item.request, 'query') ? (
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <JsonBlock ariaLabel={`query preview ${item.case_id}`} value={requestSection(item.request, 'query')} />
+                            </Grid>
+                          ) : null}
+                          {requestSection(item.request, 'body') ? (
+                            <Grid size={{ xs: 12, md: 6 }}>
+                              <JsonBlock ariaLabel={`body preview ${item.case_id}`} value={requestSection(item.request, 'body')} />
+                            </Grid>
+                          ) : null}
+                        </Grid>
+                      </Stack>
+                    </AccordionDetails>
+                  </Accordion>
+                )
+              })
+            ) : (
+              <Typography color="text.secondary" variant="body2">
+                No runnable cases are ready. Approve a draft case before running evidence.
+              </Typography>
+            )}
+          </Stack>
+
+          <Stack spacing={0.75}>
+            <Typography component="h3" variant="h3">
+              HTTP method risk
+            </Typography>
+            <Alert severity={hasUnsafeRunnableCase ? 'warning' : 'success'} variant="outlined">
+              {hasUnsafeRunnableCase
+                ? 'One or more approved cases use POST, PUT, PATCH, or DELETE. Confirm unsafe methods before execution.'
+                : 'Approved cases use read-style methods or no approved case is selected yet. Unsafe confirmation is not required for GET.'}
+            </Alert>
           </Stack>
 
           <Grid container spacing={1}>
@@ -412,40 +630,148 @@ function ApprovedRunPanel({
           </Grid>
 
           <Button
-            disabled={pending || approvedCaseCount === 0 || !baseUrl.trim()}
+            disabled={pending || !runReady}
             onClick={handleRunApproved}
             size="small"
             variant="contained"
           >
             Run approved cases
           </Button>
+          <Stack aria-label="Evidence history" role="region" spacing={0.75}>
+            <Typography component="h3" variant="h3">
+              Evidence history
+            </Typography>
+            <Alert severity="info" variant="outlined">
+              Runtime evidence is support, not proof. Use these observations to inform the manual decision.
+            </Alert>
+            <Typography color="text.secondary" variant="body2">
+              Recommendation: {review?.runtime_recommendation ?? 'NO_RECOMMENDATION'}. Evidence cases recorded: {runtimeCaseCount}.
+            </Typography>
+            {evidenceCases.length ? (
+              evidenceCases.map((item) => (
+                <Accordion key={item.case_id} disableGutters variant="outlined">
+                  <AccordionSummary expandIcon={<ExpandMoreIcon fontSize="small" />}>
+                    <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 0.75 }}>
+                      <CaseStateBadge state={item.case_state} />
+                      <RuntimeVerdictBadge runtimeVerdict={item.runtime_verdict} />
+                      <Typography color="text.secondary" variant="caption">
+                        {item.case_id} · {requestMethod(item.request)} {requestPath(item.request)}
+                      </Typography>
+                    </Stack>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Stack spacing={1}>
+                      {item.expected_observation ? (
+                        <Alert severity="info" variant="outlined">
+                          {item.expected_observation}
+                        </Alert>
+                      ) : null}
+                      {item.runtime_result ? <JsonBlock ariaLabel={`runtime result ${item.case_id}`} value={item.runtime_result} /> : null}
+                    </Stack>
+                  </AccordionDetails>
+                </Accordion>
+              ))
+            ) : (
+              <Typography color="text.secondary" variant="body2">
+                No executed evidence has been recorded yet.
+              </Typography>
+            )}
+          </Stack>
         </Stack>
       </CardContent>
     </Card>
   )
 }
 
-function ManualDecisionPanel({
+const MANUAL_DECISION_OPTIONS = [
+  {
+    description: 'Use the static constraint as the effective final constraint.',
+    label: 'Accept static',
+    value: 'ACCEPT_STATIC',
+  },
+  {
+    description: 'Use the dynamic constraint as the effective final constraint.',
+    label: 'Accept dynamic',
+    value: 'ACCEPT_DYNAMIC',
+  },
+  {
+    description: 'Write a custom final constraint after review.',
+    label: 'Custom final',
+    value: 'CUSTOM_FINAL',
+  },
+  {
+    description: 'Keep no final combined constraint for this row.',
+    label: 'No final',
+    value: 'NO_FINAL',
+  },
+  {
+    description: 'Escalate to a domain owner before accepting either side.',
+    label: 'Needs business review',
+    value: 'NEEDS_BUSINESS_REVIEW',
+  },
+  {
+    description: 'Reject the relation classification and expose no final row.',
+    label: 'Reject relation',
+    value: 'REJECT_RELATION',
+  },
+]
+
+function decisionImpact(
+  decision: string,
+  detail?: CombinationDetailResponse,
+  customFinalConstraint?: string,
+) {
+  if (decision === 'ACCEPT_STATIC') return detail?.static_constraint ?? 'Static constraint will be used when available.'
+  if (decision === 'ACCEPT_DYNAMIC') return detail?.dynamic_constraint ?? 'Dynamic constraint will be used when available.'
+  if (decision === 'CUSTOM_FINAL') return customFinalConstraint?.trim() || 'A custom final constraint is required.'
+  if (decision === 'NO_FINAL') return 'Constraint Explorer overlay will expose no effective combined final for this key.'
+  if (decision === 'NEEDS_BUSINESS_REVIEW') return 'The row stays unresolved until business review finishes.'
+  if (decision === 'REJECT_RELATION') return 'The relation is rejected and no combined final row should be used for this key.'
+  return 'Select a decision to preview the Constraint Explorer impact.'
+}
+
+function DecisionSupportPanel({
+  detail,
   onFinalize,
   onReopen,
   pending,
+  review,
 }: {
+  detail?: CombinationDetailResponse
   onFinalize: (request: CombinationReviewFinalizeRequest) => void
   onReopen: (rationale: string) => void
   pending?: boolean
+  review?: CombinationReviewResponse
 }) {
   const [customFinalConstraint, setCustomFinalConstraint] = useState('')
-  const [manualDecision, setManualDecision] = useState('ACCEPT_STATIC')
+  const [manualDecision, setManualDecision] = useState('')
+  const [confirmNoEvidenceOpen, setConfirmNoEvidenceOpen] = useState(false)
   const [rationale, setRationale] = useState('Reviewed by human operator.')
   const [reopenRationale, setReopenRationale] = useState('Reopened for additional review.')
+  const runtimeEvidenceAvailable = hasRuntimeEvidence(review)
+  const canFinalize = Boolean(
+    manualDecision
+    && rationale.trim()
+    && (manualDecision !== 'CUSTOM_FINAL' || customFinalConstraint.trim()),
+  )
 
-  function handleFinalize() {
+  function submitFinalize() {
     onFinalize({
       custom_final_constraint: customFinalConstraint || null,
       idempotency_key: createIdempotencyKey('finalize'),
       manual_decision: manualDecision,
       rationale,
     })
+    setConfirmNoEvidenceOpen(false)
+  }
+
+  function handleFinalize() {
+    if (!canFinalize) return
+    if (!runtimeEvidenceAvailable) {
+      setConfirmNoEvidenceOpen(true)
+      return
+    }
+    submitFinalize()
   }
 
   return (
@@ -453,28 +779,48 @@ function ManualDecisionPanel({
       <CardContent>
         <Stack spacing={1.25}>
           <Typography component="h2" variant="h2">
-            Finalize decision
+            Final decision support
           </Typography>
+          {!runtimeEvidenceAvailable ? (
+            <Alert severity="warning" variant="outlined">
+              No runtime evidence is attached yet. Finalizing now requires an explicit confirmation and should be treated as a manual judgment.
+            </Alert>
+          ) : null}
           <Grid container spacing={1}>
-            <Grid size={{ xs: 12, md: 4 }}>
-              <TextField fullWidth label="Manual decision" onChange={(event) => setManualDecision(event.target.value)} select size="small" value={manualDecision}>
-                <MenuItem value="ACCEPT_STATIC">ACCEPT_STATIC</MenuItem>
-                <MenuItem value="ACCEPT_DYNAMIC">ACCEPT_DYNAMIC</MenuItem>
-                <MenuItem value="CUSTOM_FINAL">CUSTOM_FINAL</MenuItem>
-                <MenuItem value="NO_FINAL">NO_FINAL</MenuItem>
-                <MenuItem value="NEEDS_BUSINESS_REVIEW">NEEDS_BUSINESS_REVIEW</MenuItem>
-                <MenuItem value="REJECT_RELATION">REJECT_RELATION</MenuItem>
-              </TextField>
-            </Grid>
-            <Grid size={{ xs: 12, md: 8 }}>
-              <TextField fullWidth label="Rationale" onChange={(event) => setRationale(event.target.value)} size="small" value={rationale} />
-            </Grid>
-            <Grid size={{ xs: 12 }}>
-              <TextField fullWidth label="Custom final constraint" onChange={(event) => setCustomFinalConstraint(event.target.value)} size="small" value={customFinalConstraint} />
-            </Grid>
+            {MANUAL_DECISION_OPTIONS.map((option) => (
+              <Grid key={option.value} size={{ xs: 12, md: 4 }}>
+                <Button
+                  aria-label={option.label}
+                  aria-pressed={manualDecision === option.value}
+                  color={manualDecision === option.value ? 'primary' : 'inherit'}
+                  fullWidth
+                  onClick={() => setManualDecision(option.value)}
+                  sx={{ alignItems: 'flex-start', justifyContent: 'flex-start', minHeight: 96, textAlign: 'left', whiteSpace: 'normal' }}
+                  variant={manualDecision === option.value ? 'contained' : 'outlined'}
+                >
+                  <Stack spacing={0.5}>
+                    <Typography component="span" variant="subtitle2">
+                      {option.label}
+                    </Typography>
+                    <Typography component="span" variant="caption">
+                      {option.description}
+                    </Typography>
+                  </Stack>
+                </Button>
+              </Grid>
+            ))}
           </Grid>
+          <TextField fullWidth label="Rationale" onChange={(event) => setRationale(event.target.value)} size="small" value={rationale} />
+          {manualDecision === 'CUSTOM_FINAL' ? (
+            <Box>
+              <TextField fullWidth label="Custom final constraint" onChange={(event) => setCustomFinalConstraint(event.target.value)} size="small" value={customFinalConstraint} />
+            </Box>
+          ) : null}
+          <Alert severity={manualDecision ? 'info' : 'warning'} variant="outlined">
+            Impact preview: {decisionImpact(manualDecision, detail, customFinalConstraint)}
+          </Alert>
           <Stack direction="row" sx={{ alignItems: 'center', flexWrap: 'wrap', gap: 1 }}>
-            <Button disabled={pending} onClick={handleFinalize} size="small" variant="contained">
+            <Button disabled={pending || !canFinalize} onClick={handleFinalize} size="small" variant="contained">
               Finalize
             </Button>
             <TextField label="Reopen rationale" onChange={(event) => setReopenRationale(event.target.value)} size="small" sx={{ minWidth: 260 }} value={reopenRationale} />
@@ -484,11 +830,30 @@ function ManualDecisionPanel({
           </Stack>
         </Stack>
       </CardContent>
+      <Dialog
+        aria-labelledby="finalize-without-evidence-title"
+        onClose={() => setConfirmNoEvidenceOpen(false)}
+        open={confirmNoEvidenceOpen}
+      >
+        <DialogTitle id="finalize-without-evidence-title">Finalize without runtime evidence</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2">
+            This row has no executed counter-example evidence yet. Confirm only if the manual decision is intentional and documented by the rationale.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmNoEvidenceOpen(false)}>Cancel</Button>
+          <Button onClick={submitFinalize} variant="contained">
+            Confirm finalize
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Card>
   )
 }
 
 function HumanReviewPanel({
+  detail,
   onApproveCase,
   onFinalize,
   onGenerateDraft,
@@ -499,6 +864,7 @@ function HumanReviewPanel({
   review,
   reviewActionError,
 }: {
+  detail: CombinationDetailResponse
   onApproveCase: (caseId: string, request: JsonValue | null) => void
   onFinalize: (request: CombinationReviewFinalizeRequest) => void
   onGenerateDraft: (request: CounterExampleGenerateRequest) => void
@@ -519,9 +885,9 @@ function HumanReviewPanel({
           {actionErrorMessage}
         </Alert>
       ) : null}
-      <ApprovedRunPanel onGenerateDraft={onGenerateDraft} onRunApproved={onRunApproved} pending={pending} review={review} />
       <DraftCaseList onApproveCase={onApproveCase} onRejectCase={onRejectCase} pending={pending} review={review} />
-      <ManualDecisionPanel onFinalize={onFinalize} onReopen={onReopen} pending={pending} />
+      <RunEvidencePanel onGenerateDraft={onGenerateDraft} onRunApproved={onRunApproved} pending={pending} review={review} />
+      <DecisionSupportPanel detail={detail} onFinalize={onFinalize} onReopen={onReopen} pending={pending} review={review} />
     </Stack>
   )
 }
@@ -618,6 +984,7 @@ export function CombinationDetailComposer({
         </Card>
       ) : (
         <HumanReviewPanel
+          detail={detail}
           onApproveCase={onApproveCase}
           onFinalize={onFinalize}
           onGenerateDraft={onGenerateDraft}

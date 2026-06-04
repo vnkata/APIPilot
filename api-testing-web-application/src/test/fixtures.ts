@@ -42,6 +42,7 @@ import type {
   ExecutionEventListResponse,
   RunSummaryResponse,
   TestCasePageResponse,
+  CounterExampleCaseResponse,
 } from '../shared/api/generated/model'
 
 export const runA: RunMetadataResponse = {
@@ -655,6 +656,113 @@ export const combinationReview: CombinationReviewResponse = {
   run_name: 'Run A',
   runtime_recommendation: 'NO_RECOMMENDATION',
   target_base_url_suggestions: ['https://example.test'],
+}
+
+const approvedGetCase: CounterExampleCaseResponse = {
+  case_id: 'ce-case-approved-get',
+  case_state: 'APPROVED',
+  rationale: 'Approved safe read-style probe.',
+  expected_observation: 'Static constraint holds while dynamic constraint fails.',
+  generation_id: 'ceg-fixture-approved',
+  planner_version: 'counter-example-planner-v1',
+  request: {
+    method: 'GET',
+    path: '/items',
+    path_parameters: {},
+    query: { limit: 0 },
+  },
+  request_display: {
+    method: 'GET',
+    path: '/items',
+    path_parameters: {},
+    query: { limit: 0 },
+  },
+  risk: 'low',
+  runtime_result: null,
+  runtime_verdict: null,
+  source: 'draft',
+  source_metadata: { live_llm: true },
+  target_truth_vector: {
+    static_constraint: 'true',
+    dynamic_constraint: 'false',
+  },
+  validation_error: null,
+}
+
+const approvedDeleteCase: CounterExampleCaseResponse = {
+  case_id: 'ce-case-approved-delete',
+  case_state: 'APPROVED',
+  rationale: 'Approved mutable probe for explicit safety confirmation.',
+  expected_observation: 'Deleting the synthetic item should expose relation disagreement.',
+  generation_id: 'ceg-fixture-approved',
+  planner_version: 'counter-example-planner-v1',
+  request: {
+    method: 'DELETE',
+    path: '/items/temporary-hitl-id',
+    path_parameters: {},
+    query: {},
+  },
+  request_display: {
+    method: 'DELETE',
+    path: '/items/temporary-hitl-id',
+    path_parameters: {},
+    query: {},
+  },
+  risk: 'high',
+  runtime_result: null,
+  runtime_verdict: null,
+  source: 'draft',
+  source_metadata: { live_llm: true },
+  target_truth_vector: {
+    static_constraint: 'false',
+    dynamic_constraint: 'true',
+  },
+  validation_error: null,
+}
+
+const executedCase: CounterExampleCaseResponse = {
+  ...approvedGetCase,
+  case_id: 'ce-case-executed',
+  case_state: 'EXECUTED',
+  expected_observation: 'Runtime target returned a bounded item collection.',
+  request: {
+    method: 'GET',
+    path: '/items',
+    path_parameters: {},
+    query: { limit: 1 },
+  },
+  request_display: {
+    method: 'GET',
+    path: '/items',
+    path_parameters: {},
+    query: { limit: 1 },
+  },
+  runtime_result: {
+    response_status: 200,
+    response_preview: { items: [{ id: 1 }] },
+  },
+  runtime_verdict: 'CONFLICT_BOTH_FALSE',
+}
+
+export const combinationReviewWithRunnableAndEvidence: CombinationReviewResponse = {
+  ...combinationReview,
+  cases: [
+    combinationReview.cases[0],
+    approvedGetCase,
+    approvedDeleteCase,
+    executedCase,
+  ],
+  review_state: 'RUN_COMPLETED',
+  runtime_recommendation: 'MIXED_EVIDENCE',
+}
+
+export const combinationReviewFinalConfirmed: CombinationReviewResponse = {
+  ...combinationReviewWithRunnableAndEvidence,
+  decision_source: 'manual',
+  has_manual_decision: true,
+  manual_decision: 'ACCEPT_STATIC',
+  rationale: 'Business owner accepted the static constraint.',
+  review_state: 'FINAL_CONFIRMED',
 }
 
 export const combinationSummary: CombinationSummaryResponse = {

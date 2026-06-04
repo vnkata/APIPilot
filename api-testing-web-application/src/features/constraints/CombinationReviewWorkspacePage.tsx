@@ -11,7 +11,6 @@ import type {
 import { encodeRoutePart } from '../../shared/lib/format'
 import { PageLearningPanel } from '../../shared/ui/Guidance'
 import { QueryState } from '../../shared/ui/QueryState'
-import { RelationGuide } from './components/CombinationBadges'
 import { CombinationDetailComposer } from './components/CombinationDetailComposer'
 import {
   useCombinationDetail,
@@ -129,7 +128,7 @@ export function CombinationReviewWorkspacePage({
       <PageLearningPanel
         sections={[
           {
-            body: 'Start by reading relation, status, and runtime support. Runtime evidence is support, not proof.',
+            body: 'Start by reading relation, status, and runtime support before choosing the next review action.',
             title: 'Understand the row',
           },
           {
@@ -142,8 +141,6 @@ export function CombinationReviewWorkspacePage({
           },
         ]}
       />
-      <RelationGuide />
-
       <QueryState
         empty={false}
         error={detailQuery.error ?? reviewQuery.error}

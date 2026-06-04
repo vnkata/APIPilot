@@ -4,10 +4,18 @@ import { axe } from 'jest-axe'
 import { http, HttpResponse } from 'msw'
 
 import { renderWithProviders } from '../../test/renderWithProviders'
-import { combinationEntries, combinationReview, constraintExplorerEntries, invariantExplorerEntries } from '../../test/fixtures'
+import {
+  combinationEntries,
+  combinationDetail,
+  combinationReview,
+  combinationReviewWithRunnableAndEvidence,
+  constraintExplorerEntries,
+  invariantExplorerEntries,
+} from '../../test/fixtures'
 import { server } from '../../test/msw/server'
 import App from '../../App'
 import { ConstraintsPage } from './ConstraintsPage'
+import { CombinationDetailComposer } from './components/CombinationDetailComposer'
 
 describe('ConstraintsPage', () => {
   it('renders workbench by default with current-page triage and no accessibility violations', async () => {
@@ -174,10 +182,54 @@ describe('ConstraintsPage', () => {
 
     expect(await screen.findByRole('heading', { name: /combination review workspace/i })).toBeInTheDocument()
     expect(await screen.findByRole('heading', { name: /understand relation/i })).toBeInTheDocument()
+    expect(screen.queryByRole('img', { name: /relation visual/i })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /relation semantics/i })).toBeInTheDocument()
+    expect(screen.getByText(/raw enum/i)).toBeInTheDocument()
     expect((await screen.findAllByText(/edit and approve draft cases/i)).length).toBeGreaterThan(0)
     expect(screen.getByRole('region', { name: /relation guide/i })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: /run evidence readiness/i })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: /runnable cases/i })).toBeInTheDocument()
+    expect(screen.getByText(/http method risk/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/runtime evidence is support, not proof/i).length).toBeGreaterThan(0)
+    expect(screen.getByRole('heading', { name: /final decision support/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /accept static/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^finalize$/i })).toBeDisabled()
     expect(await screen.findByRole('textbox', { name: /request json ce-case-1/i })).toBeInTheDocument()
   })
+
+  it('separates runnable cases from executed evidence in the review workspace', async () => {
+    renderWithProviders(
+      <CombinationDetailComposer
+        detail={{ ...combinationDetail, relation: 'DISJOINT', status: 'CONFLICT', resolved: false }}
+        detailView="readable"
+        evidenceLinks={[]}
+        onApproveCase={() => undefined}
+        onDetailViewChange={() => undefined}
+        onFinalize={() => undefined}
+        onGenerateDraft={() => undefined}
+        onRejectCase={() => undefined}
+        onReopen={() => undefined}
+        onRunApproved={() => undefined}
+        review={combinationReviewWithRunnableAndEvidence}
+      />,
+    )
+
+    expect(await screen.findByRole('heading', { name: /run evidence readiness/i })).toBeInTheDocument()
+    const runnableCases = await screen.findByRole('region', { name: /runnable cases/i })
+    expect(within(runnableCases).getByText(/ce-case-approved-get/i)).toBeInTheDocument()
+    expect(within(runnableCases).getByText(/ce-case-approved-delete/i)).toBeInTheDocument()
+    expect(within(runnableCases).queryByText(/ce-case-executed/i)).not.toBeInTheDocument()
+    expect(within(runnableCases).getAllByText(/delete has the highest mutation risk/i).length).toBeGreaterThan(0)
+
+    const evidenceHistory = screen.getByRole('region', { name: /evidence history/i })
+    expect(within(evidenceHistory).getByText(/ce-case-executed/i)).toBeInTheDocument()
+    expect(within(evidenceHistory).getByText(/Conflict Both False/i)).toBeInTheDocument()
+    expect(within(evidenceHistory).getByText(/support, not proof/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /^run approved cases$/i })).toBeDisabled()
+    fireEvent.click(screen.getByRole('button', { name: /use https:\/\/example\.test/i }))
+    fireEvent.click(screen.getByLabelText(/confirm unsafe http methods/i))
+    expect(screen.getByRole('button', { name: /^run approved cases$/i })).toBeEnabled()
+  }, 30_000)
 
   it('shows regenerate-required guidance for unsupported combination artifacts', async () => {
     server.use(
@@ -248,7 +300,6 @@ describe('ConstraintsPage', () => {
     expect((requests.generate as { idempotency_key: string }).idempotency_key).toMatch(/^generate-/)
 
     const editor = await screen.findByRole('textbox', { name: /request json ce-case-1/i })
-    await user.clear(editor)
     fireEvent.change(editor, {
       target: { value: JSON.stringify({ method: 'GET', path: '/items', query: { limit: 7 } }) },
     })
@@ -258,10 +309,13 @@ describe('ConstraintsPage', () => {
       request: { method: 'GET', path: '/items', query: { limit: 7 } },
     }))
 
+    await user.click(screen.getByRole('button', { name: /^accept static$/i }))
     await user.click(screen.getByRole('button', { name: /^finalize$/i }))
+    expect(await screen.findByRole('dialog', { name: /finalize without runtime evidence/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /confirm finalize/i }))
     await waitFor(() => expect(requests.finalize).toMatchObject({ manual_decision: 'ACCEPT_STATIC' }))
     expect((requests.finalize as { idempotency_key: string }).idempotency_key).toMatch(/^finalize-/)
-  }, 30_000)
+  }, 60_000)
 
   it('blocks approving draft requests that contain redacted executable values', async () => {
     const user = userEvent.setup()
@@ -284,7 +338,6 @@ describe('ConstraintsPage', () => {
 
     await screen.findByRole('heading', { name: /combination review workspace/i })
     const editor = await screen.findByRole('textbox', { name: /request json ce-case-1/i })
-    await user.clear(editor)
     fireEvent.change(editor, {
       target: {
         value: JSON.stringify({
@@ -299,7 +352,6 @@ describe('ConstraintsPage', () => {
     expect(await screen.findByText(/redacted executable values/i)).toBeInTheDocument()
     expect(updateCalled).toBe(false)
 
-    await user.clear(editor)
     fireEvent.change(editor, {
       target: {
         value: JSON.stringify({
@@ -376,20 +428,75 @@ describe('ConstraintsPage', () => {
     expect(screen.getByText(/select eligible rows to generate drafts/i)).toBeInTheDocument()
 
     await user.click(screen.getByRole('checkbox', { name: /select cmb-needs-review for batch generation/i }))
+    await user.click(screen.getByRole('checkbox', { name: /select cmb-resolved for batch generation/i }))
     await waitFor(() => expect(batchButton).toBeEnabled())
     await user.click(batchButton)
     const confirmDialog = await screen.findByRole('dialog', { name: /confirm live draft generation/i })
     expect(confirmDialog).toBeInTheDocument()
-    expect(within(confirmDialog).getByText(/1 selected row/i)).toBeInTheDocument()
+    expect(within(confirmDialog).getByText(/2 selected rows/i)).toBeInTheDocument()
     expect(within(confirmDialog).getByText(/1 eligible/i)).toBeInTheDocument()
+    expect(within(confirmDialog).getByText(/1 skipped/i)).toBeInTheDocument()
+    expect(within(confirmDialog).getByText(/live llm draft generation can add latency and provider cost/i)).toBeInTheDocument()
+    const liveToggle = within(confirmDialog).getByRole('checkbox', { name: /use live llm for selected rows/i })
+    expect(liveToggle).toBeChecked()
+    await user.click(liveToggle)
     await user.click(screen.getByRole('button', { name: /confirm live generation/i }))
     await waitFor(() => expect(requestBody).toMatchObject({
       combination_ids: ['cmb-needs-review'],
-      live_llm: true,
+      live_llm: false,
       max_cases_per_item: 3,
     }))
     expect((requestBody as { idempotency_key: string }).idempotency_key).toMatch(/^batch-generate-/)
     expect(screen.getByText(/generated 1 new draft for 1 row \(2 total\)/i)).toBeInTheDocument()
+  })
+
+  it('shows manual decision and effective final context in Constraint Explorer rows', async () => {
+    server.use(
+      http.get('*/api/v1/runs/:runName/constraints/entries', () =>
+        HttpResponse.json({
+          ...constraintExplorerEntries,
+          items: [
+            {
+              ...constraintExplorerEntries.items[0],
+              decision_source: 'manual',
+              has_manual_decision: true,
+              manual_decision: 'NO_FINAL',
+              manual_final_constraint: null,
+              review_state: 'FINAL_CONFIRMED',
+            },
+            {
+              ...constraintExplorerEntries.items[0],
+              constraint_id: 'constraint-manual-final',
+              decision_source: 'manual',
+              expression: 'input.limit <= 100',
+              has_manual_decision: true,
+              manual_decision: 'CUSTOM_FINAL',
+              manual_final_constraint: 'input.limit <= 100',
+              review_state: 'FINAL_CONFIRMED',
+            },
+          ],
+          pagination: { limit: 25, offset: 0, total: 2 },
+        }),
+      ),
+    )
+
+    renderWithProviders(
+      <ConstraintsPage
+        runName="Run A"
+        search={{
+          constraintTab: 'explorer',
+          constraintsView: 'table',
+          limit: 25,
+          offset: 0,
+        }}
+      />,
+    )
+
+    expect(await screen.findByRole('grid', { name: /constraint explorer entries/i })).toBeInTheDocument()
+    expect(screen.getAllByText(/Human: No Final/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/No effective final/i)).toBeInTheDocument()
+    expect(screen.getAllByText(/Human: Custom Final/i).length).toBeGreaterThan(0)
+    expect(screen.getByText(/Effective final: input\.limit <= 100/i)).toBeInTheDocument()
   })
 
   it('renders static, dynamic, and invariant query results with groups', async () => {
