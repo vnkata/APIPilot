@@ -68,6 +68,14 @@ function extractRunName(pathname: string) {
   return match ? decodeURIComponent(match[1]) : undefined
 }
 
+function parseNavigationTarget(path: string) {
+  const url = new URL(path, window.location.origin)
+  return {
+    search: Object.fromEntries(url.searchParams.entries()),
+    to: url.pathname,
+  }
+}
+
 function navItems(runName: string | undefined): NavItem[] {
   const items: NavItem[] = [
     { href: '/runs', icon: <ListAltIcon fontSize="small" />, label: 'Runs' },
@@ -322,7 +330,8 @@ export function AppShell() {
   useEffect(() => {
     setNavigationAdapter({
       navigateInApp: (path) => {
-        void navigate({ to: path as never })
+        const target = parseNavigationTarget(path)
+        void navigate({ search: target.search as never, to: target.to as never })
       },
       replaceSearchParams: (updates) => {
         void navigate({

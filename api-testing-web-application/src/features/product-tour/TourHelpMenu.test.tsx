@@ -27,4 +27,17 @@ describe('TourHelpMenu', () => {
 
     expect(store.getState().productTour.activeTourId).toBe('builder-run-config')
   })
+
+  it('starts Combination HITL activation from constraints routes', async () => {
+    const user = userEvent.setup()
+    const { store } = renderWithProviders(<TourHelpMenu pathname="/runs/Run%20A/constraints" />)
+
+    await user.click(screen.getByRole('button', { name: /open guided tours/i }))
+    await user.click(screen.getByRole('menuitem', { name: /start combination hitl activation/i }))
+
+    expect(store.getState().activationOnboarding.progressByRunName['Run A']?.active).toBe(true)
+    expect(window.location.pathname).toBe('/runs/Run%20A/constraints')
+    expect(window.location.search).toContain('constraintTab=combination')
+    expect(window.location.search).toContain('constraintsView=table')
+  })
 })

@@ -174,11 +174,15 @@ export class ConstraintsPage {
 
   async completeHumanReviewWorkflow(runName: string) {
     await this.page.goto(`${runPath(runName)}/constraints?constraintsView=table&constraintTab=combination`)
+    await this.page.getByRole('button', { name: 'Open guided tours' }).click()
+    await this.page.getByRole('menuitem', { name: /Start Combination HITL activation/ }).click()
     await expect(this.page.getByRole('grid', { name: 'combination constraint entries' })).toBeVisible()
+    await expect(this.page.getByRole('region', { name: 'Combination HITL activation' })).toContainText('1 of 7 complete')
     await this.page.getByText('Conflict needs decision').click()
     await expect(this.page.getByRole('heading', { name: 'Human review preview' })).toBeVisible()
     await this.page.getByRole('link', { name: /Open review workspace/ }).click()
     await expect(this.page.getByRole('heading', { name: 'Combination review workspace' })).toBeVisible()
+    await expect(this.page.getByRole('region', { name: 'Combination HITL activation' })).toBeVisible()
     await expect(this.page.getByRole('region', { name: 'Human review workflow' })).toBeVisible()
     await expect(this.page.getByRole('img', { name: /Relation visual/ })).toHaveCount(0)
     await expect(this.page.getByRole('heading', { name: 'Run evidence readiness' })).toBeVisible()
@@ -189,9 +193,11 @@ export class ConstraintsPage {
 
     await this.page.getByRole('button', { name: /^Generate draft$/ }).click()
     await expect(this.page.getByText(/The fake target returns a small item collection/)).toBeVisible()
+    await expect(this.page.getByRole('region', { name: 'Combination HITL activation' })).toContainText('Generate draft: completed')
 
     await this.page.getByRole('button', { name: /^Approve draft$/ }).click()
     await expect(this.page.getByRole('region', { name: 'Runnable cases' })).toContainText('Approved')
+    await expect(this.page.getByRole('region', { name: 'Combination HITL activation' })).toContainText('Approve case: completed')
 
     await this.page.getByRole('button', { name: /Use https:\/\/example\.test/ }).click()
     await expect(this.page.getByText(/HTTP method risk/)).toBeVisible()
@@ -199,6 +205,7 @@ export class ConstraintsPage {
     await expect(this.page.getByRole('button', { name: /^Run approved cases$/ })).toBeEnabled()
     await this.page.getByRole('button', { name: /^Run approved cases$/ }).click()
     await expect(this.page.getByText('Run Completed').first()).toBeVisible()
+    await expect(this.page.getByRole('region', { name: 'Combination HITL activation' })).toContainText('Run evidence: completed')
     const evidenceHistory = this.page.getByRole('region', { name: 'Evidence history' })
     await expect(evidenceHistory).toContainText('Executed')
     await expect(evidenceHistory).toContainText(/CONFLICT_BOTH_FALSE/)
@@ -208,6 +215,7 @@ export class ConstraintsPage {
     await acceptStatic.click()
     await this.page.getByRole('button', { name: /^Finalize$/ }).click()
     await expect(this.page.getByText(/Human: Accept Static/).first()).toBeVisible()
+    await expect(this.page.getByRole('region', { name: 'Combination HITL activation' })).toContainText('Activation complete')
     await this.page.getByRole('button', { name: /^Reopen$/ }).click()
     await expect(this.page.getByText('Reopened').first()).toBeVisible()
   }

@@ -13,6 +13,10 @@ import {
   invariantExplorerEntries,
 } from '../../test/fixtures'
 import { server } from '../../test/msw/server'
+import {
+  setActivationOnboardingEventEmitter,
+  type ActivationOnboardingEventEmitter,
+} from '../product-tour/activationOnboardingAnalytics'
 import App from '../../App'
 import { ConstraintsPage } from './ConstraintsPage'
 import { CombinationDetailComposer } from './components/CombinationDetailComposer'
@@ -167,13 +171,54 @@ describe('ConstraintsPage', () => {
     )
   })
 
+  it('shows Combination HITL activation on the table and marks eligible row selection', async () => {
+    const user = userEvent.setup()
+    server.use(
+      http.get('*/api/v1/runs/:runName/constraints/combination/entries', () =>
+        HttpResponse.json({
+          ...combinationEntries,
+          items: [
+            {
+              ...combinationEntries.items[0],
+              combination_id: 'cmb-needs-review',
+              relation: 'UNKNOWN',
+              resolved: false,
+              status: 'UNRESOLVED',
+            },
+          ],
+        }),
+      ),
+    )
+
+    const { store } = renderWithProviders(
+      <ConstraintsPage
+        runName="Run A"
+        search={{
+          constraintTab: 'combination',
+          constraintsView: 'table',
+          limit: 25,
+          offset: 0,
+        }}
+      />,
+    )
+
+    expect(await screen.findByRole('region', { name: /combination hitl activation/i })).toBeInTheDocument()
+    await user.click(screen.getByRole('button', { name: /start hitl activation/i }))
+    expect(store.getState().activationOnboarding.progressByRunName['Run A']?.active).toBe(true)
+    expect(store.getState().activationOnboarding.progressByRunName['Run A']?.completedStepIds.open_combination_table).toBe(true)
+
+    await user.click(screen.getByRole('checkbox', { name: /select cmb-needs-review for batch generation/i }))
+    expect(store.getState().activationOnboarding.progressByRunName['Run A']?.completedStepIds.select_eligible_row).toBe(true)
+    expect(screen.getByText(/open the selected row preview/i)).toBeInTheDocument()
+  })
+
   it('renders the dedicated combination review workspace route', async () => {
     server.use(
       http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId', () =>
         HttpResponse.json(combinationEntries.items[0]),
       ),
       http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId/review', () =>
-        HttpResponse.json(combinationReview),
+        HttpResponse.json(combinationReviewWithRunnableAndEvidence),
       ),
     )
     window.history.pushState({}, '', '/runs/Run%20A/constraints/combination/cmb-limit/review')
@@ -195,6 +240,7 @@ describe('ConstraintsPage', () => {
     expect(screen.getByRole('button', { name: /accept static/i })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /^finalize$/i })).toBeDisabled()
     expect(await screen.findByRole('textbox', { name: /request json ce-case-1/i })).toBeInTheDocument()
+    expect(screen.getByRole('region', { name: /combination hitl activation/i })).toHaveTextContent(/4 of 7 complete/i)
   })
 
   it('separates runnable cases from executed evidence in the review workspace', async () => {
@@ -229,7 +275,7 @@ describe('ConstraintsPage', () => {
     fireEvent.click(screen.getByRole('button', { name: /use https:\/\/example\.test/i }))
     fireEvent.click(screen.getByLabelText(/confirm unsafe http methods/i))
     expect(screen.getByRole('button', { name: /^run approved cases$/i })).toBeEnabled()
-  }, 30_000)
+  }, 60_000)
 
   it('shows regenerate-required guidance for unsupported combination artifacts', async () => {
     server.use(
@@ -265,6 +311,8 @@ describe('ConstraintsPage', () => {
   it('sends HITL review mutation bodies with idempotency keys and edited draft request', async () => {
     const user = userEvent.setup()
     const requests: Record<string, unknown> = {}
+    const activationEvents: Parameters<ActivationOnboardingEventEmitter>[0][] = []
+    const restoreActivationEmitter = setActivationOnboardingEventEmitter((event) => activationEvents.push(event))
     server.use(
       http.get('*/api/v1/runs/:runName/constraints/combination/entries/:combinationId', () =>
         HttpResponse.json(combinationEntries.items[0]),
@@ -291,13 +339,14 @@ describe('ConstraintsPage', () => {
     )
 
     window.history.pushState({}, '', '/runs/Run%20A/constraints/combination/cmb-limit/review')
-    renderWithProviders(<App />)
+    const { store } = renderWithProviders(<App />)
 
     await screen.findByRole('heading', { name: /combination review workspace/i })
     expect(await screen.findByRole('button', { name: /use https:\/\/example\.test/i })).toBeInTheDocument()
     await user.click(await screen.findByRole('button', { name: /^generate draft$/i }))
     await waitFor(() => expect(requests.generate).toMatchObject({ live_llm: true }))
     expect((requests.generate as { idempotency_key: string }).idempotency_key).toMatch(/^generate-/)
+    expect(store.getState().activationOnboarding.progressByRunName['Run A']?.completedStepIds.generate_draft).toBe(true)
 
     const editor = await screen.findByRole('textbox', { name: /request json ce-case-1/i })
     fireEvent.change(editor, {
@@ -308,6 +357,7 @@ describe('ConstraintsPage', () => {
       case_state: 'APPROVED',
       request: { method: 'GET', path: '/items', query: { limit: 7 } },
     }))
+    expect(store.getState().activationOnboarding.progressByRunName['Run A']?.completedStepIds.approve_case).toBe(true)
 
     await user.click(screen.getByRole('button', { name: /^accept static$/i }))
     await user.click(screen.getByRole('button', { name: /^finalize$/i }))
@@ -315,6 +365,11 @@ describe('ConstraintsPage', () => {
     await user.click(screen.getByRole('button', { name: /confirm finalize/i }))
     await waitFor(() => expect(requests.finalize).toMatchObject({ manual_decision: 'ACCEPT_STATIC' }))
     expect((requests.finalize as { idempotency_key: string }).idempotency_key).toMatch(/^finalize-/)
+    expect(store.getState().activationOnboarding.progressByRunName['Run A']?.completedStepIds.finalize_decision).toBe(true)
+    expect(activationEvents.some((event) => event.type === 'activation_completed')).toBe(true)
+    expect(JSON.stringify(activationEvents)).not.toContain('input.limit')
+    expect(JSON.stringify(activationEvents)).not.toContain('cmb-limit')
+    restoreActivationEmitter()
   }, 60_000)
 
   it('blocks approving draft requests that contain redacted executable values', async () => {

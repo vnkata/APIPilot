@@ -23,7 +23,7 @@ from fastapi.testclient import TestClient
 
 from api_testing.backend.app import create_app
 from api_testing.backend.settings import BackendSettings
-from tests.backend_artifact_fixtures import (
+from tests.fixtures.backend_artifacts import (
     add_combination_artifacts,
     build_artifact_cache,
     write_json,

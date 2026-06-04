@@ -13,6 +13,7 @@ import {
 import type { GridColDef, GridRowSelectionModel } from '@mui/x-data-grid'
 import { useCallback, useMemo, useState } from 'react'
 
+import { useAppDispatch } from '../../app/hooks'
 import type {
   CombinationReviewFinalizeRequest,
   CounterExampleGenerateRequest,
@@ -32,6 +33,13 @@ import { InvestigationDrawer } from '../../shared/ui/InvestigationDrawer'
 import { OperationDetailDrawer } from '../../shared/ui/OperationDetailDrawer'
 import { useUrlBackedGridState } from '../../shared/ui/useUrlBackedGridState'
 import { TOUR_ANCHORS, tourAnchor } from '../product-tour/tourAnchors'
+import { emitActivationOnboardingEvent } from '../product-tour/activationOnboardingAnalytics'
+import { completeActivationStep } from '../product-tour/activationOnboardingSlice'
+import type { CombinationHitlActivationStepId } from '../product-tour/activationOnboardingTypes'
+import {
+  combinationHitlActivationEventBase,
+  safeCombinationActivationMetadata,
+} from '../product-tour/activationOnboardingViewModels'
 import {
   toCombinationFacetParams,
   toCombinationParams,
@@ -64,6 +72,7 @@ import {
 import { ConstraintAdvancedFiltersDrawer } from './components/ConstraintAdvancedFiltersDrawer'
 import { ConstraintAppliedFiltersBar } from './components/ConstraintAppliedFiltersBar'
 import { CombinationDetailComposer } from './components/CombinationDetailComposer'
+import { CombinationHitlActivationPanel } from './components/CombinationHitlActivationPanel'
 import { ConstraintDetailComposer } from './components/ConstraintDetailComposer'
 import { ConstraintFilterPanel } from './components/ConstraintFilterPanel'
 import { ConstraintPageHeader } from './components/ConstraintPageHeader'
@@ -138,6 +147,7 @@ function constraintRows(items: ConstraintEntryDetailResponse[]) {
 }
 
 export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
+  const dispatch = useAppDispatch()
   const [legacyDetail, setLegacyDetail] = useState<LegacyConstraintRow | null>(null)
   const [advancedFiltersOpen, setAdvancedFiltersOpen] = useState(false)
   const [batchConfirmOpen, setBatchConfirmOpen] = useState(false)
@@ -225,24 +235,63 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     void explorerFacetsQuery.refetch()
   }
 
+  const recordCombinationActivationStep = useCallback((
+    stepId: CombinationHitlActivationStepId,
+    detail?: CombinationEntryResponse,
+  ) => {
+    const metadata = safeCombinationActivationMetadata({
+      detail: detail ?? combinationDetailQuery.data,
+      review: combinationReviewQuery.data,
+    })
+    dispatch(completeActivationStep({ runName, stepId }))
+    emitActivationOnboardingEvent({
+      ...combinationHitlActivationEventBase(),
+      metadata,
+      stepId,
+      type: 'step_completed',
+    })
+    if (stepId === 'finalize_decision') {
+      emitActivationOnboardingEvent({
+        ...combinationHitlActivationEventBase(),
+        metadata,
+        stepId,
+        type: 'activation_completed',
+      })
+    }
+  }, [combinationDetailQuery.data, combinationReviewQuery.data, dispatch, runName])
+
   const generateCounterExamplesMutation = useGenerateCounterExamples({
     mutation: {
-      onSuccess: refetchCombinationReviewSurface,
+      onSuccess: () => {
+        refetchCombinationReviewSurface()
+        recordCombinationActivationStep('generate_draft')
+      },
     },
   })
   const updateCounterExampleCaseMutation = useUpdateCounterExampleCase({
     mutation: {
-      onSuccess: refetchCombinationReviewSurface,
+      onSuccess: (_response, variables) => {
+        refetchCombinationReviewSurface()
+        if (variables.data.case_state === 'APPROVED') {
+          recordCombinationActivationStep('approve_case')
+        }
+      },
     },
   })
   const runCounterExamplesMutation = useRunCounterExamples({
     mutation: {
-      onSuccess: refetchCombinationReviewSurface,
+      onSuccess: () => {
+        refetchCombinationReviewSurface()
+        recordCombinationActivationStep('run_evidence')
+      },
     },
   })
   const finalizeReviewMutation = useFinalizeCombinationReview({
     mutation: {
-      onSuccess: refetchCombinationReviewSurface,
+      onSuccess: () => {
+        refetchCombinationReviewSurface()
+        recordCombinationActivationStep('finalize_decision')
+      },
     },
   })
   const reopenReviewMutation = useReopenCombinationReview({
@@ -259,6 +308,9 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         setBatchGenerateMessage(
           `Generated ${newCaseCount} new draft${newCaseCount === 1 ? '' : 's'} for ${generated} row${generated === 1 ? '' : 's'} (${totalCaseCount} total).`,
         )
+        if (generated > 0) {
+          recordCombinationActivationStep('generate_draft')
+        }
         void combinationQuery.refetch()
         void combinationFacetsQuery.refetch()
         void explorerQuery.refetch()
@@ -305,6 +357,13 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
     setBatchGenerateMessage(null)
   }, [])
 
+  const handleCombinationSelection = useCallback((row: CombinationEntryResponse, checked: boolean) => {
+    toggleCombinationSelection(row.combination_id, checked)
+    if (checked && isCombinationEligibleForCounterExample(row)) {
+      recordCombinationActivationStep('select_eligible_row', row)
+    }
+  }, [recordCombinationActivationStep, toggleCombinationSelection])
+
   const explorerRows = explorerQuery.data?.items ?? []
   const invariantRowsNew = invariantExplorerQuery.data?.items ?? []
   const legacyQuery = tab === 'dynamic' ? dynamicEntriesQuery : staticEntriesQuery
@@ -342,7 +401,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
               <span>
                 <Checkbox
                   checked={isCombinationSelected(params.row.combination_id)}
-                  onChange={(event) => toggleCombinationSelection(params.row.combination_id, event.target.checked)}
+                  onChange={(event) => handleCombinationSelection(params.row, event.target.checked)}
                   onClick={(event) => event.stopPropagation()}
                   size="small"
                   slotProps={{ input: { 'aria-label': `Select ${params.row.combination_id} for batch generation` } }}
@@ -418,7 +477,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       },
       { field: 'validation_case_count', headerName: 'Cases', minWidth: 100 },
     ],
-    [isCombinationSelected, toggleCombinationSelection],
+    [handleCombinationSelection, isCombinationSelected],
   )
   const explorerColumns = useMemo<GridColDef<ConstraintExplorerEntryResponse>[]>(
     () => [
@@ -723,6 +782,14 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
       />
 
       <ConstraintAppliedFiltersBar search={search} />
+
+      {tab === 'combination' && constraintsView === 'table' && !combinationQuery.isError ? (
+        <CombinationHitlActivationPanel
+          route="combination_table"
+          runName={runName}
+          selectedEligibleCombinationCount={selectedEligibleCombinationCount}
+        />
+      ) : null}
 
       <ConstraintResultsRegion
         columns={columns}

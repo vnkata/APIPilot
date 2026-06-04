@@ -2,6 +2,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack'
 import { Button, Stack, Typography } from '@mui/material'
 import { useState } from 'react'
 
+import { useAppDispatch } from '../../app/hooks'
 import type {
   CombinationReviewFinalizeRequest,
   CounterExampleGenerateRequest,
@@ -11,7 +12,15 @@ import type {
 import { encodeRoutePart } from '../../shared/lib/format'
 import { PageLearningPanel } from '../../shared/ui/Guidance'
 import { QueryState } from '../../shared/ui/QueryState'
+import { emitActivationOnboardingEvent } from '../product-tour/activationOnboardingAnalytics'
+import { completeActivationStep } from '../product-tour/activationOnboardingSlice'
+import type { CombinationHitlActivationStepId } from '../product-tour/activationOnboardingTypes'
+import {
+  combinationHitlActivationEventBase,
+  safeCombinationActivationMetadata,
+} from '../product-tour/activationOnboardingViewModels'
 import { CombinationDetailComposer } from './components/CombinationDetailComposer'
+import { CombinationHitlActivationPanel } from './components/CombinationHitlActivationPanel'
 import {
   useCombinationDetail,
   useCombinationReview,
@@ -31,6 +40,7 @@ export function CombinationReviewWorkspacePage({
   combinationId,
   runName,
 }: CombinationReviewWorkspacePageProps) {
+  const dispatch = useAppDispatch()
   const [detailView, setDetailView] = useState<'raw' | 'readable'>('readable')
   const encodedRunName = encodeRoutePart(runName)
   const detailQuery = useCombinationDetail(runName, combinationId)
@@ -41,17 +51,61 @@ export function CombinationReviewWorkspacePage({
     void reviewQuery.refetch()
   }
 
+  function recordActivationStep(stepId: CombinationHitlActivationStepId) {
+    const metadata = safeCombinationActivationMetadata({
+      detail: detailQuery.data,
+      review: reviewQuery.data,
+    })
+    dispatch(completeActivationStep({ runName, stepId }))
+    emitActivationOnboardingEvent({
+      ...combinationHitlActivationEventBase(),
+      metadata,
+      stepId,
+      type: 'step_completed',
+    })
+    if (stepId === 'finalize_decision') {
+      emitActivationOnboardingEvent({
+        ...combinationHitlActivationEventBase(),
+        metadata,
+        stepId,
+        type: 'activation_completed',
+      })
+    }
+  }
+
   const generateCounterExamplesMutation = useGenerateCounterExamples({
-    mutation: { onSuccess: refetchReviewSurface },
+    mutation: {
+      onSuccess: () => {
+        refetchReviewSurface()
+        recordActivationStep('generate_draft')
+      },
+    },
   })
   const updateCounterExampleCaseMutation = useUpdateCounterExampleCase({
-    mutation: { onSuccess: refetchReviewSurface },
+    mutation: {
+      onSuccess: (_response, variables) => {
+        refetchReviewSurface()
+        if (variables.data.case_state === 'APPROVED') {
+          recordActivationStep('approve_case')
+        }
+      },
+    },
   })
   const runCounterExamplesMutation = useRunCounterExamples({
-    mutation: { onSuccess: refetchReviewSurface },
+    mutation: {
+      onSuccess: () => {
+        refetchReviewSurface()
+        recordActivationStep('run_evidence')
+      },
+    },
   })
   const finalizeReviewMutation = useFinalizeCombinationReview({
-    mutation: { onSuccess: refetchReviewSurface },
+    mutation: {
+      onSuccess: () => {
+        refetchReviewSurface()
+        recordActivationStep('finalize_decision')
+      },
+    },
   })
   const reopenReviewMutation = useReopenCombinationReview({
     mutation: { onSuccess: refetchReviewSurface },
@@ -152,23 +206,31 @@ export function CombinationReviewWorkspacePage({
         }}
       >
         {detailQuery.data ? (
-          <CombinationDetailComposer
-            detail={detailQuery.data}
-            detailView={detailView}
-            evidenceLinks={evidenceLinks}
-            mode="workspace"
-            onApproveCase={(caseId, request) => handleUpdateCounterExampleCase(caseId, 'APPROVED', 'Approved for targeted HITL execution.', request)}
-            onDetailViewChange={setDetailView}
-            onFinalize={handleFinalizeReview}
-            onGenerateDraft={handleGenerateCounterExamples}
-            onRejectCase={(caseId) => handleUpdateCounterExampleCase(caseId, 'REJECTED', 'Rejected during HITL review.')}
-            onReopen={handleReopenReview}
-            onRunApproved={handleRunApprovedCounterExamples}
-            review={reviewQuery.data}
-            reviewActionError={reviewActionError}
-            reviewActionPending={reviewActionPending}
-            reviewLoading={reviewQuery.isLoading}
-          />
+          <Stack spacing={2}>
+            <CombinationHitlActivationPanel
+              detail={detailQuery.data}
+              review={reviewQuery.data}
+              route="review_workspace"
+              runName={runName}
+            />
+            <CombinationDetailComposer
+              detail={detailQuery.data}
+              detailView={detailView}
+              evidenceLinks={evidenceLinks}
+              mode="workspace"
+              onApproveCase={(caseId, request) => handleUpdateCounterExampleCase(caseId, 'APPROVED', 'Approved for targeted HITL execution.', request)}
+              onDetailViewChange={setDetailView}
+              onFinalize={handleFinalizeReview}
+              onGenerateDraft={handleGenerateCounterExamples}
+              onRejectCase={(caseId) => handleUpdateCounterExampleCase(caseId, 'REJECTED', 'Rejected during HITL review.')}
+              onReopen={handleReopenReview}
+              onRunApproved={handleRunApprovedCounterExamples}
+              review={reviewQuery.data}
+              reviewActionError={reviewActionError}
+              reviewActionPending={reviewActionPending}
+              reviewLoading={reviewQuery.isLoading}
+            />
+          </Stack>
         ) : null}
       </QueryState>
     </Stack>
