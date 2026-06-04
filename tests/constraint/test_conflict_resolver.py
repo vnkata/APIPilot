@@ -4,13 +4,18 @@ import json
 import pytest
 import requests
 
-from api_testing.constraint.combine import resolve_base_url
+from api_testing.constraint.combine import (
+    load_constraints,
+    resolve_base_url,
+    resolve_cache_dir,
+)
 from api_testing.constraint.conflict_resolver import (
     ConstraintConflictResolver,
     ConstraintRuleEvaluator,
 )
 from api_testing.memory.contextual_memory import ContextualMemory
 from api_testing.models.http_data import ResponseData
+from tests.fakes.http import FakeJsonResponse
 
 
 def conflict_record():
@@ -21,9 +26,11 @@ def conflict_record():
                 "property": "return.count",
                 "static_constraint": "gte(return.count, 0)",
                 "dynamic_constraint": "return.count == 5",
-                "status": "NOT_COMBINED",
+                "status": "UNRESOLVED",
+                "relation": "DYNAMIC_STRONGER",
                 "final_constraint": None,
                 "reason": "CONFLICT: Needs runtime verification.",
+                "runtime_verdict": None,
                 "counter_example": {
                     "target_side": "STATIC_TRUE_DYNAMIC_FALSE",
                     "concrete_property_value": 3,
@@ -53,26 +60,41 @@ class FakeRequestor:
         )
 
 
-def test_resolver_declares_static_win_from_runtime_response(tmp_path):
+def test_resolver_keeps_dynamic_stronger_pending_from_static_only_response(tmp_path):
     resolver = ConstraintConflictResolver(
         cache_dir=tmp_path, requestor=FakeRequestor(parsed={"count": 3})
     )
     record = resolver.resolve(conflict_record())["get-/things"]["return.count"]
 
-    assert record["verdict"] == "STATIC_WIN"
-    assert record["status"] == "NOT_COMBINED"
-    assert record["final_constraint"] == "gte(return.count, 0)"
+    assert record["runtime_verdict"] == "STATIC_WIN"
+    assert record["status"] == "UNRESOLVED"
+    assert record["final_constraint"] is None
 
 
-def test_resolver_creates_union_only_after_both_rules_hold(tmp_path):
+def test_resolver_keeps_dynamic_stronger_unresolved_when_runtime_supports_both(tmp_path):
     resolver = ConstraintConflictResolver(
         cache_dir=tmp_path, requestor=FakeRequestor(parsed={"count": 5})
     )
     record = resolver.resolve(conflict_record())["get-/things"]["return.count"]
 
-    assert record["verdict"] == "BOTH_TRUE"
-    assert record["status"] == "COMBINED_UNION"
-    assert record["final_constraint"] == "and(gte(return.count, 0),return.count == 5)"
+    assert record["runtime_verdict"] == "BOTH_TRUE"
+    assert record["runtime_recommendation"] == "INCONCLUSIVE"
+    assert record["status"] == "UNRESOLVED"
+    assert record["final_constraint"] is None
+
+
+def test_resolver_treats_dynamic_win_for_dynamic_stronger_as_contradiction(tmp_path):
+    data = conflict_record()
+    data["get-/things"]["return.count"]["static_constraint"] = "gte(return.count, 10)"
+    resolver = ConstraintConflictResolver(
+        cache_dir=tmp_path, requestor=FakeRequestor(parsed={"count": 5})
+    )
+    record = resolver.resolve(data)["get-/things"]["return.count"]
+
+    assert record["runtime_verdict"] == "DYNAMIC_WIN"
+    assert record["runtime_recommendation"] == "RELATION_CONTRADICTION"
+    assert record["status"] == "UNRESOLVED"
+    assert record["final_constraint"] is None
 
 
 def test_resolver_reports_server_failure_without_combining(tmp_path):
@@ -81,8 +103,8 @@ def test_resolver_reports_server_failure_without_combining(tmp_path):
     )
     record = resolver.resolve(conflict_record())["get-/things"]["return.count"]
 
-    assert record["verdict"] == "CONFLICT_BOTH_FALSE"
-    assert record["status"] == "NOT_COMBINED"
+    assert record["runtime_verdict"] == "CONFLICT_BOTH_FALSE"
+    assert record["status"] == "UNRESOLVED"
     assert record["final_constraint"] is None
 
 
@@ -96,22 +118,26 @@ def test_verify_base_url_comes_from_cached_spec_not_unrelated_config(tmp_path):
     assert resolve_base_url(tmp_path, "https://override.example/") == "https://override.example/"
 
 
+def test_resolve_cache_dir_recovers_quoted_shell_escaped_space(tmp_path):
+    cache_dir = tmp_path / "Canada Holidays"
+    cache_dir.mkdir()
+
+    resolved = resolve_cache_dir(str(tmp_path / "Canada\\ Holidays"))
+
+    assert resolved == cache_dir
+
+
+def test_load_constraints_reports_required_missing_artifact(tmp_path):
+    with pytest.raises(FileNotFoundError, match="static_constraint_miner.json"):
+        load_constraints(tmp_path)
+
+
 def test_resolver_default_http_path_does_not_depend_on_requestor_har(monkeypatch, tmp_path):
     calls = {}
 
-    class FakeResponse:
-        status_code = 200
-        headers = {"Content-Type": "application/json"}
-        cookies = type("Cookies", (), {"get_dict": lambda self: {}})()
-        text = '{"count": 3}'
-        encoding = "utf-8"
-
-        def json(self):
-            return {"count": 3}
-
     def fake_request(method, url, **kwargs):
         calls.update({"method": method, "url": url, "kwargs": kwargs})
-        return FakeResponse()
+        return FakeJsonResponse({"count": 3})
 
     monkeypatch.setattr(requests, "request", fake_request)
     resolver = ConstraintConflictResolver(
@@ -122,7 +148,7 @@ def test_resolver_default_http_path_does_not_depend_on_requestor_har(monkeypatch
 
     assert calls["method"] == "GET"
     assert calls["url"] == "https://example.test/things"
-    assert record["verdict"] == "STATIC_WIN"
+    assert record["runtime_verdict"] == "STATIC_WIN"
 
 
 def test_resolver_uses_contextual_memory_for_unstaged_path_request(tmp_path):
@@ -146,7 +172,7 @@ def test_resolver_uses_contextual_memory_for_unstaged_path_request(tmp_path):
     assert requestor.requests[0].parameters == {"billId": 1000}
     assert verified["counter_example"]["path_parameter_source"] == "contextual_memory.db whitelist"
     assert verified["counter_example"]["server_actual_response"]["status_code"] == 200
-    assert verified["verdict"] == "STATIC_WIN"
+    assert verified["runtime_verdict"] == "STATIC_WIN"
 
 
 def test_resolver_replaces_llm_literal_path_identifier_with_memory_whitelist(tmp_path):
@@ -251,9 +277,11 @@ def test_resolver_retries_whitelisted_path_value_until_property_is_present(tmp_p
                 "property": "return.currentStage.stageSittings[].billId",
                 "static_constraint": "gt(return.currentStage.stageSittings[].billId, 0)",
                 "dynamic_constraint": "return.currentStage.stageSittings.billId >= 1",
-                "status": "NOT_COMBINED",
+                "status": "UNRESOLVED",
+                "relation": "DYNAMIC_STRONGER",
                 "final_constraint": None,
                 "reason": "Needs response property.",
+                "runtime_verdict": None,
                 "counter_example": None,
             }
         }
@@ -281,7 +309,7 @@ def test_resolver_retries_whitelisted_path_value_until_property_is_present(tmp_p
     assert [request.parameters["billId"] for request in requestor.requests] == [1000, 100]
     assert record["validation_cases"][1]["request"]["parameters"]["billId"] == 100
     assert record["validation_cases"][1]["response_summary"]["status_code"] == 200
-    assert record["verdict"] == "BOTH_TRUE"
+    assert record["runtime_verdict"] == "BOTH_TRUE"
 
 
 def test_rule_evaluator_treats_missing_optional_input_as_false_exists_guard():
@@ -348,7 +376,10 @@ def test_resolver_records_configurable_multiple_validation_cases_with_rules(tmp_
         "eq(return.count,5)"
     )
     assert result["runtime_evaluation"]["cases_executed"] == 3
-    assert result["verdict"] == "BOTH_TRUE"
+    assert result["runtime_verdict"] == "BOTH_TRUE"
+    assert result["runtime_recommendation"] == "INCONCLUSIVE"
+    assert result["status"] == "UNRESOLVED"
+    assert result["final_constraint"] is None
 
 
 def test_resolver_executes_distinct_llm_staged_payloads_up_to_configured_limit(tmp_path):

@@ -5,7 +5,7 @@ from pathlib import Path
 
 def _load_contextual_memory_class():
     module_path = (
-        Path(__file__).resolve().parents[1]
+        Path(__file__).resolve().parents[2]
         / "api_testing"
         / "memory"
         / "contextual_memory.py"

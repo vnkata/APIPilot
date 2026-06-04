@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from tests.backend_artifact_fixtures import build_artifact_cache, write_json
+from tests.fixtures.backend_artifacts import build_artifact_cache, write_json
 
 
 def build_explorer_artifact_cache(tmp_path: Path) -> Path:

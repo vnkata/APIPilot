@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 def _load_module(relative_path, module_name):
-    module_path = Path(__file__).resolve().parents[1] / relative_path
+    module_path = Path(__file__).resolve().parents[2] / relative_path
     spec = importlib.util.spec_from_file_location(module_name, module_path)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)

@@ -4,7 +4,7 @@ import time
 
 from fastapi.testclient import TestClient
 
-from tests.backend_write_fixtures import simple_openapi_content
+from tests.fixtures.backend_write_specs import simple_openapi_content
 
 
 def _client(tmp_path, *, allowed_targets=("https://example.test",), max_active=2):

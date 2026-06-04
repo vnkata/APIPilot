@@ -55,19 +55,19 @@ class TestRandomBooleanGenerator:
         # Allow 10% deviation from expected
         assert 0.6 <= true_count / 1000 <= 0.8
 
-    def test_next_value_as_string(self):
-        """Test that next_value_as_string returns proper string."""
+    def test_next_value_can_be_stringified(self):
+        """Test that generated booleans can be stringified by callers."""
         gen = RandomBooleanGenerator(seed=42)
         for _ in range(10):
-            value = gen.next_value_as_string()
+            value = str(gen.next_value())
             assert value in ["True", "False"]
 
     def test_next_fuzz_value_returns_value(self):
         """Test that next_fuzz_value returns a value."""
         gen = RandomBooleanGenerator(seed=42)
-        
+
         for _ in range(20):
-            value = gen.next_fuzz_value()
+            value = gen.next_fuzz_value(FuzzStrategy.EMPTY)
             # Value should be one of the expected fuzz types
             assert value is not None or value is None  # Can be None
 
@@ -78,7 +78,7 @@ class TestRandomBooleanGenerator:
         # Run multiple times to hit the EMPTY strategy
         empty_values = []
         for _ in range(100):
-            value = gen.next_fuzz_value()
+            value = gen.next_fuzz_value(FuzzStrategy.EMPTY)
             if value is None or value == "":
                 empty_values.append(value)
         
@@ -91,9 +91,9 @@ class TestRandomBooleanGenerator:
         
         type_error_values = ["true", "false", "TRUE", "FALSE", 0, 1, "yes", "no"]
         found_type_errors = []
-        
+
         for _ in range(100):
-            value = gen.next_fuzz_value()
+            value = gen.next_fuzz_value(FuzzStrategy.TYPE_ERROR)
             if value in type_error_values:
                 found_type_errors.append(value)
         

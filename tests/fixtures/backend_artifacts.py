@@ -1,7 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 from pathlib import Path
+
+FIXTURE_MTIME = 1767225600  # 2026-01-01T00:00:00Z
 
 
 def write_json(path: Path, payload: object) -> None:
@@ -235,7 +238,120 @@ def build_artifact_cache(tmp_path: Path) -> Path:
         },
     )
     _build_canada_holidays_medium(cache_root)
+    _set_deterministic_mtime(cache_root)
     return cache_root
+
+
+def _set_deterministic_mtime(root: Path) -> None:
+    for path in sorted(root.rglob("*"), key=lambda current: len(current.parts), reverse=True):
+        os.utime(path, (FIXTURE_MTIME, FIXTURE_MTIME))
+    os.utime(root, (FIXTURE_MTIME, FIXTURE_MTIME))
+
+
+def add_combination_artifacts(cache_root: Path, run_name: str = "Run A") -> Path:
+    run_dir = cache_root / run_name
+    write_json(
+        run_dir / "combine_constraint_miners.json",
+        {
+            "get-/items": {
+                "return.items[].id": {
+                    "endpoint": "get-/items",
+                    "property": "return.items[].id",
+                    "static_constraint": "return.items.id >= 1",
+                    "dynamic_constraint": "return.items.id >= 1",
+                    "status": "RESOLVED",
+                    "relation": "EQUIVALENT",
+                    "runtime_verdict": "BOTH_TRUE",
+                    "final_constraint": "return.items.id >= 1 and return.items.id <= 100",
+                    "reason": "Resolved by equivalent static and dynamic evidence.",
+                    "counter_example": {
+                        "staged_payload": {
+                            "endpoint_path": "/items",
+                            "http_method": "get",
+                            "headers": {"Authorization": "Bearer combo-secret"},
+                            "parameters": {"limit": 1},
+                            "body": {"api_key": "combo-api-key", "safe": "visible"},
+                        },
+                        "server_actual_response": {
+                            "status_code": 200,
+                            "set_cookie": "combo-cookie",
+                        },
+                    },
+                    "runtime_evaluation": {
+                        "cases_executed": 1,
+                        "cases_evaluated": 1,
+                        "case_verdicts": ["BOTH_TRUE"],
+                    },
+                    "validation_cases": [
+                        {
+                            "case_number": 1,
+                            "request": {
+                                "headers": {"Authorization": "Bearer case-secret"},
+                                "body": {"password": "case-password"},
+                            },
+                            "response_payload": {
+                                "items": [{"id": 1}],
+                                "token": "case-response-token",
+                            },
+                            "runtime_verdict": "BOTH_TRUE",
+                        }
+                    ],
+                },
+                "return.items[].status": {
+                    "endpoint": "get-/items",
+                    "property": "return.items[].status",
+                    "static_constraint": "return.items.status one of {ACTIVE}",
+                    "dynamic_constraint": "return.items.status one of {INACTIVE}",
+                    "status": "CONFLICT",
+                    "relation": "DISJOINT",
+                    "runtime_verdict": None,
+                    "final_constraint": None,
+                    "reason": "CONFLICT_PENDING: Runtime verification is required.",
+                    "counter_example": None,
+                },
+                "malformed": "not a record",
+            }
+        },
+    )
+    _write_contextual_memory_db(
+        run_dir / "contextual_memory.db",
+        {
+            "get-/items": {
+                "whitelist": [{"id": 1, "token": "memory-token"}],
+                "blacklist": [{"id": 0}],
+            },
+            "item": [{"id": 1, "secret": "memory-secret"}],
+        },
+    )
+    _set_deterministic_mtime(cache_root)
+    return cache_root
+
+
+def _write_contextual_memory_db(path: Path, contexts: dict[str, object]) -> None:
+    import duckdb
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    conn = duckdb.connect(str(path))
+    try:
+        conn.execute(
+            """
+            CREATE TABLE IF NOT EXISTS contextual_memory (
+                context_key VARCHAR PRIMARY KEY,
+                payload JSON NOT NULL,
+                updated_at TIMESTAMP
+            )
+            """
+        )
+        for context_key, payload in contexts.items():
+            conn.execute(
+                """
+                INSERT OR REPLACE INTO contextual_memory (context_key, payload, updated_at)
+                VALUES (?, CAST(? AS JSON), to_timestamp(?))
+                """,
+                [context_key, json.dumps(payload), FIXTURE_MTIME],
+            )
+    finally:
+        conn.close()
 
 
 def _build_canada_holidays_medium(cache_root: Path) -> None:

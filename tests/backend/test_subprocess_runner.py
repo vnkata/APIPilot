@@ -8,7 +8,7 @@ from typing import Any
 
 import pytest
 
-from tests.backend_write_fixtures import simple_openapi_content
+from tests.fixtures.backend_write_specs import simple_openapi_content
 
 
 class RecordingPopenFactory:

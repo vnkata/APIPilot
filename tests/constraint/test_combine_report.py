@@ -14,10 +14,11 @@ def test_generate_combination_html_report_contains_filters_and_evidence(tmp_path
                         "property": "return.count",
                         "static_constraint": "gte(return.count, 0)",
                         "dynamic_constraint": "eq(return.count, 5)",
-                        "status": "NOT_COMBINED",
-                        "verdict": "STATIC_WIN",
-                        "final_constraint": "gte(return.count, 0)",
-                        "reason": "Runtime selected the static rule.",
+                        "status": "UNRESOLVED",
+                        "relation": "DYNAMIC_STRONGER",
+                        "runtime_verdict": "STATIC_WIN",
+                        "final_constraint": None,
+                        "reason": "Runtime evidence supports only the static rule.",
                         "runtime_evaluation": {
                             "static_expression": "gte(return.count, 0)",
                             "dynamic_expression": "eq(return.count,5)",
@@ -26,7 +27,7 @@ def test_generate_combination_html_report_contains_filters_and_evidence(tmp_path
                         "validation_cases": [
                             {
                                 "case_number": 1,
-                                "verdict": "STATIC_WIN",
+                                "runtime_verdict": "STATIC_WIN",
                                 "request": {"parameters": {"limit": 3}},
                                 "response_summary": {"status_code": 200},
                                 "response_payload": {"count": 3, "large": ["hidden"]},
@@ -53,6 +54,7 @@ def test_generate_combination_html_report_contains_filters_and_evidence(tmp_path
     assert output.name == "combine_constraint_miners.html"
     assert "Combined Constraint Report" in rendered
     assert "All statuses" in rendered
+    assert "DYNAMIC_STRONGER" in rendered
     assert "STATIC_WIN" in rendered
     assert "return.count" in rendered
     assert 'class="record"' in rendered

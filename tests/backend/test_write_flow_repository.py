@@ -3,7 +3,7 @@ from __future__ import annotations
 import concurrent.futures
 from pathlib import Path
 
-from tests.backend_write_fixtures import simple_openapi_content
+from tests.fixtures.backend_write_specs import simple_openapi_content
 
 
 def test_sqlite_write_metadata_repository_persists_records_and_events(tmp_path):

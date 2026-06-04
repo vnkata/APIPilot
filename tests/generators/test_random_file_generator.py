@@ -7,10 +7,10 @@ from api_testing.inputs.fuzz_strategy import FuzzStrategy
 class TestRandomFileGenerator:
     """Test suite for RandomFileGenerator."""
 
-    def test_initialization_default_pdf(self):
-        """Test default initialization is pdf."""
+    def test_initialization_default_random_type(self):
+        """Test default initialization leaves file type random."""
         gen = RandomFileGenerator()
-        assert gen.file_type == "pdf"
+        assert gen.file_type is None
 
     def test_initialization_docx(self):
         """Test initialization with docx."""
@@ -85,11 +85,8 @@ class TestRandomFileGenerator:
 
     def test_unsupported_file_type_raises_error(self):
         """Test that unsupported file type raises ValueError."""
-        gen = RandomFileGenerator()
-        gen.file_type = "invalid_type"
-        
         with pytest.raises(ValueError, match="Unsupported file type"):
-            gen.next_value()
+            RandomFileGenerator(file_type="invalid_type")
 
     def test_next_fuzz_value_empty_strategy(self):
         """Test fuzz value for empty strategy returns empty bytes."""
@@ -98,8 +95,8 @@ class TestRandomFileGenerator:
         
         empty_values = []
         for _ in range(50):
-            value = gen.next_fuzz_value()
-            if value == b"":
+            value = gen.next_fuzz_value(FuzzStrategy.EMPTY)
+            if isinstance(value, tuple) and value[1] == b"":
                 empty_values.append(value)
         
         # Should find empty bytes at least once
@@ -112,8 +109,8 @@ class TestRandomFileGenerator:
         
         large_values = []
         for _ in range(50):
-            value = gen.next_fuzz_value()
-            if isinstance(value, bytes) and len(value) > 1000000:
+            value = gen.next_fuzz_value(FuzzStrategy.LARGE)
+            if isinstance(value, tuple) and len(value[1]) > 1000000:
                 large_values.append(value)
         
         # May find large value (10MB)
@@ -126,8 +123,8 @@ class TestRandomFileGenerator:
         
         string_values = []
         for _ in range(50):
-            value = gen.next_fuzz_value()
-            if isinstance(value, str) and value.startswith("binary_data_"):
+            value = gen.next_fuzz_value(FuzzStrategy.WRONG_TYPE)
+            if isinstance(value, str) and value.startswith("invalid_file_"):
                 string_values.append(value)
         
         # Should find string value at least once
@@ -137,10 +134,10 @@ class TestRandomFileGenerator:
         """Test fuzz value for junk strategy returns random bytes."""
         # Use txt to avoid wkhtmltopdf dependency for PDF
         gen = RandomFileGenerator(file_type="txt", seed=42)
-        
+
         for _ in range(50):
-            value = gen.next_fuzz_value()
-            if isinstance(value, bytes) and len(value) == 2048:
+            value = gen.next_fuzz_value(FuzzStrategy.JUNK)
+            if isinstance(value, tuple) and len(value[1]) == 2048:
                 # Found junk value (2048 random bytes)
                 return
         
@@ -150,11 +147,11 @@ class TestRandomFileGenerator:
         """Test that next_fuzz_value returns some value."""
         # Use txt to avoid wkhtmltopdf dependency for PDF
         gen = RandomFileGenerator(file_type="txt", seed=42)
-        
+
         for _ in range(10):
-            value = gen.next_fuzz_value()
-            # Should return bytes, string, or None
-            assert value is None or isinstance(value, (bytes, str))
+            value = gen.next_fuzz_value(None)
+            # Should return a file tuple, wrong-type string, or None
+            assert value is None or isinstance(value, (tuple, str))
 
     def test_description_exists(self):
         """Test that description attribute exists."""
@@ -186,9 +183,10 @@ class TestRandomFileGeneratorWithFakerFile:
         """Test TXT file generation with faker_file."""
         gen = RandomFileGenerator(file_type="txt", seed=42)
         value = gen.next_value()
-        
-        assert isinstance(value, bytes)
-        assert len(value) > 0
+
+        assert isinstance(value, tuple)
+        assert isinstance(value[1], bytes)
+        assert len(value[1]) > 0
 
     def test_corrupt_fuzz_value(self, check_faker_file):
         """Test corrupt fuzz strategy corrupts file header."""
@@ -196,11 +194,15 @@ class TestRandomFileGeneratorWithFakerFile:
         
         # Get a valid file first
         valid = gen.next_value()
-        
+
         # Generate fuzz values until we get a corrupt one
         for _ in range(100):
             gen = RandomFileGenerator(file_type="txt", seed=42)
-            value = gen.next_fuzz_value()
-            if isinstance(value, bytes) and len(value) > 0 and value != valid:
+            value = gen.next_fuzz_value(FuzzStrategy.CORRUPT)
+            if (
+                isinstance(value, tuple)
+                and len(value[1]) > 0
+                and value[1] != valid[1]
+            ):
                 # Found a potentially corrupted value
                 return

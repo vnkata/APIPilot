@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from tests.backend_artifact_fixtures import build_artifact_cache
+from tests.fixtures.backend_artifacts import build_artifact_cache
 
 
 def _service(tmp_path):
@@ -324,7 +324,7 @@ def test_service_lists_constraint_explorer_facets(tmp_path):
 
 
 def test_service_constraint_explorer_cache_invalidates_when_artifact_changes(tmp_path):
-    from tests.backend_artifact_fixtures import write_json
+    from tests.fixtures.backend_artifacts import write_json
 
     from api_testing.backend.application.querying import (
         ConstraintExplorerQuery,
@@ -433,7 +433,7 @@ def test_service_lists_graph_edges_and_report_entries(tmp_path):
 
 
 def test_service_lists_invariant_explorer_with_correlation_facets_and_detail(tmp_path):
-    from tests.backend_explorer_fixtures import build_explorer_artifact_cache
+    from tests.fixtures.backend_explorer_artifacts import build_explorer_artifact_cache
 
     from api_testing.backend.application.querying import (
         InvariantExplorerQuery,
@@ -499,7 +499,7 @@ def test_service_lists_invariant_explorer_with_correlation_facets_and_detail(tmp
 
 
 def test_service_lists_graph_explorer_nodes_edges_sequences_and_facets(tmp_path):
-    from tests.backend_explorer_fixtures import build_explorer_artifact_cache
+    from tests.fixtures.backend_explorer_artifacts import build_explorer_artifact_cache
 
     from api_testing.backend.application.querying import (
         GraphEdgeExplorerQuery,
@@ -583,7 +583,7 @@ def test_service_lists_graph_explorer_nodes_edges_sequences_and_facets(tmp_path)
 
 
 def test_service_parses_list_shaped_graph_sequences(tmp_path):
-    from tests.backend_explorer_fixtures import build_list_sequence_artifact_cache
+    from tests.fixtures.backend_explorer_artifacts import build_list_sequence_artifact_cache
 
     from api_testing.backend.application.querying import GraphSequenceQuery, QueryOptions
     from api_testing.backend.repository import FileArtifactRepository
@@ -606,7 +606,7 @@ def test_service_parses_list_shaped_graph_sequences(tmp_path):
 
 
 def test_service_lists_operation_explorer_entries_facets_and_detail(tmp_path):
-    from tests.backend_explorer_fixtures import build_explorer_artifact_cache
+    from tests.fixtures.backend_explorer_artifacts import build_explorer_artifact_cache
 
     from api_testing.backend.application.querying import (
         OperationExplorerQuery,

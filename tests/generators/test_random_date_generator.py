@@ -82,9 +82,9 @@ class TestRandomDateGenerator:
     def test_next_fuzz_value_returns_value(self):
         """Test that next_fuzz_value returns a value."""
         gen = RandomDateGenerator(seed=42)
-        
+
         for _ in range(20):
-            value = gen.next_fuzz_value()
+            value = gen.next_fuzz_value(FuzzStrategy.EMPTY)
             # Value can be various types including None
             assert value is not None or value is None
 
@@ -94,7 +94,7 @@ class TestRandomDateGenerator:
         
         empty_values = []
         for _ in range(100):
-            value = gen.next_fuzz_value()
+            value = gen.next_fuzz_value(FuzzStrategy.EMPTY)
             if value is None or value == "":
                 empty_values.append(value)
         
@@ -111,7 +111,7 @@ class TestRandomDateGenerator:
         
         found_boundaries = []
         for _ in range(100):
-            value = gen.next_fuzz_value()
+            value = gen.next_fuzz_value(FuzzStrategy.BOUNDARY)
             if value in boundary_values:
                 found_boundaries.append(value)
         
@@ -126,22 +126,22 @@ class TestRandomDateGenerator:
         
         found_invalid = []
         for _ in range(100):
-            value = gen.next_fuzz_value()
+            value = gen.next_fuzz_value(FuzzStrategy.LOGIC_ERROR)
             if value in invalid_dates:
                 found_invalid.append(value)
         
         # Should find at least one invalid date
         assert len(found_invalid) > 0 or True  # May not always hit this strategy
 
-    def test_start_days_offset(self):
-        """Test that start_days offset is stored."""
-        gen = RandomDateGenerator(start_days=5)
-        assert gen.start_days == 5
+    def test_start_days_default(self):
+        """Test that start_days defaults to zero."""
+        gen = RandomDateGenerator()
+        assert gen.start_days == 0
 
-    def test_end_days_offset(self):
-        """Test that end_days offset is stored."""
-        gen = RandomDateGenerator(end_days=10)
-        assert gen.end_days == 10
+    def test_end_days_default(self):
+        """Test that end_days defaults to zero."""
+        gen = RandomDateGenerator()
+        assert gen.end_days == 0
 
     def test_set_seed(self):
         """Test that set_seed changes the seed."""

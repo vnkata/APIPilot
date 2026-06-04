@@ -3,6 +3,8 @@ from __future__ import annotations
 import json
 from types import SimpleNamespace
 
+from tests.fakes.http import FakeJsonResponse
+
 
 def test_sync_requestor_unflattens_nested_request_bodies():
     from api_testing.generators.requestor import unflatten_dict
@@ -18,28 +20,13 @@ def test_sync_requestor_records_har_entries_and_reports(tmp_path, monkeypatch):
     from api_testing.generators.status_code_peport import StatusCodeReport
     from api_testing.models.http_data import RequestData
 
-    class FakeCookies:
-        def get_dict(self):
-            return {}
-
-    class FakeResponse:
-        status_code = 201
-        headers = {"Content-Type": "application/json"}
-        text = '{"id": 1}'
-        content = b'{"id": 1}'
-        cookies = FakeCookies()
-        encoding = "utf-8"
-
-        def json(self):
-            return {"id": 1}
-
     captured = {}
 
     def fake_request(method, url, **kwargs):
         captured["method"] = method
         captured["url"] = url
         captured["kwargs"] = kwargs
-        return FakeResponse()
+        return FakeJsonResponse({"id": 1}, status_code=201)
 
     StatusCodeReport.reset_shared()
     monkeypatch.setattr(requestor_module.requests, "request", fake_request)

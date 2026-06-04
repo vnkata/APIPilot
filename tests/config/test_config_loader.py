@@ -53,7 +53,8 @@ def test_load_config_resolves_env(tmp_path, monkeypatch):
     assert config["headers"]["Authorization"] == "Bearer test-key"
 
 
-def test_missing_required_llm_fields(tmp_path):
+def test_missing_required_llm_fields(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     content = """
     [project]
     spec_path = "datasets/Test.json"
@@ -122,7 +123,8 @@ def test_openai_provider_does_not_require_azure_env(tmp_path):
     assert config["llm"]["openai"]["api_key"] == "literal-key"
 
 
-def test_missing_openai_key_with_unresolved_placeholder(tmp_path):
+def test_missing_openai_key_with_unresolved_placeholder(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     content = """
     [project]
     spec_path = "datasets/Test.json"
@@ -158,7 +160,8 @@ def test_missing_openai_key_with_unresolved_placeholder(tmp_path):
         load_config(str(path))
 
 
-def test_unresolved_header_placeholder_raises(tmp_path):
+def test_unresolved_header_placeholder_raises(tmp_path, monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
     content = """
     [project]
     spec_path = "datasets/Test.json"

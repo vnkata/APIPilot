@@ -51,6 +51,7 @@ def _setup_common(monkeypatch, config, args):
         def __init__(self, base_title=None, **kwargs):
             state["tester_created"] = True
             self.base_title = base_title or "Dummy API"
+            self.logger = types.SimpleNamespace(debug=lambda *args, **kwargs: None)
 
         def run_tests(self, **kwargs):
             state["run_tests_called"] = True
@@ -78,10 +79,18 @@ def _setup_common(monkeypatch, config, args):
     def _suppress_console_logging():
         state["suppressed"] = True
 
+    class DummyEmbedder:
+        def load_model(self):
+            state["embedder_loaded"] = True
+
     monkeypatch.setattr(api_testing_module, "load_config", lambda path: config)
     monkeypatch.setattr(api_testing_module, "apply_cli_overrides", lambda cfg, args: cfg)
-    monkeypatch.setattr(api_testing_module, "build_llm", lambda cfg: object())
-    monkeypatch.setattr(api_testing_module, "build_embedder", lambda cfg: object())
+    monkeypatch.setattr(
+        api_testing_module.PromptFactory,
+        "from_config",
+        staticmethod(lambda cfg: types.SimpleNamespace(common_llm=object())),
+    )
+    monkeypatch.setattr(api_testing_module, "build_embedder", lambda cfg: DummyEmbedder())
     monkeypatch.setattr(api_testing_module, "APITesting", DummyAPITesting)
     monkeypatch.setattr(api_testing_module, "TUIApp", DummyTUIApp)
     monkeypatch.setattr(api_testing_module, "set_console_level", _set_console_level)

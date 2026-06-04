@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from tests.backend_artifact_fixtures import build_artifact_cache, write_json
+from tests.fixtures.backend_artifacts import build_artifact_cache, write_json
 
 
 def test_repository_lists_runs_and_excludes_tooling(tmp_path):
