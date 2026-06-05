@@ -55,6 +55,7 @@ def _setup_common(monkeypatch, config, args):
 
         def run_tests(self, **kwargs):
             state["run_tests_called"] = True
+            state["run_tests_kwargs"] = kwargs
             return 3, {"op": 1}
 
     class DummyTUIApp:
@@ -133,3 +134,21 @@ def test_main_non_debug_runs_tui(monkeypatch):
     assert state.get("suppressed") is True
     assert state.get("console_level") == api_testing_module.logging.INFO
     assert state.get("run_tests_called") is True
+
+
+def test_main_passes_constraint_pipeline_config_to_run_tests(monkeypatch):
+    config = _base_config(True)
+    config["constraint_pipeline"] = {"enabled": True, "run_after_tests": True}
+    config["counter_examples"] = {
+        "counter_examples_per_pair": 2,
+        "request_budget": 4,
+    }
+    args = _make_args()
+    state = _setup_common(monkeypatch, config, args)
+
+    api_testing_module.main()
+
+    assert state["run_tests_kwargs"]["constraint_pipeline"] == config[
+        "constraint_pipeline"
+    ]
+    assert state["run_tests_kwargs"]["counter_examples"] == config["counter_examples"]

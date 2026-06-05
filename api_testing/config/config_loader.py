@@ -73,6 +73,23 @@ DEFAULT_CONFIG: Dict[str, Any] = {
         "max_request_workers": 10,
         "async_max_concurrent": 20,
     },
+    "constraint_pipeline": {
+        "enabled": False,
+        "run_after_tests": True,
+        "run_per_generation": False,
+        "steps": ["combine", "counter_examples", "execute", "summarize"],
+    },
+    "counter_examples": {
+        "counter_examples_per_pair": 5,
+        "live_planner": False,
+        "allow_non_get": False,
+        "confirm_unsafe_methods": False,
+        "allowed_target_base_urls": [],
+        "request_budget": 5,
+        "timeout_seconds": 10.0,
+        "overwrite_labels_with_backup": False,
+        "overwrite_evidence": False,
+    },
     "headers": {},
 }
 

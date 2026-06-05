@@ -298,6 +298,14 @@ def _detail_from_record(
         return None
     if record.get("verdict") is not None:
         return None
+    if _is_stale_static_stronger_record(
+        status=status,
+        relation=relation,
+        final_constraint=final_constraint,
+    ):
+        raise InvalidArtifactRequest(
+            "combine_constraint_miners.json contains stale STATIC_STRONGER resolved records; regenerate required"
+        )
     reason = optional_str(record.get("reason"))
     counter_example = _sanitize(record.get("counter_example"))
     runtime_evaluation = _sanitize(record.get("runtime_evaluation"))
@@ -345,6 +353,17 @@ def _detail_from_record(
         raw_record_sanitized=sanitized_record,
     )
     return detail
+
+
+def _is_stale_static_stronger_record(
+    *,
+    status: str,
+    relation: str | None,
+    final_constraint: str | None,
+) -> bool:
+    return relation == "STATIC_STRONGER" and (
+        status == "RESOLVED" or final_constraint is not None
+    )
 
 
 def _entry_from_detail(detail: CombinationDetail) -> CombinationEntry:

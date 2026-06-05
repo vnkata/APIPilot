@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import asdict
+from typing import Literal
+
 from pydantic import Field, JsonValue, model_validator
 
 from api_testing.backend.api.schemas.common import (
@@ -45,6 +48,12 @@ from api_testing.backend.domain.review_models import (
     CombinationReviewDetail,
     CombinationReviewEvent,
     CounterExampleCase,
+)
+from api_testing.backend.application.research_services.constraint_research import (
+    ResearchDetail,
+    ResearchEntry,
+    ResearchEntryPage,
+    ResearchEvidenceCase,
 )
 
 
@@ -463,6 +472,134 @@ class CombinationFacetsResponse(BackendBaseModel):
             malformed_count=facets.malformed_count,
             warnings=facets.warnings,
         )
+
+
+class ResearchMetricsResponse(BackendBaseModel):
+    tp: int = Field(ge=0)
+    fp: int = Field(ge=0)
+    unsure: int = Field(ge=0)
+    evaluated: int = Field(ge=0)
+    precision: float | None = None
+    recall: float | None = None
+    f1: float | None = None
+
+
+class ConstraintResearchSummaryResponse(BackendBaseModel):
+    run_name: str
+    pair_count: int = Field(ge=0)
+    evidence_case_count: int = Field(ge=0)
+    relation_counts: dict[str, int]
+    status_counts: dict[str, int]
+    label_counts: dict[str, dict[str, int]]
+    runtime_recommendation_counts: dict[str, int]
+    invalid_runtime_counts: dict[str, int]
+    planner_status_counts: dict[str, int] = Field(default_factory=dict)
+    metric_excluded_counts: dict[str, int] = Field(default_factory=dict)
+    source_metrics: dict[str, ResearchMetricsResponse]
+    label_artifact: str
+    evidence_artifact: str
+
+    @classmethod
+    def from_domain(cls, summary: dict[str, JsonValue]) -> "ConstraintResearchSummaryResponse":
+        return cls(**summary)
+
+
+class ConstraintResearchEntryResponse(BackendBaseModel):
+    run_name: str
+    research_pair_id: str
+    combination_id: str
+    operation_id: str
+    property_path: str
+    relation: str
+    status: str
+    static_constraint: str
+    dynamic_constraint: str
+    final_constraint: str
+    runtime_recommendation: str
+    suggested_static_label: str
+    suggested_dynamic_label: str
+    suggested_combined_label: str
+    static_label: str
+    dynamic_label: str
+    combined_label: str | None = None
+    notes: str
+    updated_at: str
+    evidence_case_count: int = Field(ge=0)
+    invalid_case_count: int = Field(ge=0)
+    orphaned: bool = False
+    metric_included: bool = True
+
+    @classmethod
+    def from_domain(cls, entry: ResearchEntry) -> "ConstraintResearchEntryResponse":
+        return cls(**asdict(entry))
+
+
+class ConstraintResearchEntryPageResponse(BackendBaseModel):
+    run_name: str
+    items: list[ConstraintResearchEntryResponse]
+    pagination: PaginationMetadata
+
+    @classmethod
+    def from_domain(
+        cls,
+        run_name: str,
+        page: ResearchEntryPage,
+    ) -> "ConstraintResearchEntryPageResponse":
+        return cls(
+            run_name=run_name,
+            items=[ConstraintResearchEntryResponse.from_domain(item) for item in page.items],
+            pagination=PaginationMetadata(
+                limit=page.limit,
+                offset=page.offset,
+                total=page.total,
+            ),
+        )
+
+
+class ConstraintResearchEvidenceCaseResponse(BackendBaseModel):
+    pair_id: str
+    combination_id: str
+    case_id: str
+    request_summary: JsonValue
+    response_summary: JsonValue
+    runtime_verdict: str
+    runtime_recommendation: str
+    invalid_reason: str
+    invalid_detail: str = ""
+    planner_status: str = ""
+    planner_error_kind: str = ""
+    weak_evidence: bool = False
+    execution_metadata: JsonValue
+
+    @classmethod
+    def from_domain(
+        cls,
+        evidence: ResearchEvidenceCase,
+    ) -> "ConstraintResearchEvidenceCaseResponse":
+        return cls(**asdict(evidence))
+
+
+class ConstraintResearchDetailResponse(ConstraintResearchEntryResponse):
+    evidence_cases: list[ConstraintResearchEvidenceCaseResponse]
+    operation_spec_excerpt: JsonValue = Field(default_factory=dict)
+
+    @classmethod
+    def from_domain(cls, detail: ResearchDetail) -> "ConstraintResearchDetailResponse":
+        return cls(
+            **ConstraintResearchEntryResponse.from_domain(detail.entry).model_dump(),
+            evidence_cases=[
+                ConstraintResearchEvidenceCaseResponse.from_domain(item)
+                for item in detail.evidence_cases
+            ],
+            operation_spec_excerpt=detail.operation_spec_excerpt,
+        )
+
+
+class ConstraintResearchLabelUpdateRequest(BackendBaseModel):
+    static_label: Literal["TP", "FP", "UNSURE"]
+    dynamic_label: Literal["TP", "FP", "UNSURE"]
+    combined_label: Literal["TP", "FP", "UNSURE"] | None = None
+    notes: str = ""
 
 
 class CounterExampleCaseResponse(BackendBaseModel):

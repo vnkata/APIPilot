@@ -195,6 +195,7 @@ def test_relation_specific_planner_strategy_classes_add_diagnostic_intent():
             return []
 
     expected = {
+        "STATIC_STRONGER": "static_stronger_diagnostic",
         "DYNAMIC_STRONGER": "dynamic_stronger_diagnostic",
         "PARTIAL_OVERLAP": "partial_overlap_diagnostic",
         "DISJOINT": "disjoint_diagnostic",

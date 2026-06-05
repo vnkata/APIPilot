@@ -51,7 +51,7 @@ class FailingOnceModel:
     ("relation", "expected_status", "expected_final"),
     [
         ("EQUIVALENT", "RESOLVED", "static-rule"),
-        ("STATIC_STRONGER", "RESOLVED", "static-rule"),
+        ("STATIC_STRONGER", "UNRESOLVED", None),
         ("DYNAMIC_STRONGER", "UNRESOLVED", None),
         ("PARTIAL_OVERLAP", "UNRESOLVED", None),
         ("DISJOINT", "CONFLICT", None),

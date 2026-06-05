@@ -47,6 +47,7 @@ from api_testing.models.http_data import RequestData, ResponseData
 
 
 ELIGIBLE_DRAFT_RELATIONS = {
+    "STATIC_STRONGER",
     "DYNAMIC_STRONGER",
     "PARTIAL_OVERLAP",
     "DISJOINT",

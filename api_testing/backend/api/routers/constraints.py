@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, Query, Response, status
 
 from api_testing.backend.api.dependencies import (
     get_artifact_service,
     get_combination_review_service,
+    get_constraint_research_service,
 )
 from api_testing.backend.api.schemas.constraints import (
     BatchCounterExampleGenerateRequest,
@@ -17,6 +18,11 @@ from api_testing.backend.api.schemas.constraints import (
     CombinationReviewReopenRequest,
     CombinationReviewResponse,
     CombinationSummaryResponse,
+    ConstraintResearchDetailResponse,
+    ConstraintResearchEntryPageResponse,
+    ConstraintResearchEntryResponse,
+    ConstraintResearchLabelUpdateRequest,
+    ConstraintResearchSummaryResponse,
     CounterExampleCaseUpdateRequest,
     CounterExampleGenerateRequest,
     CounterExampleGenerateResponse,
@@ -34,6 +40,9 @@ from api_testing.backend.api.schemas.constraints import (
 )
 from api_testing.backend.application.review_services.combination_review import (
     CombinationReviewService,
+)
+from api_testing.backend.application.research_services.constraint_research import (
+    ConstraintResearchService,
 )
 from api_testing.backend.application.querying import (
     CombinationFacetsQuery,
@@ -612,6 +621,105 @@ def get_combination_facets(
                 q=q,
             ),
         )
+    )
+
+
+@router.get("/research/summary", response_model=ConstraintResearchSummaryResponse)
+def get_constraint_research_summary(
+    run_name: str,
+    service: ConstraintResearchService = Depends(get_constraint_research_service),
+) -> ConstraintResearchSummaryResponse:
+    return ConstraintResearchSummaryResponse.from_domain(service.get_summary(run_name))
+
+
+@router.get("/research/entries", response_model=ConstraintResearchEntryPageResponse)
+def list_constraint_research_entries(
+    run_name: str,
+    relation: str | None = Query(default=None, description="Filter by set relation."),
+    runtime_recommendation: str | None = Query(
+        default=None,
+        description="Filter by runtime recommendation.",
+    ),
+    invalid_reason: str | None = Query(
+        default=None,
+        description="Filter by case-level invalid runtime reason.",
+    ),
+    label_state: str | None = Query(
+        default=None,
+        description="Allowed values: labeled, unlabeled.",
+    ),
+    orphaned: bool | None = Query(
+        default=False,
+        description="Filter orphaned CSV labels that no longer match current Combination pairs.",
+    ),
+    limit: int = Query(default=50, ge=1, le=MAX_PAGE_LIMIT),
+    offset: int = Query(default=0, ge=0),
+    service: ConstraintResearchService = Depends(get_constraint_research_service),
+) -> ConstraintResearchEntryPageResponse:
+    return ConstraintResearchEntryPageResponse.from_domain(
+        run_name,
+        service.list_entries(
+            run_name,
+            relation=relation,
+            runtime_recommendation=runtime_recommendation,
+            invalid_reason=invalid_reason,
+            label_state=label_state,
+            orphaned=orphaned,
+            limit=limit,
+            offset=offset,
+        ),
+    )
+
+
+@router.get(
+    "/research/entries/{combination_id}",
+    response_model=ConstraintResearchDetailResponse,
+)
+def get_constraint_research_entry(
+    run_name: str,
+    combination_id: str,
+    service: ConstraintResearchService = Depends(get_constraint_research_service),
+) -> ConstraintResearchDetailResponse:
+    return ConstraintResearchDetailResponse.from_domain(
+        service.get_detail(run_name, combination_id)
+    )
+
+
+@router.put(
+    "/research/entries/{combination_id}/labels",
+    response_model=ConstraintResearchEntryResponse,
+)
+def update_constraint_research_labels(
+    run_name: str,
+    combination_id: str,
+    payload: ConstraintResearchLabelUpdateRequest,
+    service: ConstraintResearchService = Depends(get_constraint_research_service),
+) -> ConstraintResearchEntryResponse:
+    return ConstraintResearchEntryResponse.from_domain(
+        service.update_labels(
+            run_name,
+            combination_id,
+            static_label=payload.static_label,
+            dynamic_label=payload.dynamic_label,
+            combined_label=payload.combined_label,
+            notes=payload.notes,
+        )
+    )
+
+
+@router.get("/research/labels.csv")
+def download_constraint_research_labels(
+    run_name: str,
+    service: ConstraintResearchService = Depends(get_constraint_research_service),
+) -> Response:
+    return Response(
+        content=service.export_csv(run_name),
+        media_type="text/csv",
+        headers={
+            "content-disposition": (
+                'attachment; filename="constraint_pair_labels.csv"'
+            )
+        },
     )
 
 

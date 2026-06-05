@@ -241,6 +241,8 @@ def main():
             max_request_workers=run["max_request_workers"],
             async_max_concurrent=run["async_max_concurrent"],
             headers=headers,
+            constraint_pipeline=config.get("constraint_pipeline", {}),
+            counter_examples=config.get("counter_examples", {}),
         )
     except Exception as e:
         import traceback
@@ -438,7 +440,9 @@ class APITesting:
     def run_tests(self, num_generations=1, num_test_cases=20, mutation_ratio=0.0, header_mutation_ratio=0.5,
                   async_mode: bool = False, max_request_workers: Optional[int] = None,
                   async_max_concurrent: int = DEFAULT_ASYNC_MAX_CONCURRENT,
-                  headers: Optional[Dict[str, str]] = None):
+                  headers: Optional[Dict[str, str]] = None,
+                  constraint_pipeline: Optional[Dict[str, Any]] = None,
+                  counter_examples: Optional[Dict[str, Any]] = None):
         def build_graph_for_run():
             return OperationGraph(
                 spec_parser=self.spec_parser,
@@ -842,6 +846,25 @@ class APITesting:
             if self.mining_constraints and self.miner is not None:
                 self.miner.dynamic_mining()
                 self.miner.combine()
+                if (
+                    constraint_pipeline
+                    and constraint_pipeline.get("enabled")
+                    and constraint_pipeline.get("run_per_generation")
+                ):
+                    self._run_constraint_pipeline(
+                        constraint_pipeline=constraint_pipeline,
+                        counter_examples=counter_examples,
+                    )
+        if (
+            constraint_pipeline
+            and constraint_pipeline.get("enabled")
+            and constraint_pipeline.get("run_after_tests", True)
+            and not constraint_pipeline.get("run_per_generation")
+        ):
+            self._run_constraint_pipeline(
+                constraint_pipeline=constraint_pipeline,
+                counter_examples=counter_examples,
+            )
         if total_testcase == 0:
             self.logger.warning("No test cases executed")
         self.logger.debug(
@@ -857,6 +880,30 @@ class APITesting:
         print("Success rate", len(successFull.keys()))
         return total_testcase, successFull
         # merge constraints
+
+    def _run_constraint_pipeline(
+        self,
+        *,
+        constraint_pipeline: Dict[str, Any],
+        counter_examples: Optional[Dict[str, Any]],
+    ) -> None:
+        steps = set(constraint_pipeline.get("steps") or [])
+        if steps and not {"counter_examples", "execute", "summarize"} & steps:
+            return
+        from api_testing.constraint.pipeline import run_constraint_pipeline
+
+        merged_counter_examples = dict(counter_examples or {})
+        if self.base_url and not merged_counter_examples.get("target_base_url"):
+            merged_counter_examples["target_base_url"] = self.base_url
+        result = run_constraint_pipeline(
+            cache_dir=self.project_dir,
+            pipeline_config=constraint_pipeline,
+            counter_example_config=merged_counter_examples,
+        )
+        self.logger.debug(
+            "Constraint pipeline completed: %s",
+            getattr(result, "summary", {}),
+        )
 
         
 

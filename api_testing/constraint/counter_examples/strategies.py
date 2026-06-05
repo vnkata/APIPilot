@@ -35,6 +35,15 @@ class DynamicStrongerCounterExamplePlannerStrategy(BaseCounterExamplePlannerStra
     )
 
 
+class StaticStrongerCounterExamplePlannerStrategy(BaseCounterExamplePlannerStrategy):
+    strategy_name = "static_stronger_diagnostic"
+    strategy_guidance = (
+        "Try to find a case where the stricter static constraint is false while "
+        "the broader dynamic constraint is true, or collect evidence that a "
+        "reviewer can use to confirm the static-only restriction."
+    )
+
+
 class PartialOverlapCounterExamplePlannerStrategy(BaseCounterExamplePlannerStrategy):
     strategy_name = "partial_overlap_diagnostic"
     strategy_guidance = (
@@ -72,6 +81,7 @@ def planner_strategy_for_relation(
     planner: Any,
 ) -> BaseCounterExamplePlannerStrategy:
     strategy_type = {
+        "STATIC_STRONGER": StaticStrongerCounterExamplePlannerStrategy,
         "DYNAMIC_STRONGER": DynamicStrongerCounterExamplePlannerStrategy,
         "PARTIAL_OVERLAP": PartialOverlapCounterExamplePlannerStrategy,
         "DISJOINT": DisjointCounterExamplePlannerStrategy,

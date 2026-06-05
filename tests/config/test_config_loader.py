@@ -238,6 +238,83 @@ def test_run_debug_defaults_false(tmp_path, monkeypatch):
     assert config["run"]["debug"] is False
 
 
+def test_constraint_pipeline_and_counter_examples_default_disabled(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    content = """
+    [project]
+    spec_path = "datasets/Test.json"
+    base_url = "http://localhost:9999"
+
+    [llm]
+    provider = "openai"
+    model = "gpt-4o-mini"
+    temperature = 0.1
+
+    [llm.openai]
+    api_key = "${OPENAI_API_KEY}"
+    base_url = "https://api.openai.com/v1"
+
+    [embedding]
+    provider = "huggingface"
+    model = "google/embeddinggemma-300m"
+    use_half = false
+    """
+    path = tmp_path / "configurations.toml"
+    _write_config(path, content)
+
+    config = load_config(str(path))
+
+    assert config["constraint_pipeline"]["enabled"] is False
+    assert config["constraint_pipeline"]["run_after_tests"] is True
+    assert config["constraint_pipeline"]["run_per_generation"] is False
+    assert config["counter_examples"]["counter_examples_per_pair"] == 5
+    assert config["counter_examples"]["request_budget"] == 5
+
+
+def test_constraint_pipeline_and_counter_examples_allow_overrides(tmp_path, monkeypatch):
+    monkeypatch.setenv("OPENAI_API_KEY", "test-key")
+    content = """
+    [project]
+    spec_path = "datasets/Test.json"
+    base_url = "http://localhost:9999"
+
+    [llm]
+    provider = "openai"
+    model = "gpt-4o-mini"
+    temperature = 0.1
+
+    [llm.openai]
+    api_key = "${OPENAI_API_KEY}"
+    base_url = "https://api.openai.com/v1"
+
+    [embedding]
+    provider = "huggingface"
+    model = "google/embeddinggemma-300m"
+    use_half = false
+
+    [constraint_pipeline]
+    enabled = true
+    run_per_generation = true
+
+    [counter_examples]
+    counter_examples_per_pair = 3
+    request_budget = 9
+    allowed_target_base_urls = ["http://localhost:9999"]
+    """
+    path = tmp_path / "configurations.toml"
+    _write_config(path, content)
+
+    config = load_config(str(path))
+
+    assert config["constraint_pipeline"]["enabled"] is True
+    assert config["constraint_pipeline"]["run_per_generation"] is True
+    assert config["counter_examples"]["counter_examples_per_pair"] == 3
+    assert config["counter_examples"]["request_budget"] == 9
+    assert config["counter_examples"]["allowed_target_base_urls"] == [
+        "http://localhost:9999"
+    ]
+
+
 def test_run_debug_allows_override_true(tmp_path, monkeypatch):
     monkeypatch.setenv("OPENAI_API_KEY", "test-key")
     content = """

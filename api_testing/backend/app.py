@@ -24,6 +24,9 @@ from api_testing.backend.application.services import ArtifactQueryService
 from api_testing.backend.application.review_services.combination_review import (
     CombinationReviewService,
 )
+from api_testing.backend.application.research_services.constraint_research import (
+    ConstraintResearchService,
+)
 from api_testing.backend.application.write_services import WriteFlowService
 from api_testing.backend.infrastructure.artifacts.repository import FileArtifactRepository
 from api_testing.backend.infrastructure.combination_review_metadata import (
@@ -112,6 +115,10 @@ def create_app(settings: BackendSettings | None = None) -> FastAPI:
         review_repository,
         app_settings,
     )
+    constraint_research_service = ConstraintResearchService(
+        service,
+        app_settings.cache_root,
+    )
 
     @asynccontextmanager
     async def lifespan(app: FastAPI):
@@ -134,6 +141,7 @@ def create_app(settings: BackendSettings | None = None) -> FastAPI:
     app.state.artifact_service = service
     app.state.write_flow_service = write_service
     app.state.combination_review_service = combination_review_service
+    app.state.constraint_research_service = constraint_research_service
 
     if app_settings.allowed_origins:
         app.add_middleware(

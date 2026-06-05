@@ -8,7 +8,7 @@ from api_testing.prompts.constraint_combination import ConstraintCombination
 from api_testing.utils.log import getLogger
 
 
-_RESOLVED_RELATIONS = {"EQUIVALENT", "STATIC_STRONGER"}
+_RESOLVED_RELATIONS = {"EQUIVALENT"}
 _VALID_RELATIONS = {
     "EQUIVALENT",
     "STATIC_STRONGER",
@@ -138,6 +138,8 @@ class ConstraintCombiner:
     ) -> tuple[str, Optional[str]]:
         if relation in _RESOLVED_RELATIONS:
             return "RESOLVED", static_constraint
+        if relation == "STATIC_STRONGER":
+            return "UNRESOLVED", None
         if relation == "DYNAMIC_STRONGER":
             return "UNRESOLVED", None
         if relation == "PARTIAL_OVERLAP":
