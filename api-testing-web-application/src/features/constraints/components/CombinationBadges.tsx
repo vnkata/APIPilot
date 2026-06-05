@@ -86,8 +86,8 @@ export function CombinationRelationBadge({
   const theme = useTheme()
   const tone: AppTone =
     relation === 'DISJOINT' ? 'danger'
-      : relation === 'DYNAMIC_STRONGER' || relation === 'PARTIAL_OVERLAP' || relation === 'UNKNOWN' ? 'warning'
-      : relation === 'EQUIVALENT' || relation === 'STATIC_STRONGER' ? 'success'
+      : relation === 'STATIC_STRONGER' || relation === 'DYNAMIC_STRONGER' || relation === 'PARTIAL_OVERLAP' || relation === 'UNKNOWN' ? 'warning'
+      : relation === 'EQUIVALENT' ? 'success'
       : 'info'
 
   return (

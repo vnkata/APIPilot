@@ -53,6 +53,7 @@ type ConstraintResultsRegionProps = {
   onMatrixByChange: (value: MatrixBy) => void
   onSelectConstraint: (constraintId: string) => void
   onSelectInvariant: (invariantId: string) => void
+  researchReviewHref?: string
   selectedCombinationCount: number
   selectedEligibleCombinationCount: number
   selectedSkippedCombinationCount: number
@@ -84,6 +85,7 @@ export function ConstraintResultsRegion({
   onMatrixByChange,
   onSelectConstraint,
   onSelectInvariant,
+  researchReviewHref,
   selectedCombinationCount,
   selectedEligibleCombinationCount,
   selectedSkippedCombinationCount,
@@ -152,6 +154,11 @@ export function ConstraintResultsRegion({
             >
               Batch generate drafts
             </Button>
+            {researchReviewHref ? (
+              <Button href={researchReviewHref} size="small" variant="outlined">
+                Open research review
+              </Button>
+            ) : null}
             <Typography color="text.secondary" variant="body2">
               {selectedEligibleCombinationCount === 0
                 ? 'Select eligible rows to generate drafts.'

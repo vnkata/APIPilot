@@ -38,6 +38,11 @@ import type {
   ConstraintExplorerDetailResponse,
   ConstraintExplorerPageResponse,
   ConstraintFacetsResponse,
+  ConstraintResearchDetailResponse,
+  ConstraintResearchEntryPageResponse,
+  ConstraintResearchEntryResponse,
+  ConstraintResearchLabelUpdateRequest,
+  ConstraintResearchSummaryResponse,
   CounterExampleCaseUpdateRequest,
   CounterExampleGenerateRequest,
   CounterExampleGenerateResponse,
@@ -53,6 +58,7 @@ import type {
   InvariantPageResponse,
   ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams,
   ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams,
+  ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams,
   ListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGetParams,
   ListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGetParams,
   ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams,
@@ -1830,6 +1836,454 @@ export function useGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariant
  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
 
   const queryOptions = getGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGetQueryOptions(runName,invariantId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary List Constraint Research Entries
+ */
+export const listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet = (
+    runName: string,
+    params?: ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConstraintResearchEntryPageResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/research/entries`, method: 'GET',
+        params, signal
+    },
+      options);
+    }
+
+
+
+
+export const getListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetQueryKey = (runName: string,
+    params?: ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/research/entries`, ...(params ? [params] : [])
+    ] as const;
+    }
+
+
+export const getListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetQueryOptions = <TData = Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    params?: ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetQueryKey(runName,params);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>> = ({ signal }) => listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet(runName,params, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetQueryResult = NonNullable<Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>>
+export type ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet<TData = Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params: undefined |  ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet<TData = Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>,
+          TError,
+          Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet<TData = Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary List Constraint Research Entries
+ */
+
+export function useListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet<TData = Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    params?: ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof listConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetQueryOptions(runName,params,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Constraint Research Entry
+ */
+export const getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet = (
+    runName: string,
+    combinationId: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConstraintResearchDetailResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/research/entries/${combinationId}`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGetQueryKey = (runName: string,
+    combinationId: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/research/entries/${combinationId}`
+    ] as const;
+    }
+
+
+export const getGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGetQueryOptions = <TData = Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGetQueryKey(runName,combinationId);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>> = ({ signal }) => getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet(runName,combinationId, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined && combinationId !== null && combinationId !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGetQueryResult = NonNullable<Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>>
+export type GetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet<TData = Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet<TData = Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>,
+          TError,
+          Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet<TData = Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Constraint Research Entry
+ */
+
+export function useGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet<TData = Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string,
+    combinationId: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGetQueryOptions(runName,combinationId,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Update Constraint Research Labels
+ */
+export const updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut = (
+    runName: string,
+    combinationId: string,
+    constraintResearchLabelUpdateRequest: BodyType<ConstraintResearchLabelUpdateRequest>,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConstraintResearchEntryResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/research/entries/${combinationId}/labels`, method: 'PUT',
+      headers: {'Content-Type': 'application/json', },
+      data: constraintResearchLabelUpdateRequest, signal
+    },
+      options);
+    }
+
+
+
+export const getUpdateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPutMutationOptions = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut>>, TError,{runName: string;combinationId: string;data: BodyType<ConstraintResearchLabelUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+): UseMutationOptions<Awaited<ReturnType<typeof updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut>>, TError,{runName: string;combinationId: string;data: BodyType<ConstraintResearchLabelUpdateRequest>}, TContext> => {
+
+const mutationKey = ['updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut'];
+const {mutation: mutationOptions, request: requestOptions} = options ?
+      options.mutation && 'mutationKey' in options.mutation && options.mutation.mutationKey ?
+      options
+      : {...options, mutation: {...options.mutation, mutationKey}}
+      : {mutation: { mutationKey, }, request: undefined};
+
+
+
+
+      const mutationFn: MutationFunction<Awaited<ReturnType<typeof updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut>>, {runName: string;combinationId: string;data: BodyType<ConstraintResearchLabelUpdateRequest>}> = (props) => {
+          const {runName,combinationId,data} = props ?? {};
+
+          return  updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut(runName,combinationId,data,requestOptions)
+        }
+
+
+
+
+
+
+  return  { mutationFn, ...mutationOptions }}
+
+    export type UpdateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPutMutationResult = NonNullable<Awaited<ReturnType<typeof updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut>>>
+    export type UpdateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPutMutationBody = BodyType<ConstraintResearchLabelUpdateRequest>
+    export type UpdateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPutMutationError = ErrorType<HTTPValidationError>
+
+    /**
+ * @summary Update Constraint Research Labels
+ */
+export const useUpdateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut = <TError = ErrorType<HTTPValidationError>,
+    TContext = unknown>(options?: { mutation?:UseMutationOptions<Awaited<ReturnType<typeof updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut>>, TError,{runName: string;combinationId: string;data: BodyType<ConstraintResearchLabelUpdateRequest>}, TContext>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient): UseMutationResult<
+        Awaited<ReturnType<typeof updateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut>>,
+        TError,
+        {runName: string;combinationId: string;data: BodyType<ConstraintResearchLabelUpdateRequest>},
+        TContext
+      > => {
+      return useMutation(getUpdateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPutMutationOptions(options), queryClient);
+    }
+    /**
+ * @summary Download Constraint Research Labels
+ */
+export const downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet = (
+    runName: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<unknown>(
+      {url: `/api/v1/runs/${runName}/constraints/research/labels.csv`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getDownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGetQueryKey = (runName: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/research/labels.csv`
+    ] as const;
+    }
+
+
+export const getDownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGetQueryOptions = <TData = Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError = ErrorType<HTTPValidationError>>(runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getDownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGetQueryKey(runName);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>> = ({ signal }) => downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet(runName, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type DownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGetQueryResult = NonNullable<Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>>
+export type DownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useDownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet<TData = Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>,
+          TError,
+          Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet<TData = Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>,
+          TError,
+          Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useDownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet<TData = Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Download Constraint Research Labels
+ */
+
+export function useDownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet<TData = Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof downloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getDownloadConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchLabelsCsvGetQueryOptions(runName,options)
+
+  const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
+
+
+
+
+
+
+/**
+ * @summary Get Constraint Research Summary
+ */
+export const getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet = (
+    runName: string,
+ options?: SecondParameter<typeof customInstance>,signal?: AbortSignal
+) => {
+
+
+      return customInstance<ConstraintResearchSummaryResponse>(
+      {url: `/api/v1/runs/${runName}/constraints/research/summary`, method: 'GET', signal
+    },
+      options);
+    }
+
+
+
+
+export const getGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGetQueryKey = (runName: string,) => {
+    return [
+    `/api/v1/runs/${runName}/constraints/research/summary`
+    ] as const;
+    }
+
+
+export const getGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGetQueryOptions = <TData = Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError = ErrorType<HTTPValidationError>>(runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGetQueryKey(runName);
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>> = ({ signal }) => getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet(runName, requestOptions, signal);
+
+
+
+
+
+   return  { queryKey, queryFn, enabled: runName !== null && runName !== undefined,  staleTime: 30000, retry: 1,  ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError, TData> & { queryKey: DataTag<QueryKey, TData, TError> }
+}
+
+export type GetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGetQueryResult = NonNullable<Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>>
+export type GetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGetQueryError = ErrorType<HTTPValidationError>
+
+
+export function useGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet<TData = Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options: { query:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError, TData>> & Pick<
+        DefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>,
+          TError,
+          Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  DefinedUseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet<TData = Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError, TData>> & Pick<
+        UndefinedInitialDataOptions<
+          Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>,
+          TError,
+          Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>
+        > , 'initialData'
+      >, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+export function useGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet<TData = Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+  ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> }
+/**
+ * @summary Get Constraint Research Summary
+ */
+
+export function useGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet<TData = Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError = ErrorType<HTTPValidationError>>(
+ runName: string, options?: { query?:Partial<UseQueryOptions<Awaited<ReturnType<typeof getConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet>>, TError, TData>>, request?: SecondParameter<typeof customInstance>}
+ , queryClient?: QueryClient
+ ):  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> } {
+
+  const queryOptions = getGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGetQueryOptions(runName,options)
 
   const query = useQuery(queryOptions, queryClient) as  UseQueryResult<TData, TError> & { queryKey: DataTag<QueryKey, TData, TError> };
 

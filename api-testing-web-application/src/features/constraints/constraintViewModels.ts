@@ -202,7 +202,7 @@ function countBy(items: string[]) {
     .map(([label, count]) => ({ count, label }))
 }
 
-const COUNTER_EXAMPLE_RELATIONS = new Set(['DYNAMIC_STRONGER', 'PARTIAL_OVERLAP', 'DISJOINT', 'UNKNOWN'])
+const COUNTER_EXAMPLE_RELATIONS = new Set(['STATIC_STRONGER', 'DYNAMIC_STRONGER', 'PARTIAL_OVERLAP', 'DISJOINT', 'UNKNOWN'])
 
 function hasHumanDecision(row: CombinationReviewFields) {
   return Boolean(row.has_manual_decision || row.manual_decision || row.decision_source || row.review_state === 'FINAL_CONFIRMED')
@@ -242,7 +242,8 @@ export function deriveCombinationReviewSignal(
   }
 
   if (
-    row.relation === 'DYNAMIC_STRONGER'
+    row.relation === 'STATIC_STRONGER'
+    || row.relation === 'DYNAMIC_STRONGER'
     || row.relation === 'PARTIAL_OVERLAP'
     || row.relation === 'UNKNOWN'
     || row.status === 'UNRESOLVED'
@@ -268,7 +269,7 @@ export function deriveCombinationReviewSignal(
     }
   }
 
-  if (row.resolved || row.relation === 'EQUIVALENT' || row.relation === 'STATIC_STRONGER' || row.status === 'RESOLVED') {
+  if (row.resolved || row.relation === 'EQUIVALENT' || row.status === 'RESOLVED') {
     return {
       description: 'This relation has a final constraint from the combiner.',
       label: 'Resolved',

@@ -19,6 +19,7 @@ import {
 } from '../product-tour/activationOnboardingAnalytics'
 import App from '../../App'
 import { ConstraintsPage } from './ConstraintsPage'
+import { ConstraintResearchReviewPage } from './ConstraintResearchReviewPage'
 import { CombinationDetailComposer } from './components/CombinationDetailComposer'
 
 describe('ConstraintsPage', () => {
@@ -152,6 +153,10 @@ describe('ConstraintsPage', () => {
     )
 
     expect(await screen.findByRole('grid', { name: /combination constraint entries/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /open research review/i })).toHaveAttribute(
+      'href',
+      '/runs/Run%20A/constraints/research-review',
+    )
     expect(requestedUrl?.searchParams.get('relation')).toBe('EQUIVALENT')
     expect(requestedUrl?.searchParams.get('status')).toBe('RESOLVED')
     expect(requestedUrl?.searchParams.get('runtime_verdict')).toBe('BOTH_TRUE')
@@ -242,6 +247,88 @@ describe('ConstraintsPage', () => {
     expect(await screen.findByRole('textbox', { name: /request json ce-case-1/i })).toBeInTheDocument()
     expect(screen.getByRole('region', { name: /combination hitl activation/i })).toHaveTextContent(/4 of 7 complete/i)
   })
+
+  it('renders the research review route and saves CSV-backed labels explicitly', async () => {
+    const user = userEvent.setup()
+    let updateBody: unknown
+    server.use(
+      http.put('*/api/v1/runs/:runName/constraints/research/entries/:combinationId/labels', async ({ request }) => {
+        updateBody = await request.json()
+        return HttpResponse.json({
+          combination_id: 'cmb-static-stronger',
+          combined_label: 'UNSURE',
+          dynamic_constraint: 'return.items.id >= 1',
+          dynamic_label: 'TP',
+          evidence_case_count: 2,
+          final_constraint: '',
+          invalid_case_count: 1,
+          metric_included: true,
+          notes: 'Confirmed static and dynamic labels.',
+          operation_id: 'get-/items',
+          orphaned: false,
+          property_path: 'input.limit',
+          relation: 'STATIC_STRONGER',
+          research_pair_id: 'rp-static-stronger',
+          run_name: 'Run A',
+          runtime_recommendation: 'SUPPORT_STATIC',
+          static_constraint: 'input.limit >= 1 and input.limit <= 50',
+          static_label: 'TP',
+          status: 'UNRESOLVED',
+          suggested_combined_label: 'UNSURE',
+          suggested_dynamic_label: 'TP',
+          suggested_static_label: 'TP',
+          updated_at: '2026-01-01T00:04:00Z',
+        })
+      }),
+    )
+    renderWithProviders(<ConstraintResearchReviewPage runName="Run A" />)
+
+    expect(await screen.findByRole('heading', { name: /constraint research review/i })).toBeInTheDocument()
+    expect(await screen.findByRole('grid', { name: /constraint research pairs/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /static label/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /dynamic label/i })).toBeInTheDocument()
+    expect(screen.getByRole('columnheader', { name: /combined label/i })).toBeInTheDocument()
+    expect(screen.getByRole('link', { name: /download csv/i })).toHaveAttribute(
+      'href',
+      '/api/v1/runs/Run%20A/constraints/research/labels.csv',
+    )
+    expect(await screen.findByRole('heading', { name: /research labels/i })).toBeInTheDocument()
+    expect(screen.getByText(/runtime cases are evidence, not proof/i)).toBeInTheDocument()
+    expect(screen.getByText(/research-case-1/i)).toBeInTheDocument()
+    expect(screen.getByText(/property_missing/i)).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /next pair/i })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /hide detail/i })).toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /hide detail/i }))
+    expect(screen.queryByRole('heading', { name: /research labels/i })).not.toBeInTheDocument()
+    fireEvent.click(screen.getByRole('button', { name: /show detail/i }))
+    const specContext = await screen.findByRole('region', { name: /spec context/i })
+    expect(within(specContext).getByText(/openapi operation excerpt/i)).toBeInTheDocument()
+    expect(within(specContext).queryByText(/"parameters"/i)).not.toBeInTheDocument()
+    fireEvent.click(within(specContext).getByRole('button', { name: /show openapi spec excerpt/i }))
+    expect(within(specContext).getByText(/list items/i)).toBeInTheDocument()
+    const evidenceRegion = screen.getByRole('region', { name: /evidence cases/i })
+    expect(within(evidenceRegion).getByText(/Visual evidence summary/i)).toBeInTheDocument()
+    expect(within(evidenceRegion).getAllByText(/GET \/items/i).length).toBeGreaterThan(0)
+    expect(within(evidenceRegion).queryByText(/"request_summary"/i)).not.toBeInTheDocument()
+    fireEvent.click(within(evidenceRegion).getAllByRole('button', { name: /view raw/i })[0])
+    expect(within(evidenceRegion).getByText(/Request summary/i)).toBeInTheDocument()
+
+    const labelEditor = screen.getByRole('region', { name: /research label editor/i })
+    const staticLabel = within(labelEditor).getByLabelText(/static label/i)
+    await user.click(staticLabel)
+    await user.click(await screen.findByRole('option', { name: /^TP$/i }))
+    await user.clear(within(labelEditor).getByLabelText(/research notes/i))
+    await user.type(within(labelEditor).getByLabelText(/research notes/i), 'Confirmed static and dynamic labels.')
+    await user.click(screen.getByRole('button', { name: /save csv labels/i }))
+
+    await waitFor(() => expect(updateBody).toMatchObject({
+      combined_label: 'UNSURE',
+      dynamic_label: 'TP',
+      notes: 'Confirmed static and dynamic labels.',
+      static_label: 'TP',
+    }))
+    expect(await screen.findByText(/saved labels for input.limit/i)).toBeInTheDocument()
+  }, 30_000)
 
   it('separates runnable cases from executed evidence in the review workspace', async () => {
     renderWithProviders(

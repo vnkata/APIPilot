@@ -7,12 +7,15 @@ import {
   useGetCombinationSummaryApiV1RunsRunNameConstraintsCombinationSummaryGet,
   useGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet,
   useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet,
+  useGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet,
+  useGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet,
   useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet,
   useGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet,
   useGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet,
   useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet,
   useListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGet,
   useListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet,
+  useListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet,
   useListDynamicConstraintEntriesApiV1RunsRunNameConstraintsDynamicEntriesGet,
   useListDynamicInvariantsApiV1RunsRunNameConstraintsDynamicInvariantsGet,
   useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet,
@@ -20,6 +23,7 @@ import {
   useGenerateCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesGeneratePost,
   useReopenCombinationReviewApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdReviewReopenPost,
   useRunCounterExamplesApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesRunPost,
+  useUpdateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut,
   useUpdateCounterExampleCaseApiV1RunsRunNameConstraintsCombinationEntriesCombinationIdCounterExamplesCaseIdPut,
 } from '../../shared/api/generated/constraints/constraints'
 import type {
@@ -28,6 +32,7 @@ import type {
   GetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGetParams,
   ListCombinationEntriesApiV1RunsRunNameConstraintsCombinationEntriesGetParams,
   ListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGetParams,
+  ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams,
   ListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGetParams,
   SortOrder,
 } from '../../shared/api/generated/model'
@@ -63,6 +68,16 @@ export type ConstraintExplorerFilters = {
   sourceType?: string
   status?: string
   runtimeVerdict?: string
+}
+
+export type ConstraintResearchFilters = {
+  invalidReason?: string
+  labelState?: string
+  limit?: number
+  offset?: number
+  orphaned?: boolean | null
+  relation?: string
+  runtimeRecommendation?: string
 }
 
 export function toConstraintExplorerParams(
@@ -196,6 +211,20 @@ export function toCombinationFacetParams(
   }
 }
 
+export function toConstraintResearchParams(
+  filters: ConstraintResearchFilters,
+): ListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGetParams {
+  return {
+    invalid_reason: filters.invalidReason,
+    label_state: filters.labelState,
+    limit: filters.limit,
+    offset: filters.offset,
+    orphaned: filters.orphaned,
+    relation: filters.relation,
+    runtime_recommendation: filters.runtimeRecommendation,
+  }
+}
+
 export const useStaticConstraintsSummary = useGetStaticConstraintsApiV1RunsRunNameConstraintsStaticGet
 export const useStaticConstraintEntries = useListStaticConstraintEntriesApiV1RunsRunNameConstraintsStaticEntriesGet
 export const useDynamicConstraintsSummary = useGetDynamicConstraintsApiV1RunsRunNameConstraintsDynamicGet
@@ -215,6 +244,10 @@ export const useUpdateCounterExampleCase = useUpdateCounterExampleCaseApiV1RunsR
 export const useConstraintExplorerEntries = useListConstraintExplorerEntriesApiV1RunsRunNameConstraintsEntriesGet
 export const useConstraintExplorerDetail = useGetConstraintExplorerEntryApiV1RunsRunNameConstraintsEntriesConstraintIdGet
 export const useConstraintExplorerFacets = useGetConstraintExplorerFacetsApiV1RunsRunNameConstraintsFacetsGet
+export const useConstraintResearchDetail = useGetConstraintResearchEntryApiV1RunsRunNameConstraintsResearchEntriesCombinationIdGet
+export const useConstraintResearchEntries = useListConstraintResearchEntriesApiV1RunsRunNameConstraintsResearchEntriesGet
+export const useConstraintResearchSummary = useGetConstraintResearchSummaryApiV1RunsRunNameConstraintsResearchSummaryGet
+export const useUpdateConstraintResearchLabels = useUpdateConstraintResearchLabelsApiV1RunsRunNameConstraintsResearchEntriesCombinationIdLabelsPut
 export const useInvariantExplorerEntries = useListInvariantExplorerEntriesApiV1RunsRunNameConstraintsInvariantsGet
 export const useInvariantExplorerDetail = useGetInvariantExplorerEntryApiV1RunsRunNameConstraintsInvariantsInvariantIdGet
 export const useInvariantExplorerFacets = useGetInvariantExplorerFacetsApiV1RunsRunNameConstraintsInvariantsFacetsGet

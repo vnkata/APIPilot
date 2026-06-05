@@ -12,6 +12,9 @@ import {
   constraintExplorerDetail,
   constraintExplorerEntries,
   constraintFacets,
+  constraintResearchDetail,
+  constraintResearchEntries,
+  constraintResearchSummary,
   dynamicConstraints,
   executionCatalog,
   executionCompleted,
@@ -185,6 +188,30 @@ export const handlers = [
     }),
   ),
   http.get(api('/runs/:runName/constraints/combination/facets'), () => HttpResponse.json(combinationFacets)),
+  http.get(api('/runs/:runName/constraints/research/summary'), () => HttpResponse.json(constraintResearchSummary)),
+  http.get(api('/runs/:runName/constraints/research/entries'), () => HttpResponse.json(constraintResearchEntries)),
+  http.get(api('/runs/:runName/constraints/research/entries/:combinationId'), () =>
+    HttpResponse.json(constraintResearchDetail),
+  ),
+  http.put(api('/runs/:runName/constraints/research/entries/:combinationId/labels'), async ({ request }) => {
+    const body = await request.json() as {
+      combined_label?: string | null
+      dynamic_label?: string
+      notes?: string
+      static_label?: string
+    }
+    return HttpResponse.json({
+      ...constraintResearchEntries.items[0],
+      combined_label: body.combined_label ?? null,
+      dynamic_label: body.dynamic_label ?? constraintResearchEntries.items[0].dynamic_label,
+      notes: body.notes ?? constraintResearchEntries.items[0].notes,
+      static_label: body.static_label ?? constraintResearchEntries.items[0].static_label,
+      updated_at: '2026-01-01T00:04:00Z',
+    })
+  }),
+  http.get(api('/runs/:runName/constraints/research/labels.csv'), () =>
+    HttpResponse.text('research_pair_id,run_name,combination_id,static_label,dynamic_label,combined_label,orphaned\nrp-static-stronger,Run A,cmb-static-stronger,TP,TP,UNSURE,false\n'),
+  ),
   http.get(api('/runs/:runName/constraints/entries'), () => HttpResponse.json(constraintExplorerEntries)),
   http.get(api('/runs/:runName/constraints/entries/:constraintId'), () =>
     HttpResponse.json(constraintExplorerDetail),

@@ -97,6 +97,17 @@ describe('constraint view models', () => {
 
     expect(deriveCombinationReviewSignal({
       ...combinationEntries.items[0],
+      relation: 'STATIC_STRONGER',
+      resolved: false,
+      status: 'UNRESOLVED',
+    })).toMatchObject({
+      label: 'Needs review',
+      priority: 'needs_review',
+      tone: 'warning',
+    })
+
+    expect(deriveCombinationReviewSignal({
+      ...combinationEntries.items[0],
       has_manual_decision: true,
       manual_decision: 'ACCEPT_STATIC',
       review_state: 'FINAL_CONFIRMED',
@@ -121,6 +132,13 @@ describe('constraint view models', () => {
     expect(isCombinationEligibleForCounterExample({
       ...combinationEntries.items[0],
       relation: 'PARTIAL_OVERLAP',
+      resolved: false,
+      status: 'UNRESOLVED',
+    })).toBe(true)
+
+    expect(isCombinationEligibleForCounterExample({
+      ...combinationEntries.items[0],
+      relation: 'STATIC_STRONGER',
       resolved: false,
       status: 'UNRESOLVED',
     })).toBe(true)

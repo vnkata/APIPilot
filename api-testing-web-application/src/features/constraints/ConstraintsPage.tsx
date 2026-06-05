@@ -816,6 +816,7 @@ export function ConstraintsPage({ runName, search }: ConstraintsPageProps) {
         onSelectCombination={(combinationId) => replaceSearchParams({ combinationId })}
         onSelectConstraint={(constraintId) => replaceSearchParams({ constraintId })}
         onSelectInvariant={(invariantId) => replaceSearchParams({ invariantId })}
+        researchReviewHref={`/runs/${encodedRunName}/constraints/research-review`}
         selectedEligibleCombinationCount={selectedEligibleCombinationCount}
         selectedSkippedCombinationCount={selectedSkippedCombinationCount}
         selectedCombinationCount={selectedCombinationCount}

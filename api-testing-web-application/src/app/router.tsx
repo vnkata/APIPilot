@@ -42,6 +42,9 @@ const LazyConstraintsPage = lazy(() =>
 const LazyCombinationReviewWorkspacePage = lazy(() =>
   import('../features/constraints/CombinationReviewWorkspacePage').then((module) => ({ default: module.CombinationReviewWorkspacePage })),
 )
+const LazyConstraintResearchReviewPage = lazy(() =>
+  import('../features/constraints/ConstraintResearchReviewPage').then((module) => ({ default: module.ConstraintResearchReviewPage })),
+)
 const LazyArtifactsPage = lazy(() =>
   import('../features/artifacts/ArtifactsPage').then((module) => ({ default: module.ArtifactsPage })),
 )
@@ -263,6 +266,19 @@ const combinationReviewRoute = createRoute({
   },
 })
 
+const constraintResearchReviewRoute = createRoute({
+  getParentRoute: () => rootRoute,
+  path: '/runs/$runName/constraints/research-review',
+  component: function ConstraintResearchReviewRoute() {
+    const { runName } = constraintResearchReviewRoute.useParams()
+    return (
+      <RouteFallback>
+        <LazyConstraintResearchReviewPage runName={runName} />
+      </RouteFallback>
+    )
+  },
+})
+
 const artifactsRoute = createRoute({
   getParentRoute: () => rootRoute,
   path: '/runs/$runName/artifacts',
@@ -333,6 +349,7 @@ const routeTree = rootRoute.addChildren([
   builderExecutionsRoute,
   builderExecutionDetailRoute,
   compareRoute,
+  constraintResearchReviewRoute,
   runOverviewRoute,
   workspaceRoute,
   operationsRoute,
