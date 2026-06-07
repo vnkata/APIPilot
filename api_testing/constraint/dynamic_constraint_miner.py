@@ -7,15 +7,8 @@ from pathlib import Path
 import random
 import re
 from typing import Any, Dict, List, Optional
-
-from reportlab.rl_settings import invariant
-
-# from api_testing.constraint.dynamic_constraints.classified_invariant_reader import ClassifiedInvariantReader
+import copy
 from api_testing.constraint.dynamic_constraints.decls_file import Comparability, DeclsFile
-# from api_testing.constraint.dynamic_constraints.invariant_classifier import (
-#     CLASSIFIED_INVARIANTS_FILENAME as DEFAULT_CLASSIFIED_INVARIANTS_FILENAME,
-#     InvariantClassifier,
-# )
 from api_testing.constraint.dynamic_constraints.invariant_extractor import InvariantExtractor
 from api_testing.constraint.dynamic_constraints.test_case import TestCase
 from api_testing.constraint.dynamic_constraints.utils.csv_manager import read_csv
@@ -32,6 +25,17 @@ def remove_outer_parens(s: str):
     if s.startswith("(") and s.endswith(")"):
         return s[1:-1]   # chỉ cắt 1 ký tự mỗi bên
     return s
+
+def normalize_variable_name(var: str) -> str:
+    var = var.strip()
+    # size(x) -> x
+    var = re.sub(r"size\((.*?)\)", r"\1", var)
+    # remove array notation
+    var = var.replace("[..]", "")
+    var = re.sub(r"\[\d+\]", "", var)
+    # remove arithmetic suffix/prefix
+    var = re.sub(r"\s*[-+*/]\s*\d+(\.\d+)?$", "", var)
+    return var.strip()
 
 def group_by_endpoint(final_invariants):
     grouped = defaultdict(list)
@@ -52,15 +56,16 @@ def group_invariants_by_variable(
     result = {}
 
     for endpoint, invariants in data.items():
-        var_group = defaultdict(list)
+        var_group = defaultdict(list) 
 
         for inv in invariants:
-            variable = inv.get("variable")
+            variable = ",".join(inv.get("variable"))
             var_group[variable].append(inv)
 
         result[endpoint] = dict(var_group)
 
     return result
+
 class DynamicConstraintMiner:
     """Dynamic constraint miner that maps API spec operations to Daikon .decls/.dtrace."""
     DECLS_FILENAME = "test_cases.decls"
@@ -136,7 +141,7 @@ class DynamicConstraintMiner:
         testcase = TestCaseFileManager(cache_dir=self.cache_dir)
         test_cases = testcase.parse_test_cases_from_history()
         testcase.save_test_cases()
-        test_cases = random.sample(test_cases, 50)
+        # test_cases = random.sample(test_cases, 50)
         self.generate_dtrace_file(test_cases, self._cache_path(self.DTRACE_FILENAME))
 
     @staticmethod
@@ -181,37 +186,47 @@ class DynamicConstraintMiner:
         final_invariants = []
         for i, row in enumerate(invariants[1:], start=1):
             invariant_dict = dict(zip(headers, row))
-
-            variables = invariant_dict.get("variables", "")
-            variables = remove_outer_parens(variables).split(",") if variables else []
-            for item in variables:
-                item = item.strip()
-                if 'return' in item:
-                    variable = item.replace("[..]", "").replace(
-                    "size(", "").replace(")", "")
-                    matches = re.search(r'&(\d{3})&', invariant_dict.get("pptname", ""))
-                    indexEnd = -1
-                    if matches:
-                        match = re.search(r"\(([^()]*)\)", invariant_dict.get("pptname", ""))
-                        if match:
-                            indexEnd = match.start()
-
-                        pptReturnPrefix = invariant_dict.get("pptname", "")[matches.start()+5:indexEnd]
-                        pptReturnPrefix = pptReturnPrefix.replace("&", ".")
-                        outputVariablesPath = pptReturnPrefix
-                        variable_old = variable
-
-                        variable = variable.replace("return", f"return.{outputVariablesPath}")
-                        invariant_dict["invariant"] = invariant_dict["invariant"].replace(variable_old, variable)
-                        if "variable" not in invariant_dict:
-                            invariant_dict["variable"] = variable
-                            invariant_dict["response_container_path"] = outputVariablesPath
-                    else:
-                        if "variable" not in invariant_dict:
-                            invariant_dict["variable"] = variable
-                            invariant_dict["response_container_path"] = None
             if ":::ENTER" in invariant_dict.get("pptname"):
                 continue
+            pptname = invariant_dict.get("pptname", "")
+            variables = invariant_dict.get("variables", "")
+            variables = remove_outer_parens(variables).split(",") if variables else []
+            
+            for item in map(str.strip, variables):
+                if "return" not in item:
+                    continue
+                variable = normalize_variable_name(item)
+                match_id = re.search(r"&(\d{3})&", pptname)
+                output_container_path = None
+                if match_id:
+                    match_args = re.search(r"\(([^()]*)\)", pptname)
+                    index_end = match_args.start() if match_args else len(pptname)
+                    output_container_path = (
+                        pptname[match_id.start() + 5:index_end]
+                        .replace("&", ".")
+                    )
+                    original_variable = variable
+                    variable = variable.replace(
+                        "return",
+                        f"return.{output_container_path}"
+                    )
+                    invariant_dict["invariant"] = invariant_dict["invariant"].replace(
+                        original_variable,
+                        variable
+                    )
+                    invariant_dict["dslExpression"] = invariant_dict["dslExpression"].replace(
+                        original_variable,
+                        variable
+                    )
+                    invariant_dict["variables"] = invariant_dict["variables"].replace(
+                        original_variable,
+                        variable
+                    )
+                invariant_dict.setdefault("variable", []).append(variable)
+                invariant_dict.setdefault(
+                    "response_container_path",
+                    output_container_path
+                )
             endpoint = invariant_dict.get("pptname", "").split("&")[0]
             invariant_dict["endpoint"] = endpoint
             final_invariants.append(invariant_dict)
@@ -229,30 +244,33 @@ class DynamicConstraintMiner:
         self.extract_decls_classes()
         self.extract_dtraces()
         raw_invariants = self.extract_invariants()
+        invariants = self._map_invariant_to_response_paths(raw_invariants) 
+        invariants = self.classify_invariants(invariants)
 
-        invariants = self.classify_invariants(raw_invariants)
-        # print(f"Classified invariants: {invariants}")
         group_invariants = group_invariants_by_variable(invariants)
-        print(f"Grouped invariants by variable: {group_invariants}")
         final_invariants = {}
-        for opt in self.operations.values():
-            if not opt.successful_responses:
-                continue
-            invariants_for_opt = group_invariants.get(opt.uuid, {})
-            final_invariants[opt.uuid] = {}
-            flatten_responses = flatten_json_schema(opt.successful_responses.to_dict())
-            for response_path, props in flatten_responses.items():
-                for property, invariant in invariants_for_opt.items():
-                    if is_nested_path_end_with(response_path, property.replace("return.", ""), equal=True):
-                        final_invariants[opt.uuid]["return." + response_path] = invariant
-                        print(f"Found invariant {invariant} for property {property} in response path {response_path} of operation {opt.uuid}")
-                        # Here you can add logic to associate the invariant with the operation and property
-        for endpoint, invariants in final_invariants.items():
+        for endpoint, invariants in group_invariants.items():
+            final_invariants[endpoint] = {}
+
             for property, invariant_list in invariants.items():
-                if len(invariant_list) <= 1:
-                    final_invariants[endpoint][property] = invariant_list[0].get("invariant") if invariant_list else None
+                if not invariant_list:
+                    final_invariants[endpoint][property] = None
+                    continue
+
+                if len(invariant_list) == 1:
+                    final_invariants[endpoint][property] = {
+                        "invariant": invariant_list[0].get("invariant"),
+                        "dslExpression": invariant_list[0].get("dslExpression"),
+                    }
                 else:
-                    final_invariants[endpoint][property] = "and(" + ",".join([item.get("invariant") for item in invariant_list]) +")"
+                    final_invariants[endpoint][property] = {
+                        "invariant": "and(" + ",".join(
+                            item.get("invariant", "") for item in invariant_list
+                        ) + ")",
+                        "dslExpression": "and(" + ",".join(
+                            item.get("dslExpression", "") for item in invariant_list
+                        ) + ")",
+                    }
 
         self.constraints = {
             "raw": raw_invariants,
@@ -261,6 +279,49 @@ class DynamicConstraintMiner:
         }
         self._save_constraints_to_cache()
         return final_invariants
+    
+    def _map_invariant_to_response_paths(self, invariants):
+        final_invariants = {}
+
+        for opt in self.operations.values():
+            if not opt.successful_responses:
+                continue
+            invariants_for_opt = invariants.get(opt.uuid, [])
+            final_invariants[opt.uuid] = []
+
+            flatten_responses = flatten_json_schema(
+                opt.successful_responses.to_dict()
+            )
+            for invariant in invariants_for_opt:
+                new_invariant = copy.deepcopy(invariant)
+                mapped_variables = []
+                for variable in invariant.get("variable", []):
+                    mapped_variable = variable
+
+                    for response_path in flatten_responses.keys():
+                        if is_nested_path_end_with(
+                            response_path,
+                            variable.replace("return.",""),
+                            equal=True
+                        ):
+                            mapped_variable = f"return.{response_path}"
+                            new_invariant["invariant"] = (
+                                new_invariant["invariant"]
+                                .replace(variable, mapped_variable)
+                            )
+                            new_invariant["dslExpression"]=(
+                                new_invariant["dslExpression"]
+                                .replace(variable, mapped_variable)
+                            )
+                            break
+
+                    mapped_variables.append(mapped_variable)
+
+                new_invariant["variable"] = mapped_variables
+                final_invariants[opt.uuid].append(new_invariant)
+
+        return final_invariants
+
     def _save_constraints_to_cache(self) -> None:
         """Save all constraints to main cache file."""
         cache_file = self.cache_dir / self.MAIN_CACHE
@@ -293,6 +354,8 @@ class DynamicConstraintMiner:
             classified_invariants[endpoint] = []
             self.logger.info(f"Classifying invariants for endpoint: {endpoint} with {len(inv_list)} invariants")
             data = []
+            if len(inv_list) == 0: 
+                continue
             for i, inv in enumerate(inv_list): 
                 self.logger.debug(f"Classifying invariant: {inv}")
                 params = {
@@ -380,7 +443,10 @@ The return fields refer to the path {params['response_container_path'] or "__ROO
                 parameters.setdefault("body", []).append(str(text))
 
         return parameters
-
+    
+    def _path_matches_endpoint(self, endpoint_pattern: str, request_path: str) -> bool:
+        return endpoint_pattern.rstrip("/").lower() == request_path.rstrip("/").lower()
+    
     def generate_dtrace_file(self, test_cases: List[TestCase], output_path: str | Path) -> None:
         """Generate dtrace file from test cases array.
         
@@ -399,7 +465,7 @@ The return fields refer to the path {params['response_container_path'] or "__ROO
         with output_path.open('w', encoding='utf-8') as dtrace_out:
             dtrace_out.write("decl-version 2.0\n")
             dtrace_out.write("var-comparability implicit\n\n")
-
+            print(len(test_cases))
             for test_case in test_cases:
                 if test_case_count % 50 == 0:
                     self.logger.info(f"Generated dtrace for {test_case_count} test cases")
@@ -409,6 +475,8 @@ The return fields refer to the path {params['response_container_path'] or "__ROO
 
                 for decls_class in self.decls_file.decls_classes:
                     test_case_path = f"{test_case.http_method.lower()}-{test_case.path}"
+                    if test_case_path == "post-/projects":
+                        print(test_case_path,decls_class.class_name)
                     if self._path_matches_endpoint(decls_class.class_name, test_case_path):
                         exits_for_status = [
                             e for e in decls_class.decls_exits
@@ -426,34 +494,151 @@ The return fields refer to the path {params['response_container_path'] or "__ROO
                                 decls_enter = enters_for_exit[0]
                                 dtrace_content = decls_exit.generate_dtrace(test_case, decls_enter)
                                 dtrace_out.write(dtrace_content)
-
         self.logger.info(f"Generated dtrace file: {output_path}")
+   
+    def mapping_invariant_to_dsl(self, invariant: str) -> str:
+        if not invariant or not isinstance(invariant, str):
+            return invariant
 
-    def _path_matches_endpoint(self, endpoint: str, path: str) -> bool:
-        """Check if test case path matches the decls class endpoint.
+        s = invariant.strip()
+
+        # -----------------------------------------
+        # equality
+        # X == Y
+        # -----------------------------------------
+        m = re.match(r"^(.+?)\s*==\s*(.+?)$", s)
+        if m:
+            return f"eq({m.group(1).strip()},{m.group(2).strip()})"
+
+        # -----------------------------------------
+        # >=
+        # -----------------------------------------
+        m = re.match(r"^(.+?)\s*>=\s*(.+?)$", s)
+        if m:
+            return f"gte({m.group(1).strip()},{m.group(2).strip()})"
+
+        # -----------------------------------------
+        # >
+        # -----------------------------------------
+        m = re.match(r"^(.+?)\s*>\s*(.+?)$", s)
+        if m:
+            return f"gt({m.group(1).strip()},{m.group(2).strip()})"
+
+
+        # -----------------------------------------
+        # <=
+        # -----------------------------------------
+        m = re.match(r"^(.+?)\s*<=\s*(.+?)$", s)
+        if m:
+            return f"lte({m.group(1).strip()},{m.group(2).strip()})"
         
-        Args:
-            endpoint: Decls class endpoint (e.g., "GET-/api/users")
-            path: Test case path (e.g., "/api/users")
-            
-        Returns:
-            True if they match
-        """
-        # Extract path part from endpoint (after the method)
-        # if '-' in endpoint:
-        #     endpoint_path = endpoint.split('-', 1)[1]
-        # else:
-        #     endpoint_path = endpoint
-        # Simple match: check if path contains endpoint_path or vice versa
-        return endpoint.lower() == path.lower()
+        # -----------------------------------------
+        # <
+        # -----------------------------------------
+        m = re.match(r"^(.+?)\s*<\s*(.+?)$", s)
+        if m:
+            return f"lt({m.group(1).strip()},{m.group(2).strip()})"
 
-    def extract_constraints(self):
-        """Optional stub for constraint extraction workflow."""
-        if not self.decls_file:
-            raise RuntimeError("No DeclsFile available. Call extract_decls_classes() first.")
+        # -----------------------------------------
+        # substring relation
+        # A is a substring of B
+        # -----------------------------------------
+        m = re.match(
+            r"^(.+?)\s+is a substring of\s+(.+?)$",
+            s,
+            re.IGNORECASE,
+        )
+        if m:
+            return f"substring({m.group(1).strip()},{m.group(2).strip()})"
 
-        # Placeholder: actual dynamic constraint logic should be added here.
-        return {
-            "decls_classes": len(self.decls_file.decls_classes),
-            "operations": len(self.operations),
-        }
+        # -----------------------------------------
+        # Timestamp
+        # -----------------------------------------
+        m = re.match(
+            r"^(.+?)\s+is\s+Timestamp(?:\.\s*Format:.*)?$",
+            s,
+            re.IGNORECASE,
+        )
+        if m:
+            return f"isTimestamp({m.group(1).strip()})"
+
+        # -----------------------------------------
+        # Date
+        # -----------------------------------------
+        m = re.match(
+            r"^(.+?)\s+is\s+a?\s*Date(?:\.\s*Format:.*)?$",
+            s,
+            re.IGNORECASE,
+        )
+        if m:
+            return f"isDate({m.group(1).strip()})"
+
+        # -----------------------------------------
+        # Email
+        # -----------------------------------------
+        m = re.match(r"^(.+?)\s+is\s+Email$", s, re.IGNORECASE)
+        if m:
+            return f"isEmail({m.group(1).strip()})"
+
+        # -----------------------------------------
+        # URL
+        # -----------------------------------------
+        m = re.match(r"^(.+?)\s+is\s+Url$", s, re.IGNORECASE)
+        if m:
+            return f"isURL({m.group(1).strip()})"
+
+        # -----------------------------------------
+        # LENGTH(x)==N
+        # -----------------------------------------
+        m = re.match(
+            r"^(?:LENGTH|length)\((.+?)\)\s*==\s*(\d+)$",
+            s,
+            re.IGNORECASE,
+        )
+        if m:
+            return f"eq(sizeOf({m.group(1).strip()}),{m.group(2)})"
+
+        # -----------------------------------------
+        # All elements have LENGTH=N
+        # -----------------------------------------
+        m = re.match(
+            r"^All the elements of\s+(.+?)\s+have LENGTH\s*=\s*(\d+)$",
+            s,
+            re.IGNORECASE,
+        )
+        if m:
+            return f"eq(sizeOf(element),{m.group(2)})"
+
+        # -----------------------------------------
+        # one of {a,b,c}
+        # -----------------------------------------
+        m = re.match(
+            r"^(.+?)\s+one of\s*\{(.+?)\}$",
+            s,
+            re.IGNORECASE,
+        )
+        if m:
+            path = m.group(1).strip()
+            values = [v.strip() for v in re.split(r",|;", m.group(2))]
+            values = [
+                v if re.match(r"^-?\d+$", v) else f'"{v}"'
+                for v in values
+            ]
+            return f"contains([{', '.join(values)}], {path})"
+
+        # -----------------------------------------
+        # keep existing contains(...)
+        # -----------------------------------------
+        if s.startswith("contains("):
+            return s
+
+        # -----------------------------------------
+        # keep existing logical expressions
+        # and(...)
+        # or(...)
+        # not(...)
+        # -----------------------------------------
+        if re.match(r"^(and|or|not)\s*\(", s):
+            return s
+
+        return s

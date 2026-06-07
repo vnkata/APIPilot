@@ -203,7 +203,6 @@ class ItemProperties:
         if self.type == 'array':
             if not self.items:
                 return "an array"
-            print(self.items)
             if self.items.type in ('object'):
                 xrefs = self.items.xrefs if self.items.xrefs else None
                 if xrefs:

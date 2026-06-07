@@ -188,9 +188,11 @@ class GeminiModel(APITestingBaseLLMModel):
             usage = getattr(response, "usage_metadata", None)
             print("GeminiModel raw response:", response.text)
             if usage:
-                prompt_tokens = getattr(usage, "prompt_token_count", 0)
-                completion_tokens = getattr(usage, "candidates_token_count", 0)
-                add_usage(prompt_tokens, completion_tokens)
+                prompt_tokens = getattr(usage, "prompt_token_count", 0) or 0
+                completion_tokens = getattr(usage, "candidates_token_count", 0) or 0
+                cached_tokens = getattr( usage, "cached_content_token_count", 0 ) or 0
+                reasoning_tokens = getattr( usage, "thoughts_token_count", 0 ) or 0
+                add_usage(prompt_tokens, completion_tokens,cached_tokens, reasoning_tokens)
             return schema.model_validate_json(cleaned), 0
         else:
             response = self.client.models.generate_content(

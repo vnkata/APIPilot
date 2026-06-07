@@ -4,6 +4,7 @@ from enum import Enum, auto
 import random
 from typing import Any, Dict
 
+from api_testing.generators.counter_value_generator import CounterValueGenerator, HypothesisProperties
 from api_testing.generators.naive_value_generator import NaiveValueGenerator
 from api_testing.generators.requestor import Requestor
 from api_testing.generators.smart_value_generator import SmartValueGenerator
@@ -18,7 +19,7 @@ class Strategy(Enum):
   SMART_VALUE = auto()      # use GPT
   NAIVE_VALUE = auto()      # combine params
   COUNTER_VALUE = auto()    # sinh giá trị đối nghịch / edge-case
-  FUZZY_VALUE = auto()      # sinh data fuzzy
+#   FUZZY_VALUE = auto()      # sinh data fuzzy
 
 def merge_config(
         p: ParameterProperties | ItemProperties | Dict[str, Any] = None,
@@ -102,7 +103,7 @@ def merge_config(
 
 class Executor:
   def __init__(self, api_url: str=None, strategy: Strategy = Strategy.SMART_VALUE, operation: OperationProperties = None, cache_dir=None,model=None,configuration=None,
-               num_test_cases=1, context_pool=None, mutation_ratio = 0.1):
+               num_test_cases=1, context_pool=None, mutation_ratio = 0.1, hypothesis: HypothesisProperties = None):
     self.api_url = api_url
     self.strategy = strategy
     self.operation = operation
@@ -113,7 +114,8 @@ class Executor:
     self.context_pool = context_pool
     self.num_test_cases = num_test_cases
     self.mutation_ratio = mutation_ratio
-
+    self.hypothesis = hypothesis
+    
   def mutator(self, requests: list["RequestData"], body_schema) -> list["RequestData"]:
     if not requests:
         return []
@@ -175,7 +177,8 @@ class Executor:
           mime = "application/json"
       headers = {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-          "Accept": "*/*"
+          "Accept": "*/*",
+          "PRIVATE-TOKEN": "ByXJTBw-ysRRFnnK86Rv"  # placeholder, sẽ được thay thế bằng token thực tế nếu cần
       }
 
       # 2. Cập nhật Content-Type dựa trên mime (giả sử 'mime' là biến chứa type)
@@ -216,6 +219,11 @@ class Executor:
               values = self.generate_naive_values(self.operation, params, body_schema)
               values = build_requests(values)
               return self.mutator(values, req_body.get(mime, {}))
+          case Strategy.COUNTER_VALUE:
+              values = self.generate_counter_values(self.operation, self.hypothesis)
+              values = build_requests(values)
+              return self.mutator(values, req_body.get(mime, {}))
+          
           case Strategy.COUNTER_VALUE | Strategy.FUZZY_VALUE:
               # TODO: implement later (read config, merge, etc.)
               return []
@@ -238,7 +246,18 @@ class Executor:
   def generate_naive_values(self,operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
     value_generator = NaiveValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, cache_dir=self.cache_dir,  mutation_ratio = self.mutation_ratio)
     return value_generator.exec()
-  
+
+  def generate_counter_values(self,operation: OperationProperties, hypothesis: HypothesisProperties):
+    """
+    Generate counter-example values for parameters and request body using LLMs
+    :param operation_properties: Dictionary mapping of operation properties
+    :param requirements: RequestRequirements object that contains any parameters or request body requirements
+    :return: a tuple of the generated parameters and request body
+    """
+    value_generator = CounterValueGenerator(operation, hypothesis=hypothesis, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, )
+    return value_generator.exec()
+
+
   def exec(self):
     data = self.generate_values()
     for item in data:

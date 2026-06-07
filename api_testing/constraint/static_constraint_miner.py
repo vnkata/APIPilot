@@ -550,19 +550,44 @@ class StaticConstraintMiner:
             
             flatten_responses = flatten_json_schema(opt.successful_responses.to_dict())
             
-            for response_path, response_props in flatten_responses.items():
-                response_schema = response_props.get("xrefs")
-                
-                if response_schema not in schema_constraints:
+            for response_schema, schema_rules in schema_constraints.items():
+                matching_responses = [
+                    response_path
+                    for response_path, response_props in flatten_responses.items()
+                    if response_props.get("xrefs") == response_schema
+                ]
+
+                if not matching_responses:
                     continue
-                
-                schema_rules = schema_constraints[response_schema]
-                
-                for attribute_name, attribute_rules in schema_rules.items():
-                    if is_nested_path_end_with(response_path, attribute_name):
-                        attribute_rules = attribute_rules.replace(attribute_name, f"return.{response_path}")
-                        final_constraints[opt.uuid][f"return.{response_path}"] = attribute_rules
-        
+
+                for attr_names, attr_rules in schema_rules.items():
+                    original_attrs = attr_names.split(",")
+                    attr_mapping = {}
+                    for attr_name in original_attrs:
+                        for response_path in matching_responses:
+                            if is_nested_path_end_with(response_path, attr_name):
+                                attr_mapping[attr_name] = f"return.{response_path}"
+                                break
+                    # skip nếu chưa map đủ attributes
+                    if len(attr_mapping) != len(original_attrs):
+                        continue
+
+                    updated_rule = attr_rules
+                    mapped_attrs = []
+
+                    for attr_name in original_attrs:
+                        mapped_path = attr_mapping[attr_name]
+
+                        updated_rule = updated_rule.replace(
+                            attr_name,
+                            mapped_path
+                        )
+
+                        mapped_attrs.append(mapped_path)
+
+                    final_constraints[opt.uuid][
+                        ",".join(mapped_attrs)
+                    ] = updated_rule
         return final_constraints
 
     def _save_constraints_to_cache(self) -> None:

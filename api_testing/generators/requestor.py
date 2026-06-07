@@ -12,7 +12,7 @@ import uuid
 import requests
 
 from api_testing.generators.status_code_peport import StatusCodeReport
-from api_testing.models.http_data import ResponseData
+from api_testing.models.http_data import RequestData, ResponseData
 from api_testing.utils.log import getLogger
 
 
@@ -435,9 +435,24 @@ class HARFileManager:
         with open(self.cache_file, "w", encoding="utf-8") as f:
             json.dump(har_data, f, indent=2, ensure_ascii=False, default=to_placeholder)
 
+class TestCaseManager:
+    """Manages test case results and integration with HAR entries.
+    """
+    def __init__(self, cache_file: str):
+        """Initialize with status code report instance."""
+        self.cache_file = cache_file
+        self.file_handle = open(self.cache_file, "a", encoding="utf-8", buffering=1)
+        
+    def save(self, request_data: "RequestData") -> None:
+        line = json.dumps(request_data.to_dict(), ensure_ascii=False)
+        self.file_handle.write(line + "\n")
 
-# ==================== Main Requestor Class ====================
-
+    def close(self):
+        if hasattr(self, 'file_handle') and not self.file_handle.closed:
+            self.file_handle.close()
+            
+    def __del__(self):
+        self.close()
 class Requestor:
     """
     Executes HTTP requests with comprehensive HAR logging and status tracking.
@@ -476,6 +491,7 @@ class Requestor:
         self._url_builder = URLBuilder(api_url)
         self._payload_builder = PayloadBuilder()
         self._har_manager = HARFileManager(self._cache_dir / f"{self.session_id}.har")
+        self._test_case_manager = TestCaseManager(self._cache_dir / "testcases.jsonl")
         self._report = StatusCodeReport(
             report_file=str(self._cache_dir.parent / RequestConfig.REPORTS_FILE)
         )
@@ -530,6 +546,7 @@ class Requestor:
                 response=response_data,
                 duration_ms=duration_ms,
                 expected_code=request_data.expected_code,
+                request_data=request_data
             )
             
             return response_data
@@ -578,6 +595,7 @@ class Requestor:
         response: ResponseData,
         duration_ms: float,
         expected_code: str,
+        request_data: "RequestData"
     ) -> None:
         """Record request/response as HAR entry and update status report."""
         entry = HAREntryBuilder.build(
@@ -600,3 +618,6 @@ class Requestor:
         
         # Save HAR
         self._har_manager.save_entries(self.entries, self.session_id)
+        # save testcase result
+        if entry.get("is_expected_status"): # only save test case if it matches expected status
+            self._test_case_manager.save(request_data)

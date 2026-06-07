@@ -80,7 +80,6 @@ class DeclsFile:
         variable_name_input: str = "input",
     ) -> None:
         """Parse a single operation and inject declarations into instrumentation."""
-
         decls_class = DeclsClass(endpoint)
 
         enter_variables = get_list_of_decls_variables(

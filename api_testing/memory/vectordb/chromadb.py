@@ -73,10 +73,8 @@ class ChromaDB(APITestingVectorDB):
         return self._client
 
     def create(self) -> None:
-        print("cre")
         """Create the collection in ChromaDb."""
         if not self.exists():
-            print()
             logger.debug(f"Creating collection: {self.collection}")
             self._collection = self.client.create_collection(
                 name=self.collection, metadata={

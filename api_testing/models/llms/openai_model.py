@@ -54,7 +54,7 @@ class OpenAIModel(APITestingBaseLLMModel):
     # Load model / client
     # ========================
     def load_model(self, *args, **kwargs):
-        self.api_key = os.getenv("OPENAI_API_KEY")
+        self.api_key = self.api_key or os.getenv("OPENAI_API_KEY")
         if not self.api_key:
             raise ValueError(
                 "OpenAI API key is required. Set OPENAI_API_KEY or pass api_key."
@@ -107,7 +107,16 @@ class OpenAIModel(APITestingBaseLLMModel):
         usage = getattr(response, "usage", None)
         prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
         completion_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
-
+        cached_tokens=getattr(
+        usage.prompt_tokens_details,
+            "cached_tokens",
+            0
+        ) if getattr(usage, "prompt_tokens_details", None) else 0
+        reasoning_tokens=getattr(
+            usage.completion_tokens_details,
+            "reasoning_tokens",
+            0
+        ) if getattr(usage, "completion_tokens_details", None) else 0
         text = response.choices[0].message.content.strip()
 
         # ===== structured output =====
@@ -115,7 +124,7 @@ class OpenAIModel(APITestingBaseLLMModel):
             try:
                 # print(text)
                 parsed = schema.model_validate_json(text)
-                add_usage(prompt_tokens, completion_tokens)
+                add_usage(prompt_tokens, completion_tokens, cached_tokens, reasoning_tokens)
 
                 return parsed, 0
             except Exception:

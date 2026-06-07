@@ -412,6 +412,9 @@ class APITesting:
             if self.mining_constraints:
                 self.miner.dynamic_mining()
                 self.miner.constraint_arbitration()
+                self.miner.constraint_review(base_url=self.base_url, num_test_cases=num_test_cases)
+
+
             # merge constraints
 
         

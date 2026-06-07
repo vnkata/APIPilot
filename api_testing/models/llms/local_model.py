@@ -74,8 +74,6 @@ class LocalModel(APITestingBaseLLMModel):
     ###############################################
 
     def load_model(self, async_mode: bool = False):
-        print(self.base_url)
-        print(self.api_key)
         return OpenAI(
             base_url=self.base_url,
             api_key=self.api_key

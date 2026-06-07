@@ -98,8 +98,47 @@ class DSLEngine:
                 print(f"Error validating rule for path '{path}': {e}")
                 results[path] = False
         return results
+    
+    def _common_parent(self, paths: list[str]) -> str:
+        split_paths = [p.split(".") for p in paths]
+
+        result = []
+
+        for parts in zip(*split_paths):
+            if len(set(parts)) == 1:
+                result.append(parts[0])
+            else:
+                break
+
+        return ".".join(result)
+    def _validate_multi_path(
+        self,
+        path: str,
+        dsl: str,
+        context: dict
+    ):
+        paths = [p.strip() for p in path.split(",")]
+        parent = self._common_parent(paths)
+        targets = self._collect_targets(parent, context)
+        results = []
+        for local_obj, _ in targets:
+            local_context = self._build_local_context(
+                local_obj,
+                local_obj
+            )
+            eval_context = DSLEvaluationContext(
+                context,
+                local_context
+            )
+            tree = self._parser.parse(dsl)
+            transformer = DSLTransformer(eval_context)
+            value = transformer.transform(tree)
+            results.append(bool(value))
+        return all(results)
 
     def _validate_path(self, path: str, dsl: str, context: dict) -> bool:
+        if "," in path:
+            return self._validate_multi_path(path, dsl, context)
         targets = self._collect_targets(path, context)
 
         if not targets:
