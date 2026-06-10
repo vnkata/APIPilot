@@ -12,7 +12,7 @@ from api_testing.utils.log import getLogger
 
 
 EXPECTED_INVARIANTS_HEADER: Final[str] = (
-    "pptname;invariant;invariantType;variables;postmanAssertion"
+    "pptname;invariant;invariantType;variables;postmanAssertion;dslExpression"
 )
 JAVA_FX_VERSION: Final[str] = "21.0.2"
 MAX_ERROR_OUTPUT_CHARS: Final[int] = 2_000
@@ -33,7 +33,7 @@ class InvariantExtractor:
         self.jar_path = (
             Path(jar_path).resolve()
             if jar_path
-            else (self.repo_root / "tools" / "daikon" / "daikon_modified.jar").resolve()
+            else (self.repo_root / "tools" / "daikon" / "daikon.jar").resolve()
         )
         self.java_executable = str(java_executable) if java_executable is not None else None
         self._resolved_java_executable: str | None = None
@@ -104,7 +104,8 @@ class InvariantExtractor:
 
     def _run_daikon(self, decls_path: Path, dtrace_path: Path) -> str:
         java_executable = self._resolve_java_executable()
-        command = [java_executable, "-jar", str(self.jar_path), str(decls_path), str(dtrace_path)]
+        command = [java_executable, "-cp", str(self.jar_path), "daikon.Daikon", str(decls_path), str(dtrace_path)]
+        print("Running Daikon with command:", " ".join(command))
         result = self._run_process(command)
         if result.returncode == 0:
             return result.stdout
@@ -130,6 +131,8 @@ class InvariantExtractor:
             str(decls_path),
             str(dtrace_path),
         ]
+        print("Running Daikon with command:", " ".join(command))
+
         result = self._run_process(command)
         if result.returncode == 0:
             return result.stdout

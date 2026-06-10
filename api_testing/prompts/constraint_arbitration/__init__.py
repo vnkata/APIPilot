@@ -10,58 +10,82 @@ from api_testing.utils.log import getLogger
 class ConstraintArbitration:
 
     SYSTEM_PROMPT = """
-You are an assistant that evaluates which constraint better represents the true behavior of a REST API property.
+You are an assistant whose task is to classify the relationship between two constraints for the same API property.
 You will be given:
+
 * API specification (OpenAPI): type, format, enum, min/max, description
 * Two constraints for the same property:
+
   1. Constraint A (from specification)
   2. Constraint B (from dynamic runtime)
----
-### **Internal Reasoning Steps**
-    When making your decision, internally perform:
-    1. **Understand the property**
-    * Identify its type, domain, and meaning from the API spec
-    2. **Validate each constraint independently**
-    * Does it match the type?
-    * Does it align with the semantic meaning of the property?
-    * Could it hold for all valid API responses?
-    3. **Check generalization**
-    * Is the constraint universal or derived from limited observations?
-    * Does it overfit to specific values?
-    4. **Compare reliability**
-    * OpenAPI = intended contract
-    * Runtime = observed behavior (may be incomplete)
-    5. **Detect issues**
-    * Overly specific values → likely runtime artifact
-    * Cross-field comparisons without meaning → invalid
-    * Type mismatch → invalid
----
-### **Decision Rule**
-* Prefer the constraint that is:
-  * Semantically correct
-  * Type-consistent
-  * Valid for ALL possible valid responses
-  * Not overfitted to sample data
----
+
+### Internal Reasoning Steps
+When making your decision, internally perform the following:
+
+1. **Understand the property**
+
+   * Identify the property type, format, allowed values, and semantic meaning from the API specification.
+   * Infer the intended domain of valid values.
+
+2. **Normalize both constraints**
+
+   * Rewrite Constraint A and Constraint B into comparable logical forms.
+   * Convert ranges, enums, regexes, predicates, or textual conditions into explicit sets or conditions when possible.
+
+3. **Compare the valid value spaces**
+
+   * Determine the relationship between the value sets allowed by Constraint A and Constraint B.
+
+4. **Classify the relationship**
+Use one of the following categories:
+
+* **Equivalent**
+  Both constraints allow exactly the same set of values.
+
+* **Subset**
+  One constraint allows a strict subset of the values allowed by the other constraint.
+  In other words, one constraint is strictly more restrictive than the other.
+
+  Example:
+  - A: integer ≥ 0
+  - B: integer ≥ 10
+  → B is a subset of A.
+
+* **Intersection**
+  The constraints partially overlap, but neither constraint fully contains the other.
+
+  Example:
+  - A: integer between 1 and 10
+  - B: even integers between 2 and 20
+  → overlap exists, but neither is a subset of the other.
+
+* **Disjoint (Conflicting)**
+  The constraints have no overlapping valid values and cannot both be true simultaneously.
+
+  Example:
+  - A: string enum {"A", "B"}
+  - B: string enum {"C", "D"}
+5. **Prioritize semantic meaning**
+
+   * Do not rely only on syntax.
+   * Consider descriptions, naming, formats, and implied business rules.
+
+6. **Handle uncertainty carefully**
+
+   * If the relationship cannot be determined precisely, choose the closest conservative classification and explain why.
+
 ### **Output Format (STRICT)**
 Return ONLY:
-
 ```json
 {
   "datas": [
     {
       "id": "<index of the invariant (starting from 1)>",
-      "answer": <1 for specification constraint or 2 for runtime constraint, indicating which constraint is better>
+      "answer": <1 = Equivalent, 2 = Subset, 3 = Intersection, 4 = Disjoint>
     }
   ]
 }
 ```
-### **Important Notes**
-* Do NOT output internal reasoning steps
-* Do NOT include chain-of-thought
-* Keep reasoning concise but meaningful
-* If runtime constraint is overly specific or suspicious → prefer OpenAPI
-* If OpenAPI is vague but runtime captures a true invariant → prefer runtime
 """
 
     PROMPT = """
@@ -72,7 +96,7 @@ Parameters:
 {parameters}
 Responses:
 {responses}
-Constraints: 
+Constraints:
 {constraints}
 """
 
@@ -90,4 +114,3 @@ Constraints:
         )
         self.logger.debug("ConstraintArbitration Response: " + response.model_dump_json(indent=2))
         return response.datas
-    

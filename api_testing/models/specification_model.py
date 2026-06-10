@@ -60,7 +60,7 @@ class ItemProperties:
     allOf: Optional[List['ItemProperties']] = field(default_factory=list)
     anyOf: Optional[List['ItemProperties']] = field(default_factory=list)
     oneOf: Optional[List['ItemProperties']] = field(default_factory=list)
-    
+
     @classmethod
     def from_dict(cls, data: dict):
         if data is None:
@@ -82,7 +82,7 @@ class ItemProperties:
         if data.get("oneOf"):
             it.oneOf = [ItemProperties.from_dict(x) for x in data["oneOf"]]
         return it
-    
+
     def merge_allOf(self) -> 'ItemProperties':
         if not self.allOf:
             return self
@@ -161,7 +161,7 @@ class ItemProperties:
             ]) + ")"
         if self.type not in ('array', 'object'):
             # pass
-            
+
             str = ''
             if ingore_type:
                 str+= f'a attribute to describe {self.description}' if self.description else ' a attribute'
@@ -188,7 +188,7 @@ class ItemProperties:
             if self.max_items is not None:
                 str += f', maximum items {self.max_items}'
             if self.unique_items == True:
-                str += f', array unique items' 
+                str += f', array unique items'
             if self.example:
                 str += f', eg: {self.example}'
             return str
@@ -202,11 +202,12 @@ class ItemProperties:
             return json.dumps(dict_items, indent=2)
         if self.type == 'array':
             if not self.items:
-                return "array"
-            if self.xrefs:
-                return f"array of {self.xrefs} object"
-            items = self.items if isinstance(self.items, ItemProperties) else ItemProperties.from_dict(self.items)
-            return f"array of {items.to_human_readable()}"            # return dict_items
+                return "an array"
+            if self.items.type in ('object'):
+                xrefs = self.items.xrefs if self.items.xrefs else None
+                if xrefs:
+                    return f"array of {xrefs} object"
+            return f"array of {self.items.to_human_readable()}"            # return dict_items
         return ''
 
 @dataclass
@@ -340,8 +341,8 @@ class OperationProperties:
             for resp in (self.responses or {}).values()
             for mime in (resp.content or {}).keys()
         }
-        return list(request_mime_types | response_mime_types)    
-    
+        return list(request_mime_types | response_mime_types)
+
     # @property
     # def schemas(self) -> Dict[str, ItemProperties]:
 
@@ -479,7 +480,7 @@ class OperationProperties:
 
     # @property
     # def schemas(self) -> Dict[str, ItemProperties]:
-        
+
     #     def get_relevant_schema_of_endpoint(response: ResponseProperties) -> List[str]:
     #         relevant_schemas = {}
 
@@ -513,7 +514,7 @@ class OperationProperties:
     @property
     def optional_parameters(self) -> Dict[str, ParameterProperties]:
         return {k: v for k, v in self.parameters.items() if not v.required}
-    
+
     # @property
     # def successful_responses(self) -> ItemProperties:
     #     if self.responses is None:
@@ -652,7 +653,7 @@ class OperationProperties:
     @classmethod
     def from_dict(cls, data: dict):
         # Lấy tên của tất cả các fields định nghĩa trong dataclass
-        class_fields = {f.name for f in fields(cls)} 
+        class_fields = {f.name for f in fields(cls)}
         # Lọc data
         filtered_data = {k: v for k, v in data.items() if k in class_fields}
         ints = cls(**filtered_data)
@@ -660,17 +661,17 @@ class OperationProperties:
             for params in data.get("parameters").keys():
                 ints.parameters[params] = ParameterProperties.from_dict(
                     data.get("parameters", {}).get(params))
-                
+
         if data.get("request_body"):
             for contentType in data.get("request_body").keys():
                 ints.request_body[contentType] = ItemProperties.from_dict(
                     data.get("request_body", {}).get(contentType))
-                
+
         if data.get("responses"):
             for statusCode in data.get("responses").keys():
                 ints.responses[statusCode] = ResponseProperties.from_dict(
                     data.get("responses", {}).get(statusCode))
-                
+
         return ints
 
     def to_dict(self):
@@ -683,7 +684,7 @@ class OperationProperties:
     def get_parameters(self, required=False):
         if not self.parameters:
             return []
-        
+
         return remove_nulls([{
             "name": name,
             "type": details.schema.type,

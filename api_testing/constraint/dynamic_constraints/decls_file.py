@@ -68,7 +68,7 @@ class DeclsFile:
         self.decls_classes = decls_classes
         # self.common_path =  common_path
         return decls_classes
-    
+
     # ----------------------------------------------------------------------
     # Internal helpers
     # ----------------------------------------------------------------------
@@ -80,7 +80,6 @@ class DeclsFile:
         variable_name_input: str = "input",
     ) -> None:
         """Parse a single operation and inject declarations into instrumentation."""
-
         decls_class = DeclsClass(endpoint)
 
         enter_variables = get_list_of_decls_variables(
@@ -138,8 +137,8 @@ class DeclsFile:
     def __str__(self) -> str:
         """Convert to Daikon declarations format."""
         res = f"decl-version {self.version}\nvar-comparability {self.comparability.lower()}\n"
-        
+
         for decls_class in self.decls_classes:
             res += f"\n{decls_class}\n"
-        
+
         return res

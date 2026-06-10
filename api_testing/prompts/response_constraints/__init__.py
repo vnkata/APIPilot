@@ -8,6 +8,7 @@ You are a Data Engineering and Schema Architecture expert. Analyze a schema to i
 ### Task
 **Step 1:** Understand each property’s purpose from its name and description; infer relationships when clearly implied.
 **Step 2:** Extract constraints only when clearly justified—explicitly stated or unambiguously implied by structured fields (e.g., fixed length, positional, composite IDs) with consistent mappings. Consider relationships across sibling and nested fields, deriving constraints only when stable and unambiguous.
+**Step 3:**: Convert finalized and validated natural-language rules into precise, machine-readable DSL representations.
 *For encoded fields:* Identify multi-part structures (e.g., positional semantics) and map components via substring/position logic; use `eq` for exact, guaranteed mappings, and `implies` for partial or uncertain ones—defaulting to `implies` when not fully certain.
 ### Rules
 * **Semantic inference:** e.g., IDs → `> 0`, counts → `≥ 0`, positions → `≥ 1`
@@ -21,11 +22,13 @@ When a field has both intrinsic constraints (derived from its own description, t
 - Inferred or cross-field constraints MUST be expressed using `implies`, unless the mapping is exact and type-safe.
 - NEVER overwrite or omit intrinsic constraints when adding inferred constraints.
 - If there is any uncertainty in mapping (e.g., substring extraction, type mismatch like string vs integer), prefer `implies` over `eq`.
+- If a constraint expression references multiple properties, you MUST list all referenced properties in the constraint key using comma-separated names.
+- Preserve intrinsic constraints for each individual field, and declare inter-field relationships as a separate rule.
 ### DSL
 * Logical: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `and`, `or`, `not`, `implies`
 * Set: `in`
 * Functions: `size_of`, `contains`,  `substring`, `exists`, etc.
-* API: `isSortedBy`, `isDate`, `isTime`, `isDateTime`, `isEmail`, `isURL`,`between`, `isRegex`,etc. 
+* API: `isSortedBy`, `isDate`, `isTime`, `isDateTime`, `isEmail`, `isURL`,`between`, `isRegex`,etc.
 **Format enforcement rule:**
 * Use `isRegex` when a **specific pattern (e.g., https, fixed format, exact structure)** is explicitly defined.
 * Use `isURL`, `isDate`, etc. only for **general format validation** when no stricter pattern is provided.
@@ -34,7 +37,9 @@ When a field has both intrinsic constraints (derived from its own description, t
 ```json
 {
   "constraints": {
-    "property_1": "<DSL_expression>" ## DSL_expression must be concise yet comprehensive. eg: `implies(not(eq(type, 'ROH')), eq(typeEstimated.category, substring(type, 0, 1)))`
+    "property_1": "<DSL_expression>" ## DSL_expression must be concise yet comprehensive. eg: `implies(not(eq(type, 'ROH')), eq(typeEstimated.category, substring(type, 0, 1)))`,
+    "property_2,property_3": "<DSL_expression>" ## Use comma-separated property names when a constraint involves multiple properties. eg: date_in,date_out: `gt(date_out,date_in)`
+
   }
 }
 ```
@@ -47,12 +52,13 @@ DSL Examples:
     "name": "gt(sizeOf(name), 0)",
     "url": "and(isURL(url), isRegex(url, '^https://.*$'))",
     "startDate": "isDate(startDate)",
-    "endDate": "and(isDate(endDate), gte(endDate, startDate))",
+    "endDate": "isDate(endDate)",
+    "endDate,startDate": "gte(endDate, startDate)",
     "code": "and(isRegex(code, '^[A-Z0-9]{3}$'), eq(sizeOf(code), 3))",
     "items": "gt(sizeOf(items), 0)",
     "sortedList": "isSortedBy(sortedList, 'date')",
     "compositeField": "implies(exists(parent), eq(child, substring(parent, 0, 2)))",
-    "totalPrice": "and(gt(totalPrice, 0), eq(totalPrice, sum(items.price)))"
+    "totalPrice,items.price": "and(gt(totalPrice, 0), eq(totalPrice, sum(items.price)))"
   }
 }
 """

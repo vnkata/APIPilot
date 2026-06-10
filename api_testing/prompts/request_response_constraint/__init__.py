@@ -4,65 +4,6 @@ from api_testing.utils.log import getLogger
 
 
 class RequestResponseConstraint:
-#     SYSTEM_PROMPT = """
-# You are given a set of request parameters and an API response schema. Your task is to infer constraints that describe how input parameters influence response properties, and express them using a formal, machine-readable Domain-Specific Language (DSL).
-# ---
-# ### Objective
-# For each single, pair, or triple of input parameters, identify whether they impose constraints on one or more response properties.
-# ⚠️ **Only include constraints where BOTH `parameter` and `property` are present (non-null).**
-# Discard any constraint that does not map input parameters to specific response properties.
-# ---
-# ### DSL Specification
-# Use the following DSL primitives:
-# #### Logical operators
-# * `eq(a, b)`, `neq(a, b)`
-# * `gt(a, b)`, `gte(a, b)`, `lt(a, b)`, `lte(a, b)`
-# * `and(expr1, expr2, ...)`, `or(expr1, expr2, ...)`, `not(expr)`
-# * `implies(expr1, expr2)`
-# #### Set and domain
-# * `in(x, [v1, v2, ...])`
-# #### Existence
-# * `exists(x)`, `isNull(x)`
-# #### Functions
-# * `sizeOf(x)`
-# * `contains(x, y)`
-# #### API-specific predicates
-# * `isSortedBy(return, field, order)`
-# * `default(input.x, v)`
-# * `between(x, min, max)`
-# ---
-# ### Naming Convention
-# * Input parameters: `input.<param>`
-# * Response fields: `return.<field>`
-# * Nested fields: `return.a.b.c`
-# ---
-# ### Constraint Format
-# Return a JSON object:
-# ```json
-# {
-#   "constraint": [
-#     {
-#       "parameter": "<param_list>",
-#       "predicate": "<DSL_expression>",
-#       "property": "<response_fields>"
-#     }
-#   ]
-# }
-# ```
-# ---
-# ### Rules
-# * Each `parameter` must include all input parameters involved (single, pair, or triple).
-# * Each `property` must include all response fields involved.
-# * The predicate must be fully machine-readable using the DSL.
-# * Use `default(...)` when a parameter has a default value.
-# * Use `implies(...)` for conditional constraints.
-# * Use abstract predicates if needed, but only when they map to a concrete response property.
-# * Ensure input and output refer to the same concept when using `eq`.
-# * ❗ **Exclude any constraint where `property` is null or missing.**
-# ---
-# ### Output Requirement
-# Only return the JSON object following the specified format. Do not include explanations.
-#     """
     SYSTEM_PROMPT = """
 You are given a set of request parameters and an API response schema. Your task is to infer constraints describing how input parameters influence response properties, and express them using a formal DSL.
 ---
@@ -72,6 +13,7 @@ You are given a set of request parameters and an API response schema. Your task 
 Identify constraints where **individual parameters or minimal necessary parameter groups** affect response fields.
 
 * Prefer **single-parameter constraints** when possible.
+* Only generate non-trivial constraints with a clear and meaningful relationship
 * Only create **multi-parameter constraints when they jointly define one behavior** (e.g., sorting).
 * Avoid redundant or overlapping constraints.
 
@@ -270,4 +212,4 @@ Use:
         )
         # Filter out constraints where parameter is None
         self.logger.debug("RequestResponseConstraint Response: " +  response.model_dump_json(indent=2))
-        return json.loads(response.model_dump_json(indent=2)) 
+        return json.loads(response.model_dump_json(indent=2))

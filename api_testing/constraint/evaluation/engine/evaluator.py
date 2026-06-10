@@ -66,6 +66,8 @@ class DSLTransformer(Transformer):
             "isDate": "is_date",
             "isRegex": "is_regex",
             "isSortedBy": "is_sorted_by",
+            "isNumeric": "is_numeric",
+            "oneOf": "one_of"
         }
 
         method_name = special_map.get(raw_name) or ''.join(
@@ -78,6 +80,7 @@ class DSLTransformer(Transformer):
             raise AttributeError(f"Undefined DSL function: {raw_name}")
 
         try:
+
             null_aware = {
                 "and",
                 "or",

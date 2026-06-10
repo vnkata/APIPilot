@@ -174,14 +174,23 @@ class OpenAIModel(APITestingBaseLLMModel):
         usage = getattr(response, "usage", None)
         prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0
         completion_tokens = getattr(usage, "completion_tokens", 0) if usage else 0
-
+        cached_tokens=getattr(
+        usage.prompt_tokens_details,
+            "cached_tokens",
+            0
+        ) if getattr(usage, "prompt_tokens_details", None) else 0
+        reasoning_tokens=getattr(
+            usage.completion_tokens_details,
+            "reasoning_tokens",
+            0
+        ) if getattr(usage, "completion_tokens_details", None) else 0
         text = response.choices[0].message.content.strip()
 
         # ===== structured output =====
         if schema:
             try:
                 parsed = _validate_schema_json(text, schema)
-                add_usage(prompt_tokens, completion_tokens)
+                add_usage(prompt_tokens, completion_tokens, cached_tokens, reasoning_tokens)
                 return parsed, 0
             except Exception as e:
                 raise Exception(f"JSON parse failed: {e}")

@@ -5,7 +5,16 @@ class RuleFunctions:
     # --- Logical Operators ---
     @staticmethod
     def eq(a, b):
-        return a == b
+        # So sánh trực tiếp trước
+        if a == b:
+            return True
+        # Thử ép về số
+        try:
+            return float(a) == float(b)
+        except (TypeError, ValueError):
+            pass
+
+        return False
 
     @staticmethod
     def neq(a, b): return a != b
@@ -15,14 +24,20 @@ class RuleFunctions:
 
     @staticmethod
     def gte(a, b):
-        return a >= b
+        a_num = int(a)
+        b_num = int(b)
+        if a_num is not None and b_num is not None:
+            return a_num >= b_num
 
     @staticmethod
     def lt(a, b): return a < b
 
     @staticmethod
     def lte(a, b):
-        return a <= b
+        a_num = int(a)
+        b_num = int(b)
+        if a_num is not None and b_num is not None:
+            return a_num <= b_num
 
     @staticmethod
     def and_op(*args): return all(args)
@@ -40,15 +55,29 @@ class RuleFunctions:
 
     # --- Set & Collection Operators ---
     @staticmethod
-    def is_in(a, b_list): 
-        return a in b_list if isinstance(b_list, list) else False
+    def is_in(a, b_list):
+
+        if not isinstance(b_list, list):
+            return False
+
+        if isinstance(a, list):
+            return all(item in b_list for item in a)
+
+        return a in b_list
 
     @staticmethod
     def size_of(val):
         try:
             return len(val)
         except Exception as e:
-            print(f"Error in size_of: {e}") 
+            print(f"Error in size_of: {e}")
+            return 0
+    @staticmethod
+    def length(val):
+        try:
+            return len(val)
+        except Exception as e:
+            print(f"Error in size_of: {e}")
             return 0
 
     @staticmethod
@@ -89,20 +118,32 @@ class RuleFunctions:
         return bool(re.match(pattern, str(val)))
 
     @staticmethod
-    def is_date(val):
-        try:
-            # Hỗ trợ ISO format phổ biến từ JSON
-            datetime.fromisoformat(str(val).replace('Z', '+00:00'))
-            return True
-        except: return False
+    def is_date(val, format="iso"):
+        """
+        Check whether a value matches a date/datetime format.
 
-    @staticmethod
-    def is_date_time(val):
-        try:
-            datetime.fromisoformat(str(val).replace('Z', '+00:00'))
-            return 'T' in str(val) or ' ' in str(val)
-        except Exception:
-            return False
+        ```
+        Args:
+            val: value to validate.
+            format: a format string, "iso", or a list of formats.
+
+        Returns:
+            bool
+        """
+        formats = format if isinstance(format, list) else [format]
+        for fmt in formats:
+            try:
+                if fmt == "iso":
+                    datetime.fromisoformat(
+                        str(val).replace("Z", "+00:00")
+                    )
+                else:
+                    datetime.strptime(str(val), fmt)
+                return True
+            except (ValueError, TypeError):
+                continue
+        return False
+
 
     @staticmethod
     def between(val, low, high):
@@ -126,7 +167,7 @@ class RuleFunctions:
             values = [item.get(key) for item in collection]
             return values == sorted(values)
         except: return False
-        
+
     @staticmethod
     def substring(val, start, end):
         try:
@@ -136,9 +177,15 @@ class RuleFunctions:
     @staticmethod
     def exists(val):
         return val is not None
-    
+
     @staticmethod
     def all_op(collection, evaluator_fn):
         if not isinstance(collection, list): return False
         if not collection: return True # Empty list thỏa mãn 'all'
         return all(evaluator_fn(item) for item in collection)
+
+    @staticmethod
+    def is_timestamp(val, start, end):
+        try:
+            return str(val)[int(start):int(end)]
+        except: return ""

@@ -8,6 +8,7 @@ import random
 from typing import Any, Dict, Optional
 
 from api_testing.events import get_emitter, EventType, Phase, OperationStatus
+from api_testing.generators.counter_value_generator import CounterValueGenerator, HypothesisProperties
 from api_testing.generators.naive_value_generator import NaiveValueGenerator
 from api_testing.generators.requestor import Requestor
 from api_testing.generators.async_requestor import AsyncRequestor, AsyncRequestBatch
@@ -132,6 +133,7 @@ class Executor:
       generation: int = 1,
       total_generations: int = 1,
       prompt_factory = None,
+      hypothesis: HypothesisProperties = None,
   ):
     self.api_url = api_url
     self.strategy = strategy
@@ -145,6 +147,7 @@ class Executor:
     self.default_headers = {str(k): str(v) for k, v in (default_headers or {}).items()}
     self.generation = generation
     self.total_generations = total_generations
+    self.hypothesis = hypothesis
 
     if use_async:
       self.async_sender = AsyncRequestor(api_url=self.api_url, cache_dir=self.cache_dir)
@@ -285,7 +288,12 @@ class Executor:
               values = self.generate_naive_values(self.operation, params, body_schema)
               values = build_requests(values)
               return self.mutator(values, req_body.get(mime, {}))
-          case Strategy.COUNTER_VALUE | Strategy.FUZZY_VALUE:
+          case Strategy.COUNTER_VALUE:
+              values = self.generate_counter_values(self.operation, self.hypothesis)
+              values = build_requests(values)
+              return self.mutator(values, req_body.get(mime, {}))
+
+          case Strategy.FUZZY_VALUE:
               # TODO: implement later (read config, merge, etc.)
               return []
 
@@ -306,6 +314,22 @@ class Executor:
   
   def generate_naive_values(self,operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
     value_generator = NaiveValueGenerator(operation, parameters=parameters, request_body=request_body, model=self.model, num_test_cases=self.num_test_cases, context_pool = self.context_pool, cache_dir=self.cache_dir,  mutation_ratio = self.mutation_ratio, prompt_factory=self.prompt_factory)
+    return value_generator.exec()
+
+  def generate_counter_values(self, operation: OperationProperties, hypothesis: HypothesisProperties):
+    """
+    Generate counter-example values for parameters and request body using LLMs
+    :param operation_properties: Dictionary mapping of operation properties
+    :param requirements: RequestRequirements object that contains any parameters or request body requirements
+    :return: a tuple of the generated parameters and request body
+    """
+    value_generator = CounterValueGenerator(
+        operation,
+        hypothesis=hypothesis,
+        model=self.model,
+        num_test_cases=self.num_test_cases,
+        context_pool=self.context_pool,
+    )
     return value_generator.exec()
 
   async def generate_naive_values_async(self, operation: OperationProperties, parameters: Dict[str, ParameterProperties], request_body: Dict[str, ItemProperties]):
