@@ -364,7 +364,9 @@ class APITesting:
                             data["resource"] = common_res
                         del data["need_change"]
                         producer_mapping[k] = data
-                    producer_obj.genParameters = {"pool": [data]}            
+                    producer_obj.genParameters = {"pool": [data]}  
+            # if node.name not in ("post-/projects"):
+            #     return
             executor = Executor(
                 api_url = self.base_url, 
                 strategy= Strategy.NAIVE_VALUE,
@@ -407,17 +409,12 @@ class APITesting:
                 
         for idx in range(num_generations):
             print("🌳"*10, " RUN GENERATIONS ", str(idx+1), "🌳"*10)
-
             traverse_forest_dfs(forest, context)
-            if self.mining_constraints:
-                self.miner.dynamic_mining()
-                self.miner.constraint_arbitration()
-                self.miner.constraint_review(base_url=self.base_url, num_test_cases=num_test_cases)
-
-
+        if self.mining_constraints:
+            self.miner.dynamic_mining()
+            self.miner.constraint_arbitration()
+            self.miner.constraint_review(base_url=self.base_url, num_test_cases=num_test_cases)
             # merge constraints
-
-        
         print("Success rate", total_success/total_testcase)
         print(successFull)
         print("Success rate", len(successFull.keys()))

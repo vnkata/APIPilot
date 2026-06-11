@@ -156,7 +156,7 @@ class GeminiModel(APITestingBaseLLMModel):
         stop=stop_after_attempt(3),
         after=log_retry_error,
     )
-    def generate(self, prompt: Union[str, List], system_prompt=None, schema: Optional[BaseModel] = None, ) -> str:
+    def generate(self, prompt: Union[str, List], system_prompt=None, schema: Optional[BaseModel] = None, caller=None,) -> str:
         """Generates text from a prompt.
 
         Args:
@@ -192,7 +192,7 @@ class GeminiModel(APITestingBaseLLMModel):
                 completion_tokens = getattr(usage, "candidates_token_count", 0) or 0
                 cached_tokens = getattr( usage, "cached_content_token_count", 0 ) or 0
                 reasoning_tokens = getattr( usage, "thoughts_token_count", 0 ) or 0
-                add_usage(prompt_tokens, completion_tokens,cached_tokens, reasoning_tokens)
+                add_usage(caller, prompt_tokens, completion_tokens,cached_tokens, reasoning_tokens)
             return schema.model_validate_json(cleaned), 0
         else:
             response = self.client.models.generate_content(
@@ -204,7 +204,9 @@ class GeminiModel(APITestingBaseLLMModel):
             if usage:
                 prompt_tokens = getattr(usage, "prompt_token_count", 0)
                 completion_tokens = getattr(usage, "candidates_token_count", 0)
-                add_usage(prompt_tokens, completion_tokens)
+                cached_tokens = getattr( usage, "cached_content_token_count", 0 ) or 0
+                reasoning_tokens = getattr( usage, "thoughts_token_count", 0 ) or 0
+                add_usage(caller, prompt_tokens, completion_tokens,cached_tokens, reasoning_tokens)
             return response.text, 0
 
     async def a_generate(

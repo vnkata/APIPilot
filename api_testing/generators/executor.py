@@ -163,7 +163,7 @@ class Executor:
         else:       
             mutated.append(req)
 
-    return mutated
+    return mutated 
      
   def generate_values(self):
       req_body = self.operation.request_body
@@ -178,7 +178,13 @@ class Executor:
       headers = {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Accept": "*/*",
-          "PRIVATE-TOKEN": "ByXJTBw-ysRRFnnK86Rv"  # placeholder, sẽ được thay thế bằng token thực tế nếu cần
+          "PRIVATE-TOKEN": "jxQposqiCQcUtk7NNDrL"  #admin
+        #   "PRIVATE-TOKEN": "iQsxaz6krFqGKeo3sMmd" #user01
+        #   "PRIVATE-TOKEN": "f8yBzJsuC47f2ryrNJ7D" #user02
+        #   "PRIVATE-TOKEN": "kR1q5aXTVxfPS5EoBPRk" #user03
+          # "PRIVATE-TOKEN": "AEz5QsnRK2TNer2xzvRy" #user04 
+
+        #   
       }
 
       # 2. Cập nhật Content-Type dựa trên mime (giả sử 'mime' là biến chứa type)

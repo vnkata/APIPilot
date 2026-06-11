@@ -106,7 +106,7 @@ class StaticConstraintMiner:
         except Exception as e:
             self.logger.error(f"Error during constraint mining: {str(e)}")
             raise
-    
+     
     def verify_constraints(self, history) -> bool:
         """
         Verify the validity of mined constraints against historical data.
@@ -144,7 +144,6 @@ class StaticConstraintMiner:
             if not operation_id:
                 self.logger.debug("Skipping history record without operation_id")
                 continue
-
             rules = all_constraints.get(operation_id)
             if not rules:
                 self.logger.debug(f"No constraints found for operation_id={operation_id}")
@@ -430,15 +429,20 @@ class StaticConstraintMiner:
                 for property_part in map(str.strip, property_name.split(",")):
                     property_part = property_part.replace("return.", "").strip()
                     if is_nested_path_end_with(response_path, property_part):
-                        predicate = constraint.get("predicate", "").replace(property_part, f"{response_path}")
                         # print(f"Mapping constraint property '{property_part}' to response path '{response_path}' with predicate '{predicate}'")
+                        property_mapped = f"return{response_path}" if response_path.startswith("[]") else f"return.{response_path}"
+                        original_predicate = constraint.get("predicate", "")
+                        escaped_part = re.escape(property_part)
+
+                        pattern = r'(?<!input\.)(?:return\.)?' + escaped_part + r'\b'
+                        predicate = re.sub(pattern, property_mapped, original_predicate)
+                        
                         result.append({
-                            "property": f"return.{response_path}",
+                            "property": property_mapped,
                             "predicate": predicate,
                             "parameter": constraint.get("parameter"),
                         })
                         break
-        
         return result
  
     def response_properties_constraints(self) -> Dict[str, Dict[str, Any]]:
@@ -566,7 +570,9 @@ class StaticConstraintMiner:
                     for attr_name in original_attrs:
                         for response_path in matching_responses:
                             if is_nested_path_end_with(response_path, attr_name):
-                                attr_mapping[attr_name] = f"return.{response_path}"
+                                property = f"return{response_path}" if response_path.startswith("[]") else f"return.{response_path}"
+                                
+                                attr_mapping[attr_name]  =property
                                 break
                     # skip nếu chưa map đủ attributes
                     if len(attr_mapping) != len(original_attrs):

@@ -49,7 +49,8 @@ Here is list input property and descriptions:
     response, _ = self.llm.generate(
       system_prompt=system,
       prompt=prompt,
-      schema=Verdict
+      schema=Verdict,
+      caller=self.__class__.__name__,
     )
     self.logger.debug("ParameterRandomMapper Response: " + response.model_dump_json())
 

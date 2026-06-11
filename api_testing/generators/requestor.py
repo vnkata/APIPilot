@@ -52,7 +52,7 @@ class RequestConfig:
     CACHE_SUBDIR: str = "history"
     HISTORY_EXTENSION: str = ".har"
     REPORTS_FILE: str = "reports.json"
-
+    TESTCASES_FILE: str = "testcases.jsonl"
 
 # ==================== Helper Functions ====================
 
@@ -491,7 +491,9 @@ class Requestor:
         self._url_builder = URLBuilder(api_url)
         self._payload_builder = PayloadBuilder()
         self._har_manager = HARFileManager(self._cache_dir / f"{self.session_id}.har")
-        self._test_case_manager = TestCaseManager(self._cache_dir / "testcases.jsonl")
+        self._test_case_manager = TestCaseManager(
+            cache_file=str(self._cache_dir.parent / RequestConfig.TESTCASES_FILE)
+        )
         self._report = StatusCodeReport(
             report_file=str(self._cache_dir.parent / RequestConfig.REPORTS_FILE)
         )
@@ -620,4 +622,6 @@ class Requestor:
         self._har_manager.save_entries(self.entries, self.session_id)
         # save testcase result
         if entry.get("is_expected_status"): # only save test case if it matches expected status
+            if response:
+                request_data.response = response.body
             self._test_case_manager.save(request_data)

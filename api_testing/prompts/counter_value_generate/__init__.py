@@ -9,15 +9,14 @@ Given an API endpoint and its payload definitions from an OpenAPI specification,
 Each response should follow this structure, Dont explain anything, just return the JSON array:
 ```json
 {
-  "datas": [
-    {
-      "parameters": { "parameter1": "value1", ..., "parameterN": "valueN" },
-      "requestBody": { "field1": "value1", ..., "fieldN": "valueN" },
-      "expected_code": "<expected HTTP response code: '2xx' or '4xx'>, only generate 2xx if the counterexample is valid for the OpenAPI spec but violates the hypothesis",
-      "hypothesis": "<1 for hypothesis 1 or 2 for hypothesis 2>"
-    },
-    ...
-  ]
+ "datas": [
+  {
+   "parameters": { "parameter1": "value1", ..., "parameterN": "valueN" },
+   "requestBody": { "field1": "value1", ..., "fieldN": "valueN" },
+   "expected_code": "<expected HTTP response code: '2xx' or '4xx'>, only generate 2xx if the counterexample is valid for the OpenAPI spec but violates the hypothesis"
+  },
+  ...
+ ]
 }
 ```
 Here's a clearer and more precise rewrite:
@@ -54,7 +53,8 @@ Relation between the two hypotheses (if any): {relation}
     response, _ = self.llm.generate(
       system_prompt=self.SYSTEM_PROMPT,
       prompt=prompt,
-      schema=Verdict
+      schema=Verdict,
+      caller=self.__class__.__name__,
     )
     self.logger.debug("CounterValueGenerate Response: " + response.model_dump_json(indent=2))
     return response

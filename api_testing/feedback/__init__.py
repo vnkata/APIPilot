@@ -1,4 +1,5 @@
 import json
+import os
 import re
 from sklearn.metrics.pairwise import cosine_similarity
  
@@ -20,7 +21,6 @@ def normalize_error(text):
 
     return text[:500]
 
-
 class FeedbackAnalyzer:
 
     def __init__(self, model=None, embed=None, cache_dir=None):
@@ -34,6 +34,7 @@ class FeedbackAnalyzer:
         self.error_memory = SemanticErrorMemory(embed, cache_dir=cache_dir)
         self.embed = embed
         self.threshold = 0.9
+        self.cache_dir = cache_dir  # Lưu lại cache_dir để sử dụng trong hàm adjust
 
     # ------------------------------------------------
     # GROUP ERRORS
@@ -208,8 +209,17 @@ class FeedbackAnalyzer:
 
     def adjust(self, path, context: 'ContextualMemory', producer_mapping,  operation_graph,graph_analyst, *args, **kargs):
         adjust = False
+        adjustCombine = False
         context.set_current(path)
-
+        norm_path = path.lower().replace(" ", "-")
+        if self.cache_dir:
+            combination_file = os.path.join(self.cache_dir, "combination.json")
+            if os.path.exists(combination_file):
+                try:
+                    with open(combination_file, 'r', encoding='utf-8') as f:
+                        combination_data = json.load(f)
+                except Exception:
+                    combination_data = {}
         for item in self.feedback:
 
             feedback = item.get("feedback", {})
@@ -284,6 +294,91 @@ class FeedbackAnalyzer:
                                 )
 
                 adjust = True
+            
+            if feedback.get("combination_constraints"):
+                comb_constraints = feedback.get("combination_constraints")
+                if isinstance(comb_constraints, list):
+                    if norm_path not in combination_data:
+                        continue
+                    target_list = combination_data[norm_path].get("parameters", [])
+                    original_size = len(target_list)
+                    for constraint in comb_constraints:
+
+                        c_type = constraint.get("type")
+                        params = constraint.get("params", [])
+
+                        if not isinstance(params, list) or not params:
+                            continue
+
+                        param_set = set(params)
+
+                        # -----------------------------------------
+                        # at_least_one
+                        # -----------------------------------------
+                        if c_type == "at_least_one":
+
+                            target_list[:] = [
+                                combo
+                                for combo in target_list
+                                if any(p in param_set for p in combo)
+                            ]
+
+                        # -----------------------------------------
+                        # mutually_exclusive
+                        # -----------------------------------------
+                        elif c_type == "mutually_exclusive":
+
+                            target_list[:] = [
+                                combo
+                                for combo in target_list
+                                if not param_set.issubset(set(combo))
+                            ]
+
+                        # -----------------------------------------
+                        # requires
+                        # params[0] requires params[1]
+                        # -----------------------------------------
+                        elif c_type == "requires":
+
+                            if len(params) >= 2:
+                                source = params[0]
+                                required = params[1]
+
+                                target_list[:] = [
+                                    combo
+                                    for combo in target_list
+                                    if not (
+                                        source in combo and
+                                        required not in combo
+                                    )
+                                ]
+
+                        # -----------------------------------------
+                        # all_or_none
+                        # -----------------------------------------
+                        elif c_type == "all_or_none":
+
+                            target_list[:] = [
+                                combo
+                                for combo in target_list
+                                if (
+                                    len(set(combo) & param_set) == 0
+                                    or
+                                    param_set.issubset(set(combo))
+                                )
+                            ]
+
+                    if len(target_list) != original_size:
+                        adjustCombine = True
+
+                    combination_data[norm_path]["parameters"] = target_list
 
         # context.clear_current()
+        if adjustCombine and combination_file:
+            try:
+                os.makedirs(os.path.dirname(combination_file), exist_ok=True)
+                with open(combination_file, 'w', encoding='utf-8') as f:
+                    json.dump(combination_data, f, indent=2, ensure_ascii=False)
+            except Exception as e:
+                print(f"Error saving combination cache: {e}")
         return adjust

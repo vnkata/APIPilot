@@ -188,6 +188,7 @@ class NaiveValueGenerator:
     
     def exec(self):
         # process parameters
+        print("GEN NAIVE VALUE" , self.operation.uuid)
         cache = self.load_cache()
         if self.operation.uuid in cache:
             param_combos = cache.get(self.operation.uuid, {}).get("parameters", [])
@@ -357,19 +358,14 @@ class NaiveValueGenerator:
             if not should_mutate:    
                 for _ in range(10):
                     path_param_values = {k: v for k, v in params.items() if k in path_params}
-
-                    # 1️⃣ blacklist check FIRST
-                    if self.context_pool.is_blacklisted(path_param_values):
-                        params, params_mutated = generate_fields(self.parameters, params_selected)
-                        # body, body_mutated = generate_fields(self.request_body, body_selected)
-                        continue
-                    # 2️⃣ whitelist priority (70%)
-                    if random.random() < 0.7:
-                        if self.context_pool.in_whitelist(path_param_values):
-                            break
-                    else:
-                        # 3️⃣ exploration 30%
-                        break
+                    # Only consider breaking if the parameters are NOT blacklisted
+                    if not self.context_pool.is_blacklisted(path_param_values):
+                        # Break and accept these params if:
+                        # 1. We fall into the 30% exploration bucket, OR
+                        # 2. We are in the 70% bucket AND the params are whitelisted
+                        if random.random() >= 0.7 or self.context_pool.in_whitelist(path_param_values):
+                            break 
+                    # If it was blacklisted, OR it wasn't whitelisted during the 70% phase, regenerate and loop
                     params, params_mutated = generate_fields(self.parameters, params_selected)
                     # body, body_mutated = generate_fields(self.request_body, body_selected)
                     # 

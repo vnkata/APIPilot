@@ -27,7 +27,8 @@ class RequestData:
     headers: Dict[str, str] = field(default_factory=dict)
     cookies: Dict[str, str] = field(default_factory=dict)
     expected_code: str = "2xx"
-
+    response: Union[str, bytes, Any] = None
+    
     def __post_init__(self):
         if not self.endpoint_path or not isinstance(self.endpoint_path, str):
             raise ValueError("endpoint_path must be a non-empty string")

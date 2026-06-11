@@ -174,13 +174,13 @@ class DynamicConstraintMiner:
                 f"{missing_paths}. Call extract_decls_classes() and extract_dtraces() first."
             ) 
         invariant_file  = os.path.join(self.cache_dir, self.INVARIANTS_FILENAME)
-        if not os.path.exists(invariant_file):
-            self.logger.info(f"Reusing existing invariants file: {invariant_file}")
+        # if not os.path.exists(invariant_file):
+        #     self.logger.info(f"Reusing existing invariants file: {invariant_file}")
             # return Path(invariant_file)
-            self.extractor.extract_invariants(
-                decls_path=decls_path,
-                dtrace_path=dtrace_path,
-            )
+        self.extractor.extract_invariants(
+            decls_path=decls_path,
+            dtrace_path=dtrace_path,
+        )
         invariants = read_csv(invariant_file, delimiter=";")
         headers = invariants[0] if invariants else []
         final_invariants = []
@@ -191,7 +191,10 @@ class DynamicConstraintMiner:
             pptname = invariant_dict.get("pptname", "")
             variables = invariant_dict.get("variables", "")
             variables = remove_outer_parens(variables).split(",") if variables else []
-            
+            invariant_dict["dslExpression"] = invariant_dict["dslExpression"].replace(
+                "[..]",
+                "[]"
+            )
             for item in map(str.strip, variables):
                 if "return" not in item:
                     continue
@@ -222,6 +225,19 @@ class DynamicConstraintMiner:
                         original_variable,
                         variable
                     )
+                
+                if  "return.array" in variable:
+                    variable = variable.replace("return.array", "return")
+                    invariant_dict["invariant"] = invariant_dict["invariant"].replace(
+                        "return.array",
+                        variable
+                    )
+                    invariant_dict["dslExpression"] = invariant_dict["dslExpression"].replace(
+                        "return.array",
+                        variable
+                    )
+
+
                 invariant_dict.setdefault("variable", []).append(variable)
                 invariant_dict.setdefault(
                     "response_container_path",
@@ -299,12 +315,23 @@ class DynamicConstraintMiner:
                     mapped_variable = variable
 
                     for response_path in flatten_responses.keys():
-                        if is_nested_path_end_with(
+                        if variable == "return":
+                            mapped_variable = f"return{response_path}" if response_path.startswith("[]") else f"return.{response_path}"
+                            new_invariant["invariant"] = (
+                                new_invariant["invariant"]
+                                .replace(variable, mapped_variable)
+                            )
+                            new_invariant["dslExpression"]=(
+                                new_invariant["dslExpression"]
+                                .replace(variable, mapped_variable)
+                            )
+
+                        elif is_nested_path_end_with(
                             response_path,
-                            variable.replace("return.",""),
+                            variable.replace("return.","").replace("return", ""),
                             equal=True
-                        ):
-                            mapped_variable = f"return.{response_path}"
+                        ) :
+                            mapped_variable = f"return{response_path}" if response_path.startswith("[]") else f"return.{response_path}"
                             new_invariant["invariant"] = (
                                 new_invariant["invariant"]
                                 .replace(variable, mapped_variable)

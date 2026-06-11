@@ -1,4 +1,5 @@
 import json
+import os
 from pathlib import Path
 from typing import Any, Dict, Optional
 
@@ -55,6 +56,7 @@ class ConstraintMiner:
 
     def static_mining(self):
         self.static_constraints = self.staic_miner.mining()
+
         return self.static_constraints
     
     def dynamic_mining(self):
@@ -97,20 +99,152 @@ class ConstraintMiner:
                 json.dump(data, f, ensure_ascii=False, indent=4)
         except Exception as e:
             raise IOError(f"Failed to save JSON to {filepath}: {str(e)}")
-        
-    def constraint_arbitration(self):
-        cache_file = Path(self.project_dir) / self.MAIN_CACHE
-        if cache_file.exists():
-            self.logger.debug(f"Loading cached constraints from {cache_file}")
-            cache = self._load_json_file(cache_file)
-            self.constraints = cache
-            return
+    
+    def _build_test_case_context(
+        self,
+        test_case: Dict[str, Any]
+    ) -> Dict[str, Any]:
+        context = {}
+        # input
+        input_data = {}
+        parameters = test_case.get("parameters") or {}
+        if isinstance(parameters, dict):
+            input_data.update(parameters)
+        request_body = test_case.get("request_body") or {}
+        if isinstance(request_body, dict):
+            input_data.update(request_body)
+        context["input"] = input_data
+        # return
+        response_body = test_case.get("response_body")
+        if isinstance(response_body, str):
+            try:
+                response_body = json.loads(response_body)
+            except Exception:
+                pass
+        context["return"] = response_body or {}
+        return context
+    
+    def verify_static_constraints(self):
+        """
+        Validate spec-derived constraints using existing execution evidence.
 
+        Any constraint contradicted by at least one successful execution
+        will be removed from self.static_constraints.
+        """
+        test_case_file = Path(self.project_dir) / "test_cases.json"
+
+        if not test_case_file.exists():
+            self.logger.warning(
+                f"Test case file not found: {test_case_file}"
+            )
+            return {}
+
+        if not hasattr(self, "static_constraints"):
+            self.static_mining()
+
+        test_cases = self._load_json_file(test_case_file)
+
+        # group by operation
+        grouped: Dict[str, list] = {}
+
+        for tc in test_cases:
+            operation_id = tc.get("operation_id")
+            if not operation_id:
+                continue
+            grouped.setdefault(
+                operation_id,
+                []
+            ).append(tc)
+        engine = DSLEngine()
+        removed_constraints: Dict[str, Dict[str, Any]] = {}
+        filtered_constraints: Dict[str, Dict[str, str]] = {}
+        for endpoint, constraints in self.static_constraints.items():
+            filtered_constraints[endpoint] = {}
+            endpoint_records = grouped.get(endpoint, [])
+            # No evidence -> keep all constraints
+            if not endpoint_records:
+                filtered_constraints[endpoint] = constraints
+                continue
+            for prop, rule in constraints.items():
+                if not rule:
+                    continue
+                violated = False
+                counterexample = None
+                for record in endpoint_records:
+                    try:
+                        context = self._build_test_case_context(
+                            record
+                        )
+                        passed = engine.evaluate(
+                            rule,
+                            context
+                        )
+                    except Exception as e:
+                        self.logger.debug(
+                            f"Constraint evaluation failed: {rule} - {e}"
+                        )
+                        passed = False
+                    if not passed:
+                        violated = True
+                        counterexample = {
+                            "test_case_id": record.get(
+                                "test_case_id"
+                            ),
+                            "context": self._minimize_context(
+                                context,
+                                prop
+                            )
+                        }
+                        break
+                if violated:
+                    removed_constraints \
+                        .setdefault(endpoint, {})[prop] = {
+                            "rule": rule,
+                            "invalid_example": counterexample
+                        }
+
+                    self.logger.info(
+                        f"Removed static constraint "
+                        f"{endpoint}::{prop}"
+                    )
+
+                else:
+                    filtered_constraints[endpoint][prop] = rule
+        self.static_constraints = filtered_constraints
+        self.logger.info(
+            f"Static verification removed "
+            f"{sum(len(v) for v in removed_constraints.values())} "
+            f"constraints"
+        )
+         # save removed constraints
+        removed_file = (
+            Path(self.project_dir)
+            / "removed_static_constraints.json"
+        )
+
+        self._save_json_file(
+            removed_file,
+            removed_constraints
+        )
+        return removed_constraints
+
+        
+    
+    def constraint_arbitration(self):
+        # cache_file = Path(self.project_dir) / self.MAIN_CACHE
+        # if cache_file.exists():
+        #     self.logger.debug(f"Loading cached constraints from {cache_file}")
+        #     cache = self._load_json_file(cache_file)
+        #     self.constraints = cache
+        #     return
+        self.verify_static_constraints()
         constraints = self.merge_constraints()
         # Implement your arbitration logic here
         for endpoint, props in constraints.items():
             endpoint_constraints = [] # This will hold the final constraints for this endpoint after arbitration
             for prop, details in props.items():
+                if details.get("spec") is None or details.get("runtime") is None:
+                    continue
                 spec_constraint = details.get("spec")
                 runtime_constraint = details.get("runtime")
                 final_constraint = details.get("final")
@@ -123,7 +257,7 @@ class ConstraintMiner:
                         "spec": spec_constraint,
                         "runtime": runtime_constraint
                     })
-                    print(f"No clear constraint for {endpoint} - {prop}. Spec: {spec_constraint}, Runtime: {runtime_constraint}")
+                    print(f"No clear final constraint for {endpoint} - {prop}. Spec: {spec_constraint}, Runtime: {runtime_constraint}")
             if len(endpoint_constraints) == 0:
                 continue
             print(f"Arbitrating constraints for endpoint: {endpoint}")
@@ -200,25 +334,32 @@ class ConstraintMiner:
     def _minimize_context(
         self,
         context: Dict[str, Any],
-        prop: str
+        prop: str,
     ) -> Dict[str, Any]:
-
         mini_context = {}
         if "input" in context:
             mini_context["input"] = context["input"]
-
         try:
             eval_context = DSLEvaluationContext(context)
-            value = eval_context.get(prop)
-            mini_context["return"] = {
-                prop: value
-            }
+            values = {}
+            properties = [
+                p.strip()
+                for p in prop.split(",")
+                if p.strip()
+            ]
+            for p in properties:
+                try:
+                    values[p] = eval_context.get(p)
+                except Exception:
+                    values[p] = None
+            mini_context["return"] = values
         except Exception as e:
             mini_context["return"] = {
                 "error": str(e)
             }
 
         return mini_context
+    
     def verify_constraints(
         self,
         prop: str,
@@ -247,7 +388,6 @@ class ConstraintMiner:
                 continue
             for idx, record in enumerate(records):
                 try:
-                    print("build context")
                     context = self._build_history_context(record)
                     passed = engine.evaluate(
                         rule,
@@ -287,7 +427,6 @@ class ConstraintMiner:
                 continue
 
             counterfactual_results[endpoint] = {}
-            print(props)
             for prop, details in props.items():
                 if details.get("type") == "Equivalent" or details.get("type") == "Unique":
                     print(f"Skipping counterfactual for {endpoint} - {prop} due to clear arbitration result.")
@@ -296,7 +435,7 @@ class ConstraintMiner:
                     hypothesis = HypothesisProperties(
                         name=prop,
                         hypothesis_1=details.get("spec"),
-                        hypothesis_2=details.get("runtime",{}).get("invariant"),
+                        hypothesis_2=details.get("runtime"),
                         relation=details.get("type")
                     )
                 except Exception as e:
@@ -336,27 +475,26 @@ class ConstraintMiner:
         review_results: Dict[str, Dict[str, Any]] = {}
         for endpoint, props in self.counterfactual_results.items():
             review_results[endpoint] = {}
+            endpoint_info = self.operations.get(endpoint)
+            if endpoint_info.successful_responses:
+                flatten_responses = flatten_json_schema(endpoint_info.successful_responses.to_dict())
+            else:
+                flatten_responses = {}
             for prop, result in props.items():
                 details = self.constraints.get(endpoint, {}).get(prop, {})
                 entries = result.get("results") or []
                 best_hypothesis = "unknown"
-                explanation = "No counterfactual entries available for review."
                 if details.get("type") == "Equivalent":
                     best_hypothesis = "equal"
-                    explanation = "Both spec and runtime hypotheses are equivalent based on arbitration result."
                     self.constraints[endpoint][prop]["final"] = details.get("spec") or details.get("runtime")
                     continue
                 if details.get("type") == "Unique":
                     if details.get("spec") is not None and details.get("runtime") is None:
                         self.constraints[endpoint][prop]["final"] = details.get("spec")
                         best_hypothesis = "hypothesis_1"
-                        explanation = "Only spec hypothesis is available, selecting it as the best hypothesis."
                     elif details.get("runtime") is not None and details.get("spec") is None:
                         self.constraints[endpoint][prop]["final"] = details.get("runtime")
                         best_hypothesis = "hypothesis_2"
-                        explanation = "Only runtime hypothesis is available, selecting it as the best hypothesis."
-                    else:
-                        explanation = "No valid hypotheses available for this unique property."
                     continue
                 if self.model is None:
                     explanation = "No model available to evaluate counterfactual results."
@@ -372,35 +510,35 @@ class ConstraintMiner:
                     # infor contain spec: number of valid / total, example data invalid if have
                     # runtime  number of valid / total, example data invalid if have
                     # counterexample_summary = self._summarize_counterfactual_entries(entries)
+                    property_descriptions = []
+
+                    for p in [x.strip() for x in prop.split(",")]:
+                        property_info = flatten_responses.get(p)
+                        if property_info:
+                            property_descriptions.append(
+                                ItemProperties(**property_info).to_human_readable()
+                            )
+
+                    property_description = "\n".join(property_descriptions)
                     review_data = self.counterfactual_reviewer.exec(
                         endpoint=endpoint,
                         property=prop,
+                        property_description=property_description,
                         hypothesis_1=details.get("spec"),
-                        hypothesis_2=details.get("runtime",{}).get("invariant"),
+                        hypothesis_2=details.get("runtime"),
                         relation=details.get("type") or "Unknown",
                         verification_info=verification_info,
                     )
                     if review_data:
-                        verdict = review_data[0]
-                        best_hypothesis = verdict.best_hypothesis.value
-                        explanation = verdict.explanation
-                    else:
-                        explanation = "LLM did not return a valid verdict."
-
+                        best_hypothesis = review_data
+                self.constraints[endpoint][prop]["review"] == best_hypothesis
                 if best_hypothesis == "hypothesis_1":
                     self.constraints[endpoint][prop]["final"] = details.get("spec")
                 elif best_hypothesis == "hypothesis_2":
                     self.constraints[endpoint][prop]["final"] = details.get("runtime")
                 elif best_hypothesis == "union":
                     self.constraints[endpoint][prop]["type"] = "Union"
-                    self.constraints[endpoint][prop]["final"] = f"and({details.get("spec")}, {details.get("runtime").get("dslExpression")})"
-                review_results[endpoint][prop] = {
-                    "best_hypothesis": best_hypothesis,
-                    "explanation": explanation,
-                    "counterexample_count": len(entries),
-                }
-
-        self.constraint_review_results = review_results
+                    self.constraints[endpoint][prop]["final"] = f"and({details.get("spec")}, {details.get("runtime")})"
         self._save_constraints_to_cache()
         return review_results
 
@@ -449,7 +587,8 @@ class ConstraintMiner:
             for prop in set(d1) | set(d2):
                 spec = d1.get(prop)
                 runtime = d2.get(prop)
-
+                if isinstance(runtime, dict):
+                    runtime = runtime.get("dslExpression")
                 # Handle composite property: "a,b"
                 if "," in prop:
                     parts = [p.strip() for p in prop.split(",")]
@@ -459,10 +598,7 @@ class ConstraintMiner:
                         runtime_parts = [d2.get(p) for p in parts]
                         runtime_parts = [x for x in runtime_parts if x]
                         if runtime_parts:
-                            runtime = {
-                                "invariant": f"and({', '.join([ inv.get("invariant") for inv in runtime_parts])})",
-                                "dslExpression": f"and({', '.join( [ inv.get("dslExpression") for inv in runtime_parts])})",
-                            }
+                            runtime =  f"and({', '.join( [ inv.get("dslExpression") for inv in runtime_parts])})"
                     # Nếu runtime có a,b nhưng spec không có
                     elif runtime is not None and spec is None:
                         spec_parts = [d1.get(p) for p in parts]

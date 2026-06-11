@@ -65,7 +65,8 @@ The invariant is classified as "true - positive" if it holds for every valid req
         response, _ = self.llm.generate(
             system_prompt=self.SYSTEM_PROMPT,
             prompt=prompt,
-            schema=Verdict
+            schema=Verdict,
+            caller=self.__class__.__name__,
         )
         self.logger.debug("InvariantClassification Response: " + response.model_dump_json(indent=2))
         return response.datas

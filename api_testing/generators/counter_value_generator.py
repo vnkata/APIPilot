@@ -56,15 +56,41 @@ class CounterValueGenerator:
         if self.operation.request_body:
             first_body = next(iter(self.operation.request_body.values()))
             if isinstance(first_body, ItemProperties) and hasattr(first_body, "to_human_readable"):
+                first_body.xrefs = None
                 params["specific_endpoint_body"] = first_body.to_human_readable()
             else:
                 params["specific_endpoint_body"] = str(first_body)
 
         results = self._generator.exec(**params)
-        if hasattr(results, "dict"):
-            return results.dict().get("datas")
-        if isinstance(results, dict):
-            return results.get("datas")
-        return getattr(results, "datas", None)
+
+        if hasattr(results, "model_dump"):
+            results = results.model_dump()
+        elif hasattr(results, "dict"):
+            results = results.dict()
+        results = results.get("datas", [])
+
+        producer_parameters = {
+            k: v
+            for k, v in (self.operation.parameters or {}).items()
+            if getattr(v, "strategy", None)
+            and v.strategy.type == "ProducerGenerator"
+        }
+
+        for result in results:
+            request_params = result.get("parameters", {})
+            for name, parameter in producer_parameters.items():
+                if name not in request_params:
+                    continue
+                new_value = parameter.generator.next_value(
+                    context_pool=self.context_pool
+                )
+                if new_value is not None:
+                    request_params[name] = new_value
+                    print(
+                        f"update {name} with {new_value}"
+                    )
+
+        return results
+        # return getattr(results, "datas", None)
 
   

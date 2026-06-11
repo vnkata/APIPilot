@@ -29,6 +29,14 @@ def log_retry_error(retry_state: RetryCallState):
 
 default_model = "gpt-4.1-mini"
 
+NO_TEMPERATURE_MODELS = (
+    "gpt-5",
+    "o3",
+    "o4",
+)
+
+def supports_temperature(model: str) -> bool:
+    return not model.startswith(NO_TEMPERATURE_MODELS)
 
 class OpenAIModel(APITestingBaseLLMModel):
     def __init__(
@@ -85,6 +93,7 @@ class OpenAIModel(APITestingBaseLLMModel):
         prompt: Union[str, List[dict]],
         system_prompt: Optional[str] = None,
         schema: Optional[BaseModel] = None,
+        caller=None,
     ):
         messages = []
 
@@ -96,12 +105,15 @@ class OpenAIModel(APITestingBaseLLMModel):
             messages.append({"role": "user", "content": system_prompt + "\n" + prompt})
         else:
             messages.extend(prompt)
-
-        response = self.client.chat.completions.create(
-            model=self.model_name,
-            messages=messages,
-            temperature=self.temperature,
-        )
+        kwargs = {
+            "model": self.model_name,
+            "messages": messages,
+        }
+        if supports_temperature(self.model_name):
+            kwargs["temperature"] = self.temperature
+        else:
+            kwargs["reasoning_effort"] = "minimal"
+        response = self.client.chat.completions.create(**kwargs)
 
         # ===== usage tracking =====
         usage = getattr(response, "usage", None)
@@ -124,7 +136,7 @@ class OpenAIModel(APITestingBaseLLMModel):
             try:
                 # print(text)
                 parsed = schema.model_validate_json(text)
-                add_usage(prompt_tokens, completion_tokens, cached_tokens, reasoning_tokens)
+                add_usage(caller, prompt_tokens, completion_tokens, cached_tokens, reasoning_tokens)
 
                 return parsed, 0
             except Exception:
@@ -161,12 +173,16 @@ class OpenAIModel(APITestingBaseLLMModel):
             messages.append({"role": "user", "content": prompt})
         else:
             messages.extend(prompt)
+        kwargs = {
+            "model": self.model_name,
+            "messages": messages,
+        }
+        if supports_temperature(self.model_name):
+            kwargs["temperature"] = self.temperature
+        else:
+            kwargs["reasoning"] = {"effort": "minimal"}
 
-        response = await self.async_client.chat.completions.create(
-            model=self.model_name,
-            messages=messages,
-            temperature=self.temperature,
-        )
+        response = await self.async_client.chat.completions.create(**kwargs)
 
         usage = getattr(response, "usage", None)
         prompt_tokens = getattr(usage, "prompt_tokens", 0) if usage else 0

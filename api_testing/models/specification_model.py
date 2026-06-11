@@ -544,10 +544,15 @@ class OperationProperties:
                 if getattr(item, "allOf", None):
                     item = item.merge_allOf()
 
-                # 🔥 array → unwrap
-                if item.type == "array" and item.items:
-                    item = item.items
-
+                # # 🔥 array → unwrap
+                # if item.type == "array" and item.items:
+                #     unwrapped = copy.deepcopy(item.items)
+                #     unwrapped._root_array = True
+                #     item = unwrapped
+                #     print("ROOT ")
+                if item.type == "array":
+                    collected.append(item)
+                    continue
                 # 🔥 anyOf / oneOf
                 if getattr(item, "anyOf", None):
                     collected.extend(item.anyOf)
@@ -561,8 +566,10 @@ class OperationProperties:
 
         if not collected:
             return None
-
+        
         return self._merge_item_properties(collected)
+    
+    
     def _merge_item_properties(self, items: list[ItemProperties]) -> ItemProperties:
         merged = ItemProperties(
             type="object",
@@ -571,8 +578,12 @@ class OperationProperties:
         )
 
         merged_xrefs = set()
+        root_array = any(i.type == "array" for i in items)
+
 
         for item in items:
+            if item.type == "array":
+                item = item.items
             if not item:
                 continue
 
@@ -624,32 +635,15 @@ class OperationProperties:
         # 🔥 set merged object-level xrefs
         if merged_xrefs:
             merged.xrefs = ",".join(sorted(merged_xrefs))
-
+        if root_array:
+            return ItemProperties(
+                type="array",
+                items=merged,
+                xrefs=merged.xrefs
+            )
         return merged.merge_allOf()
+    
 
-    # def _merge_item_properties(self, items: list[ItemProperties]) -> ItemProperties:
-    #     merged = ItemProperties(
-    #         type="object",
-    #         properties={},
-    #         required=[],
-    #     )
-
-    #     for item in items:
-    #         if not item:
-    #             continue
-
-    #         # ưu tiên object
-    #         if item.type == "object" and item.properties:
-    #             merged.properties.update(item.properties)
-
-    #             if item.required:
-    #                 merged.required = list(set(merged.required + item.required))
-    #         else:
-    #             # fallback nếu không có object nào
-    #             if not merged.properties:
-    #                 merged = item
-
-    #     return merged.merge_allOf()
     @classmethod
     def from_dict(cls, data: dict):
         # Lấy tên của tất cả các fields định nghĩa trong dataclass

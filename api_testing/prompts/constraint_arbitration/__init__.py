@@ -10,78 +10,25 @@ from api_testing.utils.log import getLogger
 class ConstraintArbitration:
 
     SYSTEM_PROMPT = """
-You are an assistant whose task is to classify the relationship between two constraints for the same API property.
-You will be given:
-
-* API specification (OpenAPI): type, format, enum, min/max, description
-* Two constraints for the same property:
-
-  1. Constraint A (from specification)
-  2. Constraint B (from dynamic runtime)
-
-### Internal Reasoning Steps
-When making your decision, internally perform the following:
-
-1. **Understand the property**
-
-   * Identify the property type, format, allowed values, and semantic meaning from the API specification.
-   * Infer the intended domain of valid values.
-
-2. **Normalize both constraints**
-
-   * Rewrite Constraint A and Constraint B into comparable logical forms.
-   * Convert ranges, enums, regexes, predicates, or textual conditions into explicit sets or conditions when possible.
-
-3. **Compare the valid value spaces**
-
-   * Determine the relationship between the value sets allowed by Constraint A and Constraint B.
-
-4. **Classify the relationship**
-Use one of the following categories:
-
-* **Equivalent**
-  Both constraints allow exactly the same set of values.
-
-* **Subset**
-  One constraint allows a strict subset of the values allowed by the other constraint.
-  In other words, one constraint is strictly more restrictive than the other.
-
-  Example:
-  - A: integer ≥ 0
-  - B: integer ≥ 10
-  → B is a subset of A.
-
-* **Intersection**
-  The constraints partially overlap, but neither constraint fully contains the other.
-
-  Example:
-  - A: integer between 1 and 10
-  - B: even integers between 2 and 20
-  → overlap exists, but neither is a subset of the other.
-
-* **Disjoint (Conflicting)**
-  The constraints have no overlapping valid values and cannot both be true simultaneously.
-
-  Example:
-  - A: string enum {"A", "B"}
-  - B: string enum {"C", "D"}
-5. **Prioritize semantic meaning**
-
-   * Do not rely only on syntax.
-   * Consider descriptions, naming, formats, and implied business rules.
-
-6. **Handle uncertainty carefully**
-
-   * If the relationship cannot be determined precisely, choose the closest conservative classification and explain why.
-
-### **Output Format (STRICT)**
-Return ONLY:
-```json
+You are an expert API constraint analyst. Classify the semantic logical relationship between Constraint A (spec-derived) and Constraint B (runtime-derived) using a strict Chain of Thought (CoT) process.
+**Analysis Steps:**
+1. **Analyze expected outputs:** Determine and compare the exact set of valid values accepted by Constraint A and Constraint B, leveraging the provided API metadata.
+2. **Classify:** Determine the logical relationship based on the value sets.
+**Rules:**
+* Normalize constraints first (remove tautologies/duplicates, flatten operators).
+* Prioritize semantic implication over syntactic similarity. 
+* "Subset" takes priority over "Intersection" if a logical implication exists.
+**Classifications:**
+* **1 = Equivalent**: Both accept exactly the same valid values.
+* **2 = Subset**: One is strictly stronger/more restrictive than the other.
+* **3 = Intersection**: Partial overlap, but neither implies the other.
+* **4 = Disjoint**: Zero common valid values.
+Return ONLY the following JSON structure. Do not include any external markdown prose or explanations.
 {
   "datas": [
     {
-      "id": "<index of the invariant (starting from 1)>",
-      "answer": <1 = Equivalent, 2 = Subset, 3 = Intersection, 4 = Disjoint>
+      "id": "<index>",
+      "answer": <1|2|3|4>
     }
   ]
 }
@@ -110,7 +57,8 @@ Constraints:
         response, _ = self.llm.generate(
             system_prompt=self.SYSTEM_PROMPT,
             prompt=prompt,
-            schema=Verdict
+            schema=Verdict,
+            caller=self.__class__.__name__,
         )
         self.logger.debug("ConstraintArbitration Response: " + response.model_dump_json(indent=2))
         return response.datas

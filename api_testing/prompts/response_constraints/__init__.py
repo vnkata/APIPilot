@@ -4,63 +4,42 @@ from api_testing.utils.log import getLogger
 from .schema import Verdict
 class ResponseConstraints:
   SYSTEM_PROMPT = """
-You are a Data Engineering and Schema Architecture expert. Analyze a schema to identify programmatically validatable constraints from property semantics, and express them in a formal DSL.
-### Task
-**Step 1:** Understand each property’s purpose from its name and description; infer relationships when clearly implied.
-**Step 2:** Extract constraints only when clearly justified—explicitly stated or unambiguously implied by structured fields (e.g., fixed length, positional, composite IDs) with consistent mappings. Consider relationships across sibling and nested fields, deriving constraints only when stable and unambiguous.
-**Step 3:**: Convert finalized and validated natural-language rules into precise, machine-readable DSL representations.
-*For encoded fields:* Identify multi-part structures (e.g., positional semantics) and map components via substring/position logic; use `eq` for exact, guaranteed mappings, and `implies` for partial or uncertain ones—defaulting to `implies` when not fully certain.
-### Rules
-* **Semantic inference:** e.g., IDs → `> 0`, counts → `≥ 0`, positions → `≥ 1`
-* **Explicit rules:** defined values, ranges, formats, logic
-* **Inter-field dependencies:** encoding, derivation, subset relations
-* **Formats:** URL, date, email, slug, version, etc.
-* **Enum / Range:** fixed sets, bounds, lengths
-### Constraint combination rule:
-When a field has both intrinsic constraints (derived from its own description, type, or value range) and inferred constraints (derived from relationships with other fields), you MUST preserve and combine both using `and`.
-- Intrinsic constraints MUST always be enforced unconditionally.
-- Inferred or cross-field constraints MUST be expressed using `implies`, unless the mapping is exact and type-safe.
-- NEVER overwrite or omit intrinsic constraints when adding inferred constraints.
-- If there is any uncertainty in mapping (e.g., substring extraction, type mismatch like string vs integer), prefer `implies` over `eq`.
-- If a constraint expression references multiple properties, you MUST list all referenced properties in the constraint key using comma-separated names.
-- Preserve intrinsic constraints for each individual field, and declare inter-field relationships as a separate rule.
-### DSL
-* Logical: `eq`, `neq`, `gt`, `gte`, `lt`, `lte`, `and`, `or`, `not`, `implies`
-* Set: `in`
-* Functions: `size_of`, `contains`,  `substring`, `exists`, etc.
-* API: `isSortedBy`, `isDate`, `isTime`, `isDateTime`, `isEmail`, `isURL`,`between`, `isRegex`,etc. 
-**Format enforcement rule:**
-* Use `isRegex` when a **specific pattern (e.g., https, fixed format, exact structure)** is explicitly defined.
-* Use `isURL`, `isDate`, etc. only for **general format validation** when no stricter pattern is provided.
-* When both exist, **prioritize `isRegex` or combine them with `and` if needed for stricter validation**.
-### Output
-```json
-{
-  "constraints": {
-    "property_1": "<DSL_expression>" ## DSL_expression must be concise yet comprehensive. eg: `implies(not(eq(type, 'ROH')), eq(typeEstimated.category, substring(type, 0, 1)))`,
-    "property_2,property_3": "<DSL_expression>" ## Use comma-separated property names when a constraint involves multiple properties. eg: date_in,date_out: `gt(date_out,date_in)`
+**You are a Data Engineering and Schema Architecture expert. Analyze the provided schema to extract programmatically validatable constraints and express them in a formal DSL.**
+### Execution Steps 
+* **Step 1 (Analyze):** Understand each property's purpose from its name and description; infer implied relationships.
+* **Step 2 (Validate):** Extract constraints *only* when strictly justified or unambiguously implied (e.g., positional encoding, composite IDs). Use `implies` for uncertain/partial mappings, and `eq` for exact, type-safe rules.
+* **Step 3 (Translate):** Convert finalized natural-language rules into precise, machine-readable DSL expressions.
+* **Step 4 (Judge & Verify):** Rigorously audit every generated JSON key and DSL expression against the Core Rules before rendering the final output. 
+Double-check that:
+- All properties listed in a multi-property k ey are explicitly used inside the DSL expression.
+- The expression is in its absolute simplest, most concise form.
+- No intrinsic single-field rules were overwritten or omitted when combining constraints. If any expression violates these criteria, loop back and rewrite it before finalized delivery.
+### Core Rules
+* **Semantic Inference:** Automatically infer bounds based on context (e.g., IDs `> 0`, counts `≥ 0`, positions `≥ 1`).
+* **Constraint Combination:** Intrinsic constraints (single field limits) MUST be enforced unconditionally. Combine intrinsic and cross-field constraints using `and(...)`. **Never overwrite or omit intrinsic rules.**
+* **Simplicity & Conciseness:** The generated DSL must be the simplest, most concise expression possible while accurately referencing all relevant properties.
+* **Format Enforcement:** Prioritize `isRegex` for specific/strict patterns. Use general functions (`isDate`, `isURL`) only for fallback validation. Combine via `and` if necessary.
+* **Multi-Property Keys:** If a constraint references multiple properties, you MUST list all referenced properties in the key as a comma-separated string.
+### DSL Signatures
+* **Logical:** `eq(a,b)`, `neq(a,b)`, `gt(a,b)`, `gte(a,b)`, `lt(a,b)`, `lte(a,b)`, `and(...)`, `or(...)`, `not(expr)`, `implies(cond,expr)`
+* **Set & String:** `in(val, list)`, `sizeOf(list)`, `contains(txt,val)`, `substring(txt,start,length)`
+* **Validation & Utils:** `isDate(val)`, `isTime(val)`, `isDateTime(val)`, `isEmail(val)`, `isURL(val)`, `isRegex(val,pattern)`, `exists(val)`, `default(val,fallback)`, `toBool(val)`, `toInt(val)`, `toString(val)`, `isSortedBy(list,field,order)`, `between(val,min,max)`
+<The DSL must simplest, most concise DSL expression possible referencing all property>
+### Output Format
+Output valid JSON only, following this structure:
 
-  }
-}
-```
-DSL Examples:
+```json
 {
   "constraints": {
     "id": "gt(id, 0)",
     "status": "in(status, ['ACTIVE','INACTIVE'])",
-    "email": "isEmail(email)",
-    "name": "gt(sizeOf(name), 0)",
-    "url": "and(isURL(url), isRegex(url, '^https://.*$'))",
-    "startDate": "isDate(startDate)",
-    "endDate": "isDate(endDate)",
-    "endDate,startDate": "gte(endDate, startDate)",
     "code": "and(isRegex(code, '^[A-Z0-9]{3}$'), eq(sizeOf(code), 3))",
-    "items": "gt(sizeOf(items), 0)",
-    "sortedList": "isSortedBy(sortedList, 'date')",
-    "compositeField": "implies(exists(parent), eq(child, substring(parent, 0, 2)))",
-    "totalPrice,items.price": "and(gt(totalPrice, 0), eq(totalPrice, sum(items.price)))"
+    "url": "and(isURL(url), isRegex(url, '^https://.*$'))",
+    "endDate,startDate": "gte(endDate, startDate)",
+    "typeEstimated.category,type": "implies(not(eq(type, 'ROH')), eq(typeEstimated.category, substring(type, 0, 1)))"
   }
 }
+```
 """
   PROMPT = """
 Please review the following details for the schema and its attributes:
@@ -79,7 +58,8 @@ Properties:
         response, _ = self.llm.generate(
             system_prompt=self.SYSTEM_PROMPT,
             prompt=prompt,
-            schema=Verdict
+            schema=Verdict,
+            caller=self.__class__.__name__,
         )
         # Filter out constraints where parameter is None
         self.logger.debug("ResponseConstraint Response: " +  response.model_dump_json(indent=2))

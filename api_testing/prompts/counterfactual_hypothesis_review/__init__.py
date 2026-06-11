@@ -1,64 +1,3 @@
-# from .schema import Verdict
-# from api_testing.utils.log import getLogger
-
-
-# class CounterfactualHypothesisReview:
-#     SYSTEM_PROMPT = """
-# You are an expert API constraint analyst. Your task is to compare two competing hypotheses for the same API property using real counterexample execution results.
-
-# You will be given:
-# * Endpoint and property information
-# * Hypothesis 1 derived from the OpenAPI specification
-# * Hypothesis 2 derived from runtime observation
-# * A short summary of counterexample requests and their responses
-
-# Your job is to decide which hypothesis is more consistent with the observed counterexamples and which one is more likely to be the better property constraint.
-
-# ### Output rules
-# Return ONLY valid JSON in this exact structure, Dont explain anything, just return the JSON array:
-# {
-#   "datas": [
-#     {
-#       "id": 1,
-#       "best_hypothesis": "<hypothesis_1|hypothesis_2|equal|union>",
-#       "explanation": "<brief reasoning>"
-#     }
-#   ]
-# }
-
-# Use these values for best_hypothesis:
-# * hypothesis_1
-# * hypothesis_2
-# * equal
-# * union
-# """
-
-#     PROMPT = """
-# Endpoint: {endpoint}
-# Property: {property}
-# Hypothesis 1 (spec): {hypothesis_1}
-# Hypothesis 2 (runtime): {hypothesis_2}
-# Relation: {relation}
-
-# Counterexample summary:
-# {counterexample_summary}
-# """
-
-#     def __init__(self, llm) -> None:
-#         self.llm = llm
-#         self.logger = getLogger()
-
-#     def exec(self, *args, **kwargs):
-#         prompt = self.PROMPT.format(*args, **kwargs)
-#         self.logger.debug("CounterfactualHypothesisReview Prompt: " + prompt)
-#         response, _ = self.llm.generate(
-#             system_prompt=self.SYSTEM_PROMPT,
-#             prompt=prompt,
-#             schema=Verdict
-#         )
-#         self.logger.debug("CounterfactualHypothesisReview Response: " + response.model_dump_json(indent=2))
-#         return response.datas
-
 from .schema import Verdict
 from api_testing.utils.log import getLogger
 
@@ -66,52 +5,39 @@ from api_testing.utils.log import getLogger
 class CounterfactualHypothesisReview:
 
     SYSTEM_PROMPT = """
-You are an expert API constraint analyst.
-
-Your task is to determine which hypothesis better explains the observed API behavior.
-
-You will receive:
-- Endpoint and property information
-- Hypothesis 1 (spec)
-- Hypothesis 2 (runtime)
-- Relationship between them
-- Verification results showing how many examples satisfy each hypothesis
-- Counterexample execution summary
-
-Decision rules:
-
-1. Prefer the hypothesis with a significantly higher validation rate.
-2. If both hypotheses have nearly identical validation rates, choose "equal".
-3. If both hypotheses explain different valid subsets of behavior and neither dominates, choose "union".
-4. Use counterexamples to understand why a hypothesis fails.
-5. Do not simply prefer specification-derived constraints.
-
-Return ONLY valid JSON.
-
-{
-  "datas": [
-    {
-      "id": 1,
-      "best_hypothesis": "<hypothesis_1|hypothesis_2|equal|union>",
-      "explanation": ""
-    }
-  ]
-}
+You are an expert API constraint analyst. Determine which hypothesis best represents true API behavior based on observed execution evidence.
+### Inputs Received:
+* Endpoint & property metadata
+* Hypothesis 1 (spec-derived) & Hypothesis 2 (runtime-derived)
+* Relationship metadata, validation statistics, and counterexample summaries
+### Decision Rules:
+1. **Empirical Support:** Prefer the hypothesis better supported by validation stats and uncontradicted by counterexamples.
+* Select 1 if Hypothesis 1 has stronger empirical support.
+* Select 2 if Hypothesis 2 has stronger empirical support.
+Precision & Tie-Breaker: If both hypotheses are equally supported by empirical data:
+2. **Precision (Strength):** If validation results are similar, prefer the **stronger, more restrictive** constraint (e.g., a logical subset, `between(x,1,34)` over `gte(x,1)`, or `A and B` over `A`).
+* Prefer the stronger, more restrictive constraint (e.g., choose between(x,1,34) over gte(x,1)).
+*If they are logically equivalent (differing only by redundant predicates), default to 1 (Spec-derived) as the baseline truth.
+3. **Equivalence:** Treat constraints that differ only by redundant or implied predicates as equivalent.
+4. **Union Criteria:** Choose **Union (3)** *only* if both hypotheses capture unique, valid behaviors. Avoid union if one is simply a broader, weaker, or redundant version of the other.
+5. **Objectivity:** Evaluate purely on semantic implication and empirical data; do not inherently bias toward spec or runtime.
+### Output Format:
+Return **ONLY** a single digit. Do not include markdown formatting, JSON, or any text.
+* `1` = Hypothesis 1 is preferred
+* `2` = Hypothesis 2 is preferred
+* `3` = Union is required
 """
 
     PROMPT = """
 Endpoint: {endpoint}
 Property: {property}
-
+Description: {property_description}
 Hypothesis 1 (spec):
 {hypothesis_1}
-
 Hypothesis 2 (runtime):
 {hypothesis_2}
-
 Relation:
 {relation}
-
 Verification Results:
 
 Spec:
@@ -143,10 +69,12 @@ Runtime:
             )
 
         return "\n".join(lines)
+    
     def exec(
         self,
         endpoint: str,
         property: str,
+        property_description: str,
         hypothesis_1: str,
         hypothesis_2: str,
         relation: str,
@@ -160,6 +88,7 @@ Runtime:
         prompt = self.PROMPT.format(
             endpoint=endpoint,
             property=property,
+            property_description=property_description,
             hypothesis_1=hypothesis_1,
             hypothesis_2=hypothesis_2,
             relation=relation,
@@ -180,6 +109,7 @@ Runtime:
             system_prompt=self.SYSTEM_PROMPT,
             prompt=prompt,
             schema=Verdict,
+            caller=self.__class__.__name__,
         )
 
         self.logger.debug(
@@ -187,4 +117,4 @@ Runtime:
             response.model_dump_json(indent=2),
         )
 
-        return response.datas
+        return response.label

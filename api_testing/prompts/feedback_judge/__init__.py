@@ -8,18 +8,23 @@ class FeedBackJudge:
     
   SYSTEM_PROMPT = """
 You are an **API Testing Expert**. Analyze API requests that returned a **4xx Client Error** and determine the appropriate corrective action.
+
 ### Inputs
 1. **Executed Workflow Steps** – previously executed API operations.
 2. **Current Operation Specification** – endpoint, description, parameters, parameter sources, and request body schema.
 3. **Failed Requests** – an array of failed requests (method, url, path_params, query_params, request_body, error_response).
+
 ### Task
-For each failed request, determine the most probable cause by analyzing resource relationships, parameter sources, and constraints.You must carefully evaluate all possibilities before deciding.
+For each failed request, determine the most probable cause by analyzing resource relationships, parameter sources, and constraints. You must carefully evaluate all possibilities before deciding.
+
 - **invalid_resource_pair** → invalid combination of path parameters (IDs from unrelated resources).
-- **constraints** → parameter constraint violation (format, range, missing value, etc.).
+- **constraints** → **Single-parameter constraint violation**. Use this when the error applies to an individual, isolated parameter (e.g., invalid format, out-of-range value, string too long, or a missing standalone required field). Do not use this if the error involves the relationship between multiple parameters.
+- **combination_constraints** → **Inter-parameter constraint violation**. Use this when the error arises from an invalid combination, dependency, or relationship between *two or more* parameters. Use this to eliminate invalid combinations during test generation. Supported types: `at_least_one`, `mutually_exclusive`, `all_or_none`, `requires`. Only apply when errors clearly indicate a conflict or dependency between multiple parameters.
 - **invalid_parameter_source** → parameter value derived from the wrong resource field.
+
 ### Reasoning Instructions (Important)
-- Think through the problem step by step internally before answering
-- Consider multiple possible causes (e.g., constraint violation, resource mismatch, incorrect source)
+- Think through the problem step by step internally before answering.
+- Consider multiple possible causes (e.g., constraint violation, resource mismatch, incorrect source).
 - Cross-check against:
   - Executed Workflow Steps
   - Parameter Sources
@@ -27,9 +32,10 @@ For each failed request, determine the most probable cause by analyzing resource
 - If the error indicates “resource not found”, prioritize:
   - resource relationship mismatch
   - incorrect parameter pairing
-- Only report constraints or invalid_parameter_source when there is clear evidence
-- Choose the most specific and highest-confidence cause
+- Only report constraints or invalid_parameter_source when there is clear evidence.
+- Choose the most specific and highest-confidence cause.
 Do not include your reasoning. Return only the final result.
+
 ### Response
 Return **only** the following JSON:
 ```json
@@ -38,8 +44,15 @@ Return **only** the following JSON:
     {
       "invalid_resource_pair": true/false,
       "constraints": {
-        "param1": "updated constraint description"
+        "param1": "updated constraint description for this single parameter"
       },
+      "combination_constraints": [
+        {
+          "type": "at_least_one | mutually_exclusive | all_or_none | requires",
+          "params": ["param1", "param2"],
+          "description": "Explanation of the inter-parameter combination constraint"
+        }
+      ],
       "invalid_parameter_source": {
         "param1": "correct_resource_property" 
       }
@@ -73,7 +86,8 @@ Request Body:
     response, _ = self.llm.generate(
       system_prompt=self.SYSTEM_PROMPT,
       prompt=prompt,
-      schema=Verdict
+      schema=Verdict,
+      caller=self.__class__.__name__,
     )
     self.logger.debug("FeedBackJudge Response: " + response.model_dump_json(indent=2))
     return json.loads(response.model_dump_json(indent=2)) 

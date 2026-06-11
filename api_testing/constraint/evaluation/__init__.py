@@ -30,6 +30,23 @@ class DSLEvaluationContext:
                 return resolved_root
 
         return default
+    @staticmethod
+    def _is_missing(value):
+
+        if value is None:
+            return True
+
+        if isinstance(value, list):
+
+            if not value:
+                return True
+
+            return all(
+                DSLEngine._is_missing(v)
+                for v in value
+            )
+
+        return False
 
     def _resolve_path(self, path: str, container: Any) -> Any:
         if container is None:
@@ -152,7 +169,7 @@ class DSLEngine:
             eval_context = DSLEvaluationContext(context, local_context)
             tree = self._parser.parse(dsl)
             transformer = DSLTransformer(eval_context)
-            if self_value is None:
+            if self._is_missing(self_value):
                 print(f"Warning: Target value for path '{path}' is None. DSL: {dsl}")
                 value = True
             else:
@@ -160,8 +177,6 @@ class DSLEngine:
             if value == False: 
                 print(f"Validation failed for path '{path}' with value '{self_value}'. DSL: {dsl}")
             results.append(bool(value))
-            # results.append(value)
-
         return all(results)
 
     def _build_local_context(self, local_obj: Any, self_value: Any) -> dict:
