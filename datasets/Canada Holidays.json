@@ -750,32 +750,9 @@
           "holidays"
         ]
       }
-    },
-    "/api/v1/spec": {
-      "get": {
-        "summary": "Get JSON schema",
-        "tags": [
-          "info"
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "headers": {
-              "content-type": {
-                "schema": {
-                  "type": "string"
-                },
-                "description": "text/yaml; charset=UTF-8"
-              }
-            }
-          }
-        },
-        "operationId": "Spec",
-        "description": "Gets the schema for the JSON API as a yaml file."
-      }
     }
   },
-  "components": {
+  "components": { 
     "schemas": {
       "Holiday": {
         "title": "Holiday",

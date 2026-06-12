@@ -132,7 +132,7 @@ class APITesting:
                  test_single_endpoint: Optional[str] = None,  # New parameter
                  # async_mode=False,
                  constraint_mining=True,
-                 
+                 requestHeader = None
                  ):
         self.base_url = base_url
         self.base_title = base_title
@@ -146,6 +146,7 @@ class APITesting:
         self.operation_graph = None
         self.tracer = None
         self.mining_constraints = constraint_mining
+        self.requestHeader = requestHeader
         self._load_()
         
         if self.test_single_endpoint:
@@ -369,6 +370,7 @@ class APITesting:
             #     return
             executor = Executor(
                 api_url = self.base_url, 
+                requestHeader= self.requestHeader,
                 strategy= Strategy.NAIVE_VALUE,
                 operation=nodes.get(node.name),
                 cache_dir=self.project_dir,

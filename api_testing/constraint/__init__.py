@@ -31,7 +31,8 @@ class ConstraintMiner:
         spec_parser: Any,
         model: Optional[Any] = None,
         embedding_model: Optional[Any] = None,
-        cache_dir: Optional[str] = None
+        cache_dir: Optional[str] = None,
+        requestHeader = None
     ) -> None:
         self.spec_parser = spec_parser
         self.model = model
@@ -50,6 +51,7 @@ class ConstraintMiner:
         )
         self.operations = self.spec_parser.operations
         self.logger = getLogger(__name__)
+        self.requestHeader = requestHeader
 
         self.arbitration = ConstraintArbitration(llm=self.model)
         self.counterfactual_reviewer = CounterfactualHypothesisReview(llm=self.model)
@@ -443,6 +445,7 @@ class ConstraintMiner:
                 print(f"Running counterfactual tests for {endpoint} - {prop}")
                 executor = Executor(
                     api_url=base_url,
+                    requestHeader= self.requestHeader,
                     strategy=Strategy.COUNTER_VALUE,
                     operation=operation,
                     cache_dir=self.project_dir,
@@ -529,9 +532,8 @@ class ConstraintMiner:
                         relation=details.get("type") or "Unknown",
                         verification_info=verification_info,
                     )
-                    if review_data:
+                    if review_data: 
                         best_hypothesis = review_data
-                self.constraints[endpoint][prop]["review"] == best_hypothesis
                 if best_hypothesis == "hypothesis_1":
                     self.constraints[endpoint][prop]["final"] = details.get("spec")
                 elif best_hypothesis == "hypothesis_2":

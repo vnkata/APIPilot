@@ -102,7 +102,7 @@ def merge_config(
 
 
 class Executor:
-  def __init__(self, api_url: str=None, strategy: Strategy = Strategy.SMART_VALUE, operation: OperationProperties = None, cache_dir=None,model=None,configuration=None,
+  def __init__(self, api_url: str=None, requestHeader: dict=None, strategy: Strategy = Strategy.SMART_VALUE, operation: OperationProperties = None, cache_dir=None,model=None,configuration=None,
                num_test_cases=1, context_pool=None, mutation_ratio = 0.1, hypothesis: HypothesisProperties = None):
     self.api_url = api_url
     self.strategy = strategy
@@ -115,6 +115,7 @@ class Executor:
     self.num_test_cases = num_test_cases
     self.mutation_ratio = mutation_ratio
     self.hypothesis = hypothesis
+    self.requestHeader = requestHeader
     
   def mutator(self, requests: list["RequestData"], body_schema) -> list["RequestData"]:
     if not requests:
@@ -178,6 +179,7 @@ class Executor:
       headers = {
           "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
           "Accept": "*/*",
+          **(self.requestHeader or {}),
           "PRIVATE-TOKEN": "jxQposqiCQcUtk7NNDrL"  #admin
         #   "PRIVATE-TOKEN": "iQsxaz6krFqGKeo3sMmd" #user01
         #   "PRIVATE-TOKEN": "f8yBzJsuC47f2ryrNJ7D" #user02
