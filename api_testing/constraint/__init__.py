@@ -469,81 +469,139 @@ class ConstraintMiner:
         self.counterfactual_results = counterfactual_results
         return counterfactual_results
 
-    def constraint_review(self, base_url: Optional[str] = None, num_test_cases: int = 20):
+    def constraint_review(
+        self,
+        base_url: Optional[str] = None,
+        num_test_cases: int = 20,
+    ):
 
-        if not hasattr(self, "counterfactual_results") or not self.counterfactual_results:
+        if (
+            not hasattr(self, "counterfactual_results")
+            or not self.counterfactual_results
+        ):
             print("constraint_counterfactual")
-            self.constraint_counterfactual(base_url=base_url, num_test_cases=num_test_cases)
+            self.constraint_counterfactual(
+                base_url=base_url,
+                num_test_cases=num_test_cases,
+            )
 
         review_results: Dict[str, Dict[str, Any]] = {}
-        for endpoint, props in self.counterfactual_results.items():
+
+        for endpoint, props in self.constraints.items():
             review_results[endpoint] = {}
+
             endpoint_info = self.operations.get(endpoint)
-            if endpoint_info.successful_responses:
-                flatten_responses = flatten_json_schema(endpoint_info.successful_responses.to_dict())
+
+            if (
+                endpoint_info
+                and endpoint_info.successful_responses
+            ):
+                flatten_responses = flatten_json_schema(
+                    endpoint_info.successful_responses.to_dict()
+                )
             else:
                 flatten_responses = {}
-            for prop, result in props.items():
-                details = self.constraints.get(endpoint, {}).get(prop, {})
-                entries = result.get("results") or []
+
+            for prop, details in props.items():
+
+                counterfactual_data = (
+                    self.counterfactual_results
+                    .get(endpoint, {})
+                    .get(prop, {})
+                )
+
+                entries = counterfactual_data.get("results", [])
+
                 best_hypothesis = "unknown"
+
                 if details.get("type") == "Equivalent":
                     best_hypothesis = "equal"
-                    self.constraints[endpoint][prop]["final"] = details.get("spec") or details.get("runtime")
-                    continue
-                if details.get("type") == "Unique":
-                    if details.get("spec") is not None and details.get("runtime") is None:
-                        self.constraints[endpoint][prop]["final"] = details.get("spec")
-                        best_hypothesis = "hypothesis_1"
-                    elif details.get("runtime") is not None and details.get("spec") is None:
-                        self.constraints[endpoint][prop]["final"] = details.get("runtime")
-                        best_hypothesis = "hypothesis_2"
-                    continue
-                if self.model is None:
-                    explanation = "No model available to evaluate counterfactual results."
-                elif not entries:
-                    explanation = "No counterfactual execution data found for this property."
-                else:
-                    # 
-                    verification_info = self.verify_constraints(
-                        prop=prop,
-                        details=details,
-                        records=entries,
+                    self.constraints[endpoint][prop]["final"] = (
+                        details.get("spec")
+                        or details.get("runtime")
                     )
-                    # infor contain spec: number of valid / total, example data invalid if have
-                    # runtime  number of valid / total, example data invalid if have
-                    # counterexample_summary = self._summarize_counterfactual_entries(entries)
-                    property_descriptions = []
+                    continue
 
-                    for p in [x.strip() for x in prop.split(",")]:
-                        property_info = flatten_responses.get(p)
-                        if property_info:
-                            property_descriptions.append(
-                                ItemProperties(**property_info).to_human_readable()
-                            )
+                if details.get("type") == "Unique":
+                    if (
+                        details.get("spec") is not None
+                        and details.get("runtime") is None
+                    ):
+                        self.constraints[endpoint][prop]["final"] = (
+                            details.get("spec")
+                        )
+                        best_hypothesis = "hypothesis_1"
 
-                    property_description = "\n".join(property_descriptions)
-                    review_data = self.counterfactual_reviewer.exec(
+                    elif (
+                        details.get("runtime") is not None
+                        and details.get("spec") is None
+                    ):
+                        self.constraints[endpoint][prop]["final"] = (
+                            details.get("runtime")
+                        )
+                        best_hypothesis = "hypothesis_2"
+
+                    continue
+
+                verification_info = self.verify_constraints(
+                    prop=prop,
+                    details=details,
+                    records=entries,
+                )
+                property_descriptions = []
+                for p in [x.strip() for x in prop.split(",")]:
+                    property_info = flatten_responses.get(p)
+                    if property_info:
+                        property_descriptions.append(
+                            ItemProperties(
+                                **property_info
+                            ).to_human_readable()
+                        )
+
+                property_description = "\n".join(
+                    property_descriptions
+                )
+                review_data = self.counterfactual_reviewer.exec(
                         endpoint=endpoint,
                         property=prop,
                         property_description=property_description,
                         hypothesis_1=details.get("spec"),
                         hypothesis_2=details.get("runtime"),
-                        relation=details.get("type") or "Unknown",
+                        relation=details.get("type")
+                        or "Unknown",
                         verification_info=verification_info,
                     )
-                    if review_data: 
-                        best_hypothesis = review_data
-                if best_hypothesis == "hypothesis_1":
-                    self.constraints[endpoint][prop]["final"] = details.get("spec")
-                elif best_hypothesis == "hypothesis_2":
-                    self.constraints[endpoint][prop]["final"] = details.get("runtime")
-                elif best_hypothesis == "union":
-                    self.constraints[endpoint][prop]["type"] = "Union"
-                    self.constraints[endpoint][prop]["final"] = f"and({details.get("spec")}, {details.get("runtime")})"
-        self._save_constraints_to_cache()
-        return review_results
 
+                if review_data:
+                    best_hypothesis = review_data
+
+                if best_hypothesis == "hypothesis_1":
+                    self.constraints[endpoint][prop]["final"] = (
+                        details.get("spec")
+                    )
+
+                elif best_hypothesis == "hypothesis_2":
+                    self.constraints[endpoint][prop]["final"] = (
+                        details.get("runtime")
+                    )
+
+                elif best_hypothesis == "union":
+                    self.constraints[endpoint][prop]["type"] = (
+                        "Union"
+                    )
+                    self.constraints[endpoint][prop]["final"] = (
+                        f"and({details.get('spec')}, "
+                        f"{details.get('runtime')})"
+                    )
+
+                review_results[endpoint][prop] = {
+                    "decision": best_hypothesis,
+                    "counterfactual_count": len(entries),
+                }
+
+        self._save_constraints_to_cache()
+
+        return review_results
     def _summarize_counterfactual_entries(self, entries: list[Dict[str, Any]], max_examples: int = 3) -> str:
         summaries = []
         for idx, entry in enumerate(entries[:max_examples], start=1):
