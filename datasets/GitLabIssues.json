@@ -2782,7 +2782,7 @@
           }
         ],
         "responses": {
-          "201": {
+          "200": {
             "description": "Sets an estimated time of work for this issue.",
             "content": {
               "application/json": {

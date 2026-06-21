@@ -1393,7 +1393,7 @@
           "required": true
         },
         "responses": {
-          "201": {
+          "200": {
             "description": "Get the comments of a commit in a project.",
             "content": {
               "application/json": {
